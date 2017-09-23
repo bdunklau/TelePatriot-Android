@@ -88,7 +88,7 @@ public class SignInActivity extends AppCompatActivity implements
                 firebaseAuthWithGoogle(account);
             } else {
                 // Google Sign-In failed
-                Log.e(TAG, "Google Sign-In failed.");
+                Log.e(TAG, "Google Sign-In failed. Make sure sha1 hash is registered with google for this machine");
             }
         }
     }
