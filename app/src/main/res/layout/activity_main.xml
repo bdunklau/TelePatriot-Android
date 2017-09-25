@@ -9,13 +9,4 @@
     tools:context="com.brentdunklau.telepatriot_android.MainActivity">
 
 
-    <Button
-        android:id="@+id/log_out_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="72dp"
-        android:text="Log Out" />
-
 </RelativeLayout>
