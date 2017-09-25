@@ -6,6 +6,8 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.firebase.ui.auth.AuthUI;
@@ -115,33 +117,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    /*
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    //  https://codelabs.developers.google.com/codelabs/firebase-android/#5
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            *//*couldn't get this to work...
-            case R.id.fresh_config_menu:
-                fetchConfig();
-                return true;*//*
-            case R.id.sign_out_menu:
-                mFirebaseAuth.signOut();
-                Auth.GoogleSignInApi.signOut(mGoogleApiClient);
-                mUsername = ANONYMOUS;
-                startActivity(new Intent(this, SignInActivity.class));
-                finish();
+        switch(item.getItemId()) {
+            case(R.id.chat_help):
                 return true;
-            default:
-                return super.onOptionsItemSelected(item);
+            case(R.id.sign_out_menu):
+                return true;
+            default: return super.onOptionsItemSelected(item);
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        //return true;
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    /*
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
