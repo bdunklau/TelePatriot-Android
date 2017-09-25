@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
 //import com.google.android.gms.common.api.GoogleApiClient;
@@ -92,6 +93,7 @@ public class MainActivity extends AppCompatActivity
             if(resultCode == RESULT_OK) {
                 // user logged in
                 Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
+                ((TextView)findViewById(R.id.name)).setText(mFirebaseAuth.getCurrentUser().getDisplayName());
             } else {
                 // user not authenticated
                 Log.d(TAG, "USER NOT AUTHENTICATED");
