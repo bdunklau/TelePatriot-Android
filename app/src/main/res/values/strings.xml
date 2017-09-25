@@ -1,10 +1,8 @@
 <resources>
     <string name="app_name">TelePatriot</string>
 
+    <string name="chat_help">Chat/Help</string>
     <string name="sign_out">Sign Out</string>
-    <string name="invite_menu_label">Invite</string>
-    <string name="cause_crash">Cause Crash</string>
-    <string name="fresh_config">Fresh Config</string>
     <string name="sign_in">Sign In</string>
 
 </resources>
