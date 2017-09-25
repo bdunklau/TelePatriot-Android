@@ -1,23 +1,27 @@
 package com.brentdunklau.telepatriot_android;
 
+
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.widget.Toast;
+import android.view.View;
 
-import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.firebase.ui.auth.AuthUI;
+//import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
+import java.util.Arrays;
 
+public class MainActivity extends AppCompatActivity implements View.OnClickListener
+        //implements GoogleApiClient.OnConnectionFailedListener
+{
+
+    private static final int RC_SIGN_IN = 1;
     private static final String TAG = "MainActivity";
     public static final String ANONYMOUS = "anonymous";
     private String mUsername;
@@ -26,13 +30,39 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private FirebaseAuth mFirebaseAuth;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
     private FirebaseUser mFirebaseUser;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
 
-    private GoogleApiClient mGoogleApiClient;
+    //private GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize Firebase Auth
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        /*if(mFirebaseAuth != null) {
+            // user already signed in
+        } else {*/
+            AuthUI aui = AuthUI.getInstance();
+            AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
+                    .setAvailableProviders(Arrays.asList(
+                            new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build(),
+                            new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
+                            new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build()
+                            )
+                    )
+                    .setTheme(R.style.FlagTheme);
+
+            Intent intent = sib.build();
+            intent.putExtra("backgroundImage", R.drawable.usflag);
+
+            startActivityForResult(intent, RC_SIGN_IN);
+        /*
+        }*/
+
+        findViewById(R.id.log_out_button).setOnClickListener(this);
+
+
+/*
         // Set default username is anonymous.
         mUsername = ANONYMOUS;
 
@@ -52,11 +82,40 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         }
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                .enableAutoManage(this *//* FragmentActivity *//*, this *//* OnConnectionFailedListener *//*)
                 .addApi(Auth.GOOGLE_SIGN_IN_API)
-                .build();
+                .build();*/
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == RC_SIGN_IN) {
+            if(resultCode == RESULT_OK) {
+                // user logged in
+                Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
+            } else {
+                // user not authenticated
+                Log.d(TAG, "USER NOT AUTHENTICATED");
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        if(view.getId() == R.id.log_out_button) {
+            AuthUI.getInstance().signOut(this)
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Log.d(TAG, "USER LOGGED OUT");
+                            finish();
+                        }
+                    });
+        }
+    }
+
+    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -68,10 +127,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            /*couldn't get this to work...
+            *//*couldn't get this to work...
             case R.id.fresh_config_menu:
                 fetchConfig();
-                return true;*/
+                return true;*//*
             case R.id.sign_out_menu:
                 mFirebaseAuth.signOut();
                 Auth.GoogleSignInApi.signOut(mGoogleApiClient);
@@ -90,5 +149,5 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         // be available.
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
         Toast.makeText(this, "Network connection dropped", Toast.LENGTH_SHORT).show();
-    }
+    }*/
 }
