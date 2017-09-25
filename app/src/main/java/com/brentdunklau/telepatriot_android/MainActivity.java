@@ -51,8 +51,7 @@ public class MainActivity extends AppCompatActivity
                             new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
                             new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build()
                             )
-                    )
-                    .setTheme(R.style.FlagTheme);
+                    );
 
             Intent intent = sib.build();
             intent.putExtra("backgroundImage", R.drawable.usflag);
