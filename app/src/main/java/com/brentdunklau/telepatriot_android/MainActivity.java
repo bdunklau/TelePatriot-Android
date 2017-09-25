@@ -19,7 +19,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.util.Arrays;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener
+public class MainActivity extends AppCompatActivity
         //implements GoogleApiClient.OnConnectionFailedListener
 {
 
@@ -41,9 +41,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Initialize Firebase Auth
         mFirebaseAuth = FirebaseAuth.getInstance();
-        /*if(mFirebaseAuth != null) {
+        if(mFirebaseAuth.getCurrentUser() != null) {
             // user already signed in
-        } else {*/
+        } else {
             AuthUI aui = AuthUI.getInstance();
             AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
                     .setAvailableProviders(Arrays.asList(
@@ -58,10 +58,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             intent.putExtra("backgroundImage", R.drawable.usflag);
 
             startActivityForResult(intent, RC_SIGN_IN);
-        /*
-        }*/
-
-        findViewById(R.id.log_out_button).setOnClickListener(this);
+        }
 
 
 /*
@@ -103,18 +100,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    @Override
-    public void onClick(View view) {
-        if(view.getId() == R.id.log_out_button) {
-            AuthUI.getInstance().signOut(this)
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            Log.d(TAG, "USER LOGGED OUT");
-                            finish();
-                        }
-                    });
-        }
+    private void signOut() {
+        AuthUI.getInstance().signOut(this)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Log.d(TAG, "USER LOGGED OUT");
+                        finish();
+                    }
+                });
     }
 
     @Override
@@ -123,6 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case(R.id.chat_help):
                 return true;
             case(R.id.sign_out_menu):
+                signOut();
                 return true;
             default: return super.onOptionsItemSelected(item);
         }
