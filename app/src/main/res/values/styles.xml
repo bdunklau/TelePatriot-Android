@@ -8,4 +8,9 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+
+    <style name="FlagTheme">
+        <item name="android:windowBackground">@drawable/usflag</item>
+    </style>
+
 </resources>

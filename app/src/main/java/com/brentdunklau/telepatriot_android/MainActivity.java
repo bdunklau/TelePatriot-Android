@@ -39,9 +39,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Initialize Firebase Auth
         mFirebaseAuth = FirebaseAuth.getInstance();
-        if(mFirebaseAuth != null) {
+        /*if(mFirebaseAuth != null) {
             // user already signed in
-        } else {
+        } else {*/
             AuthUI aui = AuthUI.getInstance();
             AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
                     .setAvailableProviders(Arrays.asList(
@@ -49,12 +49,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
                             new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build()
                             )
-                    );
+                    )
+                    .setTheme(R.style.FlagTheme);
+
             Intent intent = sib.build();
             intent.putExtra("backgroundImage", R.drawable.usflag);
 
             startActivityForResult(intent, RC_SIGN_IN);
-        }
+        /*
+        }*/
 
         findViewById(R.id.log_out_button).setOnClickListener(this);
 
