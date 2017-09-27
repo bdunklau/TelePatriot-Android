@@ -41,6 +41,11 @@ dependencies {
     // from:  https://github.com/firebase/FirebaseUI-Android
     // Single target that includes all FirebaseUI libraries above
     compile 'com.firebaseui:firebase-ui:2.3.0'
+
+    // from
+    // https://blog.chizobaogbonna.me/device-to-device-push-notification-using-cloud-functions-for-firebase-5e607d74d7a2
+    //
+    compile 'com.google.firebase:firebase-messaging:11.0.4'
 }
 
 
