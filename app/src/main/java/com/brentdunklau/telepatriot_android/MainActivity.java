@@ -2,7 +2,6 @@ package com.brentdunklau.telepatriot_android;
 
 
 import android.content.Intent;
-import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
@@ -106,23 +105,6 @@ public class MainActivity extends AppCompatActivity
     public void subscribeToTopic(View view) {
         FirebaseMessaging.getInstance().subscribeToTopic("notifications");
         Toast.makeText(this, "Subscribed to Topic: Notifications", Toast.LENGTH_SHORT).show();
-    }
-
-    // should be temporary - can't imagine leaving this around after figuring out
-    // messaging works
-    // ref:  https://github.com/chizoba/Firebase-Cloud-Functions-Tutorial/blob/master/app/src/main/java/com/github/chizoba/firebasecloudfunctions/MainActivity.java
-    class Message {
-        String title, message;
-        public Message(String title, String message) {
-            this.title = title;
-            this.message = message;
-        }
-        public String getTitle() {
-            return title;
-        }
-        public String getMessage() {
-            return message;
-        }
     }
 
     public void sendMessage(View view) {
