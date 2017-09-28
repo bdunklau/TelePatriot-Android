@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity
                     dataTitle=(String)getIntent().getExtras().get(key);
                 }
                 if (key.equals("message")) {
-                    dataMessage = (String)getIntent().getExtras().get(key);;
+                    dataMessage = (String)getIntent().getExtras().get(key);
                 }
             }
             showAlertDialog();
@@ -108,7 +108,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void sendMessage(View view) {
-        myRef.push().setValue(new Message(title.getText().toString(), message.getText().toString()));
+        // oops you deleted this Message "bean" class - not hard to recreate if you want to
+        //myRef.push().setValue(new Message(title.getText().toString(), message.getText().toString()));
         Toast.makeText(this, "Message Sent", Toast.LENGTH_SHORT).show();
     }
 
