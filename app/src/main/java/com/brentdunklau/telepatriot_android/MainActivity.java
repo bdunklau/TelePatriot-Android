@@ -1,6 +1,8 @@
 package com.brentdunklau.telepatriot_android;
 
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
@@ -10,7 +12,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,6 +56,10 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        /**
+         * see:  https://stackoverflow.com/a/11656129
+         */
+        setupUI(findViewById(R.id.main_view));
 
         // Initialize Firebase Auth
         mFirebaseAuth = FirebaseAuth.getInstance();
@@ -97,6 +106,44 @@ public class MainActivity extends AppCompatActivity
         message = findViewById(R.id.message);
     }
 
+    /**
+     * See setupUI() in onCreate() to see how we hide the keyboard when the user clicks away from either the title or the message field.
+     * Got the answer from here:  https://stackoverflow.com/a/11656129
+     * @param activity
+     */
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) activity.getSystemService(
+                        Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(
+                activity.getCurrentFocus().getWindowToken(), 0);
+    }
+
+    /**
+     * See setupUI() in onCreate() to see how we hide the keyboard when the user clicks away from either the title or the message field.
+     * Got the answer from here:  https://stackoverflow.com/a/11656129
+     * @param view
+     */
+    public void setupUI(View view) {
+
+        // Set up touch listener for non-text box views to hide keyboard.
+        if (!(view instanceof EditText)) {
+            view.setOnTouchListener(new View.OnTouchListener() {
+                public boolean onTouch(View v, MotionEvent event) {
+                    hideSoftKeyboard(MainActivity.this);
+                    return false;
+                }
+            });
+        }
+
+        //If a layout container, iterate over children and seed recursion.
+        if (view instanceof ViewGroup) {
+            for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
+                View innerView = ((ViewGroup) view).getChildAt(i);
+                setupUI(innerView);
+            }
+        }
+    }
 
 
     private void showAlertDialog() {
@@ -112,6 +159,10 @@ public class MainActivity extends AppCompatActivity
         Toast.makeText(this, "Subscribed to Topic: Notifications", Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * See android:onClick="sendMessage" in activity_main.xml
+     * @param view
+     */
     public void sendMessage(View view) {
         // oops you deleted this Message "bean" class - not hard to recreate if you want to
         myRef.push().setValue(new Message(title.getText().toString(), message.getText().toString()));
