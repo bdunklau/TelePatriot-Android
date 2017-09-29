@@ -10,6 +10,7 @@ exports.pushNotification = functions.database.ref('/messages/{pushId}').onWrite(
     
     /* Grab the current value of what was written to the Realtime Database */
     var valueObject = event.data.val();
+    console.log('valueObject: ', valueObject);
 
     /* Create a notification and data payload. They contain the notification information, and message to be sent respectively */ 
     const payload = {

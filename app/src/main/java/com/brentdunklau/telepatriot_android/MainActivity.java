@@ -72,6 +72,11 @@ public class MainActivity extends AppCompatActivity
             startActivityForResult(intent, RC_SIGN_IN);
         }
 
+        // If the app is not currently up or in the foreground, this is what gets called after
+        // you pull down the notifications and click one.
+        // If the app is not currently up or in the foreground, you don't execute the onMessageReceived()
+        // method in MyFirebaseMessagingService
+        //
         // Handle possible data accompanying notification message.
         if (getIntent().getExtras() != null) {
             for (String key : getIntent().getExtras().keySet()) {

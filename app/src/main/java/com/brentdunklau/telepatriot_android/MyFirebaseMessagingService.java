@@ -23,7 +23,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     *
+     * This gets called when the app is up.
+     * It doesn't get called when the app is in the background.
+     * When the app is in the background, you get a notification
+     * And when you click the notification, you are sent to the activity's
+     * onCreate() method
      * @see  https://github.com/firebase/quickstart-android/blob/master/messaging/app/src/main/java/com/google/firebase/quickstart/fcm/MyFirebaseMessagingService.java#L45-L82
      *
      */
