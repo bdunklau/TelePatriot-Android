@@ -36,7 +36,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Map<String, String> data = remoteMessage.getData();
         Log.d(TAG, "FCM Data Message: " + remoteMessage.getData());
 
-        sendNotification(data.get("message"), data.get("title"));
+        //sendNotification(data.get("message"), data.get("title"));
     }
 
 
@@ -47,11 +47,21 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      * @see  https://github.com/firebase/quickstart-android/blob/master/messaging/app/src/main/java/com/google/firebase/quickstart/fcm/MyFirebaseMessagingService.java#L45-L82
      *
      * @param messageBody FCM message body received.
+     *
+     * HANG ON - I DON'T THINK WE NEED THIS.
+     * When we update the database through the firebase console, this method doesn't get called.
+     * We get the little notification
+     * icon in the upper left.  When we pull down and click the notification, we trigger code
+     * in MainActivity.onCreate() - which I don't understand completely because I didn't
+     * onCreate() got called more than once
+     *
+     * The notifications are coming from firebase-functions/functions/index.js
      */
-    private void sendNotification(String messageBody, String title) {
+
+    /*private void sendNotification(String messageBody, String title) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 *//* Request code *//*, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
         String channelId = getString(R.string.default_notification_channel_id);
@@ -68,7 +78,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
-    }
+        notificationManager.notify(0 *//* ID of notification *//*, notificationBuilder.build());
+    }*/
 
 }

@@ -20,7 +20,7 @@ exports.pushNotification = functions.database.ref('/messages/{pushId}').onWrite(
         },
         data: {
             title: valueObject.title,
-            message: valueObject.message
+            message: valueObject.text
         }
     };
     
