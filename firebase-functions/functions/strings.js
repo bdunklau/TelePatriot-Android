@@ -1,0 +1,4 @@
+
+exports.strings = {
+  appname: 'TelePatriot'
+}

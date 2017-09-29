@@ -41,6 +41,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Log.d(TAG, "FCM Data Message: " + remoteMessage.getData());
 
         //sendNotification(data.get("message"), data.get("title"));
+
+        /**
+         * THE QUESTION IS:  WHAT ARE WE GOING TO DO HERE?
+         * WE SHOULD SHOW SOME KIND OF DIALOG BOX OR SOMETHING
+         * BUT WE DON'T WANT TO SHOW A DIALOG BOX IN RESPONSE TO YOUR OWN MESSAGE
+         */
     }
 
 
