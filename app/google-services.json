@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "377732711004-treopk54qcceaj2qt1riv45fqfbc5dsc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.brentdunklau.telepatriot_android",
+            "certificate_hash": "cff3c6a15e55f342a888318e117da344c981d4a7"
+          }
+        },
+        {
           "client_id": "377732711004-ffpfnki1f7d084prk6010of0f9v82pes.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

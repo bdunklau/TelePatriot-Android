@@ -3,25 +3,32 @@ package com.brentdunklau.telepatriot_android;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.v4.app.NotificationCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
-//import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Arrays;
+import java.util.StringTokenizer;
 
 public class MainActivity extends AppCompatActivity
-        //implements GoogleApiClient.OnConnectionFailedListener
 {
 
     private static final int RC_SIGN_IN = 1;
@@ -29,11 +36,16 @@ public class MainActivity extends AppCompatActivity
     public static final String ANONYMOUS = "anonymous";
     private String mUsername;
 
+    private FirebaseDatabase database;
+    private DatabaseReference myRef;
+
+    private String dataTitle, dataMessage;
+    private EditText title, message;
+
     // Firebase instance variables
     private FirebaseAuth mFirebaseAuth;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
     private FirebaseUser mFirebaseUser;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
 
-    //private GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,30 +72,50 @@ public class MainActivity extends AppCompatActivity
             startActivityForResult(intent, RC_SIGN_IN);
         }
 
-
-/*
-        // Set default username is anonymous.
-        mUsername = ANONYMOUS;
-
-        // Initialize Firebase Auth
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        if (mFirebaseUser == null) {
-            // Not signed in, launch the Sign In activity
-            startActivity(new Intent(this, SignInActivity.class));
-            finish();
-            return;
-        } else {
-            mUsername = mFirebaseUser.getDisplayName();
-            if (mFirebaseUser.getPhotoUrl() != null) {
-                //mPhotoUrl = mFirebaseUser.getPhotoUrl().toString(); // put back in when code ready
+        // If the app is not currently up or in the foreground, this is what gets called after
+        // you pull down the notifications and click one.
+        // If the app is not currently up or in the foreground, you don't execute the onMessageReceived()
+        // method in MyFirebaseMessagingService
+        //
+        // Handle possible data accompanying notification message.
+        if (getIntent().getExtras() != null) {
+            for (String key : getIntent().getExtras().keySet()) {
+                if (key.equals("title")) {
+                    dataTitle=(String)getIntent().getExtras().get(key);
+                }
+                if (key.equals("message")) {
+                    dataMessage = (String)getIntent().getExtras().get(key);
+                }
             }
+            showAlertDialog();
         }
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this *//* FragmentActivity *//*, this *//* OnConnectionFailedListener *//*)
-                .addApi(Auth.GOOGLE_SIGN_IN_API)
-                .build();*/
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("messages");
+
+        title = findViewById(R.id.title);
+        message = findViewById(R.id.message);
+    }
+
+
+
+    private void showAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Message");
+        builder.setMessage("title: " + dataTitle + "\n" + "message: " + dataMessage);
+        builder.setPositiveButton("OK", null);
+        builder.show();
+    }
+
+    public void subscribeToTopic(View view) {
+        FirebaseMessaging.getInstance().subscribeToTopic("notifications");
+        Toast.makeText(this, "Subscribed to Topic: Notifications", Toast.LENGTH_SHORT).show();
+    }
+
+    public void sendMessage(View view) {
+        // oops you deleted this Message "bean" class - not hard to recreate if you want to
+        myRef.push().setValue(new Message(title.getText().toString(), message.getText().toString()));
+        Toast.makeText(this, "Message Sent", Toast.LENGTH_SHORT).show();
     }
 
     @Override

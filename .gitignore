@@ -126,4 +126,8 @@ fabric.properties
 
 !/gradle/wrapper/gradle-wrapper.jar
 
+# ignore node_modules that we got as a result of firebase init
+**/node_modules/*
+
+
 # End of https://www.gitignore.io/api/androidstudio
