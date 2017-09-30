@@ -5,7 +5,7 @@ const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
 /* Listens for new messages added to /messages/:pushId and sends a notification to subscribed users */
-exports.pushNotification = functions.database.ref('/messages/{pushId}').onWrite( event => {
+exports.pushMessages = functions.database.ref('/messages/{pushId}').onWrite( event => {
     console.log('onMessage.js: Push notification event triggered');
 
     /* Grab the current value of what was written to the Realtime Database */
