@@ -155,8 +155,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void subscribeToTopic(View view) {
-        FirebaseMessaging.getInstance().subscribeToTopic("notifications");
-        Toast.makeText(this, "Subscribed to Topic: Notifications", Toast.LENGTH_SHORT).show();
+        String topic = "messages";
+        FirebaseMessaging.getInstance().subscribeToTopic(topic);
+        Toast.makeText(this, "Subscribed to Topic: "+topic, Toast.LENGTH_SHORT).show();
     }
 
     /**

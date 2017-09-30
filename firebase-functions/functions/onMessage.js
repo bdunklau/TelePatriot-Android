@@ -32,5 +32,5 @@ exports.pushMessages = functions.database.ref('/messages/{pushId}').onWrite( eve
     };
 
     // see  https://firebase.google.com/docs/reference/admin/node/admin.messaging
-    return admin.messaging().sendToTopic("notifications", payload, options);
+    return admin.messaging().sendToTopic("messages", payload, options);
 });
