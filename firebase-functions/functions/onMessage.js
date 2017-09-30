@@ -2,8 +2,6 @@ const functions = require('firebase-functions');
 const strings = require('./strings')
 const admin = require('firebase-admin');
 
-admin.initializeApp(functions.config().firebase);
-
 /* Listens for new messages added to /messages/:pushId and sends a notification to subscribed users */
 exports.pushMessages = functions.database.ref('/messages/{pushId}').onWrite( event => {
     console.log('onMessage.js: Push notification event triggered');

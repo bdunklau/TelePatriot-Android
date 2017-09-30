@@ -154,6 +154,13 @@ public class MainActivity extends AppCompatActivity
         builder.show();
     }
 
+    public void subscribeToTopics() {
+        String uid = mFirebaseAuth.getCurrentUser().getUid();
+
+        //DatabaseReference meAdmin = database.getReference("users/${uid}/Admin");
+
+    }
+
     public void subscribeToTopic(View view) {
         String topic = "messages";
         FirebaseMessaging.getInstance().subscribeToTopic(topic);
@@ -165,7 +172,6 @@ public class MainActivity extends AppCompatActivity
      * @param view
      */
     public void sendMessage(View view) {
-        // oops you deleted this Message "bean" class - not hard to recreate if you want to
         myRef.push().setValue(new Message(title.getText().toString(), message.getText().toString()));
         Toast.makeText(this, "Message Sent", Toast.LENGTH_SHORT).show();
     }
@@ -177,7 +183,13 @@ public class MainActivity extends AppCompatActivity
             if(resultCode == RESULT_OK) {
                 // user logged in
                 Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
+
+                // TODO shouldn't this be in a thread?
                 ((TextView)findViewById(R.id.name)).setText(mFirebaseAuth.getCurrentUser().getDisplayName());
+
+                subscribeToTopics();
+
+
             } else {
                 // user not authenticated
                 Log.d(TAG, "USER NOT AUTHENTICATED");
