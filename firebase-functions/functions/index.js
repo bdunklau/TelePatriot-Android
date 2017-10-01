@@ -14,3 +14,4 @@ exports.notifyUserCreated = notifications.notifyUserCreated
 exports.roleAssigned = roles.roleAssigned
 exports.roleUnassigned = roles.roleUnassigned
 exports.topicCreated = topics.topicCreated
+exports.topicDeleted = topics.topicDeleted

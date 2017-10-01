@@ -19,8 +19,9 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
 
     console.log("userCreated.js: onCreate returning...")
 
-    var userrecord = {photoUrl:photoUrl, email:email}
-    if(event.data.displayName) userrecord.name = event.data.displayName
+    var name = email // default value if name not present
+    if(event.data.displayName) name = event.data.displayName
+    var userrecord = {name:name, photoUrl:photoUrl, email:email}
 
     // remember, .set() returns a promise
     return newUserRef.set(userrecord)
