@@ -56,7 +56,7 @@ public class LimboActivity extends BaseActivity {
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<AccountStatusEvent, AccountStatusEventHolder>(
                 AccountStatusEvent.class,
-                android.R.layout.simple_list_item_1,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
+                android.R.layout.two_line_list_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 AccountStatusEventHolder.class,
                 myRef) {
             @Override
