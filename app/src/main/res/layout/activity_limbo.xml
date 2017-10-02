@@ -33,12 +33,15 @@
         android:layout_marginLeft="20dp"
         android:layout_marginStart="20dp" />
 
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/account_status_events"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignLeft="@+id/txt_account_status"
         android:layout_alignStart="@+id/txt_account_status"
         android:layout_below="@+id/txt_account_status"
-        android:layout_marginTop="23dp" />
+        android:layout_marginTop="18dp"
+        android:scrollbars="vertical" />
+
+
 </RelativeLayout>
