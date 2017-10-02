@@ -184,11 +184,16 @@ public class MainActivity extends AppCompatActivity
                 // user logged in
                 Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
 
+                Intent it = new Intent(this, LimboActivity.class);
+                startActivity(it);
+
+                /*****************
+                 * This stuff works but isn't really where we want to put this
                 // TODO shouldn't this be in a thread?
                 ((TextView)findViewById(R.id.name)).setText(mFirebaseAuth.getCurrentUser().getDisplayName());
 
                 subscribeToTopics();
-
+                 *************/
 
             } else {
                 // user not authenticated
