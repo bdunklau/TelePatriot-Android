@@ -13,6 +13,21 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
         android:layout_marginTop="112dp"
-        android:text="Limbo" />
+        android:text="Limbo"
+        android:textSize="24sp" />
+
+
+    <TextView
+        android:id="@+id/txt_access"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="168dp"
+        android:text="Access"
+        android:textSize="24sp"
+        android:layout_below="@+id/txt_limbo"
+        android:layout_alignLeft="@+id/txt_limbo"
+        android:layout_alignStart="@+id/txt_limbo" />
 </RelativeLayout>
