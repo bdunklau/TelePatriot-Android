@@ -5,6 +5,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 
 /**
@@ -23,6 +26,7 @@ public class LimboActivity extends BaseActivity {
         // should not be null because we don't even get here till the user
         // has logged in and been sent here from MainActivity.onActivityResult()
         mFirebaseAuth = FirebaseAuth.getInstance();
+        String uid = mFirebaseAuth.getCurrentUser().getUid()
         final String name = mFirebaseAuth.getCurrentUser().getDisplayName();
         final String msg = name + ", welcome to TelePatriot.  Because you are a new user, an admin " +
                 "has been notified to assign you to the appropriate group.";
@@ -35,6 +39,33 @@ public class LimboActivity extends BaseActivity {
 
 
         database = FirebaseDatabase.getInstance();
-        myRef = database.getReference("messages");
+        myRef = database.getReference("users/{uid}/account_status_events");
+        ChildEventListener ce = new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
+
     }
 }
