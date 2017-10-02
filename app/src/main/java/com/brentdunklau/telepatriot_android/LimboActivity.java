@@ -5,16 +5,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Created by bdunklau on 10/1/17.
  */
 
-public class LimboActivity extends AppCompatActivity {
+public class LimboActivity extends BaseActivity {
 
-    // Firebase instance variables
-    private FirebaseAuth mFirebaseAuth;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
-
+    protected String TAG = "LimboActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,5 +32,9 @@ public class LimboActivity extends AppCompatActivity {
             }
         };
         new Thread(r).start();
+
+
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("messages");
     }
 }

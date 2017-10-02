@@ -33,23 +33,18 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends BaseActivity
 {
 
     private static final int RC_SIGN_IN = 1;
-    private static final String TAG = "MainActivity";
+    protected String TAG = "MainActivity";
     public static final String ANONYMOUS = "anonymous";
-    private String mUsername;
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
 
     private String dataTitle, dataMessage;
     private EditText title, message;
-
-    // Firebase instance variables
-    private FirebaseAuth mFirebaseAuth;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
-    private FirebaseUser mFirebaseUser;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
 
 
     @Override
@@ -200,37 +195,6 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG, "USER NOT AUTHENTICATED");
             }
         }
-    }
-
-    private void signOut() {
-        AuthUI.getInstance().signOut(this)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        Log.d(TAG, "USER LOGGED OUT");
-                        finish();
-                    }
-                });
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            case(R.id.chat_help):
-                return true;
-            case(R.id.sign_out_menu):
-                signOut();
-                return true;
-            default: return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        //return true;
-        return super.onCreateOptionsMenu(menu);
     }
 
     /*
