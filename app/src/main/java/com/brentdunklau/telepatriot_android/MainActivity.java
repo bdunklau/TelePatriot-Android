@@ -6,10 +6,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -20,6 +22,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.Swipe;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -37,6 +40,7 @@ import java.util.Arrays;
 import java.util.StringTokenizer;
 
 public class MainActivity extends BaseActivity
+    implements GestureDetector.OnGestureListener
 {
 
     private static final int RC_SIGN_IN = 1;
@@ -45,6 +49,9 @@ public class MainActivity extends BaseActivity
 
     private String dataTitle, dataMessage;
     private EditText title, message;
+
+    // 7:00  https://www.youtube.com/watch?v=zsNpiOihNXU&index=21&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl
+    private GestureDetectorCompat gestureDetector;
 
 
     @Override
@@ -99,6 +106,10 @@ public class MainActivity extends BaseActivity
 
         title = findViewById(R.id.title);
         message = findViewById(R.id.message);
+
+
+        // 9:00  https://www.youtube.com/watch?v=zsNpiOihNXU&index=21&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl
+        this.gestureDetector = new GestureDetectorCompat(this, this);
     }
 
     /**
@@ -221,6 +232,53 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    @Override
+    public boolean onDown(MotionEvent motionEvent) {
+        return false;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent motionEvent) {
+
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent motionEvent) {
+        return false;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        return false;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent motionEvent) {
+
+    }
+
+    @Override
+    public boolean onFling(MotionEvent m1, MotionEvent m2, float v, float v1) {
+        String direction = "not known";
+        if(Swipe.isBottomToTop(m1, m2))
+            direction = "bottom to top";
+        else if(Swipe.isTopToBottom(m1, m2))
+            direction = "top to bottom";
+        else if(Swipe.isRightToLeft(m1, m2))
+            direction = "right to left";
+        else if(Swipe.isLeftToRight(m1, m2))
+            direction = "left to right";
+        Toast.makeText(this, direction, Toast.LENGTH_SHORT).show();
+        return true;
+    }
+
+    // 1:00  https://www.youtube.com/watch?v=VKbEfhf1qc&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl&index=22
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        this.gestureDetector.onTouchEvent(event);
+        return super.onTouchEvent(event);
+    }
+
     /*
 
     @Override
@@ -230,4 +288,6 @@ public class MainActivity extends BaseActivity
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
         Toast.makeText(this, "Network connection dropped", Toast.LENGTH_SHORT).show();
     }*/
+
+
 }
