@@ -10,6 +10,7 @@ import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android
  */
 
 public class DirectorActivity extends BaseActivity implements WhereYouAre {
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -19,6 +20,8 @@ public class DirectorActivity extends BaseActivity implements WhereYouAre {
 
     @Override
     public Class onTheLeft() {
+        // can't say for sure that this is AdminActivity - depends on the user
+        // for most people, this will be null
         return AdminActivity.class;
     }
 

@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -13,8 +14,11 @@ import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Created by bdunklau on 10/1/17.
@@ -31,6 +35,40 @@ public class BaseActivity extends AppCompatActivity implements SlideIt {
     protected DatabaseReference myRef;
     protected SwipeAdapter swipeAdapter;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        database = FirebaseDatabase.getInstance();
+
+        // Initialize Firebase Auth
+        mFirebaseAuth = FirebaseAuth.getInstance();
+
+
+        // Need to be more general with this.  Need to look at all child nodes of /users/uid/roles
+        if(mFirebaseAuth == null || mFirebaseAuth.getCurrentUser() == null) {
+            if (true) ;
+        } else {
+            DatabaseReference r1 = database.getReference("/users/" + mFirebaseAuth.getCurrentUser().getUid() + "/roles/Admin");
+            r1.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Object o = dataSnapshot.getValue();
+                    boolean roleRemoved = o == null;
+                    if (roleRemoved) {
+
+                    } else {
+                        // make sure user has Director access
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    // do what here?
+                }
+            });
+        }
+
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

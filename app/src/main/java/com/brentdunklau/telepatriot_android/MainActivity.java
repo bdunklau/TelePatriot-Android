@@ -42,8 +42,9 @@ public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
          */
         setupUI(findViewById(R.id.main_view));
 
-        // Initialize Firebase Auth
-        mFirebaseAuth = FirebaseAuth.getInstance();
+        // Initialize Firebase Auth  (moved to BaseActivity)
+        //mFirebaseAuth = FirebaseAuth.getInstance();
+
         if(mFirebaseAuth.getCurrentUser() != null) {
             // user already signed in
         } else {
@@ -80,7 +81,6 @@ public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
             showAlertDialog();
         }
 
-        database = FirebaseDatabase.getInstance();
         myRef = database.getReference("messages");
 
         title = findViewById(R.id.title);
