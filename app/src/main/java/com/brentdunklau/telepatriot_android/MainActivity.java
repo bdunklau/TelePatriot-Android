@@ -2,41 +2,28 @@ package com.brentdunklau.telepatriot_android;
 
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SlideIt;
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SwipeAdapter;
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.WhereYouAre;
 import com.firebase.ui.auth.AuthUI;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Arrays;
-import java.util.StringTokenizer;
 
-public class MainActivity extends BaseActivity
+public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
 {
 
     private static final int RC_SIGN_IN = 1;
@@ -45,7 +32,6 @@ public class MainActivity extends BaseActivity
 
     private String dataTitle, dataMessage;
     private EditText title, message;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +85,8 @@ public class MainActivity extends BaseActivity
 
         title = findViewById(R.id.title);
         message = findViewById(R.id.message);
+
+        this.swipeAdapter = new SwipeAdapter(this, this, this);
     }
 
     /**
@@ -221,6 +209,25 @@ public class MainActivity extends BaseActivity
         }
     }
 
+
+    // NOTICE THAT WE PUT THIS IN THE SUPERCLASS
+    /*// 1:00  https://www.youtube.com/watch?v=VKbEfhf1qc&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl&index=22
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        this.swipeAdapter.onTouchEvent(event);
+        return super.onTouchEvent(event);
+    }*/
+
+    @Override
+    public Class onTheLeft() {
+        return AdminActivity.class;
+    }
+
+    @Override
+    public Class onTheRight() {
+        return DirectorActivity.class;
+    }
+
     /*
 
     @Override
@@ -230,4 +237,6 @@ public class MainActivity extends BaseActivity
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
         Toast.makeText(this, "Network connection dropped", Toast.LENGTH_SHORT).show();
     }*/
+
+
 }
