@@ -56,47 +56,16 @@ public class LimboActivity extends BaseActivity {
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<AccountStatusEvent, AccountStatusEventHolder>(
                 AccountStatusEvent.class,
-                android.R.layout.two_line_list_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
+                R.layout.list_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 AccountStatusEventHolder.class,
                 myRef) {
             @Override
             public void populateViewHolder(AccountStatusEventHolder holder, AccountStatusEvent evt, int position) {
-                holder.setDate(evt.getDate());
-                holder.setEvent(evt.getEvent());
+                holder.setStatus(evt.getDate(), evt.getEvent());
             }
         };
 
         accountStatusEvents.setAdapter(mAdapter);
-
-        /******************
-         * maybe...
-        ChildEventListener ce = new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        };
-         ****************/
 
     }
 
