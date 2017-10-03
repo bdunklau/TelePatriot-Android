@@ -43,9 +43,6 @@ public class MainActivity extends BaseActivity
     protected String TAG = "MainActivity";
     public static final String ANONYMOUS = "anonymous";
 
-    //private FirebaseDatabase database;
-    //private DatabaseReference myRef;
-
     private String dataTitle, dataMessage;
     private EditText title, message;
 
@@ -185,17 +182,21 @@ public class MainActivity extends BaseActivity
                 //Intent it = new Intent(this, LimboActivity.class);
                 //startActivity(it);
 
+
+
                 /**
                  * Now we have to figure out what roles the person has
                  * If the person is an Admin, they go to the AdminActivity
                  */
-                DatabaseReference r1 = database.getReference("/users/"+mFirebaseAuth.getCurrentUser().getUid()+"/roles/Admin");
+                /*
+                DatabaseReference r1 = database.getReference("/users/"+mFirebaseAuth.getCurrentUser().getUid()+"/roles");
                 r1.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        if("true".equalsIgnoreCase(dataSnapshot.getValue()+"")) {
-                            Intent it = new Intent(MainActivity.this, AdminActivity.class);
-                            startActivity(it);
+                        Iterable<DataSnapshot> iter = dataSnapshot.getChildren();
+                        while(iter.iterator().hasNext()) {
+                            DataSnapshot ds = iter.iterator().next();
+                            String role = ds.getKey();
                         }
                     }
 
@@ -203,7 +204,7 @@ public class MainActivity extends BaseActivity
                     public void onCancelled(DatabaseError databaseError) {
                         // do what here?
                     }
-                });
+                });*/
 
                 /*****************
                  * This stuff works but isn't really where we want to put this
