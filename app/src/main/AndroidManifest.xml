@@ -19,6 +19,12 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".AdminActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".LimboActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -25,9 +25,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Arrays;
@@ -40,8 +43,8 @@ public class MainActivity extends BaseActivity
     protected String TAG = "MainActivity";
     public static final String ANONYMOUS = "anonymous";
 
-    private FirebaseDatabase database;
-    private DatabaseReference myRef;
+    //private FirebaseDatabase database;
+    //private DatabaseReference myRef;
 
     private String dataTitle, dataMessage;
     private EditText title, message;
@@ -179,8 +182,28 @@ public class MainActivity extends BaseActivity
                 // user logged in
                 Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
 
-                Intent it = new Intent(this, LimboActivity.class);
-                startActivity(it);
+                //Intent it = new Intent(this, LimboActivity.class);
+                //startActivity(it);
+
+                /**
+                 * Now we have to figure out what roles the person has
+                 * If the person is an Admin, they go to the AdminActivity
+                 */
+                DatabaseReference r1 = database.getReference("/users/"+mFirebaseAuth.getCurrentUser().getUid()+"/roles/Admin");
+                r1.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if("true".equalsIgnoreCase(dataSnapshot.getValue()+"")) {
+                            Intent it = new Intent(MainActivity.this, AdminActivity.class);
+                            startActivity(it);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        // do what here?
+                    }
+                });
 
                 /*****************
                  * This stuff works but isn't really where we want to put this
