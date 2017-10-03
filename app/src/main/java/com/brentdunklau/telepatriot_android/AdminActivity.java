@@ -1,9 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.os.Bundle;
-import android.transition.Slide;
-
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SlideIt;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SwipeAdapter;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.WhereYouAre;
 
