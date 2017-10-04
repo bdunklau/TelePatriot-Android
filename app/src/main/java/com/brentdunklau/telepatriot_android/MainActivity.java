@@ -26,7 +26,7 @@ public class MainActivity extends BaseActivity implements SlideIt
 {
 
     private static final int RC_SIGN_IN = 1;
-    protected String TAG = "MainActivity";
+    private static final String TAG = "MainActivity";
     public static final String ANONYMOUS = "anonymous";
 
     private String dataTitle, dataMessage;
@@ -36,6 +36,7 @@ public class MainActivity extends BaseActivity implements SlideIt
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        currentActivity = this.getClass();
         /**
          * see:  https://stackoverflow.com/a/11656129
          */
@@ -166,12 +167,17 @@ public class MainActivity extends BaseActivity implements SlideIt
             if(resultCode == RESULT_OK) {
                 user = User.getInstance();
                 user.login(mFirebaseAuth.getCurrentUser());
-                updateLabel(R.id.name, user.getName());
-                // user logged in
-                Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
+                String name = user.getName();
 
-                //Intent it = new Intent(this, LimboActivity.class);
-                //startActivity(it);
+                // Oops - this causes the app to crash.  I guess because we set the text of a label
+                // in a Runnable and by the time the Runnable gets called, we have moved on to the LimboActivity ...?
+                // Is that it?  Seems like it.  Everything seems to work when this 1 line below is commented out
+                //updateLabel(R.id.name, name);
+                // user logged in
+                //Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
+
+                Intent it = new Intent(this, LimboActivity.class);
+                startActivity(it);
 
 
 
@@ -203,52 +209,27 @@ public class MainActivity extends BaseActivity implements SlideIt
                 subscribeToTopics();
                  *************/
 
+
             } else {
                 // user not authenticated
                 Log.d(TAG, "USER NOT AUTHENTICATED");
             }
-        }
-    }
 
-
-    // NOTICE THAT WE PUT THIS IN THE SUPERCLASS
-    /*// 1:00  https://www.youtube.com/watch?v=VKbEfhf1qc&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl&index=22
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        this.swipeAdapter.onTouchEvent(event);
-        return super.onTouchEvent(event);
-    }*/
-
-
-    private Class onTheLeft() {
-        return user.activityOnTheLeft(MainActivity.class);
-    }
-
-    private Class onTheRight() {
-        return user.activityOnTheRight(MainActivity.class);
-    }
-
-
-    @Override
-    public void rightToLeft() {
-        Class onTheRight = onTheRight();
-        if(onTheRight != null) {
-            Intent it = new Intent(this, onTheRight());
-            startActivity(it);
-            overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
         }
     }
 
     @Override
-    public void leftToRight() {
-        Class onTheLeft = onTheLeft();
-        if(onTheLeft != null) {
-            Intent it = new Intent(this, onTheLeft());
-            startActivity(it);
-            overridePendingTransition(R.anim.slide_from_left, R.anim.slide_to_right);
-        }
+    protected void onResume() {
+        super.onResume();
+        currentActivity = this.getClass();
+        Log.d(TAG, "resume");
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        currentActivity = this.getClass();
+    }
 
     /*
 

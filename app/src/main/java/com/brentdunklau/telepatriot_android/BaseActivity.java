@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -29,7 +30,7 @@ import com.google.firebase.database.ValueEventListener;
 public class BaseActivity extends AppCompatActivity {
 
 
-    protected String TAG = "BaseActivity";
+    private String TAG = "BaseActivity";
 
     // Firebase instance variables
     protected FirebaseAuth mFirebaseAuth;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
@@ -37,6 +38,7 @@ public class BaseActivity extends AppCompatActivity {
     protected DatabaseReference myRef;
     protected SwipeAdapter swipeAdapter;
     protected User user;
+    protected Class currentActivity;
 
 
     @Override
@@ -143,5 +145,34 @@ public class BaseActivity extends AppCompatActivity {
         super.onStart();
         String cname = this.getClass().getName();
         Log.d(cname, "start");
+    }
+
+
+    private Class onTheLeft() {
+        return user.activityOnTheLeft(currentActivity);
+    }
+
+
+    private Class onTheRight() {
+        return user.activityOnTheRight(currentActivity);
+    }
+
+
+    public void rightToLeft() {
+        Class onTheRight = onTheRight();
+        if(onTheRight != null) {
+            Intent it = new Intent(this, onTheRight());
+            startActivity(it);
+            overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
+        }
+    }
+
+    public void leftToRight() {
+        Class onTheLeft = onTheLeft();
+        if(onTheLeft != null) {
+            Intent it = new Intent(this, onTheLeft());
+            startActivity(it);
+            overridePendingTransition(R.anim.slide_from_left, R.anim.slide_to_right);
+        }
     }
 }
