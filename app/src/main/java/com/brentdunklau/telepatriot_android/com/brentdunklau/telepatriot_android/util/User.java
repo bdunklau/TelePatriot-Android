@@ -10,6 +10,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by bdunklau on 10/3/17.
  */
@@ -22,6 +25,7 @@ public class User {
     private boolean isAdmin, isDirector, isVolunteer;
     private ChildEventListener childEventListener;
     private static User singleton;
+    private List<RoleAssignedListener> roleAssignedListeners = new ArrayList<RoleAssignedListener>();
 
     public static User getInstance() {
         if(singleton == null) {
@@ -60,6 +64,10 @@ public class User {
         return firebaseUser.getDisplayName();
     }
 
+    public String getUid() {
+        return firebaseUser.getUid();
+    }
+
     public String getEmail() {
         return firebaseUser.getEmail();
     }
@@ -79,7 +87,10 @@ public class User {
     private class ChildEventAdapter implements ChildEventListener {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            boolean notAssignedYet = !isAdmin && !isDirector && !isVolunteer;
             doRole(dataSnapshot.getKey(), true);
+            if(notAssignedYet)
+                User.this.fireRoleAssignedEvent(dataSnapshot.getKey());
         }
 
         private void doRole(String role, boolean val) {
@@ -137,6 +148,24 @@ public class User {
          * that there is always nothing to the right of the Volunteer activity
          */
         else return null;
+    }
+
+    void fireRoleAssignedEvent(String role) {
+        List<RoleAssignedListener> removeThese = new ArrayList<RoleAssignedListener>();
+        for(RoleAssignedListener roleAssignedListener : roleAssignedListeners) {
+            roleAssignedListener.roleAssigned(role);
+            if(roleAssignedListener instanceof OneTime)
+                removeThese.add(roleAssignedListener);
+        }
+        // remove any OneTime listeners...
+        for(RoleAssignedListener rem : removeThese) {
+            boolean removed = roleAssignedListeners.remove(rem);
+            if(removed) ; // just for debugging
+        }
+    }
+
+    public void addRoleAssignedListener(RoleAssignedListener roleAssignedListener) {
+        roleAssignedListeners.add(roleAssignedListener);
     }
 
 }
