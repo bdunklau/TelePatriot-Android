@@ -19,15 +19,13 @@ public class SwipeAdapter implements GestureDetector.OnGestureListener {
     // 7:00  https://www.youtube.com/watch?v=zsNpiOihNXU&index=21&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl
     private GestureDetectorCompat gestureDetector;
     private Context ctx;
-    //private WhereYouAre whereYouAre;
     private SlideIt slideIt;
 
 
-    public SwipeAdapter(Context ctx, /*WhereYouAre whereYouAre, */SlideIt slideIt) {
+    public SwipeAdapter(Context ctx, SlideIt slideIt) {
         // 9:00  https://www.youtube.com/watch?v=zsNpiOihNXU&index=21&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl
         this.gestureDetector = new GestureDetectorCompat(ctx, this);
         this.ctx = ctx;
-        //this.whereYouAre = whereYouAre;
         this.slideIt = slideIt;
     }
 

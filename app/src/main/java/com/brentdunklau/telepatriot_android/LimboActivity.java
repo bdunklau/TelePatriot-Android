@@ -66,7 +66,6 @@ public class LimboActivity extends BaseActivity {
         };
 
         accountStatusEvents.setAdapter(mAdapter);
-
     }
 
     @Override
