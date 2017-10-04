@@ -37,6 +37,12 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".ListUsersActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">
