@@ -2,6 +2,7 @@ package com.brentdunklau.telepatriot_android;
 
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import android.os.Bundle;
@@ -15,15 +16,13 @@ import android.widget.Toast;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SlideIt;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SwipeAdapter;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.WhereYouAre;
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Arrays;
 
-public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
+public class MainActivity extends BaseActivity implements SlideIt
 {
 
     private static final int RC_SIGN_IN = 1;
@@ -42,10 +41,12 @@ public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
          */
         setupUI(findViewById(R.id.main_view));
 
-        // Initialize Firebase Auth
-        mFirebaseAuth = FirebaseAuth.getInstance();
+        // Initialize Firebase Auth  (moved to BaseActivity)
+        //mFirebaseAuth = FirebaseAuth.getInstance();
+
         if(mFirebaseAuth.getCurrentUser() != null) {
-            // user already signed in
+            user = User.getInstance(mFirebaseAuth.getCurrentUser());
+            updateLabel(R.id.name, user.getName());
         } else {
             AuthUI aui = AuthUI.getInstance();
             AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
@@ -80,13 +81,12 @@ public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
             showAlertDialog();
         }
 
-        database = FirebaseDatabase.getInstance();
         myRef = database.getReference("messages");
 
         title = findViewById(R.id.title);
         message = findViewById(R.id.message);
 
-        this.swipeAdapter = new SwipeAdapter(this, this, this);
+        this.swipeAdapter = new SwipeAdapter(this, this);
     }
 
     /**
@@ -164,6 +164,9 @@ public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
+                user = User.getInstance();
+                user.login(mFirebaseAuth.getCurrentUser());
+                updateLabel(R.id.name, user.getName());
                 // user logged in
                 Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
 
@@ -196,8 +199,6 @@ public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
 
                 /*****************
                  * This stuff works but isn't really where we want to put this
-                // TODO shouldn't this be in a thread?
-                ((TextView)findViewById(R.id.name)).setText(mFirebaseAuth.getCurrentUser().getDisplayName());
 
                 subscribeToTopics();
                  *************/
@@ -218,15 +219,36 @@ public class MainActivity extends BaseActivity implements WhereYouAre, SlideIt
         return super.onTouchEvent(event);
     }*/
 
+
+    private Class onTheLeft() {
+        return user.activityOnTheLeft(MainActivity.class);
+    }
+
+    private Class onTheRight() {
+        return user.activityOnTheRight(MainActivity.class);
+    }
+
+
     @Override
-    public Class onTheLeft() {
-        return AdminActivity.class;
+    public void rightToLeft() {
+        Class onTheRight = onTheRight();
+        if(onTheRight != null) {
+            Intent it = new Intent(this, onTheRight());
+            startActivity(it);
+            overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
+        }
     }
 
     @Override
-    public Class onTheRight() {
-        return DirectorActivity.class;
+    public void leftToRight() {
+        Class onTheLeft = onTheLeft();
+        if(onTheLeft != null) {
+            Intent it = new Intent(this, onTheLeft());
+            startActivity(it);
+            overridePendingTransition(R.anim.slide_from_left, R.anim.slide_to_right);
+        }
     }
+
 
     /*
 

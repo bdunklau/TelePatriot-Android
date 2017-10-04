@@ -1,26 +1,32 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SlideIt;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SwipeAdapter;
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Created by bdunklau on 10/1/17.
  */
 
-public class BaseActivity extends AppCompatActivity implements SlideIt {
+public class BaseActivity extends AppCompatActivity {
 
 
     protected String TAG = "BaseActivity";
@@ -30,7 +36,44 @@ public class BaseActivity extends AppCompatActivity implements SlideIt {
     protected FirebaseDatabase database;
     protected DatabaseReference myRef;
     protected SwipeAdapter swipeAdapter;
+    protected User user;
 
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        database = FirebaseDatabase.getInstance();
+
+        // Initialize Firebase Auth
+        mFirebaseAuth = FirebaseAuth.getInstance();
+
+
+        // Need to be more general with this.  Need to look at all child nodes of /users/uid/roles
+        /*
+        if(mFirebaseAuth == null || mFirebaseAuth.getCurrentUser() == null) {
+            if (true) ;
+        } else {
+            DatabaseReference r1 = database.getReference("/users/" + mFirebaseAuth.getCurrentUser().getUid() + "/roles/Admin");
+            r1.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Object o = dataSnapshot.getValue();
+                    boolean roleRemoved = o == null;
+                    if (roleRemoved) {
+
+                    } else {
+                        // make sure user has Director access
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    // do what here?
+                }
+            });
+        }*/
+
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -58,6 +101,7 @@ public class BaseActivity extends AppCompatActivity implements SlideIt {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         Log.d(TAG, "USER LOGGED OUT");
+                        user.onSignout();
                         finish();
                     }
                 });
@@ -70,14 +114,34 @@ public class BaseActivity extends AppCompatActivity implements SlideIt {
         return super.onTouchEvent(event);
     }
 
-
-    @Override
-    public void rightToLeft() {
-        overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
+    protected void updateLabel(final int Rid, final String text) {
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                ((TextView)findViewById(Rid)).setText(text);
+            }
+        };
+        new Thread(r).start();
     }
 
     @Override
-    public void leftToRight() {
-        overridePendingTransition(R.anim.slide_from_left, R.anim.slide_to_right);
+    protected void onPause() {
+        super.onPause();
+        String cname = this.getClass().getName();
+        Log.d(cname, "paused");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String cname = this.getClass().getName();
+        Log.d(cname, "resume");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        String cname = this.getClass().getName();
+        Log.d(cname, "start");
     }
 }
