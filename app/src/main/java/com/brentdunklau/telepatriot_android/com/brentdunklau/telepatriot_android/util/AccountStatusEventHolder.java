@@ -15,7 +15,7 @@ public class AccountStatusEventHolder extends RecyclerView.ViewHolder {
 
     public AccountStatusEventHolder(View itemView) {
         super(itemView);
-        statusField = (TextView) itemView.findViewById(R.id.item_status);
+        statusField = (TextView) itemView.findViewById(R.id.line_item);
     }
 
     public void setStatus(String date, String event) {

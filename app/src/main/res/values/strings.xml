@@ -7,5 +7,6 @@
     <string name="default_notification_channel_id">notifications</string>
     <string name="channel_name">Channel 1</string>
     <string name="channel_description">This is the description of Channel 1</string>
+    <string name="list_users">List Users</string>
 
 </resources>
