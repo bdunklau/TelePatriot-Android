@@ -15,16 +15,19 @@ exports.notifyUserCreated = functions.auth.user().onCreate(event => {
     var newuser = email
     if(event.data.displayName) newuser = event.data.displayName
     var body = newuser+" just joined. Assign to group after vetting."
-    var message = newuser+" just joined "+strings.strings.appname+".  Confirm that this person is "+
+    var message = newuser+" just joined "+strings.strings.appname+".  Confirm that this person "+
     "should be allowed in.  If so, assign this person to a group"
 
     /* Create a notification and data payload. They contain the notification information, and message to be sent respectively */
     const payload = {
+        // see  https://medium.com/@Miqubel/mastering-firebase-notifications-36a3ffe57c41
+        /*
         notification: {
             title: "New User",
             body: body,
             sound: "default"
         },
+        */
         data: {
             title: "New "+strings.strings.appname+" User",
             message: message,
@@ -39,5 +42,5 @@ exports.notifyUserCreated = functions.auth.user().onCreate(event => {
     };
 
     // see  https://firebase.google.com/docs/reference/admin/node/admin.messaging
-    return admin.messaging().sendToTopic("userCreated", payload, options);
+    return admin.messaging().sendToTopic("AccountEvents", payload, options);
 });
