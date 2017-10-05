@@ -24,5 +24,9 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
     var userrecord = {name:name, photoUrl:photoUrl, email:email}
 
     // remember, .set() returns a promise
-    return newUserRef.set(userrecord)
+    //return newUserRef.set(userrecord)
+
+    return newUserRef.set(userrecord).then(snap => {
+        return ref.child(`/no_roles/${uid}`).set(userrecord)
+    })
 })

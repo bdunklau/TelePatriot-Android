@@ -1,8 +1,13 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.AccountStatusEventHolder;
@@ -11,6 +16,11 @@ import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
 
 /**
  * Created by bdunklau on 10/4/17.
@@ -26,13 +36,14 @@ public class ListUsersActivity extends BaseActivity implements SlideIt {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listusers);
-        currentActivity = this.getClass();
+        currentActivity = this.getClass(); // get rid of this probably ...in all activity classes
 
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         users = (RecyclerView) findViewById(R.id.user_list);
         users.setLayoutManager(new LinearLayoutManager(this));
 
-        myRef = database.getReference("users");
+        // Just focusing on users that need to be assigned to a role
+        myRef = database.getReference("no_roles");
 
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<UserBean, UserHolder>(
@@ -43,6 +54,42 @@ public class ListUsersActivity extends BaseActivity implements SlideIt {
             @Override
             public void populateViewHolder(UserHolder holder, UserBean user, int position) {
                 holder.setName(user.getName());
+            }
+
+
+            // https://stackoverflow.com/a/41629505
+            @Override
+            public UserHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                UserHolder viewHolder = super.onCreateViewHolder(parent, viewType);
+                viewHolder.setOnClickListener(new UserHolder.ClickListener() {
+                    @Override
+                    public void onItemClick(View view, int position) {
+                        int vid = view.getId();
+                        Log.d("ListUsersActivity", "view.getId()="+view.getId());
+                        mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                HashMap map = (HashMap) dataSnapshot.getValue();
+                                Intent it = new Intent(ListUsersActivity.this, AssignUserActivity.class);
+                                it.putExtra("uid", dataSnapshot.getKey());
+                                it.putExtra("name", map.get("name")+"");
+                                it.putExtra("email", map.get("email")+"");
+                                it.putExtra("photoUrl", map.get("photoUrl")+"");
+                                startActivity(it);
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onItemLongClick(View view, int position) {
+                    }
+                });
+                return viewHolder;
             }
         };
         users.setAdapter(mAdapter);
