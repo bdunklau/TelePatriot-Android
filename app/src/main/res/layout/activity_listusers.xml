@@ -9,55 +9,61 @@
     tools:context="com.brentdunklau.telepatriot_android.ListUsersActivity">
 
 
-    <ScrollView
+
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:background="#ddffffff">
+        android:background="#ddffffff"
+        android:orientation="vertical">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/text_admin"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
+            android:onClick="onClickRole"
+            android:text="Admin" />
 
-            <TextView
-                android:id="@+id/txt_user_header"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:layout_marginLeft="10dp"
-                android:text="Unassigned Users"
-                android:textSize="18sp"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
 
-            <TextView
-                android:id="@+id/txt_explanation"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:layout_marginLeft="10dp"
-                android:layout_below="@+id/txt_user_header"
-                android:text="Each of these users needs to be assigned to at least one group.  They have no access to this app until they are assigned to at least one group"
-                android:textSize="12sp"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/user_list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="10dp"
-                android:layout_marginLeft="10dp"
-                android:scrollbars="vertical"
-                android:layout_below="@+id/txt_explanation"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true" />
+        <TextView
+            android:id="@+id/text_director"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Director"
+            android:layout_alignBottom="@+id/text_admin"
+            android:layout_centerHorizontal="true"
+            android:onClick="onClickRole"
+            android:layout_alignTop="@+id/text_admin" />
 
-        </LinearLayout>
-    </ScrollView>
 
+        <TextView
+            android:id="@+id/text_volunteer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Volunteer"
+            android:layout_marginRight="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_alignBottom="@+id/text_director"
+            android:layout_alignParentRight="true"
+            android:onClick="onClickRole"
+            android:layout_alignParentEnd="true" />
+    </RelativeLayout>
+
+    <fragment
+        android:id="@+id/user_list_fragment"
+        android:name="com.brentdunklau.telepatriot_android.UserListFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="46dp"
+        tools:layout="@layout/user_list_fragment"
+        android:layout_below="@+id/text_admin"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>
