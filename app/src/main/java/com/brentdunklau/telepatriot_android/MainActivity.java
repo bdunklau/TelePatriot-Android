@@ -23,7 +23,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.Arrays;
 
 public class MainActivity extends BaseActivity implements SlideIt
-{
+{ 
 
     private static final int RC_SIGN_IN = 1;
     private static final String TAG = "MainActivity";
