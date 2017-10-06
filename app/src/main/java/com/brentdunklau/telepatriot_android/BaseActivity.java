@@ -2,6 +2,7 @@ package com.brentdunklau.telepatriot_android;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -36,9 +37,11 @@ public class BaseActivity extends AppCompatActivity {
     protected FirebaseAuth mFirebaseAuth;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
     protected FirebaseDatabase database;
     protected DatabaseReference myRef;
-    protected SwipeAdapter swipeAdapter;
+
+    // Left as a comment because SwipeAdapter does provide an example of how to do swiping
+    // even though we're not swiping to change perspectives anymore
+    //protected SwipeAdapter swipeAdapter;
     protected User user;
-    protected Class currentActivity;
 
 
     @Override
@@ -48,32 +51,6 @@ public class BaseActivity extends AppCompatActivity {
 
         // Initialize Firebase Auth
         mFirebaseAuth = FirebaseAuth.getInstance();
-
-
-        // Need to be more general with this.  Need to look at all child nodes of /users/uid/roles
-        /*
-        if(mFirebaseAuth == null || mFirebaseAuth.getCurrentUser() == null) {
-            if (true) ;
-        } else {
-            DatabaseReference r1 = database.getReference("/users/" + mFirebaseAuth.getCurrentUser().getUid() + "/roles/Admin");
-            r1.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Object o = dataSnapshot.getValue();
-                    boolean roleRemoved = o == null;
-                    if (roleRemoved) {
-
-                    } else {
-                        // make sure user has Director access
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    // do what here?
-                }
-            });
-        }*/
 
     }
 
@@ -85,8 +62,22 @@ public class BaseActivity extends AppCompatActivity {
             case(R.id.sign_out_menu):
                 signOut();
                 return true;
+            case(R.id.volunteer_view_menu):
+                //gotoScreen(VolunteerActivity.class);
+                return true;
+            case(R.id.director_view_menu):
+                gotoScreen(DirectorActivity.class);
+                return true;
+            case(R.id.admin_view_menu):
+                gotoScreen(AdminActivity.class);
+                return true;
             default: return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void gotoScreen(Class activity) {
+        Intent it = new Intent(this, activity);
+        startActivity(it);
     }
 
     @Override
@@ -112,7 +103,10 @@ public class BaseActivity extends AppCompatActivity {
     // 1:00  https://www.youtube.com/watch?v=VKbEfhf1qc&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl&index=22
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        this.swipeAdapter.onTouchEvent(event);
+
+        // Left as a comment because SwipeAdapter does provide an example of how to do swiping
+        // even though we're not swiping to change perspectives anymore
+        //this.swipeAdapter.onTouchEvent(event);
         return super.onTouchEvent(event);
     }
 
@@ -120,10 +114,22 @@ public class BaseActivity extends AppCompatActivity {
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                ((TextView)findViewById(Rid)).setText(text);
+                try {
+                    TextView t = (TextView) findViewById(Rid);
+                    t.setText(text);
+                }
+                catch(Throwable t) {
+                    // We get an exception when called from ListUsersActivity when the list of users
+                    // goes from a non-zero size to zero size.  Not sure why.  And this exception, when
+                    // caught here, doesn't prevent the label from being updated.  So seems like we
+                    // could just catch this and do nothing ?  hope so
+                    // android.view.ViewRootImpl$CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views.
+                    Log.d("xxx", "ssss");
+                }
             }
         };
-        new Thread(r).start();
+        Handler h = new Handler();
+        h.post(r);
     }
 
     @Override
@@ -148,16 +154,10 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
-    private Class onTheLeft() {
-        return user.activityOnTheLeft(currentActivity);
-    }
-
-
-    private Class onTheRight() {
-        return user.activityOnTheRight(currentActivity);
-    }
-
-
+    /*********
+     * Not swiping to change perspectives anymore, but this code, together with SlideIt and
+     * SwipeAdapter provide an example of how to do swiping
+     *
     public void rightToLeft() {
         Class onTheRight = onTheRight();
         if(onTheRight != null) {
@@ -175,4 +175,5 @@ public class BaseActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_from_left, R.anim.slide_to_right);
         }
     }
+     **************/
 }

@@ -14,7 +14,9 @@ import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android
  * Created by bdunklau on 10/2/17.
  */
 
-public class AdminActivity extends BaseActivity implements SlideIt {
+public class AdminActivity extends BaseActivity
+        //implements SlideIt
+{
 
     private final static String TAG = "AdminActivity";
 
@@ -22,27 +24,27 @@ public class AdminActivity extends BaseActivity implements SlideIt {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
-        currentActivity = this.getClass();
-        swipeAdapter = new SwipeAdapter(this, this);
+        //swipeAdapter = new SwipeAdapter(this, this);
         user = User.getInstance();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        currentActivity = this.getClass();
         Log.d(TAG, "resume");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        currentActivity = this.getClass();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
+            case(R.id.list_unassigned_users):
+                listUnassignedUsers();
+                return true;
             case(R.id.list_users):
                 listUsers();
                 return true;
@@ -57,6 +59,11 @@ public class AdminActivity extends BaseActivity implements SlideIt {
 
     void listUsers() {
         Intent it = new Intent(this, ListUsersActivity.class);
+        startActivity(it);
+    }
+
+    void listUnassignedUsers() {
+        Intent it = new Intent(this, UnassignedUsersActivity.class);
         startActivity(it);
     }
 

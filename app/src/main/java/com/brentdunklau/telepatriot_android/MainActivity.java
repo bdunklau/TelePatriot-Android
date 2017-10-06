@@ -22,7 +22,8 @@ import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Arrays;
 
-public class MainActivity extends BaseActivity implements SlideIt
+public class MainActivity extends BaseActivity
+        //implements SlideIt
 {
 
     private static final int RC_SIGN_IN = 1;
@@ -36,7 +37,6 @@ public class MainActivity extends BaseActivity implements SlideIt
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        currentActivity = this.getClass();
         /**
          * see:  https://stackoverflow.com/a/11656129
          */
@@ -87,7 +87,9 @@ public class MainActivity extends BaseActivity implements SlideIt
         title = findViewById(R.id.title);
         message = findViewById(R.id.message);
 
-        this.swipeAdapter = new SwipeAdapter(this, this);
+        // Left as a comment because SwipeAdapter does provide an example of how to do swiping
+        // even though we're not swiping to change perspectives anymore
+        //this.swipeAdapter = new SwipeAdapter(this, this);
     }
 
     /**
@@ -101,7 +103,7 @@ public class MainActivity extends BaseActivity implements SlideIt
                         Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(
                 activity.getCurrentFocus().getWindowToken(), 0);
-    }
+    } 
 
     /**
      * See setupUI() in onCreate() to see how we hide the keyboard when the user clicks away from either the title or the message field.
@@ -221,14 +223,12 @@ public class MainActivity extends BaseActivity implements SlideIt
     @Override
     protected void onResume() {
         super.onResume();
-        currentActivity = this.getClass();
         Log.d(TAG, "resume");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        currentActivity = this.getClass();
     }
 
     /*

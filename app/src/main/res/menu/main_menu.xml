@@ -10,4 +10,17 @@
         android:title="@string/sign_out"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/volunteer_view_menu"
+        android:title="@string/volunteer_view"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/director_view_menu"
+        android:title="@string/director_view"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/admin_view_menu"
+        android:title="@string/admin_view"
+        app:showAsAction="never"/>
+
 </menu>

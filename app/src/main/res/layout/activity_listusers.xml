@@ -9,43 +9,64 @@
     tools:context="com.brentdunklau.telepatriot_android.ListUsersActivity">
 
 
-    <ScrollView
+
+
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:background="#ddffffff">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="0dp"
+        android:background="#ccffffff"
+        android:orientation="vertical"
+        android:id="@+id/top_menu_layout">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/text_admin"
+            android:text="Admin"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="20dp"
+            android:onClick="onClickRole" />
 
-            <TextView
-                android:id="@+id/txt_user_header"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:layout_marginLeft="10dp"
-                android:text="Users"
-                android:textSize="18sp"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/user_list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="10dp"
-                android:layout_marginLeft="10dp"
-                android:scrollbars="vertical"
-                android:layout_below="@+id/txt_user_header"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true" />
 
-        </LinearLayout>
-    </ScrollView>
+        <TextView
+            android:id="@+id/text_director"
+            android:text="Director"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/text_admin"
+            android:layout_centerHorizontal="true"
+            android:onClick="onClickRole"
+            android:layout_alignTop="@+id/text_admin" />
 
+
+        <TextView
+            android:id="@+id/text_volunteer"
+            android:text="Volunteer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_alignBottom="@+id/text_director"
+            android:layout_alignParentRight="true"
+            android:onClick="onClickRole"
+            android:layout_alignParentEnd="true" />
+    </RelativeLayout>
+
+    <fragment
+        android:id="@+id/user_list_fragment"
+        android:name="com.brentdunklau.telepatriot_android.UserListFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        tools:layout="@layout/user_list_fragment"
+        android:layout_below="@+id/top_menu_layout"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>
