@@ -120,7 +120,18 @@ public class BaseActivity extends AppCompatActivity {
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                ((TextView)findViewById(Rid)).setText(text);
+                try {
+                    TextView t = (TextView) findViewById(Rid);
+                    t.setText(text);
+                }
+                catch(Throwable t) {
+                    // We get an exception when called from ListUsersActivity when the list of users
+                    // goes from a non-zero size to zero size.  Not sure why.  And this exception, when
+                    // caught here, doesn't prevent the label from being updated.  So seems like we
+                    // could just catch this and do nothing ?  hope so
+                    // android.view.ViewRootImpl$CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views.
+                    Log.d("xxx", "ssss");
+                }
             }
         };
         new Thread(r).start();

@@ -44,6 +44,31 @@ public class ListUsersActivity extends BaseActivity implements SlideIt {
 
         // Just focusing on users that need to be assigned to a role
         myRef = database.getReference("no_roles");
+        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.getValue() == null) {
+                    // print a "Your Work is Done" message
+                    // All users are in a role
+                    String workIsDone = "Your work is done here. All users have been assigned to at least one group.";
+                    updateLabel(R.id.txt_explanation, workIsDone);
+                }
+                else {
+                    // this is the case where we have some new users that need to be assigned to a role
+                    doit();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+
+    }
+
+    private void doit() {
 
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<UserBean, UserHolder>(
