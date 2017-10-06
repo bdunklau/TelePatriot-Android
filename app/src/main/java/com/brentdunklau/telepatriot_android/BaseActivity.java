@@ -2,6 +2,7 @@ package com.brentdunklau.telepatriot_android;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -153,8 +154,8 @@ public class BaseActivity extends AppCompatActivity {
                 }
             }
         };
-        // TODO replace with Handler
-        new Thread(r).start();
+        Handler h = new Handler();
+        h.post(r);
     }
 
     @Override
