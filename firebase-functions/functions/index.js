@@ -4,12 +4,14 @@ admin.initializeApp(functions.config().firebase)
 
 const onmessage = require('./onMessage')
 const createModule = require('./userCreated')
+const deleteModule = require('./userDeleted')
 const notifications = require('./notifications')
 const roles = require('./roles')
 const topics = require('./topics')
 
 exports.messagestuff = onmessage.pushMessages
 exports.userCreated = functions.auth.user().onCreate(createModule.createUserAccount)
+exports.userDeleted = deleteModule.deleteUserAccount
 exports.notifyUserCreated = notifications.notifyUserCreated
 exports.roleAssigned = roles.roleAssigned
 exports.roleUnassigned = roles.roleUnassigned
