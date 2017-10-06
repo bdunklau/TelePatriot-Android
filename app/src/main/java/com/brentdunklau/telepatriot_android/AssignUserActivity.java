@@ -96,28 +96,38 @@ public class AssignUserActivity extends BaseActivity {
     }
 
     public void clickOk(View view) {
-        if(isAdmin) {
-            setRole("Admin");
-        } else {
-            unsetRole("Admin");
-        }
-        if(isDirector) {
-            setRole("Director");
-        } else {
-            unsetRole("Director");
-        }
-
+        String returnToTab = null;
         if(isVolunteer) {
+            returnToTab = "Volunteer";
             setRole("Volunteer");
         } else {
             unsetRole("Volunteer");
         }
 
+        if(isDirector) {
+            returnToTab = "Director";
+            setRole("Director");
+        } else {
+            unsetRole("Director");
+        }
+
+        if(isAdmin) {
+            returnToTab = "Admin";
+            setRole("Admin");
+        } else {
+            unsetRole("Admin");
+        }
+
+
         // as long is something is set, remove the record from the no_roles node
         if(isAdmin || isDirector || isVolunteer)
             database.getReference("no_roles/"+uid).removeValue();
 
-        startActivity(new Intent(this, ListUsersActivity.class));
+        // Send the Admin back to the right "tab" (Admin, Director or Volunteer) on
+        // ListUsersActivity so he can see the person he just added !
+        Intent it = new Intent(this, ListUsersActivity.class);
+        it.putExtra("returnToTab", returnToTab);
+        startActivity(it);
     }
 
     private void setRole(String role) {

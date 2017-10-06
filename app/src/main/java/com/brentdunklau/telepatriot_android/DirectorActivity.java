@@ -23,7 +23,6 @@ public class DirectorActivity extends BaseActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_director);
         //swipeAdapter = new SwipeAdapter(this, this);
-        user = User.getInstance();
     }
 
     @Override

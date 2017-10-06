@@ -1,9 +1,15 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -41,7 +47,7 @@ public class BaseActivity extends AppCompatActivity {
     // Left as a comment because SwipeAdapter does provide an example of how to do swiping
     // even though we're not swiping to change perspectives anymore
     //protected SwipeAdapter swipeAdapter;
-    protected User user;
+    //protected User user;
 
 
     @Override
@@ -53,6 +59,53 @@ public class BaseActivity extends AppCompatActivity {
         mFirebaseAuth = FirebaseAuth.getInstance();
 
     }
+
+
+
+    // https://stackoverflow.com/a/41931325
+    protected BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            showAlertDialog(intent.getExtras().getString("uid"),
+                    intent.getExtras().getString("title"),
+                    intent.getExtras().getString("message"));
+        }
+    };
+
+
+    protected void showAlertDialog(final String uid, String dataTitle, String dataMessage) {
+        if(uid == null || dataTitle == null || dataMessage == null)
+            return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Message");
+        builder.setMessage(dataTitle + "\n" + dataMessage);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Intent it = new Intent(BaseActivity.this, AssignUserActivity.class);
+                it.putExtra("uid", uid);
+                startActivity(it);
+            }
+        });
+        builder.show();
+    }
+
+    // https://stackoverflow.com/a/41931325
+    @Override
+    protected void onStart() {
+        super.onStart();
+        LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
+                new IntentFilter("NewUser")
+        );
+    }
+
+    // https://stackoverflow.com/a/41931325
+    @Override
+    protected void onStop() {
+        super.onStop();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -94,8 +147,14 @@ public class BaseActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         Log.d(TAG, "USER LOGGED OUT");
+                        User user = User.getInstance();
                         user.onSignout();
-                        finish();
+
+                        // https://stackoverflow.com/a/14002030
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        intent.putExtra("EXIT", true);
+                        startActivity(intent);
                     }
                 });
     }
@@ -144,13 +203,6 @@ public class BaseActivity extends AppCompatActivity {
         super.onResume();
         String cname = this.getClass().getName();
         Log.d(cname, "resume");
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        String cname = this.getClass().getName();
-        Log.d(cname, "start");
     }
 
 
