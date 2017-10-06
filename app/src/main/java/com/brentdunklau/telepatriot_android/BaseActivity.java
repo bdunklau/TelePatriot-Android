@@ -85,8 +85,22 @@ public class BaseActivity extends AppCompatActivity {
             case(R.id.sign_out_menu):
                 signOut();
                 return true;
+            case(R.id.volunteer_view_menu):
+                //gotoScreen(VolunteerActivity.class);
+                return true;
+            case(R.id.director_view_menu):
+                gotoScreen(DirectorActivity.class);
+                return true;
+            case(R.id.admin_view_menu):
+                gotoScreen(AdminActivity.class);
+                return true;
             default: return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void gotoScreen(Class activity) {
+        Intent it = new Intent(this, activity);
+        startActivity(it);
     }
 
     @Override
