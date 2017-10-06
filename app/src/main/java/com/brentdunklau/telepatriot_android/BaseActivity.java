@@ -52,32 +52,6 @@ public class BaseActivity extends AppCompatActivity {
         // Initialize Firebase Auth
         mFirebaseAuth = FirebaseAuth.getInstance();
 
-
-        // Need to be more general with this.  Need to look at all child nodes of /users/uid/roles
-        /*
-        if(mFirebaseAuth == null || mFirebaseAuth.getCurrentUser() == null) {
-            if (true) ;
-        } else {
-            DatabaseReference r1 = database.getReference("/users/" + mFirebaseAuth.getCurrentUser().getUid() + "/roles/Admin");
-            r1.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Object o = dataSnapshot.getValue();
-                    boolean roleRemoved = o == null;
-                    if (roleRemoved) {
-
-                    } else {
-                        // make sure user has Director access
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    // do what here?
-                }
-            });
-        }*/
-
     }
 
     @Override
