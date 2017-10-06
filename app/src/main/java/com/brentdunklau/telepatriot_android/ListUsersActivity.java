@@ -30,7 +30,9 @@ import java.util.HashMap;
  * Created by bdunklau on 10/4/17.
  */
 
-public class ListUsersActivity extends BaseActivity implements SlideIt {
+public class ListUsersActivity extends BaseActivity
+        //implements SlideIt
+{
 
     private UserListFragment userListFragment;
     private TextView textAdmin, textDirector, textVolunteer;
