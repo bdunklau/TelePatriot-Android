@@ -25,7 +25,6 @@ public class AdminActivity extends BaseActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
         //swipeAdapter = new SwipeAdapter(this, this);
-        user = User.getInstance();
     }
 
     @Override
