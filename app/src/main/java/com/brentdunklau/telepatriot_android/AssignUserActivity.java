@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
@@ -81,6 +82,12 @@ public class AssignUserActivity extends BaseActivity {
         } else {
             unsetRole("Volunteer");
         }
+
+        // as long is something is set, remove the record from the no_roles node
+        if(isAdmin || isDirector || isVolunteer)
+            database.getReference("no_roles/"+uid).removeValue();
+
+        startActivity(new Intent(this, ListUsersActivity.class));
     }
 
     private void setRole(String role) {
