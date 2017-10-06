@@ -60,28 +60,16 @@ public class UserListFragment extends Fragment {
     }
 
     public void setRole(String role) {
-        updateLabel(view, R.id.role_header, role);
+        updateLabel(view, R.id.role_header, role+"s");
 
         final DatabaseReference ref = database.getReference("roles/"+role+"/users");
         ref.orderByChild("name")/*.limitToFirst(25) limit somehow? */.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.getValue() == null) {
-                    // print a "Your Work is Done" message
-                    // All users are in a role
-                    String workIsDone = "Your work is done here. All users have been assigned to at least one group.";
-                    updateLabel(view, R.id.txt_explanation, workIsDone);
-                }
-                else {
-                    // this is the case where we have some new users that need to be assigned to a role
-                    doit(ref);
-                }
+                doit(ref);
             }
-
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
+            public void onCancelled(DatabaseError databaseError) {}
         });
     }
 
