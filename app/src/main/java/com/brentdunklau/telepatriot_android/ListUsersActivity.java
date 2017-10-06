@@ -46,6 +46,12 @@ public class ListUsersActivity extends BaseActivity
         textVolunteer = findViewById(R.id.text_volunteer);
         userListFragment = (UserListFragment) getSupportFragmentManager().findFragmentById(R.id.user_list_fragment);
         userListFragment.setDatabase(database);
+
+        String showTab = "Admin";
+        if (getIntent().getExtras() != null && getIntent().getExtras().get("returnToTab") != null) {
+            showTab = (String) getIntent().getExtras().get("returnToTab");
+        }
+        userListFragment.setRole(showTab);
     }
 
     public void onClickRole(View view) {

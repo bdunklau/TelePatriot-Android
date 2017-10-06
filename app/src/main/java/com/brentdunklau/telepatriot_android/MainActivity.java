@@ -3,7 +3,12 @@ package com.brentdunklau.telepatriot_android;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,9 +23,14 @@ import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SwipeAdapter;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends BaseActivity
         //implements SlideIt
@@ -30,7 +40,7 @@ public class MainActivity extends BaseActivity
     private static final String TAG = "MainActivity";
     public static final String ANONYMOUS = "anonymous";
 
-    private String dataTitle, dataMessage;
+    //private String dataTitle, dataMessage;
     private EditText title, message;
 
     @Override
@@ -46,8 +56,8 @@ public class MainActivity extends BaseActivity
         //mFirebaseAuth = FirebaseAuth.getInstance();
 
         if(mFirebaseAuth.getCurrentUser() != null) {
-            user = User.getInstance(mFirebaseAuth.getCurrentUser());
-            updateLabel(R.id.name, user.getName());
+            String name = User.getInstance(mFirebaseAuth.getCurrentUser()).getName();
+            updateLabel(R.id.name, name);
         } else {
             AuthUI aui = AuthUI.getInstance();
             AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
@@ -71,6 +81,7 @@ public class MainActivity extends BaseActivity
         //
         // Handle possible data accompanying notification message.
         if (getIntent().getExtras() != null) {
+            String dataTitle = null; String dataMessage = null; String uid = null;
             for (String key : getIntent().getExtras().keySet()) {
                 if (key.equals("title")) {
                     dataTitle=(String)getIntent().getExtras().get(key);
@@ -78,8 +89,11 @@ public class MainActivity extends BaseActivity
                 if (key.equals("message")) {
                     dataMessage = (String)getIntent().getExtras().get(key);
                 }
+                if (key.equals("uid")) {
+                    uid = (String)getIntent().getExtras().get(key);
+                }
             }
-            showAlertDialog();
+            showAlertDialog(uid, dataTitle, dataMessage);
         }
 
         myRef = database.getReference("messages");
@@ -90,6 +104,12 @@ public class MainActivity extends BaseActivity
         // Left as a comment because SwipeAdapter does provide an example of how to do swiping
         // even though we're not swiping to change perspectives anymore
         //this.swipeAdapter = new SwipeAdapter(this, this);
+
+
+        // https://stackoverflow.com/a/14002030
+        if (getIntent().getBooleanExtra("EXIT", false)) {
+            finish();
+        }
     }
 
     /**
@@ -131,15 +151,6 @@ public class MainActivity extends BaseActivity
         }
     }
 
-
-    private void showAlertDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Message");
-        builder.setMessage("title: " + dataTitle + "\n" + "message: " + dataMessage);
-        builder.setPositiveButton("OK", null);
-        builder.show();
-    }
-
     public void subscribeToTopics() {
         String uid = mFirebaseAuth.getCurrentUser().getUid();
 
@@ -167,8 +178,7 @@ public class MainActivity extends BaseActivity
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
-                user = User.getInstance();
-                user.login(mFirebaseAuth.getCurrentUser());
+                User user = User.getInstance(mFirebaseAuth.getCurrentUser());
                 String name = user.getName();
 
                 // Oops - this causes the app to crash.  I guess because we set the text of a label
@@ -178,38 +188,33 @@ public class MainActivity extends BaseActivity
                 // user logged in
                 //Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
 
-                Intent it = new Intent(this, LimboActivity.class);
-                startActivity(it);
-
-
 
                 /**
-                 * Now we have to figure out what roles the person has
-                 * If the person is an Admin, they go to the AdminActivity
+                 * Does the user have any roles yet, or is this a brand new user?
+                 * Where we send the user will depend on whether they are brand new or not
                  */
-                /*
-                DatabaseReference r1 = database.getReference("/users/"+mFirebaseAuth.getCurrentUser().getUid()+"/roles");
-                r1.addListenerForSingleValueEvent(new ValueEventListener() {
+
+                database.getReference("/users/"+mFirebaseAuth.getCurrentUser().getUid()+"/roles").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        Iterable<DataSnapshot> iter = dataSnapshot.getChildren();
-                        while(iter.iterator().hasNext()) {
-                            DataSnapshot ds = iter.iterator().next();
-                            String role = ds.getKey();
+                        HashMap<String, String> roles = (HashMap) dataSnapshot.getValue();
+                        if(roles == null || roles.isEmpty()) {
+                            Intent it = new Intent(MainActivity.this, LimboActivity.class);
+                            startActivity(it);
+                        } else {
+                            Map<String, Class> activities = new HashMap<String, Class>();
+                            activities.put("Admin", AdminActivity.class);
+                            activities.put("Director", DirectorActivity.class);
+                            //activities.put("Volunteer", VolunteerActivity.class);
+                            String role = roles.keySet().iterator().next();
+                            Class activity = activities.get(role);
+                            Intent it = new Intent(MainActivity.this, activity);
+                            startActivity(it);
                         }
                     }
-
                     @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        // do what here?
-                    }
-                });*/
-
-                /*****************
-                 * This stuff works but isn't really where we want to put this
-
-                subscribeToTopics();
-                 *************/
+                    public void onCancelled(DatabaseError databaseError) { }
+                });
 
 
             } else {
@@ -226,10 +231,6 @@ public class MainActivity extends BaseActivity
         Log.d(TAG, "resume");
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
 
     /*
 

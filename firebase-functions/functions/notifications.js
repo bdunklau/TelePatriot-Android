@@ -12,6 +12,10 @@ exports.notifyUserCreated = functions.auth.user().onCreate(event => {
     const uid = event.data.uid
     const email = event.data.email
 
+    console.log("notifications.js: event.data = ", event.data)
+    console.log("notifications.js: event.data.uid = ", event.data.uid)
+
+
     var newuser = email
     if(event.data.displayName) newuser = event.data.displayName
     var body = newuser+" just joined. Assign to group after vetting."
@@ -21,13 +25,11 @@ exports.notifyUserCreated = functions.auth.user().onCreate(event => {
     /* Create a notification and data payload. They contain the notification information, and message to be sent respectively */
     const payload = {
         // see  https://medium.com/@Miqubel/mastering-firebase-notifications-36a3ffe57c41
-        /*
         notification: {
             title: "New User",
             body: body,
             sound: "default"
         },
-        */
         data: {
             title: "New "+strings.strings.appname+" User",
             message: message,

@@ -1,18 +1,20 @@
 package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util;
 
-import com.brentdunklau.telepatriot_android.AdminActivity;
-import com.brentdunklau.telepatriot_android.DirectorActivity;
-import com.brentdunklau.telepatriot_android.MainActivity;
+import android.util.Log;
+
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by bdunklau on 10/3/17.
@@ -22,7 +24,7 @@ public class User {
 
     private FirebaseUser firebaseUser;
     private FirebaseDatabase database;
-    private DatabaseReference rolesRef;
+    private DatabaseReference userRef;
     private boolean isAdmin, isDirector, isVolunteer;
     private ChildEventListener childEventListener;
     private static User singleton;
@@ -46,11 +48,39 @@ public class User {
     public void login(FirebaseUser firebaseUser) {
         this.firebaseUser = firebaseUser;
         this.database = FirebaseDatabase.getInstance();
-        FirebaseMessaging.getInstance().subscribeToTopic("AccountEvents");
         childEventListener = new ChildEventAdapter();
 
-        rolesRef = database.getReference("/users/"+firebaseUser.getUid()+"/roles");
-        rolesRef.addChildEventListener(childEventListener);
+        userRef = database.getReference("/users/"+firebaseUser.getUid());
+        userRef.child("roles").addChildEventListener(childEventListener);
+
+        userRef.child("topics").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                String topic = dataSnapshot.getKey();
+                FirebaseMessaging.getInstance().subscribeToTopic(topic);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                String topic = dataSnapshot.getKey();
+                FirebaseMessaging.getInstance().unsubscribeFromTopic(topic);
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private User() {
@@ -58,7 +88,24 @@ public class User {
     }
 
     public void onSignout() {
-        rolesRef.removeEventListener(childEventListener);
+        userRef.removeEventListener(childEventListener);
+
+        database.getReference("/users/"+firebaseUser.getUid()+"/topics").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Object o = dataSnapshot.getValue();
+                HashMap topics = (HashMap)o;
+                Log.d("c", "s");
+                for(Object topic : topics.keySet()) {
+                    FirebaseMessaging.getInstance().unsubscribeFromTopic(topic.toString());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     public String getName() {
@@ -122,33 +169,6 @@ public class User {
         public void onCancelled(DatabaseError databaseError) {
 
         }
-    }
-
-    public Class activityOnTheLeft(Class currentActivity) {
-        if(currentActivity.equals(AdminActivity.class))
-            return null; // nothing to the left of the AdminActivity
-        else if(currentActivity.equals(DirectorActivity.class))
-            return isAdmin() ? AdminActivity.class : null;
-        else if(currentActivity.equals(MainActivity.class))
-            return isAdmin() ? AdminActivity.class : null;
-        /**
-         * Add condition for isVolunteer() when that's written
-         */
-        else return null;
-    }
-
-    public Class activityOnTheRight(Class currentActivity) {
-        if(currentActivity.equals(AdminActivity.class))
-            return isDirector() ? DirectorActivity.class : isVolunteer() ? null/*VolunteerActivity.class*/ : null;
-        else if(currentActivity.equals(DirectorActivity.class))
-            return isVolunteer() ? null/*VolunteerActivity.class*/ : null;
-        else if(currentActivity.equals(MainActivity.class))
-            return isDirector() ? DirectorActivity.class : isVolunteer() ? null/*VolunteerActivity.class*/ : null;
-        /**
-         * Actually don't NEED a condition here for isVolunteer() because we are saying
-         * that there is always nothing to the right of the Volunteer activity
-         */
-        else return null;
     }
 
     void fireRoleAssignedEvent(String role) {
