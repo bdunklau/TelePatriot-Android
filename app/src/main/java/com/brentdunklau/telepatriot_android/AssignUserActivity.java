@@ -33,7 +33,6 @@ public class AssignUserActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_assignuser);
-        currentActivity = this.getClass(); // get rid of this probably ...in all activity classes
 
         adminSwitch = findViewById(R.id.switch_admin);
         directorSwitch = findViewById(R.id.switch_director);

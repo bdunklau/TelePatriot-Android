@@ -26,7 +26,9 @@ import java.util.HashMap;
  * Created by bdunklau on 10/4/17.
  */
 
-public class UnassignedUsersActivity extends BaseActivity implements SlideIt {
+public class UnassignedUsersActivity extends BaseActivity
+        //implements SlideIt
+{
 
     private FirebaseRecyclerAdapter<UserBean, UserHolder> mAdapter;
     protected String TAG = "UnassignedUsersActivity";
@@ -36,7 +38,6 @@ public class UnassignedUsersActivity extends BaseActivity implements SlideIt {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_unassignedusers);
-        currentActivity = this.getClass(); // get rid of this probably ...in all activity classes
 
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         users = (RecyclerView) findViewById(R.id.user_list);

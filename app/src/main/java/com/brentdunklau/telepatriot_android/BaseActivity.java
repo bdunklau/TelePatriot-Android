@@ -36,9 +36,11 @@ public class BaseActivity extends AppCompatActivity {
     protected FirebaseAuth mFirebaseAuth;  // see https://codelabs.developers.google.com/codelabs/firebase-android/#5
     protected FirebaseDatabase database;
     protected DatabaseReference myRef;
-    protected SwipeAdapter swipeAdapter;
+
+    // Left as a comment because SwipeAdapter does provide an example of how to do swiping
+    // even though we're not swiping to change perspectives anymore
+    //protected SwipeAdapter swipeAdapter;
     protected User user;
-    protected Class currentActivity;
 
 
     @Override
@@ -126,7 +128,10 @@ public class BaseActivity extends AppCompatActivity {
     // 1:00  https://www.youtube.com/watch?v=VKbEfhf1qc&list=PL6gx4Cwl9DGBsvRxJJOzG4r4k_zLKrnxl&index=22
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        this.swipeAdapter.onTouchEvent(event);
+
+        // Left as a comment because SwipeAdapter does provide an example of how to do swiping
+        // even though we're not swiping to change perspectives anymore
+        //this.swipeAdapter.onTouchEvent(event);
         return super.onTouchEvent(event);
     }
 
@@ -148,6 +153,7 @@ public class BaseActivity extends AppCompatActivity {
                 }
             }
         };
+        // TODO replace with Handler
         new Thread(r).start();
     }
 
@@ -173,16 +179,10 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
-    private Class onTheLeft() {
-        return user.activityOnTheLeft(currentActivity);
-    }
-
-
-    private Class onTheRight() {
-        return user.activityOnTheRight(currentActivity);
-    }
-
-
+    /*********
+     * Not swiping to change perspectives anymore, but this code, together with SlideIt and
+     * SwipeAdapter provide an example of how to do swiping
+     *
     public void rightToLeft() {
         Class onTheRight = onTheRight();
         if(onTheRight != null) {
@@ -200,4 +200,5 @@ public class BaseActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_from_left, R.anim.slide_to_right);
         }
     }
+     **************/
 }
