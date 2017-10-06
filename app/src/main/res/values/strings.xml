@@ -1,13 +1,16 @@
 <resources>
     <string name="app_name">TelePatriot</string>
 
+    <string name="admin_view">Admin View</string>
     <string name="chat_help">Chat/Help</string>
     <string name="sign_out">Sign Out</string>
     <string name="sign_in">Sign In</string>
     <string name="default_notification_channel_id">notifications</string>
+    <string name="director_view">Director View</string>
     <string name="channel_name">Channel 1</string>
     <string name="channel_description">This is the description of Channel 1</string>
     <string name="list_users">List Users</string>
     <string name="unassigned_users">Unassigned Users</string>
+    <string name="volunteer_view">Volunteer View</string>
 
 </resources>
