@@ -101,7 +101,7 @@ public class MainActivity extends BaseActivity implements SlideIt
                         Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(
                 activity.getCurrentFocus().getWindowToken(), 0);
-    }
+    } 
 
     /**
      * See setupUI() in onCreate() to see how we hide the keyboard when the user clicks away from either the title or the message field.
