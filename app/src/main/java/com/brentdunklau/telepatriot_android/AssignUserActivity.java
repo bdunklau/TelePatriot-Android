@@ -2,12 +2,19 @@ package com.brentdunklau.telepatriot_android;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
+import android.widget.TextView;
+
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Created by bdunklau on 10/5/2017.
@@ -28,20 +35,12 @@ public class AssignUserActivity extends BaseActivity {
         setContentView(R.layout.activity_assignuser);
         currentActivity = this.getClass(); // get rid of this probably ...in all activity classes
 
-        if (getIntent().getExtras() != null) {
-            uid = (String)getIntent().getExtras().get("uid");
-            String name = (String)getIntent().getExtras().get("name");
-            String email = (String)getIntent().getExtras().get("email");
-            updateLabel(R.id.text_name, name);
-            updateLabel(R.id.text_email, email);
-        }
-
         adminSwitch = findViewById(R.id.switch_admin);
         directorSwitch = findViewById(R.id.switch_director);
         volunteerSwitch = findViewById(R.id.switch_volunteer);
-        okButton = findViewById(R.id.button_ok);
 
         adminSwitch.setSwitchPadding(100);
+
 
         adminSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -63,6 +62,38 @@ public class AssignUserActivity extends BaseActivity {
                 isVolunteer = b;
             }
         });
+
+
+        if (getIntent().getExtras() != null) {
+            uid = (String)getIntent().getExtras().get("uid");
+            database.getReference("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    UserBean ub = null;
+                    try {
+                        ub = dataSnapshot.getValue(UserBean.class);
+                    } catch(Throwable t) {
+                        Log.d("d", "x");
+                    }
+                    updateLabel(R.id.text_name, ub.getName());
+                    updateLabel(R.id.text_email, ub.getEmail());
+                    isAdmin = ub.isRole("Admin");
+                    isDirector = ub.isRole("Director");
+                    isVolunteer = ub.isRole("Volunteer");
+                    setSwitch(isAdmin, adminSwitch);
+                    setSwitch(isDirector, directorSwitch);
+                    setSwitch(isVolunteer, volunteerSwitch);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        }
+
+        okButton = findViewById(R.id.button_ok);
+
     }
 
     public void clickOk(View view) {
@@ -96,6 +127,26 @@ public class AssignUserActivity extends BaseActivity {
 
     private void unsetRole(String role) {
         database.getReference("users/"+uid+"/roles/"+role).removeValue();
+    }
+
+    private void setSwitch(final boolean value, final SwitchCompat switchCompat) {
+        Handler h = new Handler();
+        h.post(new Runnable() {
+            @Override
+            public void run() {
+                switchCompat.setChecked(value);
+            }
+        });
+    }
+
+    protected void updateLabel(final int Rid, final String text) {
+        Handler h = new Handler();
+        h.post(new Runnable() {
+            @Override
+            public void run() {
+                ((TextView)findViewById(Rid)).setText(text);
+            }
+        });
     }
 
 }

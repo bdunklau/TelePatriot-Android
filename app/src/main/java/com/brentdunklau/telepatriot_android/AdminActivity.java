@@ -43,6 +43,9 @@ public class AdminActivity extends BaseActivity implements SlideIt {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
+            case(R.id.list_unassigned_users):
+                listUnassignedUsers();
+                return true;
             case(R.id.list_users):
                 listUsers();
                 return true;
@@ -57,6 +60,11 @@ public class AdminActivity extends BaseActivity implements SlideIt {
 
     void listUsers() {
         Intent it = new Intent(this, ListUsersActivity.class);
+        startActivity(it);
+    }
+
+    void listUnassignedUsers() {
+        Intent it = new Intent(this, UnassignedUsersActivity.class);
         startActivity(it);
     }
 
