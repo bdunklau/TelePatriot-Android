@@ -27,7 +27,20 @@ public class DbLog {
     }
 
     public static void d(String name, String msg) {
+        log("debug", name, msg);
+    }
+
+    public static void i(String name, String msg) {
+        log("info", name, msg);
+    }
+
+    public static void e(String name, String msg) {
+        log("error", name, msg);
+    }
+
+    private static void log(String level, String name, String msg) {
         HashMap<String, String> m = new HashMap<String, String>();
+        m.put("level", level);
         m.put("date", new Date().toString());
         m.put("name", name);
         m.put("msg", msg);
