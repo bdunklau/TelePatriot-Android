@@ -33,7 +33,7 @@ import com.google.firebase.database.ValueEventListener;
 /**
  * Created by bdunklau on 10/1/17.
  */
-
+ 
 public class BaseActivity extends AppCompatActivity {
 
 

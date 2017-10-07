@@ -19,6 +19,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.DbLog;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SlideIt;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SwipeAdapter;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
@@ -199,6 +200,7 @@ public class MainActivity extends BaseActivity
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         HashMap<String, String> roles = (HashMap) dataSnapshot.getValue();
                         if(roles == null || roles.isEmpty()) {
+                            DbLog.d(mFirebaseAuth.getCurrentUser().getDisplayName(), "logging in - no roles assigned yet");
                             Intent it = new Intent(MainActivity.this, LimboActivity.class);
                             startActivity(it);
                         } else {
@@ -207,6 +209,7 @@ public class MainActivity extends BaseActivity
                             activities.put("Director", DirectorActivity.class);
                             //activities.put("Volunteer", VolunteerActivity.class);
                             String role = roles.keySet().iterator().next();
+                            DbLog.d(mFirebaseAuth.getCurrentUser().getDisplayName(), "logging in - going to "+role+" screen");
                             Class activity = activities.get(role);
                             Intent it = new Intent(MainActivity.this, activity);
                             startActivity(it);

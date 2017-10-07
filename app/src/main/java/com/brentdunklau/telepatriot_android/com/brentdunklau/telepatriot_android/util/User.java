@@ -49,6 +49,7 @@ public class User {
         this.firebaseUser = firebaseUser;
         this.database = FirebaseDatabase.getInstance();
         childEventListener = new ChildEventAdapter();
+        final String name = firebaseUser.getDisplayName();
 
         userRef = database.getReference("/users/"+firebaseUser.getUid());
         userRef.child("roles").addChildEventListener(childEventListener);
@@ -57,6 +58,7 @@ public class User {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 String topic = dataSnapshot.getKey();
+                DbLog.d(name, "subscribing to topic: "+topic);
                 FirebaseMessaging.getInstance().subscribeToTopic(topic);
             }
 
@@ -89,6 +91,7 @@ public class User {
 
     public void onSignout() {
         userRef.removeEventListener(childEventListener);
+        final String name = firebaseUser.getDisplayName();
 
         database.getReference("/users/"+firebaseUser.getUid()+"/topics").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -97,6 +100,7 @@ public class User {
                 HashMap topics = (HashMap)o;
                 Log.d("c", "s");
                 for(Object topic : topics.keySet()) {
+                    DbLog.d(name, "unsubscribing to topic: "+topic);
                     FirebaseMessaging.getInstance().unsubscribeFromTopic(topic.toString());
                 }
             }
