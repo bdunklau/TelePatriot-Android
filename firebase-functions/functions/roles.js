@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 const strings = require('./strings')
-const admin = require('firebase-admin');
+const admin = require('firebase-admin')
+const date = require('./dateformat')
 
 // see:  https://www.youtube.com/watch?v=7E13ZBCyKT0&index=2&list=PLl-K7zZEsYLkPZHe41m4jfAxUi0JjLgSM
 
@@ -36,6 +37,10 @@ exports.roleAssigned = functions.database.ref('/users/{uid}/roles/{role}').onWri
             var topic = child.val().name
             event.data.adminRef.root.child(`/users/${uid}/topics`).child(topic).set('true')
           });
+    }).then(snapshot => {
+        var datestr = date.format(new Date())
+        var msg = "Admin has assigned you to the "+role+" group"
+        event.data.adminRef.root.child(`/users/${uid}/account_status_events`).push({date: datestr, event: msg})
     })
 
 });

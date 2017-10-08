@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -26,23 +27,27 @@ public class DbLog {
         return dbLog;
     }
 
-    public static void d(String name, String msg) {
-        log("debug", name, msg);
+    private static String getName() {
+        return FirebaseAuth.getInstance().getCurrentUser() != null ? FirebaseAuth.getInstance().getCurrentUser().getDisplayName() : "(name not available)";
     }
 
-    public static void i(String name, String msg) {
-        log("info", name, msg);
+    public static void d(String msg) {
+        log("debug", msg);
     }
 
-    public static void e(String name, String msg) {
-        log("error", name, msg);
+    public static void i(String msg) {
+        log("info", msg);
     }
 
-    private static void log(String level, String name, String msg) {
+    public static void e(String msg) {
+        log("error", msg);
+    }
+
+    private static void log(String level, String msg) {
         HashMap<String, String> m = new HashMap<String, String>();
         m.put("level", level);
         m.put("date", new Date().toString());
-        m.put("name", name);
+        m.put("name", getName());
         m.put("msg", msg);
         getInstance().log1.push().setValue(m);
     }

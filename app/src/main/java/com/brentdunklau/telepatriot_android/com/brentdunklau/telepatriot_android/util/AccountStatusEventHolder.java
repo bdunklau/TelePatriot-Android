@@ -11,14 +11,17 @@ import com.brentdunklau.telepatriot_android.R;
  */
 
 public class AccountStatusEventHolder extends RecyclerView.ViewHolder {
-    private final TextView statusField;
+    private TextView dateField, nameField;
 
     public AccountStatusEventHolder(View itemView) {
         super(itemView);
-        statusField = (TextView) itemView.findViewById(R.id.line_item);
+        dateField = (TextView) itemView.findViewById(R.id.date);
+        nameField = (TextView) itemView.findViewById(R.id.name);
     }
 
     public void setStatus(String date, String event) {
-        statusField.setText(date+" "+event);
+        dateField.setText(date);
+        nameField.setText(event); // TODO oops we're reusing the firebase recycler view and getting our
+        // fields mixed up.  Should probably create a layout specifically for the account status events
     }
 }

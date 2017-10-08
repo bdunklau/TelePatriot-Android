@@ -2,6 +2,7 @@ package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_androi
 
 import android.util.Log;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -22,7 +23,7 @@ import java.util.Map;
 
 public class User {
 
-    private FirebaseUser firebaseUser;
+    //private FirebaseUser firebaseUser;
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     private boolean isAdmin, isDirector, isVolunteer;
@@ -36,29 +37,38 @@ public class User {
         }
         return singleton;
     }
-
+/*
     public static User getInstance(FirebaseUser firebaseUser) {
         if(singleton == null) {
             singleton = new User();
             singleton.login(firebaseUser);
         }
         return singleton;
+    }*/
+
+    private FirebaseUser getFirebaseUser() {
+        return FirebaseAuth.getInstance().getCurrentUser();
     }
 
-    public void login(FirebaseUser firebaseUser) {
-        this.firebaseUser = firebaseUser;
+    public void login(/*FirebaseUser firebaseUser*/) {
+        if(!exists()) {
+            DbLog.e("Whoa! This should never happen. We tried to login but the FirebaseUser doesn't exist yet.  Fix this.");
+            return;
+        }
+
+        //this.firebaseUser = firebaseUser;
         this.database = FirebaseDatabase.getInstance();
         childEventListener = new ChildEventAdapter();
-        final String name = firebaseUser.getDisplayName();
+        final String name = getName();
 
-        userRef = database.getReference("/users/"+firebaseUser.getUid());
+        userRef = database.getReference("/users/"+getUid());
         userRef.child("roles").addChildEventListener(childEventListener);
 
         userRef.child("topics").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 String topic = dataSnapshot.getKey();
-                DbLog.d(name, "subscribing to topic: "+topic);
+                DbLog.d("subscribing to topic: "+topic);
                 FirebaseMessaging.getInstance().subscribeToTopic(topic);
             }
 
@@ -86,21 +96,24 @@ public class User {
     }
 
     private User() {
-
+        login();
     }
 
     public void onSignout() {
         userRef.removeEventListener(childEventListener);
-        final String name = firebaseUser.getDisplayName();
+        if(!exists())
+            return;
 
-        database.getReference("/users/"+firebaseUser.getUid()+"/topics").addListenerForSingleValueEvent(new ValueEventListener() {
+        database.getReference("/users/"+getUid()+"/topics").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Object o = dataSnapshot.getValue();
+                // WILL BE NULL for new users that logout before being assigned to any roles
+                if(o == null)
+                    return;
                 HashMap topics = (HashMap)o;
-                Log.d("c", "s");
                 for(Object topic : topics.keySet()) {
-                    DbLog.d(name, "unsubscribing to topic: "+topic);
+                    DbLog.d("unsubscribing to topic: "+topic);
                     FirebaseMessaging.getInstance().unsubscribeFromTopic(topic.toString());
                 }
             }
@@ -112,16 +125,20 @@ public class User {
         });
     }
 
+    public boolean exists() {
+        return getFirebaseUser() != null;
+    }
+
     public String getName() {
-        return firebaseUser.getDisplayName();
+        return getFirebaseUser()!=null ? getFirebaseUser().getDisplayName() : "name not available";
     }
 
     public String getUid() {
-        return firebaseUser.getUid();
+        return getFirebaseUser()!=null ? getFirebaseUser().getUid() : "uid not available";
     }
 
     public String getEmail() {
-        return firebaseUser.getEmail();
+        return getFirebaseUser()!=null ? getFirebaseUser().getEmail() : "uid not available";
     }
 
     public boolean isAdmin() {

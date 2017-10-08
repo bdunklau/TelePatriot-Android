@@ -11,11 +11,15 @@ import com.brentdunklau.telepatriot_android.R;
  */
 
 public class UserHolder extends RecyclerView.ViewHolder {
-    private final TextView userField;
+    private TextView userField;
+    private TextView dateField;
+    private TextView reviewedByField;
 
     public UserHolder(View itemView) {
         super(itemView);
-        userField = (TextView) itemView.findViewById(R.id.line_item);
+        userField = itemView.findViewById(R.id.name);
+        dateField = itemView.findViewById(R.id.date);
+        reviewedByField = itemView.findViewById(R.id.reviewed_by);
 
         // https://stackoverflow.com/a/41629505
         //listener set on ENTIRE ROW, you may set on individual components within a row.
@@ -32,7 +36,7 @@ public class UserHolder extends RecyclerView.ViewHolder {
 
     // https://stackoverflow.com/a/41629505
     //Interface to send callbacks...
-    public interface ClickListener{
+    public interface ClickListener {
         public void onItemClick(View view, int position);
         public void onItemLongClick(View view, int position);
     }
@@ -44,5 +48,13 @@ public class UserHolder extends RecyclerView.ViewHolder {
 
     public void setName(String name) {
         userField.setText(name);
+    }
+
+    public void setDate(String date) {
+        dateField.setText(date);
+    }
+
+    public void setReviewedBy(String reviewedBy) {
+        reviewedByField.setText(reviewedBy);
     }
 }

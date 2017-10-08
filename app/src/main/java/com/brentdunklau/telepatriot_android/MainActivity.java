@@ -56,9 +56,12 @@ public class MainActivity extends BaseActivity
         // Initialize Firebase Auth  (moved to BaseActivity)
         //mFirebaseAuth = FirebaseAuth.getInstance();
 
-        if(mFirebaseAuth.getCurrentUser() != null) {
-            String name = User.getInstance(mFirebaseAuth.getCurrentUser()).getName();
+        if(User.getInstance().exists()) {
+            String name = User.getInstance().getName();
             updateLabel(R.id.name, name);
+            // We have to check here also to see if the user belongs to any roles yet
+            // because if they don't, we have to send them back to LimboActivity
+            figureOutWhereToGo();
         } else {
             AuthUI aui = AuthUI.getInstance();
             AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
@@ -113,6 +116,36 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    private void figureOutWhereToGo() {
+        database.getReference("/users/"+User.getInstance().getUid()+"/roles").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                HashMap<String, String> roles = (HashMap) dataSnapshot.getValue();
+                if(roles == null || roles.isEmpty()) {
+                    try {
+                        DbLog.d("logging in - no roles assigned yet");
+                        Intent it = new Intent(MainActivity.this, LimboActivity.class);
+                        startActivity(it);
+                    } catch(Throwable t) {
+                        DbLog.e("Throwable: "+t);
+                    }
+                } else {
+                    Map<String, Class> activities = new HashMap<String, Class>();
+                    activities.put("Admin", UnassignedUsersActivity.class);
+                    activities.put("Director", DirectorActivity.class);
+                    //activities.put("Volunteer", VolunteerActivity.class);
+                    String role = roles.keySet().iterator().next();
+                    DbLog.d("logging in - going to "+role+" screen");
+                    Class activity = activities.get(role);
+                    Intent it = new Intent(MainActivity.this, activity);
+                    startActivity(it);
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) { }
+        });
+    }
+
     /**
      * See setupUI() in onCreate() to see how we hide the keyboard when the user clicks away from either the title or the message field.
      * Got the answer from here:  https://stackoverflow.com/a/11656129
@@ -152,13 +185,6 @@ public class MainActivity extends BaseActivity
         }
     }
 
-    public void subscribeToTopics() {
-        String uid = mFirebaseAuth.getCurrentUser().getUid();
-
-        //DatabaseReference meAdmin = database.getReference("users/${uid}/Admin");
-
-    }
-
     public void subscribeToTopic(View view) {
         String topic = "messages";
         FirebaseMessaging.getInstance().subscribeToTopic(topic);
@@ -179,45 +205,12 @@ public class MainActivity extends BaseActivity
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
-                User user = User.getInstance(mFirebaseAuth.getCurrentUser());
-                String name = user.getName();
-
-                // Oops - this causes the app to crash.  I guess because we set the text of a label
-                // in a Runnable and by the time the Runnable gets called, we have moved on to the LimboActivity ...?
-                // Is that it?  Seems like it.  Everything seems to work when this 1 line below is commented out
-                //updateLabel(R.id.name, name);
-                // user logged in
-                //Log.d(TAG, mFirebaseAuth.getCurrentUser().getEmail());
-
 
                 /**
                  * Does the user have any roles yet, or is this a brand new user?
                  * Where we send the user will depend on whether they are brand new or not
                  */
-
-                database.getReference("/users/"+mFirebaseAuth.getCurrentUser().getUid()+"/roles").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        HashMap<String, String> roles = (HashMap) dataSnapshot.getValue();
-                        if(roles == null || roles.isEmpty()) {
-                            DbLog.d(mFirebaseAuth.getCurrentUser().getDisplayName(), "logging in - no roles assigned yet");
-                            Intent it = new Intent(MainActivity.this, LimboActivity.class);
-                            startActivity(it);
-                        } else {
-                            Map<String, Class> activities = new HashMap<String, Class>();
-                            activities.put("Admin", AdminActivity.class);
-                            activities.put("Director", DirectorActivity.class);
-                            //activities.put("Volunteer", VolunteerActivity.class);
-                            String role = roles.keySet().iterator().next();
-                            DbLog.d(mFirebaseAuth.getCurrentUser().getDisplayName(), "logging in - going to "+role+" screen");
-                            Class activity = activities.get(role);
-                            Intent it = new Intent(MainActivity.this, activity);
-                            startActivity(it);
-                        }
-                    }
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) { }
-                });
+                figureOutWhereToGo();
 
 
             } else {
