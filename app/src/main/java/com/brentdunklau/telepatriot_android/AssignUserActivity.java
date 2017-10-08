@@ -11,10 +11,16 @@ import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.DbLog;
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Created by bdunklau on 10/5/2017.
@@ -65,6 +71,16 @@ public class AssignUserActivity extends BaseActivity {
 
         if (getIntent().getExtras() != null) {
             uid = (String)getIntent().getExtras().get("uid");
+
+            // So we've come to this place because the Admin has clicked a user's name so the Admin
+            // can assign him to a group/role.  Clicking the user's name is an event that we want to log
+            // to the database: /users/${uid}/account_status_events
+            // because the user is probably looking at his screen (LimboActivity) and seeing an Account Status message
+            // that says "Admin has been notified".
+            // So here, we generate another event that says "Admin is reviewing" or something to that effect
+            // This additional notification gives the user a realtime update on his account
+            database.getReference("users/"+uid+"/account_status_events").push().setValue(reviewingEvent());
+
             database.getReference("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -72,16 +88,21 @@ public class AssignUserActivity extends BaseActivity {
                     try {
                         ub = dataSnapshot.getValue(UserBean.class);
                     } catch(Throwable t) {
-                        Log.d("d", "x");
+                        DbLog.e("UserBean ub = dataSnapshot.getValue(UserBean.class) <- this threw this exception: "+t
+                                +"  And because of this exception, 'ub' is null which means we can't do anything else on this screen." +
+                                "  At least we check again for null 'ub' object so we don't blow something else up.");
                     }
-                    updateLabel(R.id.text_name, ub.getName());
-                    updateLabel(R.id.text_email, ub.getEmail());
-                    isAdmin = ub.isRole("Admin");
-                    isDirector = ub.isRole("Director");
-                    isVolunteer = ub.isRole("Volunteer");
-                    setSwitch(isAdmin, adminSwitch);
-                    setSwitch(isDirector, directorSwitch);
-                    setSwitch(isVolunteer, volunteerSwitch);
+
+                    if(ub != null) {
+                        updateLabel(R.id.text_name, ub.getName());
+                        updateLabel(R.id.text_email, ub.getEmail());
+                        isAdmin = ub.isRole("Admin");
+                        isDirector = ub.isRole("Director");
+                        isVolunteer = ub.isRole("Volunteer");
+                        setSwitch(isAdmin, adminSwitch);
+                        setSwitch(isDirector, directorSwitch);
+                        setSwitch(isVolunteer, volunteerSwitch);
+                    }
                 }
 
                 @Override
@@ -93,6 +114,14 @@ public class AssignUserActivity extends BaseActivity {
 
         okButton = findViewById(R.id.button_ok);
 
+    }
+
+    private HashMap<String, String> reviewingEvent() {
+        HashMap<String, String> evt = new HashMap<String, String>();
+        String dt = new SimpleDateFormat("MM/dd/yyyy hh:mm a").format(new Date());
+        evt.put("date", dt);
+        evt.put("event", "Admin ("+ User.getInstance().getName()+") is reviewing your account...");
+        return evt;
     }
 
     public void clickOk(View view) {

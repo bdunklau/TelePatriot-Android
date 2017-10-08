@@ -79,11 +79,15 @@ public class BaseActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Message");
         builder.setMessage(dataTitle + "\n" + dataMessage);
+        // We COULD send the Admin right to AssignUserActivity for the new person that needs
+        // to be assigned, but there IS the possibility of clash between admins
+        // So for now, we'll send Admins to UnassignedUsersActivity because there, we display
+        // a note next to each new person if an Admin is already reviewing their account
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                Intent it = new Intent(BaseActivity.this, AssignUserActivity.class);
-                it.putExtra("uid", uid);
+                Intent it = new Intent(BaseActivity.this, UnassignedUsersActivity.class);
+                //it.putExtra("uid", uid); // only needed if we send Admins to AssignUserActivity
                 startActivity(it);
             }
         });

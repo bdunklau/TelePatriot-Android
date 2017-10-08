@@ -10,7 +10,7 @@ import java.util.SimpleTimeZone;
 
 public class UserBean {
 
-    private String name, email, uid, photoUrl;
+    private String name, email, uid, photoUrl, created, reviewed_by;
     private Map<String, Object> roles;
 
     public void setName(String name) {
@@ -43,6 +43,22 @@ public class UserBean {
 
     public String getPhotoUrl() {
         return photoUrl;
+    }
+
+    public String getCreated() {
+        return created;
+    }
+
+    public void setCreated(String created) {
+        this.created = created;
+    }
+
+    public void setReviewed_by(String reviewed_by) {
+        this.reviewed_by = reviewed_by;
+    }
+
+    public String getReviewed_by() {
+        return reviewed_by;
     }
 
     public void setRoles(Map<String, Object> roles) {

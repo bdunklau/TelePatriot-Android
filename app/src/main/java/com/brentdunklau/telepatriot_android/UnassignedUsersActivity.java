@@ -79,17 +79,20 @@ public class UnassignedUsersActivity extends BaseActivity
                 myRef) {
             @Override
             public void populateViewHolder(UserHolder holder, UserBean user, int position) {
+                holder.setDate(user.getCreated());
                 holder.setName(user.getName());
+                holder.setReviewedBy(user.getReviewed_by());
             }
 
 
             // https://stackoverflow.com/a/41629505
             @Override
             public UserHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                UserHolder viewHolder = super.onCreateViewHolder(parent, viewType);
+                final UserHolder viewHolder = super.onCreateViewHolder(parent, viewType);
                 viewHolder.setOnClickListener(new UserHolder.ClickListener() {
                     @Override
                     public void onItemClick(View view, int position) {
+                        mAdapter.getRef(position).child("reviewed_by").setValue(User.getInstance().getName()+" is reviewing");
                         mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
