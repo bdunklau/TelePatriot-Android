@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 const strings = require('./strings')
 const admin = require('firebase-admin')
 const date = require('./dateformat')
+const moment = require('moment');
 
 // create reference to root of the database
 const ref = admin.database().ref()
@@ -49,6 +50,6 @@ exports.notifyUserCreated = functions.auth.user().onCreate(event => {
     // see  https://firebase.google.com/docs/reference/admin/node/admin.messaging
     return admin.messaging().sendToTopic("AccountEvents", payload, options).then(function(response) {
         return ref.child(`/users/${uid}/account_status_events`).push(
-            {date: date.format(new Date()), event: "Admins have been notified..."})
+            {date: moment().format('MMM Do YYYY, h:mm:ss a'), event: "Admins have been notified..."})
     }).catch(function(response) { console.log("CAUGHT ERROR: ", response) });
 });

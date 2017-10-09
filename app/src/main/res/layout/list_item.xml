@@ -7,10 +7,6 @@
 
 
 
-    <GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
         <TextView
             android:id="@+id/date"
             android:layout_width="wrap_content"
@@ -19,8 +15,10 @@
             android:layout_centerHorizontal="true"
             android:layout_marginLeft="5dp"
             android:layout_marginTop="5dp"
+            android:textStyle="bold"
+            android:textColor="#999999"
             android:gravity="left"
-            android:textSize="14sp"
+            android:textSize="12sp"
             tools:text="date here" />
 
         <TextView
@@ -30,7 +28,7 @@
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
             android:layout_marginLeft="5dp"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="0dp"
             android:gravity="left"
             android:textSize="14sp"
             tools:text="name here" />
@@ -47,6 +45,5 @@
             android:textSize="14sp"
             tools:text="" />
 
-    </GridLayout>
 
 </LinearLayout>
