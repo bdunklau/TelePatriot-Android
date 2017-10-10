@@ -49,6 +49,12 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".MessageActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".UnassignedUsersActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -26,6 +26,7 @@ import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android
 import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -39,22 +40,12 @@ public class MainActivity extends BaseActivity
 
     private static final int RC_SIGN_IN = 1;
     private static final String TAG = "MainActivity";
-    public static final String ANONYMOUS = "anonymous";
 
-    //private String dataTitle, dataMessage;
-    private EditText title, message;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        /**
-         * see:  https://stackoverflow.com/a/11656129
-         */
-        setupUI(findViewById(R.id.main_view));
-
-        // Initialize Firebase Auth  (moved to BaseActivity)
-        //mFirebaseAuth = FirebaseAuth.getInstance();
 
         if(User.getInstance().exists()) {
             String name = User.getInstance().getName();
@@ -100,11 +91,6 @@ public class MainActivity extends BaseActivity
             showAlertDialog(uid, dataTitle, dataMessage);
         }
 
-        myRef = database.getReference("messages");
-
-        title = findViewById(R.id.title);
-        message = findViewById(R.id.message);
-
         // Left as a comment because SwipeAdapter does provide an example of how to do swiping
         // even though we're not swiping to change perspectives anymore
         //this.swipeAdapter = new SwipeAdapter(this, this);
@@ -117,6 +103,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void figureOutWhereToGo() {
+        database = FirebaseDatabase.getInstance();
         database.getReference("/users/"+User.getInstance().getUid()+"/roles").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -137,67 +124,17 @@ public class MainActivity extends BaseActivity
                     String role = roles.keySet().iterator().next();
                     DbLog.d("logging in - going to "+role+" screen");
                     Class activity = activities.get(role);
-                    Intent it = new Intent(MainActivity.this, activity);
-                    startActivity(it);
+                    if(activity == null) {
+                        DbLog.e("There is no activity class mapped to this role: "+role+"  If this doesn't sound right, see MainActivity.figureOutWhereToGo().  Because there is no activity, we are going to stay on MainActivity");
+                    } else {
+                        Intent it = new Intent(MainActivity.this, activity);
+                        startActivity(it);
+                    }
                 }
             }
             @Override
             public void onCancelled(DatabaseError databaseError) { }
         });
-    }
-
-    /**
-     * See setupUI() in onCreate() to see how we hide the keyboard when the user clicks away from either the title or the message field.
-     * Got the answer from here:  https://stackoverflow.com/a/11656129
-     * @param activity
-     */
-    public static void hideSoftKeyboard(Activity activity) {
-        InputMethodManager inputMethodManager =
-                (InputMethodManager) activity.getSystemService(
-                        Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(
-                activity.getCurrentFocus().getWindowToken(), 0);
-    } 
-
-    /**
-     * See setupUI() in onCreate() to see how we hide the keyboard when the user clicks away from either the title or the message field.
-     * Got the answer from here:  https://stackoverflow.com/a/11656129
-     * @param view
-     */
-    public void setupUI(View view) {
-
-        // Set up touch listener for non-text box views to hide keyboard.
-        if (!(view instanceof EditText)) {
-            view.setOnTouchListener(new View.OnTouchListener() {
-                public boolean onTouch(View v, MotionEvent event) {
-                    hideSoftKeyboard(MainActivity.this);
-                    return false;
-                }
-            });
-        }
-
-        //If a layout container, iterate over children and seed recursion.
-        if (view instanceof ViewGroup) {
-            for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
-                View innerView = ((ViewGroup) view).getChildAt(i);
-                setupUI(innerView);
-            }
-        }
-    }
-
-    public void subscribeToTopic(View view) {
-        String topic = "messages";
-        FirebaseMessaging.getInstance().subscribeToTopic(topic);
-        Toast.makeText(this, "Subscribed to Topic: "+topic, Toast.LENGTH_SHORT).show();
-    }
-
-    /**
-     * See android:onClick="sendMessage" in activity_main.xml
-     * @param view
-     */
-    public void sendMessage(View view) {
-        myRef.push().setValue(new Message(title.getText().toString(), message.getText().toString()));
-        Toast.makeText(this, "Message Sent", Toast.LENGTH_SHORT).show();
     }
 
     @Override
