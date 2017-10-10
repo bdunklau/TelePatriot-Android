@@ -118,7 +118,7 @@ public class AssignUserActivity extends BaseActivity {
 
     private HashMap<String, String> reviewingEvent() {
         HashMap<String, String> evt = new HashMap<String, String>();
-        String dt = new SimpleDateFormat("MM/dd/yyyy hh:mm a").format(new Date());
+        String dt = new SimpleDateFormat("MMM d, yyyy h:mm a z").format(new Date());
         evt.put("date", dt);
         evt.put("event", "Admin ("+ User.getInstance().getName()+") is reviewing your account...");
         return evt;
