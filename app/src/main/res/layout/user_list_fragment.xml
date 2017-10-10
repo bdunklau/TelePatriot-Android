@@ -25,6 +25,7 @@
                 android:layout_marginLeft="10dp"
                 android:text="Role"
                 android:textSize="18sp"
+                android:textStyle="bold"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true" />
 
