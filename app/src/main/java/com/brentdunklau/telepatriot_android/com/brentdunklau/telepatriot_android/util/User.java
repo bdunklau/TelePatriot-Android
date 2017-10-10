@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -21,9 +22,8 @@ import java.util.Map;
  * Created by bdunklau on 10/3/17.
  */
 
-public class User {
+public class User implements FirebaseAuth.AuthStateListener {
 
-    //private FirebaseUser firebaseUser;
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     private boolean isAdmin, isDirector, isVolunteer;
@@ -36,6 +36,14 @@ public class User {
             singleton = new User();
         }
         return singleton;
+    }
+
+    private User() {
+        FirebaseAuth.getInstance().addAuthStateListener(this);
+    }
+
+    public boolean isLoggedId() {
+        return getFirebaseUser() != null;
     }
 /*
     public static User getInstance(FirebaseUser firebaseUser) {
@@ -50,13 +58,11 @@ public class User {
         return FirebaseAuth.getInstance().getCurrentUser();
     }
 
-    public void login(/*FirebaseUser firebaseUser*/) {
-        if(!exists()) {
-            DbLog.e("Whoa! This should never happen. We tried to login but the FirebaseUser doesn't exist yet.  Fix this.");
-            return;
-        }
-
-        //this.firebaseUser = firebaseUser;
+    private void login(/*FirebaseUser firebaseUser*/) {
+        /**
+         * NOTE: No point in checking to see if the user is logged in already via getFirebaseUser() != null
+         * If that is how we
+         */
         this.database = FirebaseDatabase.getInstance();
         childEventListener = new ChildEventAdapter();
         final String name = getName();
@@ -95,14 +101,11 @@ public class User {
         });
     }
 
-    private User() {
-        login();
-    }
-
-    public void onSignout() {
-        userRef.removeEventListener(childEventListener);
-        if(!exists())
+    private void onSignout() {
+        if(userRef == null)
             return;
+
+        userRef.removeEventListener(childEventListener);
 
         database.getReference("/users/"+getUid()+"/topics").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -123,10 +126,6 @@ public class User {
 
             }
         });
-    }
-
-    public boolean exists() {
-        return getFirebaseUser() != null;
     }
 
     public String getName() {
@@ -151,6 +150,18 @@ public class User {
 
     public boolean isVolunteer() {
         return isVolunteer;
+    }
+
+    @Override
+    public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+        if(firebaseUser != null) {
+            String name = firebaseUser.getDisplayName();
+            login();
+        }
+        else {
+            onSignout();
+        }
     }
 
     private class ChildEventAdapter implements ChildEventListener {

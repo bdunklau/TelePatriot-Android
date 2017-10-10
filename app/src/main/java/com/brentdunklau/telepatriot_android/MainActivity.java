@@ -47,12 +47,37 @@ public class MainActivity extends BaseActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if(User.getInstance().exists()) {
-            String name = User.getInstance().getName();
-            updateLabel(R.id.name, name);
+        // https://stackoverflow.com/a/14002030
+        if (getIntent().getBooleanExtra("EXIT", false)) {
+            finish();
+        }
+        else if(User.getInstance().isLoggedId()) {
             // We have to check here also to see if the user belongs to any roles yet
             // because if they don't, we have to send them back to LimboActivity
             figureOutWhereToGo();
+
+            // If the app is not currently up or in the foreground, this is what gets called after
+            // you pull down the notifications and click one.
+            // If the app is not currently up or in the foreground, you don't execute the onMessageReceived()
+            // method in MyFirebaseMessagingService
+            //
+            // Handle possible data accompanying notification message.
+            if (getIntent().getExtras() != null) {
+                String dataTitle = null; String dataMessage = null; String uid = null;
+                for (String key : getIntent().getExtras().keySet()) {
+                    if (key.equals("title")) {
+                        dataTitle=(String)getIntent().getExtras().get(key);
+                    }
+                    if (key.equals("message")) {
+                        dataMessage = (String)getIntent().getExtras().get(key);
+                    }
+                    if (key.equals("uid")) {
+                        uid = (String)getIntent().getExtras().get(key);
+                    }
+                }
+                showAlertDialog(uid, dataTitle, dataMessage);
+            }
+
         } else {
             AuthUI aui = AuthUI.getInstance();
             AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
@@ -66,40 +91,15 @@ public class MainActivity extends BaseActivity
             Intent intent = sib.build();
             intent.putExtra("backgroundImage", R.drawable.usflag);
 
+            // NOTE:  FirebaseAuth.getInstance().getCurrentUser() = null  at this point
             startActivityForResult(intent, RC_SIGN_IN);
         }
 
-        // If the app is not currently up or in the foreground, this is what gets called after
-        // you pull down the notifications and click one.
-        // If the app is not currently up or in the foreground, you don't execute the onMessageReceived()
-        // method in MyFirebaseMessagingService
-        //
-        // Handle possible data accompanying notification message.
-        if (getIntent().getExtras() != null) {
-            String dataTitle = null; String dataMessage = null; String uid = null;
-            for (String key : getIntent().getExtras().keySet()) {
-                if (key.equals("title")) {
-                    dataTitle=(String)getIntent().getExtras().get(key);
-                }
-                if (key.equals("message")) {
-                    dataMessage = (String)getIntent().getExtras().get(key);
-                }
-                if (key.equals("uid")) {
-                    uid = (String)getIntent().getExtras().get(key);
-                }
-            }
-            showAlertDialog(uid, dataTitle, dataMessage);
-        }
 
         // Left as a comment because SwipeAdapter does provide an example of how to do swiping
         // even though we're not swiping to change perspectives anymore
         //this.swipeAdapter = new SwipeAdapter(this, this);
 
-
-        // https://stackoverflow.com/a/14002030
-        if (getIntent().getBooleanExtra("EXIT", false)) {
-            finish();
-        }
     }
 
     private void figureOutWhereToGo() {
@@ -113,6 +113,7 @@ public class MainActivity extends BaseActivity
                         DbLog.d("logging in - no roles assigned yet");
                         Intent it = new Intent(MainActivity.this, LimboActivity.class);
                         startActivity(it);
+                        //finish();  DON'T call this   https://stackoverflow.com/a/23718678
                     } catch(Throwable t) {
                         DbLog.e("Throwable: "+t);
                     }
@@ -129,6 +130,7 @@ public class MainActivity extends BaseActivity
                     } else {
                         Intent it = new Intent(MainActivity.this, activity);
                         startActivity(it);
+                        //finish();  DON'T call this   https://stackoverflow.com/a/23718678
                     }
                 }
             }
@@ -139,16 +141,16 @@ public class MainActivity extends BaseActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // NOTE:  FirebaseAuth.getInstance().getCurrentUser() IS NOT null  at this point
+
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
-
                 /**
                  * Does the user have any roles yet, or is this a brand new user?
                  * Where we send the user will depend on whether they are brand new or not
                  */
                 figureOutWhereToGo();
-
 
             } else {
                 // user not authenticated

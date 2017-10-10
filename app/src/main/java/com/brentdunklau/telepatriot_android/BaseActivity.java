@@ -146,19 +146,18 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     protected void signOut() {
-        AuthUI.getInstance().signOut(this)
+        AuthUI aui = AuthUI.getInstance();
+        aui.signOut(this)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         Log.d(TAG, "USER LOGGED OUT");
-                        User user = User.getInstance();
-                        user.onSignout();
-
                         // https://stackoverflow.com/a/14002030
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         intent.putExtra("EXIT", true);
                         startActivity(intent);
+                        finish();
                     }
                 });
     }
