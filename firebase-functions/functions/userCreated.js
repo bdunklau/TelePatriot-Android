@@ -22,7 +22,7 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
 
     var name = email // default value if name not present
     if(event.data.displayName) name = event.data.displayName
-    var created = date.format(new Date());
+    var created = date.asCentralTime()
     var userrecord = {name:name, photoUrl:photoUrl, email:email, created: created}
 
     // remember, .set() returns a promise

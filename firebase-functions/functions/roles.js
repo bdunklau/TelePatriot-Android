@@ -38,7 +38,7 @@ exports.roleAssigned = functions.database.ref('/users/{uid}/roles/{role}').onWri
             event.data.adminRef.root.child(`/users/${uid}/topics`).child(topic).set('true')
           });
     }).then(snapshot => {
-        var datestr = date.format(new Date())
+        var datestr = date.asCentralTime()
         var msg = "Admin has assigned you to the "+role+" group"
         event.data.adminRef.root.child(`/users/${uid}/account_status_events`).push({date: datestr, event: msg})
     })
