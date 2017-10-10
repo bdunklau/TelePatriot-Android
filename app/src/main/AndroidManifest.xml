@@ -31,6 +31,12 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".ChatActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".DirectorActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

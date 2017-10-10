@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
@@ -65,6 +66,11 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
         };
 
         accountStatusEvents.setAdapter(mAdapter);
+    }
+
+    public void slideOutChatWindow(View view) {
+        startActivity(new Intent(this, ChatActivity.class));
+        overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
     }
 
     @Override
