@@ -51,6 +51,7 @@ public class User {
     }
 
     public void login(/*FirebaseUser firebaseUser*/) {
+        // TODO Do we want to get rid of this 'if' block - can't tell right now.  See the constructor
         if(!exists()) {
             DbLog.e("Whoa! This should never happen. We tried to login but the FirebaseUser doesn't exist yet.  Fix this.");
             return;
@@ -96,7 +97,10 @@ public class User {
     }
 
     private User() {
-        login();
+        login(); // TODO this is not right, because look at what we do in login()...
+        // We check to see if the FirebaseUser exists yet.  But of course it won't exist yet
+        // In the case of a brand new user.  So we need to NOT call login() from inside
+        // this constructor
     }
 
     public void onSignout() {
