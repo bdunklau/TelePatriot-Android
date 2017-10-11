@@ -32,6 +32,7 @@ public class ChatActivity extends BaseActivity {
     private RecyclerView messages;
     private Button mSendButton;
     private EditText messageEditText;
+    private LinearLayoutManager mLinearLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +43,11 @@ public class ChatActivity extends BaseActivity {
         messages = (RecyclerView) findViewById(R.id.admin_chat_messages);
         messages.setLayoutManager(new LinearLayoutManager(this));
         messageEditText = findViewById(R.id.messageEditText);
+
+
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mLinearLayoutManager.setStackFromEnd(true);
+
 
         myRef = FirebaseDatabase.getInstance().getReference().child("admin_messages/"+User.getInstance().getUid());
 
@@ -89,6 +95,28 @@ public class ChatActivity extends BaseActivity {
             }
 
         };
+
+
+        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                super.onItemRangeInserted(positionStart, itemCount);
+                int friendlyMessageCount = mAdapter.getItemCount();
+                int lastVisiblePosition =
+                        mLinearLayoutManager.findLastCompletelyVisibleItemPosition();
+                // If the recycler view is initially being loaded or the
+                // user is at the bottom of the list, scroll to the bottom
+                // of the list to show the newly added message.
+                if (lastVisiblePosition == -1 ||
+                        (positionStart >= (friendlyMessageCount - 1) &&
+                                lastVisiblePosition == (positionStart - 1))) {
+                    messages.scrollToPosition(positionStart);
+                }
+            }
+        });
+
+        messages.setLayoutManager(mLinearLayoutManager);
+
         messages.setAdapter(mAdapter);
     }
 
