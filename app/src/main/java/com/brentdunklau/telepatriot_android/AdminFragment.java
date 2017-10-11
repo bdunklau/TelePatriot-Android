@@ -32,6 +32,7 @@ public class AdminFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.admin_menu, menu);  // Use filter.xml from step 1
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         FragmentManager fragmentManager = getFragmentManager();

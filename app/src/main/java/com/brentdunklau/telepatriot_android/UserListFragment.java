@@ -1,5 +1,8 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.FragmentManager;
+import android.app.FragmentManagerNonConfig;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -27,6 +30,7 @@ import com.google.firebase.database.ValueEventListener;
 import org.w3c.dom.Text;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * https://www.youtube.com/watch?v=yOBQHf5nM2I
@@ -59,14 +63,14 @@ public class UserListFragment extends Fragment {
         this.database = database;
     }
 
-    public void setRole(String role) {
+    public void setRole(String role, final FragmentManager fragmentManager, final Fragment back) {
         updateLabel(view, R.id.role_header, role+"s");
 
         final DatabaseReference ref = database.getReference("roles/"+role+"/users");
         ref.orderByChild("name")/*.limitToFirst(25) limit somehow? */.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                doit(ref);
+                doit(ref, fragmentManager, back);
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {}
@@ -88,7 +92,7 @@ public class UserListFragment extends Fragment {
         h.post(r);
     }
 
-    private void doit(DatabaseReference ref) {
+    private void doit(DatabaseReference ref, final FragmentManager fragmentManager, final Fragment back) {
 
         final Context activity = view.getContext();
 
@@ -118,13 +122,25 @@ public class UserListFragment extends Fragment {
                                 // at the user's roles at /users/uid/roles because we need to set the role switches
                                 // to the right values
                                 String uid = dataSnapshot.getKey();
-                                HashMap map = (HashMap) dataSnapshot.getValue();
+
+                                // Instead of going to an activity, we need to load a fragment...
+                                AssignUserFragment fragment = new AssignUserFragment();
+                                fragment.setUid(uid);
+                                fragment.setFragmentManager(fragmentManager, back);
+                                try {
+                                    FragmentTransaction t1 = fragmentManager.beginTransaction();
+                                    FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
+                                    int res = t2.commit();
+                                    int i=1;
+                                } catch(Throwable t) {
+                                    t.printStackTrace();
+                                }
+
+                                /*
                                 final Intent it = new Intent(activity, AssignUserActivity.class);
                                 it.putExtra("uid", uid);
-                                /*it.putExtra("name", map.get("name")+"");
-                                it.putExtra("email", map.get("email")+"");
-                                it.putExtra("photoUrl", map.get("photoUrl")+"");*/
                                 startActivity(it);
+                                */
                             }
 
                             @Override

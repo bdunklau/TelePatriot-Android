@@ -93,7 +93,6 @@
             android:layout_gravity="center_horizontal|center"
             android:layout_marginBottom="20dp"
             android:background="@color/com_facebook_blue"
-            android:onClick="clickOk"
             android:text="OK"
             android:textColor="@color/cardview_light_background" />
 

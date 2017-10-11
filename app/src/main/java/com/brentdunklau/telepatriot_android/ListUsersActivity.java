@@ -32,13 +32,13 @@ public class ListUsersActivity extends BaseActivity
         if (getIntent().getExtras() != null && getIntent().getExtras().get("returnToTab") != null) {
             showTab = (String) getIntent().getExtras().get("returnToTab");
         }
-        userListFragment.setRole(showTab);
+        //userListFragment.setRole(showTab);
     }
 
     public void onClickRole(View view) {
         int id = view.getId();
         TextView textView = (TextView) findViewById(view.getId());
         String role = textView.getText().toString();
-        userListFragment.setRole(role);
+        //userListFragment.setRole(role);
     }
 }

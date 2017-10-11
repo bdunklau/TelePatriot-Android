@@ -8,17 +8,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.PassInfo;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Map;
 
 /**
  * Created by bdunklau on 10/11/17.
  */
 
-public class ListUsersFragment extends AdminFragment {
+public class ListUsersFragment extends AdminFragment implements PassInfo {
 
     View myView;
     private UserListFragment userListFragment;
     private TextView text_admin, text_director, text_volunteer;
+    private String useThisRole;
 
     @Nullable
     @Override
@@ -29,6 +33,10 @@ public class ListUsersFragment extends AdminFragment {
         catch(Throwable t) {
             t.printStackTrace();
         }
+
+        View cf = container.findViewById(R.id.content_frame);
+        int rid = R.id.content_frame;
+        int cid = cf.getId();
 
         setHasOptionsMenu(true);
 
@@ -58,13 +66,13 @@ public class ListUsersFragment extends AdminFragment {
         return myView;
     }
 
-    public void onClickRole(String role) {
-        /*
-        int id = myView.getId();
-        TextView textView = (TextView) myView.findViewById(view.getId());
-        String role = textView.getText().toString();
-        */
-        userListFragment.setRole(role);
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(useThisRole != null) {
+            userListFragment.setRole(useThisRole, getFragmentManager(), this);
+            useThisRole = null;
+        }
     }
 
     private void setOnClickListeners() {
@@ -72,12 +80,18 @@ public class ListUsersFragment extends AdminFragment {
             @Override
             public void onClick(View view) {
                 String role = ((TextView) view).getText().toString();
-                userListFragment.setRole(role);
+                userListFragment.setRole(role, getFragmentManager(), ListUsersFragment.this);
             }
         };
 
         text_admin.setOnClickListener(l);
         text_director.setOnClickListener(l);
         text_volunteer.setOnClickListener(l);
+    }
+
+    public void pass(Map m) {
+        if(m != null && m.containsKey("role")) {
+            useThisRole = m.get("role").toString();
+        }
     }
 }
