@@ -2,18 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_volunteer_layout"
-            android:icon="@drawable/ic_menu_camera"
-            android:title="Volunteers" />
-        <item
-            android:id="@+id/nav_director_layout"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="Directors" />
-        <item
-            android:id="@+id/nav_admin_layout"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="Admins" />
+        <item android:title="Switch to...">
+            <menu>
+                <item
+                    android:id="@+id/nav_volunteer_layout"
+                    android:icon="@drawable/ic_menu_camera"
+                    android:title="Volunteer View" />
+                <item
+                    android:id="@+id/nav_director_layout"
+                    android:icon="@drawable/ic_menu_gallery"
+                    android:title="Director View" />
+                <item
+                    android:id="@+id/nav_admin_layout"
+                    android:icon="@drawable/ic_menu_slideshow"
+                    android:title="Admin View" />
+            </menu>
+        </item>
     </group>
 
 
