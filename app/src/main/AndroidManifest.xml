@@ -31,7 +31,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ChatActivity">
+        <activity android:name=".ChatActivity"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
