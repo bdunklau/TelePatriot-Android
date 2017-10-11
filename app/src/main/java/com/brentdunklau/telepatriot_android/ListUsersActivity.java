@@ -1,31 +1,8 @@
 package com.brentdunklau.telepatriot_android;
 
-import android.app.FragmentManager;
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.AccountStatusEventHolder;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SlideIt;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserHolder;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
-
-import org.w3c.dom.Text;
-
-import java.util.HashMap;
 
 /**
  * Created by bdunklau on 10/4/17.
@@ -41,7 +18,7 @@ public class ListUsersActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_listusers);
+        setContentView(R.layout.list_users_fragment);
         textAdmin = findViewById(R.id.text_admin);
         textDirector = findViewById(R.id.text_director);
         textVolunteer = findViewById(R.id.text_volunteer);

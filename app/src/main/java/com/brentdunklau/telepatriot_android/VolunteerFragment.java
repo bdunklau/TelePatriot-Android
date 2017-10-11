@@ -18,7 +18,7 @@ public class VolunteerFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.activity_volunteer, container, false);
+        myView = inflater.inflate(R.layout.volunteer_fragment, container, false);
 
         setHasOptionsMenu(true);
         return myView;

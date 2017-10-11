@@ -22,7 +22,7 @@ public class AdminFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.activity_admin, container, false);
+        myView = inflater.inflate(R.layout.admin_fragment, container, false);
 
         setHasOptionsMenu(true);
         return myView;
