@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -44,7 +45,10 @@ public class ListUsersActivity extends BaseActivity
         textAdmin = findViewById(R.id.text_admin);
         textDirector = findViewById(R.id.text_director);
         textVolunteer = findViewById(R.id.text_volunteer);
-        userListFragment = (UserListFragment) getSupportFragmentManager().findFragmentById(R.id.user_list_fragment);
+
+        // We WERE using getSupportFragmentManager() but that returns a FragmentManager in one of those v4 compatibility packages
+        // Not sure which to use right now.  Just getting stuff to compile.
+        userListFragment = (UserListFragment) getFragmentManager().findFragmentById(R.id.user_list_fragment);
         userListFragment.setDatabase(database);
 
         String showTab = "Admin";
