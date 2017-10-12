@@ -38,7 +38,7 @@ public class AssignUserFragment extends AdminFragment {
     private SwitchCompat adminSwitch;
     private SwitchCompat directorSwitch;
     private SwitchCompat volunteerSwitch;
-    private Button okButton;
+    private Button okButton, chatButton;
     private String uid;
     boolean isAdmin, isDirector, isVolunteer;
     View myView;
@@ -140,6 +140,21 @@ public class AssignUserFragment extends AdminFragment {
             }
         });
 
+        chatButton = myView.findViewById(R.id.chat_button);
+        chatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // This is a director or admin starting or joining a chat with someone
+                ChatFragment chatFragment = new ChatFragment();
+                chatFragment.setTo(uid);
+                FragmentTransaction transaction = fragmentManager.beginTransaction();
+                transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
+                transaction.replace(R.id.content_frame, chatFragment);
+                transaction.addToBackStack(null);
+                transaction.commit();
+            }
+        });
+
         setHasOptionsMenu(true);
     }
 
@@ -187,16 +202,8 @@ public class AssignUserFragment extends AdminFragment {
 
         FragmentTransaction t1 = fragmentManager.beginTransaction();
         FragmentTransaction t2 = t1.replace(R.id.content_frame, back);
-        int res = t2.commit();
+        t2.commit();
 
-/*
-        try {
-            boolean bool = fragmentManager.popBackStackImmediate();
-            int i=1;
-        } catch(Throwable t) {
-            t.printStackTrace();
-        }
-        */
     }
 
     private void setRole(String role) {

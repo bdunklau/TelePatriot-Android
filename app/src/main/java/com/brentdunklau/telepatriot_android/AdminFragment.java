@@ -41,14 +41,9 @@ public class AdminFragment extends Fragment {
                 fragmentManager.beginTransaction().replace(R.id.content_frame, new UnassignedUsersFragment()).commit();
                 return true;
             case(R.id.list_users):
-                try {
-                    fragmentManager.beginTransaction()
-                            .replace(R.id.content_frame, new ListUsersFragment())
-                            .commit();
-                    System.currentTimeMillis();
-                } catch(Throwable t) {
-                    System.currentTimeMillis();
-                }
+                fragmentManager.beginTransaction()
+                        .replace(R.id.content_frame, new ListUsersFragment())
+                        .commit();
                 return true;
             default: return super.onOptionsItemSelected(item);
         }

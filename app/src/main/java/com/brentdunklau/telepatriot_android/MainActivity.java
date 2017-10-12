@@ -1,14 +1,23 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.FragmentTransaction;
+import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
+
+import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -49,6 +58,20 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        //if(User.getInstance().isLoggedIn()) {
+            View navHeaderView = navigationView.getHeaderView(0);  // https://stackoverflow.com/a/38418531
+            final TextView text_user_name = (TextView)navHeaderView.findViewById(R.id.text_user_name);
+            final TextView text_user_email = (TextView)navHeaderView.findViewById(R.id.text_user_email);
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    text_user_name.setText(User.getInstance().getName());
+                    text_user_email.setText(User.getInstance().getEmail());
+                }
+            };
+            Handler h = new Handler();
+            h.post(r);
+        //}
     }
 
     @Override
@@ -97,8 +120,14 @@ public class MainActivity extends AppCompatActivity
             fragmentManager.beginTransaction().replace(R.id.content_frame, new DirectorFragment()).commit();
         } else if (id == R.id.nav_admin_layout) {
             fragmentManager.beginTransaction().replace(R.id.content_frame, new AdminFragment()).commit();
-        } else if (id == R.id.nav_chat) {
-
+        } else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
+            String uid = User.getInstance().getUid();
+            ChatFragment chatFragment = new ChatFragment();
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
+            transaction.replace(R.id.content_frame, chatFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
         } else if (id == R.id.nav_signout) {
 
         }

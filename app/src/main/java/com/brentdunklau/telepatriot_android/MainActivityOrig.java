@@ -34,7 +34,7 @@ public class MainActivityOrig extends BaseActivity
         if (getIntent().getBooleanExtra("EXIT", false)) {
             finish();
         }
-        else if(User.getInstance().isLoggedId()) {
+        else if(User.getInstance().isLoggedIn()) {
             // We have to check here also to see if the user belongs to any roles yet
             // because if they don't, we have to send them back to LimboActivity
             figureOutWhereToGo();

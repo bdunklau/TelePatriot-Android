@@ -42,7 +42,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         FirebaseAuth.getInstance().addAuthStateListener(this);
     }
 
-    public boolean isLoggedId() {
+    public boolean isLoggedIn() {
         return getFirebaseUser() != null;
     }
 /*
@@ -150,6 +150,10 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     public boolean isVolunteer() {
         return isVolunteer;
+    }
+
+    public boolean isVolunteerOnly() {
+        return isVolunteer && !isDirector && !isAdmin;
     }
 
     @Override

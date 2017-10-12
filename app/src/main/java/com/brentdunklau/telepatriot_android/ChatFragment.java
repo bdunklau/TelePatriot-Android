@@ -1,9 +1,12 @@
 package com.brentdunklau.telepatriot_android;
 
-import android.content.Intent;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -12,46 +15,65 @@ import android.widget.EditText;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.ChatMessage;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.ChatMessageHolder;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.HashMap;
-
 /**
- * Created by bdunklau on 10/10/2017.
+ * Created by bdunklau on 10/11/17.
  */
 
-public class ChatActivity extends BaseActivity {
+public class ChatFragment extends Fragment {
+
 
     private FirebaseRecyclerAdapter<ChatMessage, ChatMessageHolder> mAdapter;
     private RecyclerView messages;
     private Button mSendButton;
     private EditText messageEditText;
     private LinearLayoutManager mLinearLayoutManager;
+    private DatabaseReference myRef;
+    private String chatKey;
 
+    View myView;
+
+    public ChatFragment() {
+        /**
+         * Whatever calls this constructor has to make sure that User.getInstance().isLoggedIn()
+         */
+        if(User.getInstance().isVolunteerOnly())
+            chatKey = User.getInstance().getUid();
+    }
+
+    public void setTo(String toUid) {
+        chatKey = toUid;
+    }
+
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chat);
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        myView = inflater.inflate(R.layout.activity_chat, container, false);
+        setUI();
+        return myView;
+    }
+
+    private void setUI() {
 
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
-        messages = (RecyclerView) findViewById(R.id.admin_chat_messages);
-        messages.setLayoutManager(new LinearLayoutManager(this));
-        messageEditText = findViewById(R.id.messageEditText);
+        messages = (RecyclerView) myView.findViewById(R.id.admin_chat_messages);
+        messages.setLayoutManager(new LinearLayoutManager(myView.getContext()));
+        messageEditText = myView.findViewById(R.id.messageEditText);
 
 
-        mLinearLayoutManager = new LinearLayoutManager(this);
+        mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
         mLinearLayoutManager.setStackFromEnd(true);
 
 
-        myRef = FirebaseDatabase.getInstance().getReference().child("chat/"+User.getInstance().getUid());
+        myRef = FirebaseDatabase.getInstance().getReference().child("chat/"+ chatKey);
 
-        mSendButton = findViewById(R.id.sendButton);
+        mSendButton = myView.findViewById(R.id.sendButton);
 
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,13 +93,6 @@ public class ChatActivity extends BaseActivity {
             @Override
             public void onCancelled(DatabaseError databaseError) { }
         });
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        startActivity(new Intent(this, LimboActivity.class));
-        overridePendingTransition(R.anim.slide_from_left, R.anim.slide_to_right);
     }
 
 
@@ -121,7 +136,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         if(mAdapter != null) mAdapter.cleanup();
     }
