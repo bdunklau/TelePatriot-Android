@@ -227,7 +227,7 @@ public class BaseActivity extends AppCompatActivity {
         if(onTheLeft != null) {
             Intent it = new Intent(this, onTheLeft());
             startActivity(it);
-            overridePendingTransition(R.anim.slide_from_left, R.anim.slide_to_right);
+            overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
         }
     }
      **************/

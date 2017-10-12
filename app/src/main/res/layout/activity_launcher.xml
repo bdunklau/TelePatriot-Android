@@ -5,19 +5,17 @@
     android:id="@+id/main_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/washington_monument"
-    tools:context="com.brentdunklau.telepatriot_android.AdminActivity">
+    android:background="@drawable/usflag"
+    tools:context="com.brentdunklau.telepatriot_android.LauncherActivity">
 
 
-    <ScrollView
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:background="#ddffffff">
-
-    </ScrollView>
-
+        android:layout_marginBottom="0dp"
+        android:background="#ddffffff"
+        android:orientation="vertical"
+        android:id="@+id/launcher_layout">
+    </RelativeLayout>
 
 </RelativeLayout>

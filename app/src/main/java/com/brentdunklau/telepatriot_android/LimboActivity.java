@@ -68,6 +68,7 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
         accountStatusEvents.setAdapter(mAdapter);
     }
 
+    // TODO  try to use fragments from now own
     public void slideOutChatWindow(View view) {
         startActivity(new Intent(this, ChatActivity.class));
         overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);

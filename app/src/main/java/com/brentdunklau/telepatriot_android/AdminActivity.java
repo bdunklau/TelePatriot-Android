@@ -6,10 +6,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SlideIt;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SwipeAdapter;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
-
 /**
  * Created by bdunklau on 10/2/17.
  */
@@ -23,7 +19,7 @@ public class AdminActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_admin);
+        setContentView(R.layout.admin_fragment);
         //swipeAdapter = new SwipeAdapter(this, this);
     }
 

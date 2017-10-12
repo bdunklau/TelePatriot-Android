@@ -78,26 +78,40 @@
         android:text="Admin" />
 
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dip"
-        android:layout_weight="1"
-        android:gravity="center|bottom"
-        android:orientation="vertical" >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:gravity="center|bottom"
+            android:orientation="vertical" >
 
-        <Button
-            android:id="@+id/button_ok"
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="145dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal|center"
-            android:layout_marginBottom="20dp"
-            android:background="@color/com_facebook_blue"
-            android:onClick="clickOk"
-            android:text="OK"
-            android:textColor="@color/cardview_light_background" />
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/chat_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal|center"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="10dp"
+                android:background="#fcd069"
+                android:text="Chat" />
+
+
+            <Button
+                android:id="@+id/button_ok"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal|center"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="20dp"
+                android:background="@color/com_facebook_blue"
+                android:text="OK"
+                android:textColor="@color/cardview_light_background" />
+
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

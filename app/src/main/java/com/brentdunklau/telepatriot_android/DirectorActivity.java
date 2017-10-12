@@ -1,12 +1,7 @@
 package com.brentdunklau.telepatriot_android;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SlideIt;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.SwipeAdapter;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
 
 /**
  * Created by bdunklau on 10/3/17.
@@ -21,7 +16,7 @@ public class DirectorActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_director);
+        setContentView(R.layout.director_fragment);
         //swipeAdapter = new SwipeAdapter(this, this);
     }
 
