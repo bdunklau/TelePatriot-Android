@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(MenuItem item) { 
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         android.app.FragmentManager fragmentManager = getFragmentManager();
