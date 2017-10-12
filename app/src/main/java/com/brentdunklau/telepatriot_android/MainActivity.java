@@ -2,8 +2,10 @@ package com.brentdunklau.telepatriot_android;
 
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -11,6 +13,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,6 +21,9 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
+import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -28,6 +34,19 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+
+/*
+        Holdover from back when everything was an activity.  This is how we were closing down the
+        app.  If we don't end up needing this soon (10/12/17), then just delete it.
+
+        // https://stackoverflow.com/a/14002030
+        if (getIntent().getBooleanExtra("EXIT", false)) {
+            finish();
+        }
+        */
+
+
 
         /**
          * KINDA NEAT - not sure how to use this right now.  But it's a little pink bubble/button
@@ -129,11 +148,31 @@ public class MainActivity extends AppCompatActivity
             transaction.addToBackStack(null);
             transaction.commit();
         } else if (id == R.id.nav_signout) {
-
+            signOut();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void signOut() {
+        AuthUI aui = AuthUI.getInstance();
+        aui.signOut(this)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Log.d("MainActivity", "USER LOGGED OUT");
+                        /*
+                        // https://stackoverflow.com/a/14002030
+                        Intent intent = new Intent(MainActivity.this, LauncherActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        intent.putExtra("EXIT", true);
+                        startActivity(intent);
+                        finish();
+                        */
+                        finishAffinity();
+                    }
+                });
     }
 }
