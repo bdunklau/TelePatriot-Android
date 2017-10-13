@@ -5,22 +5,17 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.ChatMessage;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.ChatMessageHolder;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.util.HashMap;
 
 /**
  * Created by bdunklau on 10/10/2017.
@@ -37,7 +32,7 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chat);
+        setContentView(R.layout.chat_fragment);
 
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         messages = (RecyclerView) findViewById(R.id.admin_chat_messages);

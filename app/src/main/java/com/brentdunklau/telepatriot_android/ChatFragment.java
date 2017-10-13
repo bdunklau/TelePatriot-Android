@@ -1,16 +1,18 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.ChatMessage;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.ChatMessageHolder;
@@ -21,6 +23,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import org.w3c.dom.Text;
 
 /**
  * Created by bdunklau on 10/11/17.
@@ -36,6 +40,7 @@ public class ChatFragment extends Fragment {
     private LinearLayoutManager mLinearLayoutManager;
     private DatabaseReference myRef;
     private String chatKey;
+    private TextView text_whos_typing;
 
     View myView;
 
@@ -54,7 +59,7 @@ public class ChatFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.activity_chat, container, false);
+        myView = inflater.inflate(R.layout.chat_fragment, container, false);
         setUI();
         return myView;
     }
@@ -65,7 +70,7 @@ public class ChatFragment extends Fragment {
         messages = (RecyclerView) myView.findViewById(R.id.admin_chat_messages);
         messages.setLayoutManager(new LinearLayoutManager(myView.getContext()));
         messageEditText = myView.findViewById(R.id.messageEditText);
-
+        text_whos_typing = myView.findViewById(R.id.text_whos_typing);
 
         mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
         mLinearLayoutManager.setStackFromEnd(true);
@@ -81,6 +86,7 @@ public class ChatFragment extends Fragment {
                 ChatMessage chatMessage = new ChatMessage(messageEditText.getText().toString(), User.getInstance().getName());
                 myRef.child(chatKey).push().setValue(chatMessage);
                 messageEditText.setText("");
+                mSendButton.setEnabled(false);
             }
         });
 
@@ -93,6 +99,32 @@ public class ChatFragment extends Fragment {
             @Override
             public void onCancelled(DatabaseError databaseError) { }
         });
+
+        messageEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if(messageEditText.getText().toString().length() > 0) {
+                    mSendButton.setEnabled(true);
+                    // this is where we put the code that says so-and-so is typing
+
+                }
+                else {
+                    mSendButton.setEnabled(false);
+                    // this is where we put the code that removes the "so-and-so is typing" message
+                }
+            }
+        });
+
     }
 
 
