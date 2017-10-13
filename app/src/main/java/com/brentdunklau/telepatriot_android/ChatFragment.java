@@ -71,7 +71,7 @@ public class ChatFragment extends Fragment {
         mLinearLayoutManager.setStackFromEnd(true);
 
 
-        myRef = FirebaseDatabase.getInstance().getReference().child("chat/"+ chatKey);
+        myRef = FirebaseDatabase.getInstance().getReference().child("chat");
 
         mSendButton = myView.findViewById(R.id.sendButton);
 
@@ -79,7 +79,7 @@ public class ChatFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 ChatMessage chatMessage = new ChatMessage(messageEditText.getText().toString(), User.getInstance().getName());
-                myRef.push().setValue(chatMessage);
+                myRef.child(chatKey).push().setValue(chatMessage);
                 messageEditText.setText("");
             }
         });
@@ -103,7 +103,7 @@ public class ChatFragment extends Fragment {
                 ChatMessage.class,
                 R.layout.chat_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 ChatMessageHolder.class,
-                myRef) {
+                myRef.child(chatKey)) {
             @Override
             public void populateViewHolder(ChatMessageHolder holder, ChatMessage chatMessage, int position) {
                 holder.setChatMessage(chatMessage);
