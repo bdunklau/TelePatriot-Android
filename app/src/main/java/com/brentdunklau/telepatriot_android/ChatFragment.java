@@ -40,7 +40,10 @@ public class ChatFragment extends Fragment {
     private LinearLayoutManager mLinearLayoutManager;
     private DatabaseReference myRef;
     private String chatKey;
-    private TextView text_whos_typing;
+
+    // a good idea, but a lot of work for questionable benefit
+    // Probably more important at first (10/13/17) to display timestamps on chat messages
+    //private TextView text_whos_typing;
 
     View myView;
 
@@ -70,7 +73,9 @@ public class ChatFragment extends Fragment {
         messages = (RecyclerView) myView.findViewById(R.id.admin_chat_messages);
         messages.setLayoutManager(new LinearLayoutManager(myView.getContext()));
         messageEditText = myView.findViewById(R.id.messageEditText);
-        text_whos_typing = myView.findViewById(R.id.text_whos_typing);
+
+        // a good idea but...  see top
+        //text_whos_typing = myView.findViewById(R.id.text_whos_typing);
 
         mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
         mLinearLayoutManager.setStackFromEnd(true);

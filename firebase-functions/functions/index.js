@@ -8,6 +8,7 @@ const deleteModule = require('./userDeleted')
 const notifications = require('./notifications')
 const roles = require('./roles')
 const topics = require('./topics')
+const mission = require('./mission')
 
 exports.messagestuff = onmessage.pushMessages
 exports.userCreated = createModule.createUserAccount
@@ -17,3 +18,4 @@ exports.roleAssigned = roles.roleAssigned
 exports.roleUnassigned = roles.roleUnassigned
 exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
+exports.missionCreated = mission.missionCreated

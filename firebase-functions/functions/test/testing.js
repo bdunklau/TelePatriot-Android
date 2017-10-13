@@ -1,0 +1,2 @@
+var myFunctions = require('../index')
+
