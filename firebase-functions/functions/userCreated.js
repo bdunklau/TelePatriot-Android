@@ -11,14 +11,14 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
     // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s
     // UserRecord contains: displayName, email, photoUrl, uid
     // all of this is accessible via event.data
+
     const uid = event.data.uid
     const email = event.data.email
-    const photoUrl = event.data.photoUrl || 'https://i.stack.imgur.com/34AD2.jpg'
+    const photoUrl = event.data.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
 
     // apparently you have to use backticks, not single quotes
     const newUserRef = ref.child(`/users/${uid}`)
 
-    console.log("userCreated.js: onCreate event.data: ", event.data)
 
     var name = email // default value if name not present
     if(event.data.displayName) name = event.data.displayName

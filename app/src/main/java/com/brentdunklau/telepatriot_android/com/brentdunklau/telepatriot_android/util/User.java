@@ -140,6 +140,10 @@ public class User implements FirebaseAuth.AuthStateListener {
         return getFirebaseUser()!=null ? getFirebaseUser().getEmail() : "uid not available";
     }
 
+    public String getPhotoURL() {
+        return getFirebaseUser()==null || getFirebaseUser().getPhotoUrl()==null ? "https://i.stack.imgur.com/34AD2.jpg" : getFirebaseUser().getPhotoUrl().toString();
+    }
+
     public boolean isAdmin() {
         return isAdmin;
     }

@@ -46,6 +46,9 @@ dependencies {
     // https://blog.chizobaogbonna.me/device-to-device-push-notification-using-cloud-functions-for-firebase-5e607d74d7a2
     // also this:  https://codelabs.developers.google.com/codelabs/firebase-android/#9
     compile 'com.google.firebase:firebase-messaging:11.0.4'
+
+    // for image manipulation of profile pics
+    compile 'com.squareup.picasso:picasso:2.5.2'
 }
 
 
