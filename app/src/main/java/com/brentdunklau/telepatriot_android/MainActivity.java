@@ -81,22 +81,21 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        //if(User.getInstance().isLoggedIn()) {
-            View navHeaderView = navigationView.getHeaderView(0);  // https://stackoverflow.com/a/38418531
-            final TextView text_user_name = (TextView)navHeaderView.findViewById(R.id.text_user_name);
-            final TextView text_user_email = (TextView)navHeaderView.findViewById(R.id.text_user_email);
-            final ImageView image_profile_pic = (ImageView)navHeaderView.findViewById(R.id.image_profile_pic);
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    text_user_name.setText(User.getInstance().getName());
-                    text_user_email.setText(User.getInstance().getEmail());
-                    Picasso.with(MainActivity.this).load(User.getInstance().getPhotoURL()).fit().into(image_profile_pic);
-                }
-            };
-            Handler h = new Handler();
-            h.post(r);
-        //}
+
+        View navHeaderView = navigationView.getHeaderView(0);  // https://stackoverflow.com/a/38418531
+        final TextView text_user_name = (TextView)navHeaderView.findViewById(R.id.text_user_name);
+        final TextView text_user_email = (TextView)navHeaderView.findViewById(R.id.text_user_email);
+        final ImageView image_profile_pic = (ImageView)navHeaderView.findViewById(R.id.image_profile_pic);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                text_user_name.setText(User.getInstance().getName());
+                text_user_email.setText(User.getInstance().getEmail());
+                Picasso.with(MainActivity.this).load(User.getInstance().getPhotoURL()).fit().into(image_profile_pic);
+            }
+        };
+        Handler h = new Handler();
+        h.post(r);
     }
 
     @Override
