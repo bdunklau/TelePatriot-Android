@@ -4,7 +4,7 @@ var fs = require('fs');
 var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
-var date = require('./dateformat')
+var date = require('../dateformat')
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/sheets.googleapis.com-nodejs-quickstart.json
@@ -14,6 +14,8 @@ var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
     process.env.USERPROFILE) + '/.credentials/';
 var TOKEN_PATH = TOKEN_DIR + 'sheets.googleapis.com-nodejs-quickstart.json';
 
+// COMMAND LINE ARGS!!!!   The first is "node" the second is the name of the node script
+// So the "real" args start at [2]
 const args = process.argv
 console.log(args)
 
@@ -146,8 +148,8 @@ function makeApiCall(auth) {
 
 
         resource: {
-              // TODO: Add desired properties to the request body. All existing properties
-              // will be replaced.
+              // COMMAND LINE ARGS!!!!   The first is "node" the second is the name of the node script
+              // So the "real" args start at [2]
               values: [[date.asCentralTime(), process.argv[2], process.argv[3]]] // command line arg :)
             },
 

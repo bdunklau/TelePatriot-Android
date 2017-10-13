@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -45,7 +46,7 @@ public class UserListFragment extends Fragment {
     private FirebaseRecyclerAdapter<UserBean, UserHolder> mAdapter;
     protected String TAG = "UserListFragment";
     private RecyclerView users;
-    private FirebaseDatabase database;
+    //private FirebaseDatabase database;
     private View view;
 
     @Nullable
@@ -59,22 +60,34 @@ public class UserListFragment extends Fragment {
         return view;
     }
 
-    public void setDatabase(FirebaseDatabase database) {
-        this.database = database;
-    }
-
     public void setRole(String role, final FragmentManager fragmentManager, final Fragment back) {
         updateLabel(view, R.id.role_header, role+"s");
 
-        final DatabaseReference ref = database.getReference("roles/"+role+"/users");
-        ref.orderByChild("name")/*.limitToFirst(25) limit somehow? */.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                doit(ref, fragmentManager, back);
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
+
+        try {
+            final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("/roles/"+role+"/users");
+
+            ValueEventListener v2 = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    doit(ref, fragmentManager, back);
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) { }
+            };
+
+            ref.orderByChild("name")/*.limitToFirst(25) limit somehow? */.addValueEventListener(v2);
+
+
+        } catch(Throwable t) {
+            int i=0;
+        }
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 
     private void updateLabel(final View view, final int Rid, final String text) {
