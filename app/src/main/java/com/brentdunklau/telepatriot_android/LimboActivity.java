@@ -81,17 +81,7 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
     }
 
     public void roleAssigned(String role) {
-        Class activity = null;
-        if("admin".equalsIgnoreCase(role))
-            activity = AdminActivity.class;
-        else if("director".equalsIgnoreCase(role))
-            activity = DirectorActivity.class;
-        /*else if("volunteer".equalsIgnoreCase(role))
-            activity = VolunteerActivity.class;*/
-
-        if(activity != null) {
-            Intent it = new Intent(this, activity);
-            startActivity(it);
-        }
+        Intent it = new Intent(this, MainActivity.class);
+        startActivity(it);
     }
 }
