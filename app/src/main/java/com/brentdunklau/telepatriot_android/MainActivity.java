@@ -19,12 +19,14 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.squareup.picasso.Picasso;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -83,11 +85,13 @@ public class MainActivity extends AppCompatActivity
             View navHeaderView = navigationView.getHeaderView(0);  // https://stackoverflow.com/a/38418531
             final TextView text_user_name = (TextView)navHeaderView.findViewById(R.id.text_user_name);
             final TextView text_user_email = (TextView)navHeaderView.findViewById(R.id.text_user_email);
+            final ImageView image_profile_pic = (ImageView)navHeaderView.findViewById(R.id.image_profile_pic);
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
                     text_user_name.setText(User.getInstance().getName());
                     text_user_email.setText(User.getInstance().getEmail());
+                    Picasso.with(MainActivity.this).load(User.getInstance().getPhotoURL()).fit().into(image_profile_pic);
                 }
             };
             Handler h = new Handler();
