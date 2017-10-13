@@ -26,7 +26,6 @@ public class ListUsersActivity extends BaseActivity
         // We WERE using getSupportFragmentManager() but that returns a FragmentManager in one of those v4 compatibility packages
         // Not sure which to use right now.  Just getting stuff to compile.
         userListFragment = (UserListFragment) getFragmentManager().findFragmentById(R.id.user_list_fragment);
-        userListFragment.setDatabase(database);
 
         String showTab = "Admin";
         if (getIntent().getExtras() != null && getIntent().getExtras().get("returnToTab") != null) {

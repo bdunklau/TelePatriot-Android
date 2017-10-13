@@ -34,10 +34,6 @@ public class ListUsersFragment extends AdminFragment implements PassInfo {
             t.printStackTrace();
         }
 
-        View cf = container.findViewById(R.id.content_frame);
-        int rid = R.id.content_frame;
-        int cid = cf.getId();
-
         setHasOptionsMenu(true);
 
         text_admin = myView.findViewById(R.id.text_admin);
@@ -48,20 +44,6 @@ public class ListUsersFragment extends AdminFragment implements PassInfo {
 
         FragmentManager fragmentManager = getChildFragmentManager();
         userListFragment = (UserListFragment) fragmentManager.findFragmentById(R.id.user_list_fragment);
-        try {
-            userListFragment.setDatabase(FirebaseDatabase.getInstance());
-        }
-        catch(Throwable t) {
-            t.printStackTrace();
-        }
-/*
-        String showTab = "Admin";
-        if (getIntent().getExtras() != null && getIntent().getExtras().get("returnToTab") != null) {
-            showTab = (String) getIntent().getExtras().get("returnToTab");
-        }
-        userListFragment.setRole(showTab);
-        */
-        String tag = userListFragment.getTag();
 
         return myView;
     }
@@ -80,7 +62,12 @@ public class ListUsersFragment extends AdminFragment implements PassInfo {
             @Override
             public void onClick(View view) {
                 String role = ((TextView) view).getText().toString();
-                userListFragment.setRole(role, getFragmentManager(), ListUsersFragment.this);
+                try {
+                    userListFragment.setRole(role, getFragmentManager(), ListUsersFragment.this);
+                }
+                catch(Throwable t) {
+                    t.printStackTrace();
+                }
             }
         };
 
