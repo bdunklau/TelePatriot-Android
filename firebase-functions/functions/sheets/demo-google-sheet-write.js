@@ -137,26 +137,26 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
 });
 
 
-// DOESN'T ACTUALLY APPEND/INSERT ROWS.  I MODIFIED IT TO UPDATE A GIVEN ROW
 // trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
 exports.appendrecordtospreadsheet = functions.database.ref(`missions/{missionId}/{sheetId}`).onWrite(
   event => {
     const newRecord = event.data.current.val();
     console.log('appendrecordtospreadsheet:  newRecord = ', newRecord)
     console.log('appendrecordtospreadsheet:  event.params.sheetId = ', event.params.sheetId)
-    return appendPromise({
+    return updatePromise({
       spreadsheetId: event.params.sheetId,
       range: 'Sheet1!A1:C1',
       valueInputOption: 'USER_ENTERED',
-      insertDataOption: 'INSERT_ROWS',
+      //insertDataOption: 'INSERT_ROWS', // comment this out when updating, uncomment when appending
       resource: {
         values: [[newRecord.firstColumn, newRecord.secondColumn, newRecord.thirdColumn]]
       }
     });
 });
 
-
+/*
 // accepts an append request, returns a Promise to append it, enriching it with auth
+// see also:  https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/update
 function appendPromise(requestWithoutAuth) {
   return new Promise((resolve, reject) => {
     getAuthorizedClient().then(client => {
@@ -173,23 +173,7 @@ function appendPromise(requestWithoutAuth) {
     }).catch((err) => {console.log('Uh oh! Error caught in appendPromise(): ', err); reject()});
   });
 }
-
-/*
-exports.updatespreadsheet = functions.database.ref(`missions/{missionId}/{sheetId}`).onWrite(
-  event => {
-    const newRecord = event.data.current.val();
-    console.log('appendrecordtospreadsheet:  newRecord = ', newRecord)
-    console.log('appendrecordtospreadsheet:  event.params.sheetId = ', event.params.sheetId)
-    return updatePromise({
-      spreadsheetId: event.params.sheetId,
-      range: 'Sheet1!A1:C1',
-      valueInputOption: 'USER_ENTERED',
-      resource: {
-        values: [[newRecord.firstColumn, newRecord.secondColumn, newRecord.thirdColumn]]
-      }
-    });
-});
-
+*/
 
 // accepts an append request, returns a Promise to append it, enriching it with auth
 function updatePromise(requestWithoutAuth) {
@@ -208,15 +192,16 @@ function updatePromise(requestWithoutAuth) {
     }).catch((err) => {console.log('Uh oh! Error caught in appendPromise(): ', err); reject()});
   });
 }
-*/
 
 
 // checks if oauthTokens have been loaded into memory, and if not, retrieves them
 function getAuthorizedClient() {
   console.log('getAuthorizedClient(): oauthTokens: ', oauthTokens)
+  /* commented this out because was getting "Promise.success is not a function"
   if (oauthTokens) {
     return Promise.success(functionsOauthClient);
   }
+  */
   return db.ref(DB_TOKEN_PATH).once('value').then(snapshot => {
     oauthTokens = snapshot.val();
     functionsOauthClient.credentials = oauthTokens;
