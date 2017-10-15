@@ -138,11 +138,11 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
 
 
 // trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
-exports.appendrecordtospreadsheet = functions.database.ref(`missions/{missionId}/{sheetId}`).onWrite(
+exports.updateSpreadsheet = functions.database.ref(`missions/{missionId}/{sheetId}`).onWrite(
   event => {
     const newRecord = event.data.current.val();
-    console.log('appendrecordtospreadsheet:  newRecord = ', newRecord)
-    console.log('appendrecordtospreadsheet:  event.params.sheetId = ', event.params.sheetId)
+    console.log('updateSpreadsheet:  newRecord = ', newRecord)
+    console.log('updateSpreadsheet:  event.params.sheetId = ', event.params.sheetId)
     return updatePromise({
       spreadsheetId: event.params.sheetId,
       range: 'Sheet1!A1:C1',

@@ -20,6 +20,6 @@ exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
 exports.authgoogleapi = sheetsDemo.authgoogleapi
 exports.oauthcallback = sheetsDemo.oauthcallback
-exports.appendrecordtospreadsheet = sheetsDemo.appendrecordtospreadsheet
+exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
