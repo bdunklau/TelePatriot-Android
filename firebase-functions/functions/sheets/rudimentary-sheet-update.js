@@ -1,6 +1,10 @@
 // SEE  https://developers.google.com/sheets/api/quickstart/nodejs
 
 /*****************************************
+THIS IS DESIGNED TO BE RUN FROM COMMAND LINE ON LOCAL PC, NOT FROM WITHING
+A FIREBASE FUNCTION.   See demo-google-sheet-write.js for an example of how
+to update a google spreadsheet from a firebase function.
+
 Example command for running this script using node.js
 Run this from the firebase-functions/functions directory:
 
