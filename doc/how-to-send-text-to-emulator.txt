@@ -1,0 +1,14 @@
+How to send text to emulator:
+
+Launch emulator
+Navigate to screen where you want to enter data
+Click on the EditText field to bring up the keyboard
+
+Go to Terminal in Android Studio (at the bottom left)
+cd c:\Users\bdunklau\AppData\Local\Android\sdk\platform-tools
+Type this at the prompt:  adb shell input text "hi"
+ENTER
+
+You should see hi appear in the EditText field
+
+(Now you can get rid of that Paste button :)
