@@ -1,11 +1,9 @@
-package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util;
+package com.brentdunklau.telepatriot_android.util;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.v4.view.GestureDetectorCompat;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.widget.Toast;
 
 /**
  * So that I only have to implement onFling()...

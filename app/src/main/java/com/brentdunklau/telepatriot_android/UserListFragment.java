@@ -1,37 +1,27 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.FragmentManager;
-import android.app.FragmentManagerNonConfig;
 import android.app.FragmentTransaction;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserHolder;
+import com.brentdunklau.telepatriot_android.util.UserBean;
+import com.brentdunklau.telepatriot_android.util.UserHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-
-import org.w3c.dom.Text;
-
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * https://www.youtube.com/watch?v=yOBQHf5nM2I
