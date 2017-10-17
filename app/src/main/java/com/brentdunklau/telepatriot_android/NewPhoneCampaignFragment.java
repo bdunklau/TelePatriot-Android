@@ -10,6 +10,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 /**
  * Created by bdunklau on 10/13/2017.
  */
@@ -44,7 +47,18 @@ public class NewPhoneCampaignFragment extends Fragment {
             }
         });
 
+        submit_new_phone_campaign.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("missions");
+                ref.push().child("url").setValue(edit_new_phone_campaign.getText().toString());
+            }
+        });
+
+
+
         setHasOptionsMenu(true);
         return myView;
     }
+
 }
