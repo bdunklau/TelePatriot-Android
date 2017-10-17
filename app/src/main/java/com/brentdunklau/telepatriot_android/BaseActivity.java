@@ -61,7 +61,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
-
+/*
     // https://stackoverflow.com/a/41931325
     protected BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -71,8 +71,9 @@ public class BaseActivity extends AppCompatActivity {
                     intent.getExtras().getString("message"));
         }
     };
+    */
 
-
+/*
     protected void showAlertDialog(final String uid, String dataTitle, String dataMessage) {
         if(uid == null || dataTitle == null || dataMessage == null)
             return;
@@ -93,7 +94,10 @@ public class BaseActivity extends AppCompatActivity {
         });
         builder.show();
     }
+    */
 
+
+/*
     // https://stackoverflow.com/a/41931325
     @Override
     protected void onStart() {
@@ -109,8 +113,10 @@ public class BaseActivity extends AppCompatActivity {
         super.onStop();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
     }
+    */
 
 
+/*
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
@@ -131,6 +137,8 @@ public class BaseActivity extends AppCompatActivity {
             default: return super.onOptionsItemSelected(item);
         }
     }
+    */
+
 
     private void gotoScreen(Class activity) {
         Intent it = new Intent(this, activity);

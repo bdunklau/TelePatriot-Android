@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
@@ -29,6 +30,7 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
     protected String TAG = "LimboActivity";
     private FirebaseRecyclerAdapter<AccountStatusEvent, AccountStatusEventHolder> mAdapter;
     private RecyclerView accountStatusEvents;
+    private Button chat_button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,14 +67,24 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
             }
         };
 
+        chat_button = (Button) findViewById(R.id.chat_button);
+        chat_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                slideOutChatWindow(view);
+            }
+        });
+
         accountStatusEvents.setAdapter(mAdapter);
     }
 
+
     // TODO  try to use fragments from now own
     public void slideOutChatWindow(View view) {
-        startActivity(new Intent(this, ChatActivity.class));
-        overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
+        /*startActivity(new Intent(this, ChatActivity.class));
+        overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);*/
     }
+
 
     @Override
     protected void onDestroy() {
