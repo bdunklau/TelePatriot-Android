@@ -5,6 +5,30 @@
     android:windowSoftInputMode="adjustResize">
 
 
+    <TextView
+        android:id="@+id/heading_new_phone_campaign"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="21dp"
+        android:text="New Phone Campaign"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+
+    <TextView
+        android:id="@+id/text_explain_phone_campaign"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:text="Enter the URL of a Google Spreadsheet containing names and phone numbers"
+        android:textSize="14sp"
+        android:layout_below="@+id/heading_new_phone_campaign"
+        android:layout_centerHorizontal="true" />
+
 
     <EditText
         android:id="@+id/edit_new_phone_campaign"
@@ -23,6 +47,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginRight="10dp"
         android:layout_marginLeft="10dp"
+        android:layout_marginBottom="10dp"
         android:layout_alignParentBottom="true"
         android:enabled="true"
         android:textColor="#ffffff"

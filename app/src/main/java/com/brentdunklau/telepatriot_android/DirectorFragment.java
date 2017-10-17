@@ -1,8 +1,10 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -17,6 +19,10 @@ import android.widget.Button;
 public class DirectorFragment extends Fragment {
 
     Button btnNewPhoneCampaign;
+    Button btnMyActiveMissions;
+    Button btnAllActiveMissions;
+    Button btnAllMyMissions;
+    Button btnAllMissions;
 
     View myView;
 
@@ -33,6 +39,16 @@ public class DirectorFragment extends Fragment {
             }
         });
 
+        btnMyActiveMissions = myView.findViewById(R.id.button_my_active_missions);
+        btnAllActiveMissions = myView.findViewById(R.id.button_all_active_missions);
+        btnAllMyMissions = myView.findViewById(R.id.button_all_my_missions);
+        btnAllMissions = myView.findViewById(R.id.button_all_missions);
+
+        nothingYetDialog(btnMyActiveMissions);
+        nothingYetDialog(btnAllActiveMissions);
+        nothingYetDialog(btnAllMyMissions);
+        nothingYetDialog(btnAllMissions);
+
         setHasOptionsMenu(true);
         return myView;
     }
@@ -46,5 +62,25 @@ public class DirectorFragment extends Fragment {
         } catch(Throwable t) {
             t.printStackTrace();
         }
+    }
+
+
+    protected void nothingYetDialog(Button button) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(myView.getContext());
+                builder.setTitle("Nothing Yet");
+                builder.setMessage("Nothing here yet\nBut we're working on it");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                });
+                builder.show();
+            }
+        });
+
+
     }
 }
