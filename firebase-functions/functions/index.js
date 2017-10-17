@@ -27,3 +27,4 @@ exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
 
 exports.testsheetImport = importDemo.testsheetImport
+exports.readSpreadsheet = importDemo.readSpreadsheet

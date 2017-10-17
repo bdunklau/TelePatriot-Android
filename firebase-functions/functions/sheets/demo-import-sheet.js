@@ -85,74 +85,79 @@ function getAuthorizedClient() {
 
 
 // trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
-exports.readSpreadsheet = functions.database.ref(`missions/{missionId}/{sheetId}`).onWrite(
+exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite(
   event => {
-    const newRecord = event.data.current.val();
-    console.log('readSpreadsheet:  newRecord = ', newRecord)
-    console.log('readSpreadsheet:  event.params.sheetId = ', event.params.sheetId)
 
+    // Only edit data when it is first created.
+    if (event.data.previous.exists()) {
+        console.log('readSpreadsheet: return early because event.data.previous.exists()')
+        return false;
+    }
+    // Exit when the data is deleted.
+    if (!event.data.exists()) {
+        console.log('readSpreadsheet: return early because !event.data.exists()')
+        return false;
+    }
 
-    var sheets = google.sheets('v4');
-    sheets.spreadsheets.values.get({
-        auth: auth,
-        spreadsheetId: event.params.sheetId,
-        range: 'Sheet1', // <-- read the whole sheet by just leaving the cell range out
-    }, function(err, response) {
-        if (err) {
-          console.log('The API returned an error: ' + err);
-          return;
-      }
-      var rows = response.values;
-      if (rows.length == 0) {
-          console.log('No data found.');
-      } else {
-          console.log('Name, Major:');
-          for (var i = 0; i < rows.length; i++) {
-            var row = rows[i];
-            // Print columns A and E, which correspond to indices 0 and 4.
-            console.log('%s, %s', row[0], row[4]);
-          }
-      }
-  });
+    //console.log('readSpreadsheet: event.data.val(): ', event.data.val())
+    var missionId = event.params.missionId
+    var sheet_id = event.data.val().sheet_id
+    var dbref = event.data.adminRef.root.child(`missions/${missionId}`)
 
+    return readPromise(dbref, {
+      spreadsheetId: sheet_id,
+      range: 'Sheet1'
+    });
 });
+
+
+function readPromise(dbref, requestWithoutAuth) {
+  console.log('readPromise: entered')
+
+  return new Promise((resolve, reject) => {
+    console.log('readPromise: new Promise(): entered')
+    getAuthorizedClient().then(client => {
+      console.log('readPromise: new Promise(): getAuthorizedClient().then(): entered')
+
+      const sheets = google.sheets('v4');
+      const request = requestWithoutAuth;
+      request.auth = client;
+      sheets.spreadsheets.values.get(request, (err, response) => {
+        if (err) {
+          console.log(`The API returned an error: ${err}`);
+          return reject();
+        }
+
+        var rows = response.values;
+        var colnames = []
+        for(var c = 0; c < rows[0].length; c++) {
+            colnames.push(rows[0][c])
+        }
+        var data = []
+        for(var r = 1; r < rows.length; r++) {
+            var datarow = {}
+            for(var c = 0; c < rows[0].length; c++) {
+                if(rows[r][c])
+                    datarow[colnames[c]] = rows[r][c];
+            }
+            data.push(datarow)
+        }
+
+        dbref.child('data').set(data)
+
+        // got this from example code.  Not really sure what this does
+        return resolve(response);
+      });
+    }).catch((err) => {console.log('Uh oh! Error caught in appendPromise(): ', err); reject()});
+  });
+}
 
 
 // HTTPS function to write new data to CONFIG_DATA_PATH, for testing
 exports.testsheetImport = functions.https.onRequest((req, res) => {
 
-  return db.ref(`missions/${HARDCODED_MISSION_ID}/${HARDCODED_SHEET_ID}`).set({
-    firstColumn: random1,
-    secondColumn: random2,
-    thirdColumn: random3
-  }).then(() => res.status(200).send(
-    `Wrote ${random1}, ${random2}, ${random3} to DB, trigger should now update Sheet.`));
+  return db.ref(`missions`).push({ sheet_id: HARDCODED_SHEET_ID }).then(
+     () => res.status(200).send(
+    `Wrote stuff at `+(new Date())));
 });
 
-
-
-function readSheet(auth) {
-  var sheets = google.sheets('v4');
-  sheets.spreadsheets.values.get({
-    auth: auth,
-    spreadsheetId: HARDCODED_SHEET_ID,
-    range: 'Sheet1', // <-- read the whole sheet by just leaving the cell range out
-  }, function(err, response) {
-    if (err) {
-      console.log('The API returned an error: ' + err);
-      return;
-    }
-    var rows = response.values;
-    if (rows.length == 0) {
-      console.log('No data found.');
-    } else {
-      console.log('Name, Major:');
-      for (var i = 0; i < rows.length; i++) {
-        var row = rows[i];
-        // Print columns A and E, which correspond to indices 0 and 4.
-        console.log('%s, %s', row[0], row[4]);
-      }
-    }
-  });
-
-}

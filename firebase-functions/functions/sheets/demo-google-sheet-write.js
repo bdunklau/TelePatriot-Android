@@ -137,9 +137,11 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
 });
 
 
+/*
 // trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
 exports.updateSpreadsheet = functions.database.ref(`missions/{missionId}/{sheetId}`).onWrite(
   event => {
+
     const newRecord = event.data.current.val();
     console.log('updateSpreadsheet:  newRecord = ', newRecord)
     console.log('updateSpreadsheet:  event.params.sheetId = ', event.params.sheetId)
@@ -152,7 +154,11 @@ exports.updateSpreadsheet = functions.database.ref(`missions/{missionId}/{sheetI
         values: [[newRecord.firstColumn, newRecord.secondColumn, newRecord.thirdColumn]]
       }
     });
+
 });
+*/
+
+
 
 /*
 // accepts an append request, returns a Promise to append it, enriching it with auth
