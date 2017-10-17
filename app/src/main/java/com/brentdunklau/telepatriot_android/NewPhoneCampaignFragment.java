@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,8 +21,8 @@ import com.google.firebase.database.FirebaseDatabase;
 public class NewPhoneCampaignFragment extends Fragment {
 
     Button submit_new_phone_campaign;
-    Button paste_new_phone_campaign; // just for testing because we can't cut and paste in emulator REMOVE
     EditText edit_new_phone_campaign;
+    private LinearLayoutManager mLinearLayoutManager;
 
     View myView;
 
@@ -31,21 +32,7 @@ public class NewPhoneCampaignFragment extends Fragment {
         myView = inflater.inflate(R.layout.new_phone_campaign_fragment, container, false);
 
         submit_new_phone_campaign = myView.findViewById(R.id.submit_new_phone_campaign);
-        paste_new_phone_campaign = myView.findViewById(R.id.paste_new_phone_campaign);
         edit_new_phone_campaign = myView.findViewById(R.id.edit_new_phone_campaign);
-
-        paste_new_phone_campaign.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Runnable r = new Runnable() {
-                    public void run() {
-                        edit_new_phone_campaign.setText("https://docs.google.com/spreadsheets/d/1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs/edit#gid=1330860040");
-                    }
-                };
-                Handler h = new Handler();
-                h.post(r);
-            }
-        });
 
         submit_new_phone_campaign.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,7 +41,6 @@ public class NewPhoneCampaignFragment extends Fragment {
                 ref.push().child("url").setValue(edit_new_phone_campaign.getText().toString());
             }
         });
-
 
 
         setHasOptionsMenu(true);
