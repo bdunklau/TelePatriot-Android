@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 
 import java.util.Arrays;

@@ -1,4 +1,4 @@
-package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util;
+package com.brentdunklau.telepatriot_android.util;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;

@@ -1,4 +1,4 @@
-package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util;
+package com.brentdunklau.telepatriot_android.util;
 
 import java.util.Map;
 

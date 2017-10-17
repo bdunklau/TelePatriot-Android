@@ -1,8 +1,6 @@
-package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util;
+package com.brentdunklau.telepatriot_android.util;
 
-import java.util.List;
 import java.util.Map;
-import java.util.SimpleTimeZone;
 
 /**
  * Created by bdunklau on 10/4/17.

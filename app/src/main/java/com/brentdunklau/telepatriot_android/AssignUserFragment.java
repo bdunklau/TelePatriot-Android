@@ -14,10 +14,10 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.DbLog;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.PassInfo;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.UserBean;
+import com.brentdunklau.telepatriot_android.util.DbLog;
+import com.brentdunklau.telepatriot_android.util.PassInfo;
+import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;

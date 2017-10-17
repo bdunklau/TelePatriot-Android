@@ -1,7 +1,6 @@
-package com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util;
+package com.brentdunklau.telepatriot_android.util;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -16,7 +15,6 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by bdunklau on 10/3/17.

@@ -5,17 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.DbLog;
-import com.brentdunklau.telepatriot_android.com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivityOrig extends BaseActivity
         //implements SlideIt
