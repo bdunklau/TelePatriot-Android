@@ -4,6 +4,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 //const googleAuth = require('google-auth-library');
 const google = require('googleapis');
+const sheetIdUtil = require('./get-sheet-id')
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -101,7 +102,7 @@ exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite
 
     //console.log('readSpreadsheet: event.data.val(): ', event.data.val())
     var missionId = event.params.missionId
-    var sheet_id = event.data.val().sheet_id
+    var sheet_id = sheetIdUtil.sheetId(event.data.val().url)
     var dbref = event.data.adminRef.root.child(`missions/${missionId}`)
 
     return readPromise(dbref, {
@@ -148,7 +149,9 @@ function readPromise(dbref, requestWithoutAuth) {
         // got this from example code.  Not really sure what this does
         return resolve(response);
       });
-    }).catch((err) => {console.log('Uh oh! Error caught in appendPromise(): ', err); reject()});
+    })
+    .then(() => { dbref.child('sheet_id').set(requestWithoutAuth.spreadsheetId) })
+    .catch((err) => {console.log('Uh oh! Error caught in appendPromise(): ', err); reject()});
   });
 }
 
