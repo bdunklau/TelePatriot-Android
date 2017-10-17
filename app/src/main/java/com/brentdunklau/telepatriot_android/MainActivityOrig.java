@@ -37,7 +37,7 @@ public class MainActivityOrig extends BaseActivity
         else if(User.getInstance().isLoggedIn()) {
             // We have to check here also to see if the user belongs to any roles yet
             // because if they don't, we have to send them back to LimboActivity
-            figureOutWhereToGo();
+            //figureOutWhereToGo();
 
             // If the app is not currently up or in the foreground, this is what gets called after
             // you pull down the notifications and click one.
@@ -58,7 +58,7 @@ public class MainActivityOrig extends BaseActivity
                         uid = (String)getIntent().getExtras().get(key);
                     }
                 }
-                showAlertDialog(uid, dataTitle, dataMessage);
+                //showAlertDialog(uid, dataTitle, dataMessage);
             }
 
         } else {
@@ -85,6 +85,8 @@ public class MainActivityOrig extends BaseActivity
 
     }
 
+
+    /*
     private void figureOutWhereToGo() {
         database = FirebaseDatabase.getInstance();
         database.getReference("/users/"+User.getInstance().getUid()+"/roles").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -121,7 +123,10 @@ public class MainActivityOrig extends BaseActivity
             public void onCancelled(DatabaseError databaseError) { }
         });
     }
+    */
 
+
+    /*
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // NOTE:  FirebaseAuth.getInstance().getCurrentUser() IS NOT null  at this point
@@ -129,10 +134,10 @@ public class MainActivityOrig extends BaseActivity
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
-                /**
+                *//**
                  * Does the user have any roles yet, or is this a brand new user?
                  * Where we send the user will depend on whether they are brand new or not
-                 */
+                 *//*
                 figureOutWhereToGo();
 
             } else {
@@ -142,6 +147,8 @@ public class MainActivityOrig extends BaseActivity
 
         }
     }
+    */
+
 
     @Override
     protected void onResume() {

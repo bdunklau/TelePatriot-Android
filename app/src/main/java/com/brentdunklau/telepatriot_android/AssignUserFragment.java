@@ -3,7 +3,6 @@ package com.brentdunklau.telepatriot_android;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -48,7 +47,7 @@ public class AssignUserFragment extends AdminFragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.activity_assignuser, container, false);
+        myView = inflater.inflate(R.layout.assignuser_fragment, container, false);
         setUI();
         return myView;
     }
