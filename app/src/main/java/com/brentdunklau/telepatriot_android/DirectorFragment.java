@@ -29,7 +29,7 @@ public class DirectorFragment extends Fragment {
         btnNewPhoneCampaign.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                gotoNewPhoneCampaignFragment();
+                gotoNewPhoneCampaignFragment(); 
             }
         });
 
