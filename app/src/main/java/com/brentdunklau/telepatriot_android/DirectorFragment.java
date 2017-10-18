@@ -40,7 +40,7 @@ public class DirectorFragment extends Fragment {
         wireUp(btnNewPhoneCampaign, new NewPhoneCampaignFragment());
         nothingYetDialog(btnMyActiveMissions);
         nothingYetDialog(btnAllActiveMissions);
-        nothingYetDialog(btnAllMyMissions);
+        wireUp(btnAllMyMissions, new AllMyMissionsFragment());
         wireUp(btnAllMissions, new AllMissionsFragment());
 
         setHasOptionsMenu(true);

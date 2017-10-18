@@ -59,7 +59,7 @@ public class NewPhoneCampaignFragment extends Fragment {
 
                         FragmentManager fragmentManager = getFragmentManager();
                         FragmentTransaction t1 = fragmentManager.beginTransaction();
-                        FragmentTransaction t2 = t1.replace(R.id.content_frame, new AllMissionsFragment());
+                        FragmentTransaction t2 = t1.replace(R.id.content_frame, new AllMyMissionsFragment());
                         t2.commit();
                     }
                 });

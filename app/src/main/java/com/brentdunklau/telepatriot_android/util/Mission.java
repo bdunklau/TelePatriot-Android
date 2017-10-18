@@ -8,7 +8,7 @@ import android.provider.ContactsContract;
 
 public class Mission {
 
-    private String mission_create_date, mission_name, mission_type, name;
+    private String mission_create_date, mission_name, mission_type, name, uid;
 
     public Mission() {
 
@@ -44,5 +44,13 @@ public class Mission {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 }
