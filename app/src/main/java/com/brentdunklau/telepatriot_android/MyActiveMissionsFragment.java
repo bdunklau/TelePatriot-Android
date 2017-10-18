@@ -5,9 +5,11 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.Mission;
@@ -26,6 +28,8 @@ import com.google.firebase.database.ValueEventListener;
 
 public class MyActiveMissionsFragment extends Fragment {
 
+
+    private SwitchCompat activeSwitch;
     private TextView header_mission_list;
     private FirebaseRecyclerAdapter<Mission, MissionHolder> mAdapter;
     private LinearLayoutManager mLinearLayoutManager;
@@ -42,6 +46,15 @@ public class MyActiveMissionsFragment extends Fragment {
         missions = (RecyclerView) myView.findViewById(R.id.all_missions_list);
         mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
         missions.setLayoutManager(mLinearLayoutManager);
+
+        activeSwitch = myView.findViewById(R.id.switch_active);
+        activeSwitch.setSwitchPadding(100);
+        activeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                // TODO this isn't right.  We need a switch for every mission listed
+            }
+        });
 
         header_mission_list = (TextView) myView.findViewById(R.id.header_mission_list);
         header_mission_list.setText("My Active Missions");

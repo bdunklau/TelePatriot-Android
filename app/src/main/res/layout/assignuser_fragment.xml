@@ -5,7 +5,7 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/washington_monument"
-    tools:context="com.brentdunklau.telepatriot_android.AssignUserActivity">
+    tools:context="com.brentdunklau.telepatriot_android.AssignUserFragment">
 
 
 
