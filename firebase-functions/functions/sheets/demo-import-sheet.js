@@ -5,6 +5,7 @@ const admin = require('firebase-admin');
 //const googleAuth = require('google-auth-library');
 const google = require('googleapis');
 const sheetIdUtil = require('./get-sheet-id')
+const date = require('../dateformat')
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -100,10 +101,24 @@ exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite
         return false;
     }
 
+    console.log('event.data.val() = ', event.data.val())
+    var uid = event.data.val().uid
+    var millis = date.asMillis()
+    var status = 'not started'
+    event.data.ref.child('mission_create_date').set(date.asCentralTime())
+    event.data.ref.child('uid_date_status').set(uid+'_'+millis+'_'+status)
+
+
+    //var missionId = event.params.missionId
+    //var mission_type = event.data.val().mission_type
+    //var mission_name = event.data.val().mission_name
+    //event.data.adminRef.root.child(`missions/${missionId}/mission_type`).set(mission_type)
+    //event.data.adminRef.root.child(`missions/${missionId}/mission_name`).set(mission_name)
+
     //console.log('readSpreadsheet: event.data.val(): ', event.data.val())
-    var missionId = event.params.missionId
+    //var missionId = event.params.missionId
     var sheet_id = sheetIdUtil.sheetId(event.data.val().url)
-    var dbref = event.data.adminRef.root.child(`missions/${missionId}`)
+    var dbref = event.data.ref
 
     return readPromise(dbref, {
       spreadsheetId: sheet_id,
@@ -129,6 +144,8 @@ function readPromise(dbref, requestWithoutAuth) {
           return reject();
         }
 
+        //console.log('readPromise:  response: ', response)
+
         var rows = response.values;
         var colnames = []
         for(var c = 0; c < rows[0].length; c++) {
@@ -151,7 +168,17 @@ function readPromise(dbref, requestWithoutAuth) {
       });
     })
     .then(() => { dbref.child('sheet_id').set(requestWithoutAuth.spreadsheetId) })
-    .catch((err) => {console.log('Uh oh! Error caught in appendPromise(): ', err); reject()});
+    .then(() => {
+        // write a mission_event to log the creation of this mission so we can report back
+        // to the user if the mission was successfully created or there was an error
+        // Include in the mission_event:  current time, current user, success, number of
+        // items in the mission
+        var mission_event = {date: date.asCentralTime()}
+    })
+    .catch((err) => {
+        // This is where we should write a mission_event indicating the mission failed to save
+        console.log('Uh oh! Error caught in appendPromise(): ', err); reject()
+    });
   });
 }
 

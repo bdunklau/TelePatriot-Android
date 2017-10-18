@@ -5,9 +5,18 @@ Navigate to screen where you want to enter data
 Click on the EditText field to bring up the keyboard
 
 Go to Terminal in Android Studio (at the bottom left)
+
+WINDOWS:
 cd c:\Users\bdunklau\AppData\Local\Android\sdk\platform-tools
 Type this at the prompt:  adb shell input text "hi"
 ENTER
+
+
+MAC:
+cd /Users/bdunklau/Library/Android/sdk/platform-tools
+Type this at the prompt:  ./adb shell input text "hi"
+ENTER
+
 
 You should see hi appear in the EditText field
 

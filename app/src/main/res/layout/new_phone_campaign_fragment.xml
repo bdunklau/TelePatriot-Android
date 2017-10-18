@@ -9,11 +9,11 @@
         android:id="@+id/heading_new_phone_campaign"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="21dp"
+        android:layout_marginBottom="20dp"
+        android:layout_above="@+id/text_explain_phone_campaign"
         android:text="New Phone Campaign"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
 
 
@@ -21,13 +21,23 @@
         android:id="@+id/text_explain_phone_campaign"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginLeft="10dp"
+        android:layout_marginBottom="125dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginLeft="20dp"
         android:text="Enter the URL of a Google Spreadsheet containing names and phone numbers"
         android:textSize="14sp"
-        android:layout_below="@+id/heading_new_phone_campaign"
+        android:layout_above="@+id/edit_mission_name"
         android:layout_centerHorizontal="true" />
+
+
+    <EditText
+        android:id="@+id/edit_mission_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginBottom="40dp"
+        android:layout_above="@+id/edit_new_phone_campaign"
+        android:hint="Mission Name" />
 
 
     <EditText
@@ -35,6 +45,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
+        android:layout_marginBottom="10dp"
         android:layout_above="@+id/submit_new_phone_campaign"
         android:hint="Google Spreadsheet URL" />
 
