@@ -3,36 +3,40 @@
     android:layout_width="match_parent" android:layout_height="match_parent">
 
 
+    <TextView
+        android:id="@+id/header_all_missions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:layout_marginLeft="10dp"
+        android:text="All Missions"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
+        android:layout_below="@+id/header_all_missions"
         android:background="#ddffffff">
+
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/role_header"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:layout_marginLeft="10dp"
-                android:text="Touch Admin, Director or Volunteer"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
-
             <android.support.v7.widget.RecyclerView
-                android:id="@+id/user_list"
+                android:id="@+id/all_missions_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
                 android:layout_marginLeft="10dp"
                 android:scrollbars="vertical"
                 android:layout_alignParentRight="true"
@@ -40,8 +44,6 @@
 
         </LinearLayout>
     </ScrollView>
-
-
 
 
 </RelativeLayout>

@@ -6,3 +6,7 @@ exports.asCentralTime = function() {
     console.log("now: ", now)
     return now
 }
+
+exports.asMillis = function() {
+    return moment().valueOf()
+}
