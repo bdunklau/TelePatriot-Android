@@ -24,7 +24,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/18/2017.
  */
 
-public class AllMyMissionsFragment extends Fragment {
+public class MyActiveMissionsFragment extends Fragment {
 
     private TextView header_mission_list;
     private FirebaseRecyclerAdapter<Mission, MissionHolder> mAdapter;
@@ -44,7 +44,7 @@ public class AllMyMissionsFragment extends Fragment {
         missions.setLayoutManager(mLinearLayoutManager);
 
         header_mission_list = (TextView) myView.findViewById(R.id.header_mission_list);
-        header_mission_list.setText("All My Missions");
+        header_mission_list.setText("My Active Missions");
 
         showMissions();
 
@@ -74,7 +74,7 @@ public class AllMyMissionsFragment extends Fragment {
                 Mission.class,
                 R.layout.mission_summary,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 MissionHolder.class,
-                ref.orderByChild("uid").equalTo(User.getInstance().getUid())) {
+                ref.orderByChild("uid_and_active").equalTo(User.getInstance().getUid()+"_true")) {
             @Override
             public void populateViewHolder(MissionHolder holder, Mission mission, int position) {
                 holder.setMission(mission);
