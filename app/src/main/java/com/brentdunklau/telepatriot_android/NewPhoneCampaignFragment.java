@@ -3,6 +3,7 @@ package com.brentdunklau.telepatriot_android;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -10,6 +11,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -48,6 +50,8 @@ public class NewPhoneCampaignFragment extends Fragment {
                 PhoneCampaignCreated missionCreated = new PhoneCampaignCreated(User.getInstance(), edit_mission_name.getText().toString(), edit_new_phone_campaign.getText().toString());
                 //ref.push().child("mission_events").push().setValue(missionCreated);
 
+                InputMethodManager imm = (InputMethodManager) myView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(submit_new_phone_campaign.getWindowToken(), 0);
 
                 ref.push().setValue(missionCreated).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
@@ -55,7 +59,7 @@ public class NewPhoneCampaignFragment extends Fragment {
 
                         FragmentManager fragmentManager = getFragmentManager();
                         FragmentTransaction t1 = fragmentManager.beginTransaction();
-                        FragmentTransaction t2 = t1.replace(R.id.content_frame, new MissionDetailsFragment());
+                        FragmentTransaction t2 = t1.replace(R.id.content_frame, new AllMissionsFragment());
                         t2.commit();
                     }
                 });

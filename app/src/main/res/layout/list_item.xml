@@ -5,6 +5,10 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <!--  IMPORTANT:
+      android:layout_height MUST BE wrap_content above, otherwise...
+      https://stackoverflow.com/a/36578253
+      -->
 
 
         <TextView

@@ -32,34 +32,38 @@ public class DirectorFragment extends Fragment {
         myView = inflater.inflate(R.layout.director_fragment, container, false);
 
         btnNewPhoneCampaign = myView.findViewById(R.id.button_new_phone_campaign);
-        btnNewPhoneCampaign.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                gotoNewPhoneCampaignFragment();
-            }
-        });
-
         btnMyActiveMissions = myView.findViewById(R.id.button_my_active_missions);
         btnAllActiveMissions = myView.findViewById(R.id.button_all_active_missions);
         btnAllMyMissions = myView.findViewById(R.id.button_all_my_missions);
         btnAllMissions = myView.findViewById(R.id.button_all_missions);
 
+        wireUp(btnNewPhoneCampaign, new NewPhoneCampaignFragment());
         nothingYetDialog(btnMyActiveMissions);
         nothingYetDialog(btnAllActiveMissions);
         nothingYetDialog(btnAllMyMissions);
-        nothingYetDialog(btnAllMissions);
+        wireUp(btnAllMissions, new AllMissionsFragment());
 
         setHasOptionsMenu(true);
         return myView;
     }
 
-    private void gotoNewPhoneCampaignFragment() {
+    private void wireUp(Button button, final Fragment fragment) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showFragment(fragment);
+            }
+        });
+    }
+
+    private void showFragment(Fragment fragment) {
         FragmentManager fragmentManager = getFragmentManager();
         try {
             FragmentTransaction t = fragmentManager.beginTransaction();
-            t.replace(R.id.content_frame, new NewPhoneCampaignFragment());
+            t.replace(R.id.content_frame, fragment);
             t.commit();
         } catch(Throwable t) {
+            // TODO show alert dialog or  something - not this
             t.printStackTrace();
         }
     }

@@ -11,6 +11,10 @@ import com.brentdunklau.telepatriot_android.R;
  */
 
 public class UserHolder extends RecyclerView.ViewHolder {
+
+    // https://stackoverflow.com/a/41629505
+    private UserHolder.ClickListener mClickListener;
+
     private TextView userField;
     private TextView dateField;
     private TextView reviewedByField;
@@ -30,9 +34,6 @@ public class UserHolder extends RecyclerView.ViewHolder {
             }
         });
     }
-
-    // https://stackoverflow.com/a/41629505
-    private UserHolder.ClickListener mClickListener;
 
     // https://stackoverflow.com/a/41629505
     //Interface to send callbacks...
