@@ -22,6 +22,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.Date;
+
 /**
  * Created by bdunklau on 10/13/2017.
  */
@@ -42,6 +44,10 @@ public class NewPhoneCampaignFragment extends Fragment {
         submit_new_phone_campaign = myView.findViewById(R.id.submit_new_phone_campaign);
         edit_new_phone_campaign = myView.findViewById(R.id.edit_new_phone_campaign);
         edit_mission_name = myView.findViewById(R.id.edit_mission_name);
+
+        // TODO get rid of this test code
+        edit_mission_name.setText("Testing "+new Date());
+        edit_new_phone_campaign.setText("https://docs.google.com/spreadsheets/d/1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs/edit#gid=0");
 
         submit_new_phone_campaign.setOnClickListener(new View.OnClickListener() {
             @Override
