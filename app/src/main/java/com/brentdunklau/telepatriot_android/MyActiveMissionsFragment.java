@@ -5,13 +5,16 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionHolder;
+import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -23,12 +26,14 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/18/2017.
  */
 
-public class AllMissionsFragment extends Fragment {
+public class MyActiveMissionsFragment extends Fragment {
+
 
     private TextView header_mission_list;
     private FirebaseRecyclerAdapter<Mission, MissionHolder> mAdapter;
     private LinearLayoutManager mLinearLayoutManager;
     private RecyclerView missions;
+
     View myView;
 
     @Nullable
@@ -42,8 +47,8 @@ public class AllMissionsFragment extends Fragment {
         mLinearLayoutManager.setReverseLayout(true); // puts the most recent inserts at the top
         missions.setLayoutManager(mLinearLayoutManager);
 
-        header_mission_list = myView.findViewById(R.id.header_mission_list);
-        header_mission_list.setText("All Missions");
+        header_mission_list = (TextView) myView.findViewById(R.id.header_mission_list);
+        header_mission_list.setText("My Active Missions");
 
         showMissions();
 
@@ -54,7 +59,7 @@ public class AllMissionsFragment extends Fragment {
 
     private void showMissions() {
         final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("missions");
-        ref./*orderByChild("mission_name").*/addListenerForSingleValueEvent(new ValueEventListener() {
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 doit(ref);
@@ -73,7 +78,7 @@ public class AllMissionsFragment extends Fragment {
                 Mission.class,
                 R.layout.mission_summary,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 MissionHolder.class,
-                ref) {
+                ref.orderByChild("uid_and_active").equalTo(User.getInstance().getUid()+"_true")) {
             @Override
             public void populateViewHolder(MissionHolder holder, Mission mission, int position) {
                 holder.setMission(mission, this.getRef(position)); // https://stackoverflow.com/a/45731532
@@ -84,27 +89,7 @@ public class AllMissionsFragment extends Fragment {
             @Override
             public MissionHolder onCreateViewHolder(ViewGroup parent, int viewType) {
                 MissionHolder viewHolder = super.onCreateViewHolder(parent, viewType);
-                viewHolder.setOnClickListener(new MissionHolder.ClickListener() {
-                    @Override
-                    public void onItemClick(View view, int position) {
-                        mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                // This is when you touch a mission to see just that mission
-                                // See UserListFragment
-                            }
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onItemLongClick(View view, int position) {
-                    }
-                });
                 return viewHolder;
             }
         };

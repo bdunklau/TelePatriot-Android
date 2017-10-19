@@ -38,9 +38,9 @@ public class DirectorFragment extends Fragment {
         btnAllMissions = myView.findViewById(R.id.button_all_missions);
 
         wireUp(btnNewPhoneCampaign, new NewPhoneCampaignFragment());
-        nothingYetDialog(btnMyActiveMissions);
-        nothingYetDialog(btnAllActiveMissions);
-        nothingYetDialog(btnAllMyMissions);
+        wireUp(btnMyActiveMissions, new MyActiveMissionsFragment());
+        wireUp(btnAllActiveMissions, new AllActiveMissionsFragment());
+        wireUp(btnAllMyMissions, new AllMyMissionsFragment());
         wireUp(btnAllMissions, new AllMissionsFragment());
 
         setHasOptionsMenu(true);

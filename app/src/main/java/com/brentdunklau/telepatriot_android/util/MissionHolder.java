@@ -1,10 +1,18 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SwitchCompat;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.R;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.w3c.dom.Text;
 
@@ -16,6 +24,8 @@ public class MissionHolder extends RecyclerView.ViewHolder {
 
     TextView mission_name, mission_type, mission_create_date, mission_created_by;
 
+    private SwitchCompat activeSwitch;
+
     // https://stackoverflow.com/a/41629505
     private MissionHolder.ClickListener mClickListener;
 
@@ -26,17 +36,31 @@ public class MissionHolder extends RecyclerView.ViewHolder {
         mission_type = itemView.findViewById(R.id.mission_type);
         mission_create_date = itemView.findViewById(R.id.mission_create_date);
         mission_created_by = itemView.findViewById(R.id.mission_created_by);
+
+
+        activeSwitch = itemView.findViewById(R.id.switch_active);
+        activeSwitch.setSwitchPadding(10);
     }
 
-    public void setMission(Mission mission) {
+    public void setMission(final Mission mission, final DatabaseReference ref) {
         // set TextView elements here
         mission_name.setText(mission.getMission_name());
         mission_type.setText(mission.getMission_type());
         mission_create_date.setText("Created on "+mission.getMission_create_date());
         mission_created_by.setText("By "+mission.getName());
 
+        activeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                activeSwitch.setText(b ? "Active" : "Inactive");
+                mission.setActive(b);
+                mission.setUid_and_active(mission.getUid()+"_"+b);
+                ref.child("active").setValue(b);
+                ref.child("uid_and_active").setValue(mission.getUid()+"_"+b);
+            }
+        });
 
-        // mission details:  Phone Campaign created on [date] by [name]
+        setSwitch(mission.getActive(), activeSwitch);
     }
 
     // https://stackoverflow.com/a/41629505
@@ -50,5 +74,16 @@ public class MissionHolder extends RecyclerView.ViewHolder {
     public interface ClickListener {
         public void onItemClick(View view, int position);
         public void onItemLongClick(View view, int position);
+    }
+
+    private void setSwitch(final boolean value, final SwitchCompat switchCompat) {
+        Handler h = new Handler();
+        h.post(new Runnable() {
+            @Override
+            public void run() {
+                switchCompat.setChecked(value);
+                switchCompat.setText(value ? "Active" : "Inactive");
+            }
+        });
     }
 }

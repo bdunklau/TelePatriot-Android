@@ -107,6 +107,7 @@ exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite
     var status = 'not started'
     event.data.ref.child('mission_create_date').set(date.asCentralTime())
     event.data.ref.child('uid_date_status').set(uid+'_'+millis+'_'+status)
+    event.data.ref.child('uid_and_active').set(uid+'_'+event.data.val().active)
 
 
     //var missionId = event.params.missionId

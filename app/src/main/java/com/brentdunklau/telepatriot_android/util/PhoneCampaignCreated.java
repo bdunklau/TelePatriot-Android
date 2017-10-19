@@ -5,17 +5,20 @@ package com.brentdunklau.telepatriot_android.util;
  */
 
 public class PhoneCampaignCreated {
-    private String uid, name, url, mission_name, mission_type = "Phone Campaign", create_date, uid_date_status;
+    private String uid, name, url, mission_name, mission_type = "Phone Campaign", create_date, uid_date_status, uid_and_active;
+    private boolean active;
 
     public PhoneCampaignCreated() {
 
     }
 
-    public PhoneCampaignCreated(User user, String mission_name, String url) {
+    public PhoneCampaignCreated(User user, String mission_name, String url, boolean active) {
         this.uid = user.getUid();
         this.name = user.getName();
         this.url = url;
         this.mission_name = mission_name;
+        this.active = active;
+        this.uid_and_active = this.uid+"_"+active;
     }
 
     public String getUid() {
@@ -73,5 +76,21 @@ public class PhoneCampaignCreated {
     // a compound key that we can query on/order by
     public void setUid_date_status(String uid_date_status) {
         this.uid_date_status = uid_date_status;
+    }
+
+    public boolean getActive() {
+        return  active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public String getUid_and_active() {
+        return uid_and_active;
+    }
+
+    public void setUid_and_active(String uid_and_active) {
+        this.uid_and_active = uid_and_active;
     }
 }
