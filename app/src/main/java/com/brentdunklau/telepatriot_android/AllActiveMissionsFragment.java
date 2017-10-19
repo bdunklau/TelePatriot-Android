@@ -24,107 +24,14 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/18/2017.
  */
 
-public class AllActiveMissionsFragment extends Fragment {
+public class AllActiveMissionsFragment extends MissionListFragment {
 
-    private TextView header_mission_list;
-    private FirebaseRecyclerAdapter<Mission, MissionHolder> mAdapter;
-    private LinearLayoutManager mLinearLayoutManager;
-    private RecyclerView missions;
 
-    View myView;
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.mission_list_fragment, container, false);
-
-        // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
-        missions = (RecyclerView) myView.findViewById(R.id.all_missions_list);
-        mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
-        mLinearLayoutManager.setReverseLayout(true); // puts the most recent inserts at the top
-        missions.setLayoutManager(mLinearLayoutManager);
-
-        header_mission_list = (TextView) myView.findViewById(R.id.header_mission_list);
-        header_mission_list.setText("All Active Missions");
-
-        showMissions();
-
-        setHasOptionsMenu(true);
-        return myView;
+    public AllActiveMissionsFragment() {
+        this.title = "All Active Missions";
+        this.ref = FirebaseDatabase.getInstance().getReference("missions");
+        this.query = this.ref.orderByChild("active").equalTo(true);
     }
-
-
-    private void showMissions() {
-        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("missions");
-        ref.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                doit(ref);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) { }
-        });
-    }
-
-
-    private void doit(DatabaseReference ref) {
-
-        // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
-        mAdapter = new FirebaseRecyclerAdapter<Mission, MissionHolder>(
-                Mission.class,
-                R.layout.mission_summary,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
-                MissionHolder.class,
-                ref.orderByChild("active").equalTo(true)) {
-            @Override
-            public void populateViewHolder(MissionHolder holder, Mission mission, int position) {
-                holder.setMission(mission, this.getRef(position));
-            }
-
-
-            // https://stackoverflow.com/a/41629505
-            @Override
-            public MissionHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                MissionHolder viewHolder = super.onCreateViewHolder(parent, viewType);
-                viewHolder.setOnClickListener(new MissionHolder.ClickListener() {
-                    @Override
-                    public void onItemClick(View view, int position) {
-                        mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                // This is when you touch a mission to see just that mission
-                                // See UserListFragment
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onItemLongClick(View view, int position) {
-                    }
-                });
-                return viewHolder;
-            }
-        };
-
-
-        // automatically scrolls to the last (most recent) mission - easier than reverse ordering
-        // see also ChatFragment
-        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                super.onItemRangeInserted(positionStart, itemCount);
-                missions.scrollToPosition(0);
-            }
-        });
-
-
-
-        missions.setAdapter(mAdapter);
-    }
+    
 
 }
