@@ -54,6 +54,7 @@ public class MissionListFragment extends Fragment {
         missions = (RecyclerView) myView.findViewById(R.id.all_missions_list);
         mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
         mLinearLayoutManager.setReverseLayout(true); // puts the most recent inserts at the top
+        mLinearLayoutManager.setStackFromEnd(true);  // https://stackoverflow.com/a/29810833
         missions.setLayoutManager(mLinearLayoutManager);
 
         header_mission_list = myView.findViewById(R.id.header_mission_list);
@@ -77,6 +78,7 @@ public class MissionListFragment extends Fragment {
             @Override
             public void onCancelled(DatabaseError databaseError) { }
         });
+
     }
 
 
@@ -130,9 +132,10 @@ public class MissionListFragment extends Fragment {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 super.onItemRangeInserted(positionStart, itemCount);
-                missions.scrollToPosition(0);
+                missions.getLayoutManager().scrollToPosition(positionStart); // https://stackoverflow.com/a/33329765
             }
         });
+
 
         missions.setAdapter(mAdapter);
     }
