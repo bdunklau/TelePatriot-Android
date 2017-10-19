@@ -29,7 +29,6 @@ import com.google.firebase.database.ValueEventListener;
 public class MyActiveMissionsFragment extends Fragment {
 
 
-    private SwitchCompat activeSwitch;
     private TextView header_mission_list;
     private FirebaseRecyclerAdapter<Mission, MissionHolder> mAdapter;
     private LinearLayoutManager mLinearLayoutManager;
@@ -45,16 +44,8 @@ public class MyActiveMissionsFragment extends Fragment {
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         missions = (RecyclerView) myView.findViewById(R.id.all_missions_list);
         mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
+        mLinearLayoutManager.setReverseLayout(true); // puts the most recent inserts at the top
         missions.setLayoutManager(mLinearLayoutManager);
-
-        activeSwitch = myView.findViewById(R.id.switch_active);
-        activeSwitch.setSwitchPadding(100);
-        activeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                // TODO this isn't right.  We need a switch for every mission listed
-            }
-        });
 
         header_mission_list = (TextView) myView.findViewById(R.id.header_mission_list);
         header_mission_list.setText("My Active Missions");
@@ -90,7 +81,7 @@ public class MyActiveMissionsFragment extends Fragment {
                 ref.orderByChild("uid_and_active").equalTo(User.getInstance().getUid()+"_true")) {
             @Override
             public void populateViewHolder(MissionHolder holder, Mission mission, int position) {
-                holder.setMission(mission);
+                holder.setMission(mission, this.getRef(position)); // https://stackoverflow.com/a/45731532
             }
 
 
@@ -98,27 +89,7 @@ public class MyActiveMissionsFragment extends Fragment {
             @Override
             public MissionHolder onCreateViewHolder(ViewGroup parent, int viewType) {
                 MissionHolder viewHolder = super.onCreateViewHolder(parent, viewType);
-                viewHolder.setOnClickListener(new MissionHolder.ClickListener() {
-                    @Override
-                    public void onItemClick(View view, int position) {
-                        mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                // This is when you touch a mission to see just that mission
-                                // See UserListFragment
-                            }
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onItemLongClick(View view, int position) {
-                    }
-                });
                 return viewHolder;
             }
         };
@@ -130,17 +101,7 @@ public class MyActiveMissionsFragment extends Fragment {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 super.onItemRangeInserted(positionStart, itemCount);
-                int friendlyMessageCount = mAdapter.getItemCount();
-                int lastVisiblePosition =
-                        mLinearLayoutManager.findLastCompletelyVisibleItemPosition();
-                // If the recycler view is initially being loaded or the
-                // user is at the bottom of the list, scroll to the bottom
-                // of the list to show the newly added message.
-                if (lastVisiblePosition == -1 ||
-                        (positionStart >= (friendlyMessageCount - 1) &&
-                                lastVisiblePosition == (positionStart - 1))) {
-                    missions.scrollToPosition(positionStart);
-                }
+                missions.scrollToPosition(0);
             }
         });
 

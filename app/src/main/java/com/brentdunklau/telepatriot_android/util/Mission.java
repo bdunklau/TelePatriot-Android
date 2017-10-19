@@ -8,7 +8,8 @@ import android.provider.ContactsContract;
 
 public class Mission {
 
-    private String mission_create_date, mission_name, mission_type, name, uid;
+    private String mission_create_date, mission_name, mission_type, name, uid, uid_and_active;
+    private boolean active;
 
     public Mission() {
 
@@ -52,5 +53,21 @@ public class Mission {
 
     public void setUid(String uid) {
         this.uid = uid;
+    }
+
+    public boolean getActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public String getUid_and_active() {
+        return uid_and_active;
+    }
+
+    public void setUid_and_active(String uid_and_active) {
+        this.uid_and_active = uid_and_active;
     }
 }
