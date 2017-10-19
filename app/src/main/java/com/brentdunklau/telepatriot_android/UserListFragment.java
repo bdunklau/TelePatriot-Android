@@ -97,8 +97,6 @@ public class UserListFragment extends Fragment {
 
     private void doit(DatabaseReference ref, final FragmentManager fragmentManager, final Fragment back) {
 
-        final Context activity = view.getContext();
-
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<UserBean, UserHolder>(
                 UserBean.class,
@@ -138,12 +136,6 @@ public class UserListFragment extends Fragment {
                                 } catch(Throwable t) {
                                     t.printStackTrace();
                                 }
-
-                                /*
-                                final Intent it = new Intent(activity, AssignUserActivity.class);
-                                it.putExtra("uid", uid);
-                                startActivity(it);
-                                */
                             }
 
                             @Override

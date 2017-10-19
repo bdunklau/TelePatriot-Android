@@ -30,6 +30,7 @@ public class ListUsersFragment extends AdminFragment implements PassInfo {
             myView = inflater.inflate(R.layout.list_users_fragment, container, false);
         }
         catch(Throwable t) {
+            // TODO do something else
             t.printStackTrace();
         }
 
