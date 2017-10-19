@@ -68,7 +68,7 @@ public class MissionListFragment extends Fragment {
 
 
     private void showMissions() {
-        //final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("missions");
+        // ref is instantiated in the subclasses
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
