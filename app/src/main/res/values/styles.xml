@@ -23,4 +23,8 @@
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light">
     </style>
 
+    <style name="SwitchStyleGreen">
+        <item name="colorControlActivated">#11a02b</item>
+    </style>
+
 </resources>
