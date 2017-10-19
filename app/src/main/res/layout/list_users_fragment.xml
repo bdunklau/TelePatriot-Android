@@ -55,6 +55,14 @@
             android:layout_alignParentEnd="true" />
     </RelativeLayout>
 
+    <SearchView
+        android:id="@+id/search_users"
+        android:background="#ddffffff"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/top_menu_layout"
+        android:layout_centerHorizontal="true" />
+
     <fragment
         android:id="@+id/user_list_fragment"
         android:tag="user_list_fragment"
@@ -63,7 +71,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="0dp"
         tools:layout="@layout/user_list_fragment"
-        android:layout_below="@+id/top_menu_layout"
+        android:layout_below="@+id/search_users"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
