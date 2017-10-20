@@ -11,4 +11,9 @@
         android:title="@string/list_users"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/search_users"
+        android:title="@string/search_users"
+        app:showAsAction="never"/>
+
 </menu>

@@ -66,6 +66,7 @@ public class ListUsersFragment extends AdminFragment implements PassInfo {
                     userListFragment.setRole(role, getFragmentManager(), ListUsersFragment.this);
                 }
                 catch(Throwable t) {
+                    // TODO don't do this
                     t.printStackTrace();
                 }
             }

@@ -10,6 +10,7 @@
     <string name="channel_name">Channel 1</string>
     <string name="channel_description">This is the description of Channel 1</string>
     <string name="list_users">List Users</string>
+    <string name="search_users">Search Users</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
