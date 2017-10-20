@@ -33,8 +33,8 @@ public class UserListFragment extends Fragment {
 
     private TextView roleHeader;
 
-    private FirebaseRecyclerAdapter<UserBean, UserHolder> mAdapter;
     protected String TAG = "UserListFragment";
+    private FirebaseRecyclerAdapter<UserBean, UserHolder> mAdapter;
     private RecyclerView users;
     //private FirebaseDatabase database;
     private View view;

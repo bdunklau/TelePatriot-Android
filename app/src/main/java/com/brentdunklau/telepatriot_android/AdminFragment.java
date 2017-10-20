@@ -45,6 +45,11 @@ public class AdminFragment extends Fragment {
                         .replace(R.id.content_frame, new ListUsersFragment())
                         .commit();
                 return true;
+            case(R.id.search_users):
+                fragmentManager.beginTransaction()
+                        .replace(R.id.content_frame, new SearchUsersFragment())
+                        .commit();
+                return true;
             default: return super.onOptionsItemSelected(item);
         }
     }
