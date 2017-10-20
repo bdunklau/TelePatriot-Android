@@ -1,7 +1,9 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -10,6 +12,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -73,6 +76,7 @@ public class TeamsFragment extends Fragment {
 
 
     private void setUI() {
+        ((Activity)myView.getContext()).getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         new_team_name = myView.findViewById(R.id.new_team_name);
         new_team_name.addTextChangedListener(new TextWatcher() {
             @Override
@@ -89,7 +93,6 @@ public class TeamsFragment extends Fragment {
             public void afterTextChanged(Editable editable) {
                 if(new_team_name.getText().toString().length() > 0) {
                     submit_new_team.setEnabled(true);
-                    // this is where we put the code that says so-and-so is typing
 
                 }
                 else {
@@ -105,8 +108,21 @@ public class TeamsFragment extends Fragment {
             public void onClick(View view) {
                 Team team = new Team(new_team_name.getText().toString());
                 FirebaseDatabase.getInstance().getReference("teams").push().setValue(team);
+                setField(new_team_name, "");
+                submit_new_team.setEnabled(false);
             }
         });
+    }
+
+
+    private void setField(final EditText field, final String str) {
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                field.setText(str);
+            }
+        };
+        new Handler().post(r);
     }
 
 
