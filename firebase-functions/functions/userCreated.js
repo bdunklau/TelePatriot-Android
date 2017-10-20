@@ -20,15 +20,26 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
     const newUserRef = ref.child(`/users/${uid}`)
 
 
+    console.log("createUserAccount: event.data = ", event.data)
     var name = email // default value if name not present
     if(event.data.displayName) name = event.data.displayName
     var created = date.asCentralTime()
     var userrecord = {name:name, photoUrl:photoUrl, email:email, created: created}
 
     // remember, .set() returns a promise
-    //return newUserRef.set(userrecord)
+    // just about everything returns a promise
 
     return newUserRef.set(userrecord).then(snap => {
+
         return ref.child(`/no_roles/${uid}`).set(userrecord)
+            .then( hmmm => {
+                admin.auth().getUser(uid)
+                    .then(function(userRecord) {
+                        console.log("Successfully fetched user data:", userRecord.toJSON());
+                        ref.child(`/users/${uid}/name`).set(userRecord.displayName) // displayName not ready
+                        // above, but it is at this point
+                        // https://github.com/firebase/firebaseui-web/issues/197
+                    })
+            })
     })
 })
