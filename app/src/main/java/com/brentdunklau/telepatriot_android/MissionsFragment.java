@@ -1,10 +1,8 @@
 package com.brentdunklau.telepatriot_android;
 
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -16,26 +14,35 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 /**
- * Created by bdunklau on 10/11/17.
+ * Created by bdunklau on 10/19/17.
  */
 
-public class DirectorFragment extends Fragment {
+public class MissionsFragment extends DirectorFragment {
 
-    Button button_missions;
-    Button button_teams;
+    Button btnNewPhoneCampaign;
+    Button btnMyActiveMissions;
+    Button btnAllActiveMissions;
+    Button btnAllMyMissions;
+    Button btnAllMissions;
 
     View myView;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.director_fragment, container, false);
+        myView = inflater.inflate(R.layout.missions_fragment, container, false);
 
-        button_missions = myView.findViewById(R.id.button_missions);
-        button_teams = myView.findViewById(R.id.button_teams);
+        btnNewPhoneCampaign = myView.findViewById(R.id.button_new_phone_campaign);
+        btnMyActiveMissions = myView.findViewById(R.id.button_my_active_missions);
+        btnAllActiveMissions = myView.findViewById(R.id.button_all_active_missions);
+        btnAllMyMissions = myView.findViewById(R.id.button_all_my_missions);
+        btnAllMissions = myView.findViewById(R.id.button_all_missions);
 
-        wireUp(button_missions, new MissionsFragment());
-        wireUp(button_teams, new TeamsFragment());
+        wireUp(btnNewPhoneCampaign, new NewPhoneCampaignFragment());
+        wireUp(btnMyActiveMissions, new MyActiveMissionsFragment());
+        wireUp(btnAllActiveMissions, new AllActiveMissionsFragment());
+        wireUp(btnAllMyMissions, new AllMyMissionsFragment());
+        wireUp(btnAllMissions, new AllMissionsFragment());
 
         setHasOptionsMenu(true);
         return myView;
@@ -62,26 +69,4 @@ public class DirectorFragment extends Fragment {
         }
     }
 
-
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.director_menu, menu);  // Use filter.xml from step 1
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        FragmentManager fragmentManager = getFragmentManager();
-        switch(item.getItemId()) {
-            case(R.id.menu_missions):
-                fragmentManager.beginTransaction().replace(R.id.content_frame, new MissionsFragment()).commit();
-                return true;
-            case(R.id.menu_teams):
-                fragmentManager.beginTransaction()
-                        .replace(R.id.content_frame, new TeamsFragment())
-                        .commit();
-                return true;
-            default: return super.onOptionsItemSelected(item);
-        }
-    }
 }

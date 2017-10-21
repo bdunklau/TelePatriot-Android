@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity
         Runnable r = new Runnable() {
             @Override
             public void run() {
+                // This is where we set the name, email and profile pick in the Navigation Drawer
                 text_user_name.setText(User.getInstance().getName());
                 text_user_email.setText(User.getInstance().getEmail());
                 Picasso.with(MainActivity.this).load(User.getInstance().getPhotoURL()).fit().into(image_profile_pic);

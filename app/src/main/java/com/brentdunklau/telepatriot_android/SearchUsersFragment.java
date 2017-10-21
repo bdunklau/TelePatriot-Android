@@ -3,6 +3,7 @@ package com.brentdunklau.telepatriot_android;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,6 +12,7 @@ import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.UserBean;
@@ -82,6 +84,10 @@ public class SearchUsersFragment extends Fragment {
                         viewHolder.setOnClickListener(new UserHolder.ClickListener() {
                             @Override
                             public void onItemClick(View view, int position) {
+
+                                InputMethodManager imm = (InputMethodManager) myView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+
                                 firebaseRecyclerAdapter22.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {

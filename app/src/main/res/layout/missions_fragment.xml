@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/header_missions_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:layout_marginLeft="10dp"
+        android:text="Missions"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+
+    <Button
+        android:id="@+id/button_new_phone_campaign"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:textColor="#ffffff"
+        android:background="@color/com_facebook_blue"
+        android:text="New Phone Campaign" />
+
+
+    <Button
+        android:id="@+id/button_my_active_missions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_below="@+id/button_new_phone_campaign"
+        android:textColor="#ffffff"
+        android:background="@color/com_facebook_blue"
+        android:text="My Active Missions" />
+
+    <Button
+        android:id="@+id/button_all_active_missions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_below="@+id/button_my_active_missions"
+        android:textColor="#ffffff"
+        android:background="@color/com_facebook_blue"
+        android:text="All Active Missions" />
+
+    <Button
+        android:id="@+id/button_all_my_missions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_below="@+id/button_all_active_missions"
+        android:textColor="#ffffff"
+        android:background="@color/com_facebook_blue"
+        android:text="All My Missions" />
+
+    <Button
+        android:id="@+id/button_all_missions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_below="@+id/button_all_my_missions"
+        android:textColor="#ffffff"
+        android:background="@color/com_facebook_blue"
+        android:text="All Missions" />
+
+
+</RelativeLayout>

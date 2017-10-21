@@ -1,0 +1,7 @@
+Go to the Terminal in Android Studio
+
+from any directory, run this:
+
+keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore | openssl sha1 -binary | openssl base64
+
+password:  android
