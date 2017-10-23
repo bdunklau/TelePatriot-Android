@@ -136,6 +136,8 @@ public class MainActivity extends AppCompatActivity
             fragmentManager.beginTransaction().replace(R.id.content_frame, new DirectorFragment()).commit();
         } else if (id == R.id.nav_admin_layout) {
             fragmentManager.beginTransaction().replace(R.id.content_frame, new AdminFragment()).commit();
+        } else if( id == R.id.nav_send_petition) {
+            fragmentManager.beginTransaction().replace(R.id.content_frame, new SendPetitionFragment()).commit();
         } else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
             String uid = User.getInstance().getUid();
             ChatFragment chatFragment = new ChatFragment();
