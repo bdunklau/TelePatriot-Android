@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity
 
 
         if (id == R.id.nav_volunteer_layout) {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new ConfCallFragment()).commit();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, new VolunteerFragment()).commit();
         } else if (id == R.id.nav_director_layout) {
             fragmentManager.beginTransaction().replace(R.id.content_frame, new DirectorFragment()).commit();
         } else if (id == R.id.nav_admin_layout) {
