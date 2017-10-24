@@ -10,6 +10,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -18,6 +20,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.util.CustomPhoneStateListener;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -27,12 +30,32 @@ import com.squareup.picasso.Picasso;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    //TelephonyManager tManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+
+/*
+
+        //  http://www.truiton.com/2014/08/android-phonestatelistener-example/
+        tManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        tManager.listen(new CustomPhoneStateListener(this),
+                PhoneStateListener.LISTEN_CALL_STATE
+                        | PhoneStateListener.LISTEN_CELL_INFO // Requires API 17
+                        | PhoneStateListener.LISTEN_CELL_LOCATION
+                        | PhoneStateListener.LISTEN_DATA_ACTIVITY
+                        | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE
+                        | PhoneStateListener.LISTEN_SERVICE_STATE
+                        | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS
+                        | PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR
+                        | PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR);
+
+*/
 
 
 /*
