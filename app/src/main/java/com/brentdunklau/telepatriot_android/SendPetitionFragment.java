@@ -1,14 +1,11 @@
 package com.brentdunklau.telepatriot_android;
 
-import android.*;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -27,8 +24,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.brentdunklau.telepatriot_android.util.User;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 
 /**
@@ -50,8 +45,19 @@ public class SendPetitionFragment extends Fragment {
         // pop up a dialog asking for it.
         // SEE https://stackoverflow.com/a/35861189
         if(User.getInstance().getRecruiter_id() == null) {
+            // get prompts.xml view
+            LayoutInflater li = LayoutInflater.from(myView.getContext());
+            View promptsView = li.inflate(R.layout.ok_cancel_dialog_one_numeric_input, null);
+
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(myView.getContext());
             alertDialogBuilder.setView(myView);
+
+            // set prompts.xml to alertdialog builder
+            alertDialogBuilder.setView(promptsView);
+
+            final EditText userInput = (EditText) promptsView
+                    .findViewById(R.id.dialog_input);
+
             // set dialog message
             alertDialogBuilder
                     .setCancelable(false)
@@ -60,7 +66,7 @@ public class SendPetitionFragment extends Fragment {
                                 public void onClick(DialogInterface dialog,int id) {
                                     // get user input and set it to result
                                     // edit text
-                                    result.setText(userInput.getText());
+                                    User.getInstance().setRecruiter_id(userInput.getText().toString());
                                 }
                             })
                     .setNegativeButton("Cancel",
@@ -124,16 +130,14 @@ public class SendPetitionFragment extends Fragment {
             xxxx();
             SmsManager sm = SmsManager.getDefault();
             String tel = phone_field_send_petition.getText().toString();
-            /*
-            Intent intent = new Intent(Intent.ACTION_CALL);
-            intent.setData(Uri.parse("sms:" + tel));
-            startActivity(intent);
-            */
-            String msg = User.getInstance().getName()+" would like you to sign the Convention of States petition: www.cosaction.com/?recruiter_id=12476";
+            String petition = "www.cosaction.com";
+            if(User.getInstance().getRecruiter_id() != null)
+                petition += "/?recruiter_id="+User.getInstance().getRecruiter_id();
+            String msg = User.getInstance().getName()+" would like you to sign the Convention of States petition: "+petition;
             sm.sendTextMessage(tel, null, msg, null, null);
             clear(phone_field_send_petition);
             hideKeyboard();
-            Toast.makeText(myView.getContext(), "Petition Sent !", Toast.LENGTH_SHORT).show();
+            Toast.makeText(myView.getContext(), "Petition Sent", Toast.LENGTH_SHORT).show();
 
         } catch(Throwable t) {
             // TODO don't do this

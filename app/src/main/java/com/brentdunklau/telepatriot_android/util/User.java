@@ -69,6 +69,19 @@ public class User implements FirebaseAuth.AuthStateListener {
         final String name = getName();
 
         userRef = database.getReference("/users/"+getUid());
+        // redundant because we're getting roles and topics below also
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                UserBean ub = dataSnapshot.getValue(UserBean.class);
+                User.this.recruiter_id = ub.getRecruiter_id();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
         userRef.child("roles").addChildEventListener(childEventListener);
 
         userRef.child("topics").addChildEventListener(new ChildEventListener() {
