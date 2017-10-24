@@ -2,6 +2,8 @@ package com.brentdunklau.telepatriot_android.util;
 
 import android.support.annotation.NonNull;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -25,6 +27,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     private boolean isAdmin, isDirector, isVolunteer;
+    private String recruiter_id;
     private ChildEventListener childEventListener;
     private static User singleton;
     private List<RoleAssignedListener> roleAssignedListeners = new ArrayList<RoleAssignedListener>();
@@ -66,6 +69,19 @@ public class User implements FirebaseAuth.AuthStateListener {
         final String name = getName();
 
         userRef = database.getReference("/users/"+getUid());
+        // redundant because we're getting roles and topics below also
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                UserBean ub = dataSnapshot.getValue(UserBean.class);
+                User.this.recruiter_id = ub.getRecruiter_id();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
         userRef.child("roles").addChildEventListener(childEventListener);
 
         userRef.child("topics").addChildEventListener(new ChildEventListener() {
@@ -135,7 +151,20 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public String getEmail() {
-        return getFirebaseUser()!=null ? getFirebaseUser().getEmail() : "uid not available";
+        return getFirebaseUser()!=null ? getFirebaseUser().getEmail() : "email not available";
+    }
+
+    public void setRecruiter_id(final String recruiter_id) {
+        database.getReference("/users/"+getUid()+"/recruiter_id").setValue(recruiter_id).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                User.this.recruiter_id = recruiter_id;
+            }
+        });
+    }
+
+    public String getRecruiter_id() {
+        return recruiter_id;
     }
 
     public String getPhotoURL() {
