@@ -4,6 +4,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.R;
+
 /**
  * Created by bdunklau on 10/24/17.
  */
@@ -15,6 +17,11 @@ public class MissionDetailsHolder extends RecyclerView.ViewHolder {
 
     public MissionDetailsHolder(View itemView) {
         super(itemView);
+        // LESSON LEARNED HERE - FORGOT TO DO THIS.
+        // THE APP KEPT CRASHING - NO IDEA WHY UNTIL I REALLY
+        // STARTING COMPARING THIS WITH THE UserHolder CLASS
+        mission_item_name = itemView.findViewById(R.id.mission_item_name);
+        mission_item_phone = itemView.findViewById(R.id.mission_item_phone);
     }
 
     public void setMissionDetails(MissionDetails missionDetails) {

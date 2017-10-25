@@ -17,7 +17,7 @@ public class MissionDetails {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name!=null ? name : "(no name)";
     }
 
     public String getPhone() {
@@ -25,7 +25,7 @@ public class MissionDetails {
     }
 
     public void setPhone(String phone) {
-        this.phone = phone;
+        this.phone = phone!=null ? phone : "(no phone)";
     }
 
 }

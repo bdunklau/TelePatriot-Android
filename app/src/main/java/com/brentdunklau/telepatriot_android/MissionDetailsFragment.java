@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionDetails;
 import com.brentdunklau.telepatriot_android.util.MissionDetailsHolder;
 import com.brentdunklau.telepatriot_android.util.PhoneCampaignCreated;
@@ -34,6 +35,7 @@ import com.google.firebase.database.ValueEventListener;
 
 public class MissionDetailsFragment extends Fragment {
 
+    private Mission mission;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid;
     private String missionId;
     private FirebaseRecyclerAdapter<MissionDetails, MissionDetailsHolder> mAdapter;
@@ -48,6 +50,7 @@ public class MissionDetailsFragment extends Fragment {
 
         //String uid_date_status = User.getInstance().getUid()+"_"+
         mission_name = myView.findViewById(R.id.heading_mission_name);
+        mission_name.setText(mission.getMission_name());
 
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         mission_items = (RecyclerView) myView.findViewById(R.id.mission_items);
@@ -89,6 +92,9 @@ public class MissionDetailsFragment extends Fragment {
 
     public void getMissionItems() {
 
+        if(missionId == null)
+            return;
+
         try {
             final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("/missions/"+missionId);
 
@@ -101,7 +107,7 @@ public class MissionDetailsFragment extends Fragment {
                 public void onCancelled(DatabaseError databaseError) { }
             };
 
-            ref.orderByChild("name")/*.limitToFirst(25) limit somehow? */.addValueEventListener(v2);
+            ref/*.limitToFirst(25) limit somehow? */.addValueEventListener(v2);
 
 
         } catch(Throwable t) {
@@ -117,7 +123,7 @@ public class MissionDetailsFragment extends Fragment {
                 MissionDetails.class,
                 R.layout.mission_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 MissionDetailsHolder.class,
-                ref) {
+                ref.child("data").orderByKey()/*.limitToFirst(10)*/) {
             @Override
             public void populateViewHolder(MissionDetailsHolder holder, MissionDetails missionDetails, int position) {
                 holder.setMissionDetails(missionDetails);
@@ -156,6 +162,10 @@ public class MissionDetailsFragment extends Fragment {
 
     public void setMissionId(String missionId) {
         this.missionId = missionId;
+    }
+
+    public void setMission(Mission mission) {
+        this.mission = mission;
     }
 
 }
