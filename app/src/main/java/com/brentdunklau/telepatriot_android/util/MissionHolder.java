@@ -40,6 +40,15 @@ public class MissionHolder extends RecyclerView.ViewHolder {
 
         activeSwitch = itemView.findViewById(R.id.switch_active);
         activeSwitch.setSwitchPadding(10);
+
+        // https://stackoverflow.com/a/41629505
+        //listener set on ENTIRE ROW, you may set on individual components within a row.
+        itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mClickListener.onItemClick(v, getAdapterPosition());
+            }
+        });
     }
 
     public void setMission(final Mission mission, final DatabaseReference ref) {

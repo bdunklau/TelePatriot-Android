@@ -1,6 +1,8 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -84,6 +86,8 @@ public class MissionListFragment extends Fragment {
 
     private void doit(DatabaseReference ref) {
 
+        final FragmentManager fragmentManager = getFragmentManager();
+
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<Mission, MissionHolder>(
                 Mission.class,
@@ -107,7 +111,37 @@ public class MissionListFragment extends Fragment {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
                                 // This is when you touch a mission to see just that mission
-                                // See UserListFragment
+                                // Taken from UserListFragment
+
+                                if(dataSnapshot == null) {
+                                    return;
+                                }
+
+                                // whenever you touch one of the missions, that triggers another query that looks
+                                // at the items (mission items) inside the mission
+                                String missionId = dataSnapshot.getKey();
+                                Mission mission = dataSnapshot.getValue(Mission.class);
+
+                                // Instead of going to an activity, we need to load a fragment...
+                                MissionDetailsFragment fragment = new MissionDetailsFragment();
+                                if(missionId == null) {
+                                    // shouldn't happen
+                                    int i=0;
+                                }
+                                else {
+                                    fragment.setMissionId(missionId);
+                                    fragment.setMission(mission);
+                                    //fragment.setFragmentManager(fragmentManager, MissionListFragment.this);
+                                    try {
+                                        FragmentTransaction t1 = fragmentManager.beginTransaction();
+                                        FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
+                                        int res = t2.commit();
+                                        int i = 1;
+                                    } catch (Throwable t) {
+                                        // TODO don't do this
+                                        t.printStackTrace();
+                                    }
+                                }
                             }
 
                             @Override

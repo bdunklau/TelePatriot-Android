@@ -134,6 +134,7 @@ public class UserListFragment extends Fragment {
                                     int res = t2.commit();
                                     int i=1;
                                 } catch(Throwable t) {
+                                    // TODO don't do this
                                     t.printStackTrace();
                                 }
                             }
