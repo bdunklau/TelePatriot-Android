@@ -34,8 +34,11 @@ public class DirectorFragment extends Fragment {
         button_missions = myView.findViewById(R.id.button_missions);
         button_teams = myView.findViewById(R.id.button_teams);
 
-        wireUp(button_missions, new MissionsFragment());
-        wireUp(button_teams, new TeamsFragment());
+        MissionsFragment missionsFragment = new MissionsFragment();
+        TeamsFragment teamsFragment = new TeamsFragment();
+
+        wireUp(button_missions, missionsFragment);
+        wireUp(button_teams, teamsFragment);
 
         setHasOptionsMenu(true);
         return myView;

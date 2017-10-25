@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <!--  IMPORTANT:
+      android:layout_height MUST BE wrap_content above, otherwise...
+      https://stackoverflow.com/a/36578253
+      -->
+
+
+    <TextView
+        android:id="@+id/mission_item_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp"
+        android:textStyle="bold"
+        android:textColor="#999999"
+        android:gravity="left"
+        android:textSize="12sp"
+        tools:text="date here" />
+
+    <TextView
+        android:id="@+id/mission_item_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="0dp"
+        android:gravity="left"
+        android:textSize="12sp"
+        tools:text="name here" />
+
+</LinearLayout>
