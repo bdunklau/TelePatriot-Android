@@ -28,7 +28,7 @@ import com.google.firebase.database.ValueEventListener;
 public class MissionDetailsFragment extends Fragment {
 
     private Mission mission;
-    private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid;
+    private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
     private String missionId;
     private FirebaseRecyclerAdapter<MissionDetail, MissionDetailHolder> mAdapter;
     private RecyclerView mission_items;
@@ -43,6 +43,12 @@ public class MissionDetailsFragment extends Fragment {
         //String uid_date_status = User.getInstance().getUid()+"_"+
         mission_name = myView.findViewById(R.id.heading_mission_name);
         mission_name.setText(mission.getMission_name());
+
+        mission_description = myView.findViewById(R.id.mission_description);
+        mission_description.setText(mission.getDescription());
+
+        mission_script = myView.findViewById(R.id.mission_script);
+        mission_script.setText(mission.getScript());
 
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         mission_items = (RecyclerView) myView.findViewById(R.id.mission_items);
