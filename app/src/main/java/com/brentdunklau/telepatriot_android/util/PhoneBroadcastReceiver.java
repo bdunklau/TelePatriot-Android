@@ -49,7 +49,7 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
                 state = TelephonyManager.CALL_STATE_OFFHOOK;
                 MissionItemEvent m = new MissionItemEvent(new Date().toString(), "incoming call", User.getInstance().getUid(), User.getInstance().getName(), mission, phone);
                 ref.child(phone).push().setValue(m);
-
+                ref.push().setValue(m);
             }
             else if(stateStr.equals(TelephonyManager.EXTRA_STATE_RINGING)){
                 state = TelephonyManager.CALL_STATE_RINGING;
