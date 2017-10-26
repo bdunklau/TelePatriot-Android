@@ -1,32 +1,24 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.Mission;
-import com.brentdunklau.telepatriot_android.util.MissionDetails;
-import com.brentdunklau.telepatriot_android.util.MissionDetailsHolder;
-import com.brentdunklau.telepatriot_android.util.PhoneCampaignCreated;
-import com.brentdunklau.telepatriot_android.util.User;
-import com.brentdunklau.telepatriot_android.util.UserBean;
-import com.brentdunklau.telepatriot_android.util.UserHolder;
+import com.brentdunklau.telepatriot_android.util.MissionDetail;
+import com.brentdunklau.telepatriot_android.util.MissionDetailHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 /**
@@ -38,7 +30,7 @@ public class MissionDetailsFragment extends Fragment {
     private Mission mission;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid;
     private String missionId;
-    private FirebaseRecyclerAdapter<MissionDetails, MissionDetailsHolder> mAdapter;
+    private FirebaseRecyclerAdapter<MissionDetail, MissionDetailHolder> mAdapter;
     private RecyclerView mission_items;
 
     View myView;
@@ -56,32 +48,10 @@ public class MissionDetailsFragment extends Fragment {
         mission_items = (RecyclerView) myView.findViewById(R.id.mission_items);
         mission_items.setLayoutManager(new LinearLayoutManager(myView.getContext()));
 
-
-        /* This might BE what we want...
-        Query q = FirebaseDatabase.getInstance().getReference("missions/"+missionId).limitToFirst(1);
-        q.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                PhoneCampaignCreated c = dataSnapshot.getValue(PhoneCampaignCreated.class);
-                mission_name.setText(c.getMission_name());
-                mission_details.setText(c.getMission_type()+" created "+c.getCreate_date());
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) { }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) { }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) { }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) { }
-        });
-*/
-
-        //mission_name = myView.findViewById(R.i)
+        RecyclerView.ItemAnimator animator = mission_items.getItemAnimator();
+        if (animator instanceof SimpleItemAnimator) {
+            ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
+        }
 
         getMissionItems();
 
@@ -119,22 +89,26 @@ public class MissionDetailsFragment extends Fragment {
     private void doit(DatabaseReference ref) {
 
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
-        mAdapter = new FirebaseRecyclerAdapter<MissionDetails, MissionDetailsHolder>(
-                MissionDetails.class,
+        mAdapter = new FirebaseRecyclerAdapter<MissionDetail, MissionDetailHolder>(
+                MissionDetail.class,
                 R.layout.mission_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
-                MissionDetailsHolder.class,
-                ref.child("data").orderByKey()/*.limitToFirst(10)*/) {
+                MissionDetailHolder.class,
+                ref.child("data")/*.orderByKey()*//*.limitToFirst(10)*/) {
             @Override
-            public void populateViewHolder(MissionDetailsHolder holder, MissionDetails missionDetails, int position) {
-                holder.setMissionDetails(missionDetails);
+            public void populateViewHolder(MissionDetailHolder holder, MissionDetail missionDetail, int position) {
+                holder.setMissionDetail(missionDetail);
+
+                // nested FirebaseRecyclerAdapter...
+                // https://stackoverflow.com/q/42498647
             }
 
 
+            /*
             // https://stackoverflow.com/a/41629505
             @Override
-            public MissionDetailsHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                MissionDetailsHolder viewHolder = super.onCreateViewHolder(parent, viewType);
-                viewHolder.setOnClickListener(new MissionDetailsHolder.ClickListener() {
+            public MissionDetailHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                MissionDetailHolder viewHolder = super.onCreateViewHolder(parent, viewType);
+                viewHolder.setOnClickListener(new MissionDetailHolder.ClickListener() {
                     @Override
                     public void onItemClick(View view, int position) {
                         mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
@@ -156,6 +130,7 @@ public class MissionDetailsFragment extends Fragment {
                 });
                 return viewHolder;
             }
+            */
         };
         mission_items.setAdapter(mAdapter);
     }

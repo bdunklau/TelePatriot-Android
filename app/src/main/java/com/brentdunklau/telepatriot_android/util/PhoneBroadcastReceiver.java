@@ -4,8 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.telephony.TelephonyManager;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -22,29 +20,35 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("calls");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
 
+        String mission = intent.getExtras()!=null ? intent.getExtras().getString("mission") : null;
 
         //  https://www.studytutorial.in/android-phonestatelistener-phone-call-broadcast-receiver-tutorial
         String savedNumber;
         //We listen to two intents.  The new outgoing call only tells us of an outgoing call.  We use it to get the number.
         if (intent.getAction().equals("android.intent.action.NEW_OUTGOING_CALL")) {
             savedNumber = intent.getExtras().getString("android.intent.extra.PHONE_NUMBER");
-            ref.child(savedNumber).push().setValue(new PhoneEvent(new Date().toString(), "outgoing call", User.getInstance().getUid(), User.getInstance().getName()));
-
+            MissionItemEvent m = new MissionItemEvent(new Date().toString(), "outgoing call", User.getInstance().getUid(), User.getInstance().getName(), mission, savedNumber);
+            ref.child(savedNumber).push().setValue(m);
+            ref.push().setValue(m);
         }
         else{
+            // put the mission name in the 'extras' when you make the call.  otherwise, we won't know
+            // what mission this is for
             String stateStr = intent.getExtras().getString(TelephonyManager.EXTRA_STATE);
             String phone = intent.getExtras().getString(TelephonyManager.EXTRA_INCOMING_NUMBER);
             int state = 0;
             if(stateStr.equals(TelephonyManager.EXTRA_STATE_IDLE)){
                 state = TelephonyManager.CALL_STATE_IDLE;
-                ref.child(phone).push().setValue(new PhoneEvent(new Date().toString(), "call ended", User.getInstance().getUid(), User.getInstance().getName()));
-
+                MissionItemEvent m = new MissionItemEvent(new Date().toString(), "call ended", User.getInstance().getUid(), User.getInstance().getName(), mission, phone);
+                ref.child(phone).push().setValue(m);
+                ref.push().setValue(m);
             }
             else if(stateStr.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)){
                 state = TelephonyManager.CALL_STATE_OFFHOOK;
-                ref.child(phone).push().setValue(new PhoneEvent(new Date().toString(), "incoming call", User.getInstance().getUid(), User.getInstance().getName()));
+                MissionItemEvent m = new MissionItemEvent(new Date().toString(), "incoming call", User.getInstance().getUid(), User.getInstance().getName(), mission, phone);
+                ref.child(phone).push().setValue(m);
 
             }
             else if(stateStr.equals(TelephonyManager.EXTRA_STATE_RINGING)){

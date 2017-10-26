@@ -61,6 +61,7 @@ public class ConfCallFragment extends Fragment {
                     String tel = text_214.getText().toString();
                     Intent intent = new Intent(Intent.ACTION_CALL);
                     intent.setData(Uri.parse("tel:" + tel));
+                    intent.putExtra("mission", "Big Ol' Mission");
                     startActivity(intent);
                 } catch(Throwable t) {
                     // TODO don't do this

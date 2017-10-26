@@ -24,6 +24,7 @@ public class MissionsFragment extends DirectorFragment {
     Button btnAllActiveMissions;
     Button btnAllMyMissions;
     Button btnAllMissions;
+    Button btnAllActivity;
 
     View myView;
 
@@ -37,12 +38,14 @@ public class MissionsFragment extends DirectorFragment {
         btnAllActiveMissions = myView.findViewById(R.id.button_all_active_missions);
         btnAllMyMissions = myView.findViewById(R.id.button_all_my_missions);
         btnAllMissions = myView.findViewById(R.id.button_all_missions);
+        btnAllActivity = myView.findViewById(R.id.button_all_activity);
 
         wireUp(btnNewPhoneCampaign, new NewPhoneCampaignFragment());
         wireUp(btnMyActiveMissions, new MyActiveMissionsFragment());
         wireUp(btnAllActiveMissions, new AllActiveMissionsFragment());
         wireUp(btnAllMyMissions, new AllMyMissionsFragment());
         wireUp(btnAllMissions, new AllMissionsFragment());
+        wireUp(btnAllActivity, new AllActivityFragment());
 
         setHasOptionsMenu(true);
         return myView;

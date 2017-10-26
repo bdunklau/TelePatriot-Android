@@ -43,15 +43,6 @@
             </intent-filter>
         </activity>
 
-        <!--
-        <activity   android:name=".PhoneCallActivity" android:label="phone call">
-            <intent-filter>
-                <action android:name="com.scytec.datamobile.vd.gui.android.AppPreferenceActivity" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        -->
-
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">

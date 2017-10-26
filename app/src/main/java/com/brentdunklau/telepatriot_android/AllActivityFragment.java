@@ -14,62 +14,56 @@ import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionHolder;
+import com.brentdunklau.telepatriot_android.util.MissionItemEvent;
+import com.brentdunklau.telepatriot_android.util.MissionItemEventHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 /**
- * Created by bdunklau on 10/19/17.
- *
- * Created this class to consolidate duplicated code in 4 other classes:
- * AllMissionsFragment, AllMyMissionsFragment, MyActiveMissionsFragment and AllActiveMissionsFragment
- * Almost everything in these classes is duplicated code.  The only thing that's different is
- * the stuff we now pass in from each of their constructors
+ * Created by bdunklau on 10/26/17.
  */
 
-public class MissionListFragment extends Fragment {
-    protected String title;
+public class AllActivityFragment extends Fragment {
+    protected String title = "All Activity";
     protected DatabaseReference ref;
     protected Query query;
 
-    public MissionListFragment() {
 
-    }
-
-
-    private TextView header_mission_list;
-    private FirebaseRecyclerAdapter<Mission, MissionHolder> mAdapter;
+    private TextView header_activity_list;
+    private FirebaseRecyclerAdapter<MissionItemEvent, MissionItemEventHolder> mAdapter;
     private LinearLayoutManager mLinearLayoutManager;
-    private RecyclerView missions;
+    private RecyclerView missionItemEvents;
     View myView;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.mission_list_fragment, container, false);
+        myView = inflater.inflate(R.layout.all_activity_fragment, container, false);
 
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
-        missions = (RecyclerView) myView.findViewById(R.id.all_missions_list);
+        missionItemEvents = (RecyclerView) myView.findViewById(R.id.all_activity_list);
         mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
         mLinearLayoutManager.setReverseLayout(true); // puts the most recent inserts at the top
         mLinearLayoutManager.setStackFromEnd(true);  // https://stackoverflow.com/a/29810833
-        missions.setLayoutManager(mLinearLayoutManager);
+        missionItemEvents.setLayoutManager(mLinearLayoutManager);
 
-        header_mission_list = myView.findViewById(R.id.header_activity_list);
-        header_mission_list.setText(title);
+        header_activity_list = myView.findViewById(R.id.header_activity_list);
+        header_activity_list.setText(title);
 
-        showMissions();
+        showMissionActivity();
 
         setHasOptionsMenu(true);
         return myView;
     }
 
 
-    private void showMissions() {
-        // ref is instantiated in the subclasses
+    private void showMissionActivity() {
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity"); // i.e. actual human activities like making phone calls
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -86,24 +80,24 @@ public class MissionListFragment extends Fragment {
     private void doit(DatabaseReference ref) {
 
         final FragmentManager fragmentManager = getFragmentManager();
-
+        query = ref;
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
-        mAdapter = new FirebaseRecyclerAdapter<Mission, MissionHolder>(
-                Mission.class,
-                R.layout.mission_summary,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
-                MissionHolder.class,
+        mAdapter = new FirebaseRecyclerAdapter<MissionItemEvent, MissionItemEventHolder>(
+                MissionItemEvent.class,
+                R.layout.mission_item_event,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
+                MissionItemEventHolder.class,
                 query) {
             @Override
-            public void populateViewHolder(MissionHolder holder, Mission mission, int position) {
-                holder.setMission(mission, this.getRef(position)); // https://stackoverflow.com/a/45731532
+            public void populateViewHolder(MissionItemEventHolder holder, MissionItemEvent missionItemEvent, int position) {
+                holder.setMissionItemEvent(missionItemEvent); // https://stackoverflow.com/a/45731532
             }
 
 
             // https://stackoverflow.com/a/41629505
             @Override
-            public MissionHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                MissionHolder viewHolder = super.onCreateViewHolder(parent, viewType);
-                viewHolder.setOnClickListener(new MissionHolder.ClickListener() {
+            public MissionItemEventHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                MissionItemEventHolder viewHolder = super.onCreateViewHolder(parent, viewType);
+                viewHolder.setOnClickListener(new MissionItemEventHolder.ClickListener() {
                     @Override
                     public void onItemClick(View view, int position) {
                         mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
@@ -112,6 +106,8 @@ public class MissionListFragment extends Fragment {
                                 // This is when you touch a mission to see just that mission
                                 // Taken from UserListFragment
 
+                                /*  Taken from another class.  Not doing anything in this class when the user
+                                    touches one of these rows
                                 if(dataSnapshot == null) {
                                     return;
                                 }
@@ -119,7 +115,7 @@ public class MissionListFragment extends Fragment {
                                 // whenever you touch one of the missions, that triggers another query that looks
                                 // at the items (mission items) inside the mission
                                 String missionId = dataSnapshot.getKey();
-                                Mission mission = dataSnapshot.getValue(Mission.class);
+                                MissionItemEvent missionItemEvent = dataSnapshot.getValue(MissionItemEvent.class);
 
                                 // Instead of going to an activity, we need to load a fragment...
                                 MissionDetailsFragment fragment = new MissionDetailsFragment();
@@ -141,6 +137,7 @@ public class MissionListFragment extends Fragment {
                                         t.printStackTrace();
                                     }
                                 }
+                                */
                             }
 
                             @Override
@@ -165,12 +162,12 @@ public class MissionListFragment extends Fragment {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 super.onItemRangeInserted(positionStart, itemCount);
-                missions.getLayoutManager().scrollToPosition(positionStart); // https://stackoverflow.com/a/33329765
+                missionItemEvents.getLayoutManager().scrollToPosition(positionStart); // https://stackoverflow.com/a/33329765
             }
         });
 
 
-        missions.setAdapter(mAdapter);
+        missionItemEvents.setAdapter(mAdapter);
     }
 
 }

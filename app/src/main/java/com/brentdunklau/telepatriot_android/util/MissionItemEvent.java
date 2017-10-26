@@ -6,20 +6,22 @@ import android.provider.ContactsContract;
  * Created by bdunklau on 10/24/17.
  */
 
-public class PhoneEvent {
+public class MissionItemEvent {
 
-    String event_date, event_type, volunteer_uid, volunteer_name;
+    String event_date, event_type, volunteer_uid, volunteer_name, mission_name, phone;
 
 
-    public PhoneEvent() {
+    public MissionItemEvent() {
 
     }
 
-    public PhoneEvent(String event_date, String event_type, String volunteer_uid, String volunteer_name) {
+    public MissionItemEvent(String event_date, String event_type, String volunteer_uid, String volunteer_name, String mission_name, String phone) {
         this.event_date = event_date;
         this.event_type = event_type;
         this.volunteer_uid = volunteer_uid;
         this.volunteer_name = volunteer_name;
+        this.mission_name = mission_name;
+        this.phone  = phone;
     }
 
     public String getEvent_date() {
@@ -55,4 +57,19 @@ public class PhoneEvent {
     }
 
 
+    public String getMission_name() {
+        return mission_name;
+    }
+
+    public void setMission_name(String mission_name) {
+        this.mission_name = mission_name;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 }

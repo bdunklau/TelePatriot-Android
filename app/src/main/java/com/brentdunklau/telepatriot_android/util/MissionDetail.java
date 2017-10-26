@@ -4,11 +4,11 @@ package com.brentdunklau.telepatriot_android.util;
  * Created by bdunklau on 10/24/17.
  */
 
-public class MissionDetails {
+public class MissionDetail {
 
     private String name, phone;
 
-    public MissionDetails() {
+    public MissionDetail() {
 
     }
 

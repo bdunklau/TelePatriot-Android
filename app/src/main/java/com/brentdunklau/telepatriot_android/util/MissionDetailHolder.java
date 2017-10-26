@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
@@ -10,12 +11,12 @@ import com.brentdunklau.telepatriot_android.R;
  * Created by bdunklau on 10/24/17.
  */
 
-public class MissionDetailsHolder extends RecyclerView.ViewHolder {
+public class MissionDetailHolder extends RecyclerView.ViewHolder {
 
-    private MissionDetails missionDetails;
+    //private MissionDetail missionDetail; // do we really need this?
     private TextView mission_item_name, mission_item_phone;
 
-    public MissionDetailsHolder(View itemView) {
+    public MissionDetailHolder(View itemView) {
         super(itemView);
         // LESSON LEARNED HERE - FORGOT TO DO THIS.
         // THE APP KEPT CRASHING - NO IDEA WHY UNTIL I REALLY
@@ -24,18 +25,18 @@ public class MissionDetailsHolder extends RecyclerView.ViewHolder {
         mission_item_phone = itemView.findViewById(R.id.mission_item_phone);
     }
 
-    public void setMissionDetails(MissionDetails missionDetails) {
-        this.missionDetails = missionDetails;
-        mission_item_name.setText(missionDetails.getName());
-        mission_item_phone.setText(missionDetails.getPhone());
+    public void setMissionDetail(final MissionDetail missionDetail) {
+        //this.missionDetail = missionDetail;
+        mission_item_name.setText(missionDetail.getName());
+        mission_item_phone.setText(missionDetail.getPhone());
     }
 
     // https://stackoverflow.com/a/41629505
-    private MissionDetailsHolder.ClickListener mClickListener;
+    private MissionDetailHolder.ClickListener mClickListener;
 
 
     // https://stackoverflow.com/a/41629505
-    public void setOnClickListener(MissionDetailsHolder.ClickListener clickListener){
+    public void setOnClickListener(MissionDetailHolder.ClickListener clickListener){
         mClickListener = clickListener;
     }
 
