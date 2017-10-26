@@ -129,58 +129,98 @@ exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite
 
 
 function readPromise(dbref, requestWithoutAuth) {
-  console.log('readPromise: entered')
+    console.log('readPromise: entered')
 
-  return new Promise((resolve, reject) => {
-    console.log('readPromise: new Promise(): entered')
-    getAuthorizedClient().then(client => {
-      console.log('readPromise: new Promise(): getAuthorizedClient().then(): entered')
+    return new Promise((resolve, reject) => {
+        console.log('readPromise: new Promise(): entered')
+        const sheets = google.sheets('v4');
 
-      const sheets = google.sheets('v4');
-      const request = requestWithoutAuth;
-      request.auth = client;
-      sheets.spreadsheets.values.get(request, (err, response) => {
-        if (err) {
-          console.log(`The API returned an error: ${err}`);
-          return reject();
-        }
+        getAuthorizedClient().then(client => {
+            console.log('readPromise: new Promise(): getAuthorizedClient().then(): entered')
 
-        //console.log('readPromise:  response: ', response)
+            const request = requestWithoutAuth;
+            request.auth = client;
+            sheets.spreadsheets.values.get(request, (err, response) => {
+                  if (err) {
+                      console.log(`The API returned an error: ${err}`);
+                      return reject();
+                  }
 
-        var rows = response.values;
-        var colnames = []
-        for(var c = 0; c < rows[0].length; c++) {
-            colnames.push(rows[0][c])
-        }
-        var data = []
-        for(var r = 1; r < rows.length; r++) {
-            var datarow = {}
-            for(var c = 0; c < rows[0].length; c++) {
-                if(rows[r][c])
-                    datarow[colnames[c]] = rows[r][c];
-            }
-            data.push(datarow)
-        }
+                    //console.log('readPromise:  response: ', response)
 
-        dbref.child('data').set(data)
+                  var rows = response.values;
+                  var colnames = []
+                  for(var c = 0; c < rows[0].length; c++) {
+                        colnames.push(rows[0][c])
+                  }
+                  var data = []
+                  for(var r = 1; r < rows.length; r++) {
+                        var datarow = {}
+                        for(var c = 0; c < rows[0].length; c++) {
+                            if(rows[r][c])
+                                datarow[colnames[c]] = rows[r][c];
+                        }
+                        data.push(datarow)
+                  }
 
-        // got this from example code.  Not really sure what this does
-        return resolve(response);
-      });
-    })
-    .then(() => { dbref.child('sheet_id').set(requestWithoutAuth.spreadsheetId) })
-    .then(() => {
-        // write a mission_event to log the creation of this mission so we can report back
-        // to the user if the mission was successfully created or there was an error
-        // Include in the mission_event:  current time, current user, success, number of
-        // items in the mission
-        var mission_event = {date: date.asCentralTime()}
-    })
-    .catch((err) => {
-        // This is where we should write a mission_event indicating the mission failed to save
-        console.log('Uh oh! Error caught in appendPromise(): ', err); reject()
+                  dbref.child('data').set(data)
+
+                  // got this from example code.  Not really sure what this does
+                  //return resolve(response);
+
+            });
+
+
+            request.range = 'Description'
+            console.log('readPromise: looking for mission description: check client = ', client)
+            sheets.spreadsheets.values.get(request, (err, response) => {
+                if (err) {
+                    console.log(`The API returned an error: ${err}`);
+                    return reject();
+                }
+
+                console.log('readPromise: looking for mission description: inside callback: response.values = ', response.values)
+                var rows = response.values;
+                var description = '';
+                if(rows.length > 0 && rows[0].length > 0) {
+                    dbref.child('description').set(rows[0][0])
+                }
+            })
+
+
+
+            request.range = 'Script'
+            console.log('readPromise: looking for mission Script: check client = ', client)
+            sheets.spreadsheets.values.get(request, (err, response) => {
+                if (err) {
+                    console.log(`The API returned an error: ${err}`);
+                    return reject();
+                }
+
+                console.log('readPromise: looking for mission Script: inside callback: response.values = ', response.values)
+                var rows = response.values;
+                var description = '';
+                if(rows.length > 0 && rows[0].length > 0) {
+                    dbref.child('script').set(rows[0][0])
+                }
+            })
+
+            return resolve(response);
+
+        })
+        .then(() => { dbref.child('sheet_id').set(requestWithoutAuth.spreadsheetId) })
+        .then(() => {
+            // write a mission_event to log the creation of this mission so we can report back
+            // to the user if the mission was successfully created or there was an error
+            // Include in the mission_event:  current time, current user, success, number of
+            // items in the mission
+            var mission_event = {date: date.asCentralTime()}
+        })
+        .catch((err) => {
+            // This is where we should write a mission_event indicating the mission failed to save
+            console.log('Uh oh! Error caught in appendPromise(): ', err); reject()
+        });
     });
-  });
 }
 
 
