@@ -39,6 +39,7 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.CALL_PRIVILEGED" />
                 <action android:name="android.intent.action.CALL" />
             </intent-filter>
         </activity>
