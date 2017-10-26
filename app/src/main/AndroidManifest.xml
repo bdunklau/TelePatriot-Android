@@ -39,18 +39,10 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.CALL_PRIVILEGED" />
                 <action android:name="android.intent.action.CALL" />
             </intent-filter>
         </activity>
-
-        <!--
-        <activity   android:name=".PhoneCallActivity" android:label="phone call">
-            <intent-filter>
-                <action android:name="com.scytec.datamobile.vd.gui.android.AppPreferenceActivity" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        -->
 
         <service
             android:name=".MyFirebaseMessagingService"

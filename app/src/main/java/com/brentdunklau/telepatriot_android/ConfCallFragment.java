@@ -32,6 +32,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.util.MissionItemEvent;
+import com.brentdunklau.telepatriot_android.util.User;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Date;
 import java.util.List;
 
 import static android.content.Context.TELEPHONY_SERVICE;
@@ -56,16 +62,7 @@ public class ConfCallFragment extends Fragment {
         text_214.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    xxxx();
-                    String tel = text_214.getText().toString();
-                    Intent intent = new Intent(Intent.ACTION_CALL);
-                    intent.setData(Uri.parse("tel:" + tel));
-                    startActivity(intent);
-                } catch(Throwable t) {
-                    // TODO don't do this
-                    t.printStackTrace();
-                }
+                call(text_214.getText().toString());
             }
         });
 
@@ -74,16 +71,7 @@ public class ConfCallFragment extends Fragment {
         text_469.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    xxxx();
-                    String tel = text_469.getText().toString();
-                    Intent intent = new Intent(Intent.ACTION_CALL);
-                    intent.setData(Uri.parse("tel:" + tel));
-                    startActivity(intent);
-                } catch(Throwable t) {
-                    // TODO don't do this
-                    t.printStackTrace();
-                }
+                call(text_469.getText().toString());
             }
         });
 
@@ -92,22 +80,35 @@ public class ConfCallFragment extends Fragment {
         text_kiera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    xxxx();
-                    String tel = text_kiera.getText().toString();
-                    Intent intent = new Intent(Intent.ACTION_CALL);
-                    intent.setData(Uri.parse("tel:" + tel));
-                    startActivity(intent);
-                } catch(Throwable t) {
-                    // TODO don't do this
-                    t.printStackTrace();
-                }
+                call(text_kiera.getText().toString());
             }
         });
 
 
         setHasOptionsMenu(true);
         return myView;
+    }
+
+
+    private void call(String phone) {
+        xxxx();
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + phone));
+        String fakeMission = "Big Ol' Mission";
+        intent.putExtra("mission", fakeMission);
+        // WRITE THE BEGINNING OF THE CALL TO THE DATABASE HERE BECAUSE SOME CARRIERS LIKE
+        // SPRINT BLOCK INTERNET ACCESS WHILE THE PHONE
+        // IS OFFHOOK.
+        // Writing to the database here just gives the directors the cool visual of seeing the
+        // call start and then seeing it end
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+        String eventType = "is calling";
+        MissionItemEvent m = new MissionItemEvent(new Date().toString(), eventType, User.getInstance().getUid(), User.getInstance().getName(), fakeMission, phone);
+        ref.push().setValue(m);
+        ref.child(phone).push().setValue(m);
+
+        startActivity(intent);
     }
 
 
