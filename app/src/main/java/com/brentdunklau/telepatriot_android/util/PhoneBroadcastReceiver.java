@@ -26,7 +26,7 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
 
         //  https://www.studytutorial.in/android-phonestatelistener-phone-call-broadcast-receiver-tutorial
-        //We listen to two intents.  The new outgoing call only tells us of an outgoing call.  We use it to get the number.
+        // DON'T THINK THE FIRST TWO CONDITIONS EVER GET CALLED.  IT'S ALWAYS THE LAST ONE
         if (intent.getAction().equals("android.intent.action.NEW_OUTGOING_CALL")) {
             handleOutgoing(intent, ref);
         }
