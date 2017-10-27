@@ -23,6 +23,7 @@ exports.missionActivation = functions.database.ref("missions/{missionId}/uid_and
         return true
     }
 
+
     var missionId = event.params.missionId
     var uid_and_active = event.data.val()
     var active = uid_and_active.endsWith("_true")
@@ -31,8 +32,10 @@ exports.missionActivation = functions.database.ref("missions/{missionId}/uid_and
     var updates = {};
     return adminRef.root.child(`mission_items`).orderByChild('mission_id').equalTo(missionId).on('child_added', function(snapshot) {
         console.log("missionActivation: snapshot.key = ", snapshot.key)
+        console.log("missionActivation: snapshot.val() = ", snapshot.val())
         updates["mission_items/"+snapshot.key+"/active"] = active
         updates["mission_items/"+snapshot.key+"/uid_and_active"] = uid_and_active
+        updates["mission_items/"+snapshot.key+"/active_and_accomplished"] = active+"_"+snapshot.val().accomplished
         return adminRef.root.update(updates)
     });
 

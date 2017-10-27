@@ -87,9 +87,10 @@
 
             <Button
                 android:id="@+id/button_call_person1"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#ffffff"
+                android:layout_marginTop="16dp"
                 android:background="@color/com_facebook_blue"
                 android:text="call person1" />
 
