@@ -28,3 +28,6 @@ exports.testsheetwrite = sheetsDemo.testsheetwrite
 
 exports.testsheetImport = importDemo.testsheetImport
 exports.readSpreadsheet = importDemo.readSpreadsheet
+
+const missions = require('./sheets/mission-activator')
+exports.missionActivation = missions.missionActivation

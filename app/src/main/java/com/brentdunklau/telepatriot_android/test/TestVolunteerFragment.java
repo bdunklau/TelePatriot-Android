@@ -1,4 +1,4 @@
-package com.brentdunklau.telepatriot_android;
+package com.brentdunklau.telepatriot_android.test;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -10,27 +10,31 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import com.brentdunklau.telepatriot_android.test.TestVolunteerFragment;
+import com.brentdunklau.telepatriot_android.CameraFragment;
+import com.brentdunklau.telepatriot_android.R;
+import com.brentdunklau.telepatriot_android.VideoFragment;
 
 /**
- * Created by bdunklau on 10/11/17.
+ * Created by bdunklau on 10/26/17.
  */
 
-public class VolunteerFragment extends Fragment {
+public class TestVolunteerFragment extends Fragment {
 
-    Button button_get_a_mission, button_test_volunteer_screen;
+    Button button_test_call, button_test_camera, button_test_video;
     View myView;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.volunteer_fragment, container, false);
+        myView = inflater.inflate(R.layout.test_volunteer_fragment, container, false);
 
-        button_get_a_mission = myView.findViewById(R.id.button_get_a_mission);
-        button_test_volunteer_screen = myView.findViewById(R.id.button_test_volunteer_screen);
+        button_test_call = myView.findViewById(R.id.button_test_call);
+        button_test_camera = myView.findViewById(R.id.button_test_camera);
+        button_test_video = myView.findViewById(R.id.button_test_video);
 
-        wireUp(button_get_a_mission, new GetAMissionFragment());
-        wireUp(button_test_volunteer_screen, new TestVolunteerFragment());
+        wireUp(button_test_call, new TestCallFragment());
+        wireUp(button_test_camera, new CameraFragment());
+        wireUp(button_test_video, new VideoFragment());
 
         setHasOptionsMenu(true);
         return myView;

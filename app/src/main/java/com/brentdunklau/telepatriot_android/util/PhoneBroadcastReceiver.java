@@ -75,7 +75,7 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
             ref.child(phone).push().setValue(m);
         }
         else if(stateStr.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)){
-            /*  See ConfCallFragment - don't try to write to the db here when the call starts
+            /*  See TestCallFragment - don't try to write to the db here when the call starts
             The phone is already off the hook, so some carriers like Sprint block internet access while you're on a call
 
             state = TelephonyManager.CALL_STATE_OFFHOOK;
