@@ -103,10 +103,24 @@ exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite
 
     console.log('event.data.val() = ', event.data.val())
     var uid = event.data.val().uid
-    var millis = date.asMillis()
-    var status = 'not started'
+    //var millis = date.asMillis()
+    //var status = 'not started'
+
+    var missionStuff = {mission_id: event.params.missionId,
+                        active: event.data.val().active,
+                        description: event.data.val().description, // don't have this yet, not ready
+                        mission_create_date: date.asCentralTime(),
+                        mission_name: event.data.val().mission_name,
+                        mission_type: event.data.val().mission_type,
+                        name: event.data.val().name,
+                        script: event.data.val().script,           // don't have this yet, not ready
+                        uid: event.data.val().uid,
+                        uid_and_active: event.data.val().uid_and_active,
+                        url: event.data.val().url
+                        }
+
     event.data.ref.child('mission_create_date').set(date.asCentralTime())
-    event.data.ref.child('uid_date_status').set(uid+'_'+millis+'_'+status)
+    //event.data.ref.child('uid_date_status').set(uid+'_'+millis+'_'+status)
     event.data.ref.child('uid_and_active').set(uid+'_'+event.data.val().active)
 
 
@@ -119,16 +133,16 @@ exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite
     //console.log('readSpreadsheet: event.data.val(): ', event.data.val())
     //var missionId = event.params.missionId
     var sheet_id = sheetIdUtil.sheetId(event.data.val().url)
-    var dbref = event.data.ref
+    var adminRef = event.data.adminRef
 
-    return readPromise(dbref, {
-      spreadsheetId: sheet_id,
-      range: 'Sheet1'
-    });
+    return readPromise(event.data.ref,
+                       event.data.adminRef,
+                       missionStuff,
+                       { spreadsheetId: sheet_id });
 });
 
 
-function readPromise(dbref, requestWithoutAuth) {
+function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
     console.log('readPromise: entered')
 
     return new Promise((resolve, reject) => {
@@ -140,37 +154,6 @@ function readPromise(dbref, requestWithoutAuth) {
 
             const request = requestWithoutAuth;
             request.auth = client;
-            sheets.spreadsheets.values.get(request, (err, response) => {
-                  if (err) {
-                      console.log(`The API returned an error: ${err}`);
-                      return reject();
-                  }
-
-                    //console.log('readPromise:  response: ', response)
-
-                  var rows = response.values;
-                  var colnames = []
-                  for(var c = 0; c < rows[0].length; c++) {
-                        colnames.push(rows[0][c])
-                  }
-                  var data = []
-                  for(var r = 1; r < rows.length; r++) {
-                        var datarow = {}
-                        for(var c = 0; c < rows[0].length; c++) {
-                            if(rows[r][c])
-                                datarow[colnames[c]] = rows[r][c];
-                        }
-                        data.push(datarow)
-                  }
-
-                  dbref.child('data').set(data)
-
-                  // got this from example code.  Not really sure what this does
-                  //return resolve(response);
-
-            });
-
-
             request.range = 'Description'
             console.log('readPromise: looking for mission description: check client = ', client)
             sheets.spreadsheets.values.get(request, (err, response) => {
@@ -184,26 +167,80 @@ function readPromise(dbref, requestWithoutAuth) {
                 var description = '';
                 if(rows.length > 0 && rows[0].length > 0) {
                     dbref.child('description').set(rows[0][0])
-                }
+                    missionStuff.description = rows[0][0]
+
+
+                    // recursive callbacks...
+                    request.range = 'Script'
+                    console.log('readPromise: looking for mission Script: check client = ', client)
+                    sheets.spreadsheets.values.get(request, (err, response) => {
+                        if (err) {
+                            console.log(`The API returned an error: ${err}`);
+                            return reject();
+                        }
+
+                        console.log('readPromise: looking for mission Script: inside callback: response.values = ', response.values)
+                        var rows = response.values;
+                        var description = '';
+                        if(rows.length > 0 && rows[0].length > 0) {
+                            dbref.child('script').set(rows[0][0])
+                            missionStuff.script = rows[0][0]
+
+                            request.range = 'Sheet1'
+                            // another inner callback, this time to get read each row of people
+                            sheets.spreadsheets.values.get(request, (err, response) => {
+                                  if (err) {
+                                      console.log(`The API returned an error: ${err}`);
+                                      return reject();
+                                  }
+
+                                  //console.log('readPromise:  response: ', response)
+
+                                  var rows = response.values;
+                                  var colnames = []
+                                  var emailColumn = -1;
+                                  for(var c = 0; c < rows[0].length; c++) {
+                                        colnames.push(rows[0][c])
+                                        if(rows[0][c].toLowerCase() == 'email')
+                                            emailColumn = c;
+                                  }
+
+                                  //var data = []
+                                  for(var r = 1; r < rows.length; r++) {
+
+                                        var missionCopy = JSON.parse(JSON.stringify(missionStuff))
+
+                                        //var datarow = {}
+                                        for(var c = 0; c < rows[0].length; c++) {
+                                            if(rows[r][c]) {
+                                                if(c == emailColumn) {
+                                                    // strip any " (Yes)" or " (No)" from email strings
+                                                    var stripped = stripYesNo(rows[r][c])
+                                                    missionCopy[colnames[c]] = stripped;
+                                                } else {
+                                                    missionCopy[colnames[c]] = rows[r][c];
+                                                }
+                                            }
+                                        }
+                                        //data.push(missionCopy)
+                                        adminRef.root.child('mission_items').push().set(missionCopy)
+                                  }
+
+                                  //adminRef.root.child('mission_items').push().set(data)
+
+                                  // got this from example code.  Not really sure what this does
+                                  //return resolve(response);
+
+                            });
+
+
+                        } // if(rows.length > 0 && rows[0].length > 0)
+                    })
+
+
+                } // if(rows.length > 0 && rows[0].length > 0)
             })
 
-
-
-            request.range = 'Script'
-            console.log('readPromise: looking for mission Script: check client = ', client)
-            sheets.spreadsheets.values.get(request, (err, response) => {
-                if (err) {
-                    console.log(`The API returned an error: ${err}`);
-                    return reject();
-                }
-
-                console.log('readPromise: looking for mission Script: inside callback: response.values = ', response.values)
-                var rows = response.values;
-                var description = '';
-                if(rows.length > 0 && rows[0].length > 0) {
-                    dbref.child('script').set(rows[0][0])
-                }
-            })
 
             return resolve(response);
 
@@ -214,6 +251,9 @@ function readPromise(dbref, requestWithoutAuth) {
             // to the user if the mission was successfully created or there was an error
             // Include in the mission_event:  current time, current user, success, number of
             // items in the mission
+            //
+            // I dunno ...maybe
+            //
             var mission_event = {date: date.asCentralTime()}
         })
         .catch((err) => {
@@ -221,6 +261,21 @@ function readPromise(dbref, requestWithoutAuth) {
             console.log('Uh oh! Error caught in appendPromise(): ', err); reject()
         });
     });
+}
+
+
+var stripYesNo = function(val) {
+    if(!val)
+        return ''
+    if(val.toLowerCase().indexOf("(no)") != -1) {
+        var idx = val.toLowerCase().indexOf("(no)")
+        return val.substring(0, idx).trim()
+    }
+    else if(val.toLowerCase().indexOf("(yes)") != -1) {
+        var idx = val.toLowerCase().indexOf("(yes)")
+        return val.substring(0, idx).trim()
+    }
+    else return val
 }
 
 

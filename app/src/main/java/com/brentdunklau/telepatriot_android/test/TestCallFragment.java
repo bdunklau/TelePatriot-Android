@@ -1,52 +1,33 @@
-package com.brentdunklau.telepatriot_android;
+package com.brentdunklau.telepatriot_android.test;
 
-import android.*;
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.CallLog;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.telecom.Call;
-import android.telephony.CellInfo;
-import android.telephony.CellLocation;
-import android.telephony.PhoneStateListener;
-import android.telephony.ServiceState;
-import android.telephony.TelephonyManager;
-import android.telephony.cdma.CdmaCellLocation;
-import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.R;
 import com.brentdunklau.telepatriot_android.util.MissionItemEvent;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Date;
-import java.util.List;
-
-import static android.content.Context.TELEPHONY_SERVICE;
 
 /**
  * Created by bdunklau on 10/21/17.
  */
 
-public class ConfCallFragment extends Fragment {
+public class TestCallFragment extends Fragment {
 
     TextView text_214, text_469, text_kiera;
     View myView;
@@ -54,7 +35,7 @@ public class ConfCallFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.conf_call_fragment, container, false);
+        myView = inflater.inflate(com.brentdunklau.telepatriot_android.R.layout.test_call_fragment, container, false);
 
         getCallDetails();
 

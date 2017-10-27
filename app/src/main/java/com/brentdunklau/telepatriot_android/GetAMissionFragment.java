@@ -9,6 +9,7 @@ import android.support.v7.widget.SimpleItemAnimator;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.Mission;
@@ -22,23 +23,25 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 /**
- * Created by bdunklau on 10/17/17.
+ * Created by bdunklau on 10/26/17.
  */
 
-public class MissionDetailsFragment extends Fragment {
+public class GetAMissionFragment extends Fragment {
 
     private Mission mission;
+    private MissionDetail missionDetail;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
+    private Button getButton_call_person1;
+    private Button button_call_person1;
     private String missionId;
-    private FirebaseRecyclerAdapter<MissionDetail, MissionDetailHolder> mAdapter;
-    private RecyclerView mission_items;
+
 
     View myView;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.missiondetails_fragment, container, false);
+        myView = inflater.inflate(R.layout.get_a_mission_fragment, container, false);
 
         //String uid_date_status = User.getInstance().getUid()+"_"+
         mission_name = myView.findViewById(R.id.heading_mission_name);
@@ -50,18 +53,17 @@ public class MissionDetailsFragment extends Fragment {
         mission_script = myView.findViewById(R.id.mission_script);
         mission_script.setText(mission.getScript());
 
-        // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
-        mission_items = (RecyclerView) myView.findViewById(R.id.mission_items);
-        mission_items.setLayoutManager(new LinearLayoutManager(myView.getContext()));
+        button_call_person1 = myView.findViewById(R.id.button_call_person1);
+        button_call_person1.setText(missionDetail.getName()+" "+missionDetail.getPhone());
 
-        getMissionItems();
+        getMissionItem();
 
         setHasOptionsMenu(true);
         return myView;
     }
 
 
-    public void getMissionItems() {
+    public void getMissionItem() {
 
         if(missionId == null)
             return;
@@ -72,7 +74,7 @@ public class MissionDetailsFragment extends Fragment {
             ValueEventListener v2 = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    doit(ref);
+                    //doit(ref);
                 }
                 @Override
                 public void onCancelled(DatabaseError databaseError) { }
@@ -85,55 +87,6 @@ public class MissionDetailsFragment extends Fragment {
             int i=0;
         }
 
-    }
-
-    private void doit(DatabaseReference ref) {
-
-        // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
-        mAdapter = new FirebaseRecyclerAdapter<MissionDetail, MissionDetailHolder>(
-                MissionDetail.class,
-                R.layout.mission_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
-                MissionDetailHolder.class,
-                ref.child("data")/*.orderByKey()*//*.limitToFirst(10)*/) {
-            @Override
-            public void populateViewHolder(MissionDetailHolder holder, MissionDetail missionDetail, int position) {
-                holder.setMissionDetail(missionDetail);
-
-                // nested FirebaseRecyclerAdapter...
-                // https://stackoverflow.com/q/42498647
-            }
-
-
-            /*
-            // https://stackoverflow.com/a/41629505
-            @Override
-            public MissionDetailHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                MissionDetailHolder viewHolder = super.onCreateViewHolder(parent, viewType);
-                viewHolder.setOnClickListener(new MissionDetailHolder.ClickListener() {
-                    @Override
-                    public void onItemClick(View view, int position) {
-                        mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onItemLongClick(View view, int position) {
-                    }
-                });
-                return viewHolder;
-            }
-            */
-        };
-        mission_items.setAdapter(mAdapter);
     }
 
     public void setMissionId(String missionId) {
