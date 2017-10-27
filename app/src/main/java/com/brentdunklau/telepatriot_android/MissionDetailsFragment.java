@@ -19,6 +19,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 /**
@@ -37,6 +38,7 @@ public class MissionDetailsFragment extends Fragment {
 
     @Nullable
     @Override
+    // called by MissionListFragment
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.missiondetails_fragment, container, false);
 
@@ -67,7 +69,7 @@ public class MissionDetailsFragment extends Fragment {
             return;
 
         try {
-            final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("/missions/"+missionId);
+            final Query ref = FirebaseDatabase.getInstance().getReference("/mission_items").orderByChild("mission_id").equalTo(missionId);
 
             ValueEventListener v2 = new ValueEventListener() {
                 @Override
@@ -87,14 +89,14 @@ public class MissionDetailsFragment extends Fragment {
 
     }
 
-    private void doit(DatabaseReference ref) {
+    private void doit(Query ref) {
 
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<MissionDetail, MissionDetailHolder>(
                 MissionDetail.class,
                 R.layout.mission_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 MissionDetailHolder.class,
-                ref.child("data")/*.orderByKey()*//*.limitToFirst(10)*/) {
+                ref/*.child("data")*//*.orderByKey()*//*.limitToFirst(10)*/) {
             @Override
             public void populateViewHolder(MissionDetailHolder holder, MissionDetail missionDetail, int position) {
                 holder.setMissionDetail(missionDetail);
