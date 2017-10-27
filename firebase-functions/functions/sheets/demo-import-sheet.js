@@ -223,10 +223,10 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                             }
                                         }
                                         //data.push(missionCopy)
-                                        adminRef.root.child('mission_details').push().set(missionCopy)
+                                        adminRef.root.child('mission_items').push().set(missionCopy)
                                   }
 
-                                  //adminRef.root.child('mission_details').push().set(data)
+                                  //adminRef.root.child('mission_items').push().set(data)
 
                                   // got this from example code.  Not really sure what this does
                                   //return resolve(response);
