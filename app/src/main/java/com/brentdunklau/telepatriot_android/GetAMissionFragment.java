@@ -41,12 +41,12 @@ import java.util.Map;
 
 public class GetAMissionFragment extends Fragment {
 
-    //private Mission mission;
+    private String TAG = "GetAMissionFragment";
     private MissionDetail missionDetail;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
     private Button getButton_call_person1;
     private Button button_call_person1;
-    private String missionId;
+    private String missionId, missionItemId;
 
 
     View myView;
@@ -73,9 +73,9 @@ public class GetAMissionFragment extends Fragment {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    String missionItemId = child.getKey();
+                    missionItemId = child.getKey();
 
-                    MissionDetail missionDetail = child.getValue(MissionDetail.class);
+                    missionDetail = child.getValue(MissionDetail.class);
                     if(missionDetail == null)
                         return; // we should indicate no missions available for the user
 
@@ -198,6 +198,42 @@ public class GetAMissionFragment extends Fragment {
         return myView;
     }
 
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        makeMissionItemAvailable();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        makeMissionItemAvailable();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        makeMissionItemAvailable();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        makeMissionItemAvailable();
+    }
+
+    private void makeMissionItemAvailable() {
+        if(missionDetail == null)
+            return;
+        if("new".equalsIgnoreCase(missionDetail.getAccomplished()))
+            return;
+
+        missionDetail.setAccomplished("new");
+        missionDetail.setActive_and_accomplished(missionDetail.isActive()+"_new");
+
+        FirebaseDatabase.getInstance().getReference("mission_items/"+missionItemId).setValue(missionDetail);
+    }
 
     private void wireUp(Button button, final MissionDetail missionDetail) {
         button.setOnClickListener(new View.OnClickListener() {
