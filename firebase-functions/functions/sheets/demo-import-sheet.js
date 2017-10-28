@@ -205,12 +205,10 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                             emailColumn = c;
                                   }
 
-                                  //var data = []
                                   for(var r = 1; r < rows.length; r++) {
 
                                         var missionCopy = JSON.parse(JSON.stringify(missionStuff))
 
-                                        //var datarow = {}
                                         for(var c = 0; c < rows[0].length; c++) {
                                             if(rows[r][c]) {
                                                 if(c == emailColumn) {
@@ -222,14 +220,14 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                                 }
                                             }
                                         }
-                                        //data.push(missionCopy)
+                                        // compound key: capture the status of the mission (new, in progress, complete) together
+                                        // with the active status (true/false) to figure out if this mission item is suitable
+                                        // for assigning to a volunteer.
+                                        // It's suitable if active_and_accomplished: true_new
+                                        missionCopy['accomplished'] = "new"
+                                        missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
                                         adminRef.root.child('mission_items').push().set(missionCopy)
                                   }
-
-                                  //adminRef.root.child('mission_items').push().set(data)
-
-                                  // got this from example code.  Not really sure what this does
-                                  //return resolve(response);
 
                             });
 

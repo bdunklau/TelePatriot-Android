@@ -72,7 +72,7 @@ public class TestCallFragment extends Fragment {
 
 
     private void call(String phone) {
-        xxxx();
+        checkPermission();
         Intent intent = new Intent(Intent.ACTION_CALL);
         intent.setData(Uri.parse("tel:" + phone));
         String fakeMission = "Big Ol' Mission";
@@ -94,7 +94,7 @@ public class TestCallFragment extends Fragment {
 
 
     // https://developer.android.com/training/permissions/requesting.html
-    private void xxxx() {
+    private void checkPermission() {
         checkPermission(android.Manifest.permission.CALL_PHONE);
     }
 
