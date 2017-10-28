@@ -1,8 +1,14 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
@@ -15,6 +21,8 @@ import android.widget.TextView;
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionDetail;
 import com.brentdunklau.telepatriot_android.util.MissionDetailHolder;
+import com.brentdunklau.telepatriot_android.util.MissionItemEvent;
+import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -23,6 +31,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,6 +88,7 @@ public class GetAMissionFragment extends Fragment {
                     mission_script.setText(missionScript);
                     button_call_person1.setVisibility(View.VISIBLE);
                     button_call_person1.setText(missionDetail.getName()+" "+missionDetail.getPhone());
+                    wireUp(button_call_person1, missionDetail);
 
                     missionDetail.setAccomplished("in progress");
                     missionDetail.setActive_and_accomplished("true_in progress");
@@ -186,6 +196,69 @@ public class GetAMissionFragment extends Fragment {
 
         setHasOptionsMenu(true);
         return myView;
+    }
+
+
+    private void wireUp(Button button, final MissionDetail missionDetail) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                call(missionDetail);
+            }
+        });
+    }
+
+
+    private void call(MissionDetail missionDetail) {
+        checkPermission();
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + missionDetail.getPhone()));
+        intent.putExtra("mission", missionDetail.getMission_name());
+        // WRITE THE BEGINNING OF THE CALL TO THE DATABASE HERE BECAUSE SOME CARRIERS LIKE
+        // SPRINT BLOCK INTERNET ACCESS WHILE THE PHONE
+        // IS OFFHOOK.
+        // Writing to the database here just gives the directors the cool visual of seeing the
+        // call start and then seeing it end
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+        String eventType = "is calling";
+        MissionItemEvent m = new MissionItemEvent(new Date().toString(), eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone());
+        ref.push().setValue(m);
+        ref.child(missionDetail.getPhone()).push().setValue(m);
+
+        startActivity(intent);
+    }
+
+
+    // https://developer.android.com/training/permissions/requesting.html
+    private void checkPermission() {
+        checkPermission(android.Manifest.permission.CALL_PHONE);
+    }
+
+    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(myView.getContext(), androidPermission)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), androidPermission)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions((Activity) myView.getContext(),
+                        new String[]{androidPermission},
+                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
     }
 
 }
