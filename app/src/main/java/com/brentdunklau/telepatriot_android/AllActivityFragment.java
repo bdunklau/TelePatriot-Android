@@ -28,7 +28,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/26/17.
  */
 
-public class AllActivityFragment extends Fragment {
+public class AllActivityFragment extends BaseFragment {
     protected String title = "All Activity";
     protected DatabaseReference ref;
     protected Query query;

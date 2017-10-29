@@ -33,7 +33,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/19/17.
  */
 
-public class TeamsFragment extends Fragment {
+public class TeamsFragment extends BaseFragment {
 
     protected String title = "Teams";
     protected DatabaseReference ref;

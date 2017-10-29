@@ -1,5 +1,7 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import com.google.firebase.database.FirebaseDatabase;
+
 /**
  * Created by bdunklau on 10/24/17.
  */
@@ -125,11 +127,30 @@ public class MissionDetail {
         this.accomplished = accomplished;
     }
 
+    public boolean _isAccomplished() {
+        return "complete".equalsIgnoreCase(getAccomplished());
+    }
+
     public String getActive_and_accomplished() {
         return active_and_accomplished;
     }
 
     public void setActive_and_accomplished(String active_and_accomplished) {
         this.active_and_accomplished = active_and_accomplished;
+    }
+
+    public void unassign(String missionItemId) {
+        setState("new", missionItemId);
+    }
+
+    public void setState(String state, String missionItemId) {
+        setAccomplished(state);
+        setActive_and_accomplished(isActive()+"_"+state);
+        FirebaseDatabase.getInstance().getReference("mission_items/"+missionItemId).setValue(this);
+
+    }
+
+    public void complete(String missionItemId) {
+        setState("complete", missionItemId);
     }
 }

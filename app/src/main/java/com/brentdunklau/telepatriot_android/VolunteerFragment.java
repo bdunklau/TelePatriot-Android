@@ -16,7 +16,7 @@ import com.brentdunklau.telepatriot_android.test.TestVolunteerFragment;
  * Created by bdunklau on 10/11/17.
  */
 
-public class VolunteerFragment extends Fragment {
+public class VolunteerFragment extends BaseFragment {
 
     Button button_get_a_mission, button_test_volunteer_screen;
     View myView;

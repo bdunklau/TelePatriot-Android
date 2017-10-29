@@ -19,7 +19,7 @@ import android.widget.Button;
  * Created by bdunklau on 10/11/17.
  */
 
-public class DirectorFragment extends Fragment {
+public class DirectorFragment extends BaseFragment {
 
     Button button_missions;
     Button button_teams;

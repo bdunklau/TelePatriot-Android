@@ -27,7 +27,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/11/17.
  */
 
-public class ChatFragment extends Fragment {
+public class ChatFragment extends BaseFragment {
 
 
     private FirebaseRecyclerAdapter<ChatMessage, ChatMessageHolder> mAdapter;
