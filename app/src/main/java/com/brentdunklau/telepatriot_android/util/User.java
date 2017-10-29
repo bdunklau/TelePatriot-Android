@@ -135,6 +135,8 @@ public class User implements FirebaseAuth.AuthStateListener {
 
             }
         });
+
+        unassignCurrentMissionItem();
     }
 
     public void setCurrentMissionItem(String missionItemId, MissionDetail missionItem) {
@@ -147,6 +149,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public void unassignCurrentMissionItem() {
+        if(missionItem == null)
+            return;
         missionItem.unassign(missionItemId);
         missionItemId = null;
         missionItem = null;

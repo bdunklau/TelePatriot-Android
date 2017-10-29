@@ -29,7 +29,8 @@ import com.squareup.picasso.Picasso;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    //TelephonyManager tManager;
+    private String TAG = "MainActivity";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,16 +167,47 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         Log.d("MainActivity", "USER LOGGED OUT");
-                        /*
-                        // https://stackoverflow.com/a/14002030
-                        Intent intent = new Intent(MainActivity.this, LauncherActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        intent.putExtra("EXIT", true);
-                        startActivity(intent);
-                        finish();
-                        */
                         finishAffinity();
                     }
                 });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause");
+        //handleCurrentMissionItem();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop");
+        //handleCurrentMissionItem();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy");
+        handleCurrentMissionItem();
+    }
+
+    private boolean userInTheMiddleOfSomething() {
+        boolean hasMission = User.getInstance().getCurrentMissionItem() != null;
+        return hasMission;
+    }
+
+    private void unassignMissionItem() {
+        User.getInstance().unassignCurrentMissionItem();
+    }
+
+    private void handleCurrentMissionItem() {
+        if(userInTheMiddleOfSomething()) {
+            // alert the user that he should skip/dismiss the current mission?
+            // why do that?  why can't we just un-assign the mission FOR them?
+            Log.d(TAG, "un-assigning mission item");
+            unassignMissionItem();
+        }
     }
 }
