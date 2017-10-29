@@ -49,7 +49,7 @@ import java.util.List;
  * Created by bdunklau on 10/21/17.
  */
 
-public class CameraFragment extends Fragment {
+public class CameraFragment extends BaseFragment {
 
     // got all this from:
     // https://inducesmile.com/android/android-camera2-api-example-tutorial/

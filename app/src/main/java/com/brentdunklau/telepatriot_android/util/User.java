@@ -15,6 +15,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,7 +28,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     private boolean isAdmin, isDirector, isVolunteer;
-    private String recruiter_id;
+    private String recruiter_id, missionItemId;
+    private MissionDetail missionItem;
     private ChildEventListener childEventListener;
     private static User singleton;
     private List<RoleAssignedListener> roleAssignedListeners = new ArrayList<RoleAssignedListener>();
@@ -46,14 +48,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     public boolean isLoggedIn() {
         return getFirebaseUser() != null;
     }
-/*
-    public static User getInstance(FirebaseUser firebaseUser) {
-        if(singleton == null) {
-            singleton = new User();
-            singleton.login(firebaseUser);
-        }
-        return singleton;
-    }*/
+
 
     private FirebaseUser getFirebaseUser() {
         return FirebaseAuth.getInstance().getCurrentUser();
@@ -140,6 +135,46 @@ public class User implements FirebaseAuth.AuthStateListener {
 
             }
         });
+    }
+
+    public void setCurrentMissionItem(String missionItemId, MissionDetail missionItem) {
+        this.missionItemId = missionItemId;
+        this.missionItem = missionItem;
+    }
+
+    public MissionDetail getCurrentMissionItem() {
+        return missionItem;
+    }
+
+    public void unassignCurrentMissionItem() {
+        missionItem.unassign(missionItemId);
+        missionItemId = null;
+        missionItem = null;
+    }
+
+    // called from MissionItemWrapUpFragment when the user submit the notes at the end of a call
+    public void submitWrapUp(String outcome, String notes) {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("mission_items/"+missionItemId);
+        ref.child("outcome").setValue(outcome);
+        ref.child("notes").setValue(notes);
+        ref.child("completed_by_uid").setValue(getUid());
+        ref.child("completed_by_name").setValue(getName());
+        missionItemId = null;
+        missionItem = null;
+    }
+
+    public void completeMissionItem(String myPhone) {
+        if(missionItem == null || missionItemId == null)
+            return;
+        missionItem.complete(missionItemId);
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+
+        String volunteerPhone = myPhone;
+        String supporterName = missionItem.getName();
+        MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), volunteerPhone, supporterName);
+        ref.push().setValue(m);
+        ref.child(missionItem.getPhone()).push().setValue(m);
     }
 
     public String getName() {

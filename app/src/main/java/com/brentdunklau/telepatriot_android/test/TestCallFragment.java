@@ -3,6 +3,7 @@ package com.brentdunklau.telepatriot_android.test;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,11 +87,22 @@ public class TestCallFragment extends Fragment {
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
         String eventType = "is calling";
-        MissionItemEvent m = new MissionItemEvent(new Date().toString(), eventType, User.getInstance().getUid(), User.getInstance().getName(), fakeMission, phone);
+        String volunteerPhone = getVolunteerPhone();
+        String supporterName = "(Supporter)";
+        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), fakeMission, phone, volunteerPhone, supporterName);
         ref.push().setValue(m);
         ref.child(phone).push().setValue(m);
 
         startActivity(intent);
+    }
+
+
+    private String getVolunteerPhone() {
+        TelephonyManager mTelephonyMgr;
+        mTelephonyMgr = (TelephonyManager)
+                myView.getContext().getSystemService(Context.TELEPHONY_SERVICE);
+        String tel = mTelephonyMgr.getLine1Number();
+        return tel;
     }
 
 

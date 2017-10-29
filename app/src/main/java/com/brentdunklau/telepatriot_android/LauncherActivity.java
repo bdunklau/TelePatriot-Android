@@ -1,7 +1,9 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.brentdunklau.telepatriot_android.util.User;
@@ -56,6 +58,14 @@ public class LauncherActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
+
+                /* works for me.  Some posts say you could get null or ?????? back though
+                TelephonyManager mTelephonyMgr;
+                mTelephonyMgr = (TelephonyManager)
+                        getSystemService(Context.TELEPHONY_SERVICE);
+                String tel = mTelephonyMgr.getLine1Number();
+                */
+
                 startActivity(new Intent(this, MainActivity.class));
             } else {
                 // user not authenticated

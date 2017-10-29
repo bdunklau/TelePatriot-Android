@@ -13,7 +13,7 @@ import android.view.ViewGroup;
  * Created by bdunklau on 10/20/2017.
  */
 
-public class TeamFragment extends Fragment {
+public class TeamFragment extends BaseFragment {
 
     View myView;
 

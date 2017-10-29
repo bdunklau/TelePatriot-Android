@@ -26,7 +26,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/17/17.
  */
 
-public class MissionDetailsFragment extends Fragment {
+public class MissionDetailsFragment extends BaseFragment {
 
     private Mission mission;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;

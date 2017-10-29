@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-public class VideoFragment extends Fragment
+public class VideoFragment extends BaseFragment
         implements View.OnClickListener, FragmentCompat.OnRequestPermissionsResultCallback {
 
     private static final int SENSOR_ORIENTATION_DEFAULT_DEGREES = 90;

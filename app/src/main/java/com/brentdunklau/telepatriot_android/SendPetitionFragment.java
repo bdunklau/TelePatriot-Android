@@ -30,7 +30,7 @@ import com.brentdunklau.telepatriot_android.util.User;
  * Created by bdunklau on 10/23/2017.
  */
 
-public class SendPetitionFragment extends Fragment {
+public class SendPetitionFragment extends BaseFragment {
 
     EditText phone_field_send_petition;
     Button button_send_petition;

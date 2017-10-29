@@ -30,7 +30,7 @@ import com.google.firebase.database.ValueEventListener;
  * the stuff we now pass in from each of their constructors
  */
 
-public class MissionListFragment extends Fragment {
+public class MissionListFragment extends BaseFragment {
     protected String title;
     protected DatabaseReference ref;
     protected Query query;

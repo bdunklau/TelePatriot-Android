@@ -17,7 +17,7 @@ import android.widget.Button;
  * Created by bdunklau on 10/11/17.
  */
 
-public class AdminFragment extends Fragment {
+public class AdminFragment extends BaseFragment {
 
     Button button_unassigned_users, button_search_users;
     View myView;

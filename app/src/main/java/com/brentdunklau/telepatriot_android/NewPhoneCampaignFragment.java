@@ -22,13 +22,14 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
  * Created by bdunklau on 10/13/2017.
  */
 
-public class NewPhoneCampaignFragment extends Fragment {
+public class NewPhoneCampaignFragment extends BaseFragment {
 
     Button submit_new_phone_campaign;
     EditText edit_new_phone_campaign, edit_mission_name;
@@ -46,7 +47,8 @@ public class NewPhoneCampaignFragment extends Fragment {
         edit_mission_name = myView.findViewById(R.id.edit_mission_name);
 
         // TODO get rid of this test code
-        edit_mission_name.setText("Testing "+new Date());
+
+        edit_mission_name.setText("Montana Mission "+new SimpleDateFormat("h:mm").format(new Date()));
         edit_new_phone_campaign.setText("https://docs.google.com/spreadsheets/d/1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs/edit#gid=0");
 
         submit_new_phone_campaign.setOnClickListener(new View.OnClickListener() {
