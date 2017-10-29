@@ -9,7 +9,7 @@ const notifications = require('./notifications')
 const roles = require('./roles')
 const topics = require('./topics')
 const sheetsDemo = require('./sheets/demo-google-sheet-write')
-const importDemo = require('./sheets/demo-import-sheet')
+const sheetReader = require('./sheets/import-sheet')
 
 exports.messagestuff = onmessage.pushMessages
 exports.userCreated = createModule.createUserAccount
@@ -26,8 +26,8 @@ exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
 
-exports.testsheetImport = importDemo.testsheetImport
-exports.readSpreadsheet = importDemo.readSpreadsheet
+exports.testsheetImport = sheetReader.testsheetImport
+exports.readSpreadsheet = sheetReader.readSpreadsheet
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation

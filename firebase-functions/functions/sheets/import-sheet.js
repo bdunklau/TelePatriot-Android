@@ -198,16 +198,26 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
 
                                   var rows = response.values;
                                   var colnames = []
-                                  var emailColumn = -1;
+                                  var emailColumn = -1
+                                  var phoneColumn = -1
                                   for(var c = 0; c < rows[0].length; c++) {
-                                        colnames.push(rows[0][c])
-                                        if(rows[0][c].toLowerCase() == 'email')
-                                            emailColumn = c;
+                                        if(rows[0][c].toLowerCase() == 'email') {
+                                            emailColumn = c
+                                            colnames.push(rows[0][c].toLowerCase())
+                                        }
+                                        else if(isPhoneColumn(rows[0][c])) {
+                                            phoneColumn = c
+                                            colnames.push("phone")
+                                        }
+                                        else {
+                                            colnames.push(rows[0][c].toLowerCase())
+                                        }
                                   }
 
                                   for(var r = 1; r < rows.length; r++) {
 
                                         var missionCopy = JSON.parse(JSON.stringify(missionStuff))
+                                        var hasPhone = true;
 
                                         for(var c = 0; c < rows[0].length; c++) {
                                             if(rows[r][c]) {
@@ -215,18 +225,29 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                                     // strip any " (Yes)" or " (No)" from email strings
                                                     var stripped = stripYesNo(rows[r][c])
                                                     missionCopy[colnames[c]] = stripped;
-                                                } else {
+                                                }
+                                                else {
                                                     missionCopy[colnames[c]] = rows[r][c];
                                                 }
                                             }
+                                            else if(c == phoneColumn) {
+                                                // The if block above was false, meaning no data in that cell
+                                                // So are we on the phone column?  If so, skip the whole row - don't
+                                                // write it to the database because we can't call this person anyway
+                                                hasPhone = false
+                                            }
                                         }
-                                        // compound key: capture the status of the mission (new, in progress, complete) together
-                                        // with the active status (true/false) to figure out if this mission item is suitable
-                                        // for assigning to a volunteer.
-                                        // It's suitable if active_and_accomplished: true_new
-                                        missionCopy['accomplished'] = "new"
-                                        missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
-                                        adminRef.root.child('mission_items').push().set(missionCopy)
+
+                                        if(hasPhone) {
+                                            // compound key: capture the status of the mission (new, in progress, complete) together
+                                            // with the active status (true/false) to figure out if this mission item is suitable
+                                            // for assigning to a volunteer.
+                                            // It's suitable if active_and_accomplished: true_new
+                                            missionCopy['accomplished'] = "new"
+                                            missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
+                                            adminRef.root.child('mission_items').push().set(missionCopy)
+                                        }
+
                                   }
 
                             });
@@ -274,6 +295,15 @@ var stripYesNo = function(val) {
         return val.substring(0, idx).trim()
     }
     else return val
+}
+
+var isPhoneColumn = function(val) {
+    if(!val)
+        return false
+    var lower = val.toLowerCase()
+    if(lower == "phone" || lower == "phone#" || lower == "phone number" || lower == "phone num" || lower == "phone #")
+        return true
+    else return false
 }
 
 
