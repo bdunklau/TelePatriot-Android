@@ -18,7 +18,7 @@ import com.google.firebase.database.FirebaseDatabase;
  * Created by bdunklau on 10/1/17.
  */
 
-public class LimboActivity extends BaseActivity /*implements RoleAssignedListener, OneTime*/ {
+public class LimboActivity extends BaseActivity implements AccountStatusEvent.Listener /*RoleAssignedListener, OneTime*/ {
 
     protected String TAG = "LimboActivity";
     private FirebaseRecyclerAdapter<AccountStatusEvent, AccountStatusEventHolder> mAdapter;
@@ -29,6 +29,8 @@ public class LimboActivity extends BaseActivity /*implements RoleAssignedListene
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_limbo);
+
+        User.getInstance().addAccountStatusEventListener(this);
 
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         accountStatusEvents = (RecyclerView) findViewById(R.id.account_status_events);
@@ -85,10 +87,10 @@ public class LimboActivity extends BaseActivity /*implements RoleAssignedListene
         mAdapter.cleanup();
     }
 
-    // Might want to replace RoleAssignedListener with AccountStatusEvent.Listener
-    // See User.java for usage
-    public void roleAssigned(String role) {
-        Intent it = new Intent(this, MainActivity.class);
-        startActivity(it);
+    // per AccountStatusEvent.Listener
+    @Override
+    public void fired(AccountStatusEvent evt) {
+        if(evt instanceof AccountStatusEvent.RoleAdded)
+            startActivity(new Intent(this, MainActivity.class));
     }
 }

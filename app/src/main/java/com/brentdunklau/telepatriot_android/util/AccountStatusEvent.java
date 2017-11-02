@@ -50,4 +50,16 @@ public class AccountStatusEvent {
         }
     }
 
+    public static class RoleAdded extends AccountStatusEvent {
+        RoleAdded(String role) {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), role);
+        }
+    }
+
+    public static class RoleRemoved extends AccountStatusEvent {
+        RoleRemoved(String role) {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), role);
+        }
+    }
+
 }

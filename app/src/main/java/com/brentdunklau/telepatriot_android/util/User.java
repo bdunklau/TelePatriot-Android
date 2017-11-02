@@ -274,6 +274,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
             boolean notAssignedYet = !isAdmin && !isDirector && !isVolunteer;
             doRole(dataSnapshot.getKey(), true);
+            fireRoleAdded(dataSnapshot.getKey());
         }
 
         private void doRole(String role, boolean val) {
@@ -293,6 +294,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         @Override
         public void onChildRemoved(DataSnapshot dataSnapshot) {
             doRole(dataSnapshot.getKey(), false);
+            fireRoleAdded(dataSnapshot.getKey());
         }
 
         @Override
@@ -316,6 +318,20 @@ public class User implements FirebaseAuth.AuthStateListener {
     // assuming he hasn't been deactivated
     private void fireNoRolesEvent() {
         AccountStatusEvent.NoRoles nr = new AccountStatusEvent.NoRoles();
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(nr);
+        }
+    }
+
+    private void fireRoleAdded(String role) {
+        AccountStatusEvent.RoleAdded nr = new AccountStatusEvent.RoleAdded(role);
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(nr);
+        }
+    }
+
+    private void fireRoleRemoved(String role) {
+        AccountStatusEvent.RoleRemoved nr = new AccountStatusEvent.RoleRemoved(role);
         for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
             l.fired(nr);
         }
