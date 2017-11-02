@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 
@@ -15,7 +16,7 @@ import java.util.Arrays;
  * Created by bdunklau on 10/12/2017.
  */
 
-public class LauncherActivity extends BaseActivity {
+public class LauncherActivity extends BaseActivity implements AccountStatusEvent.Listener {
 
     private static final int RC_SIGN_IN = 1;
 
@@ -51,6 +52,10 @@ public class LauncherActivity extends BaseActivity {
     }
 
 
+    /* We don't even need to do this because the singleton constructor in User.java registers
+    itself as a Firebase Auth state listener.  Go look at the queries we do in login() and see how
+    we fire different events when the user is written and removed from the /no_roles node
+*/
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // NOTE:  FirebaseAuth.getInstance().getCurrentUser() IS NOT null  at this point
@@ -59,20 +64,28 @@ public class LauncherActivity extends BaseActivity {
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
 
-                /* works for me.  Some posts say you could get null or ?????? back though
-                TelephonyManager mTelephonyMgr;
-                mTelephonyMgr = (TelephonyManager)
-                        getSystemService(Context.TELEPHONY_SERVICE);
-                String tel = mTelephonyMgr.getLine1Number();
-                */
+                ////////////////////////////////////////////////////////////////////////////////
+                // What if the user has no roles yet?  They need to go to the LimboActivity screen
+                ////////////////////////////////////////////////////////////////////////////////
 
-                startActivity(new Intent(this, MainActivity.class));
+                //startActivity(new Intent(this, MainActivity.class));
+
+
+                User.getInstance().addAccountStatusEventListener(this);
+
             } else {
                 // user not authenticated
                 Log.d("LauncherActivity", "USER NOT AUTHENTICATED");
             }
 
         }
+    }
+
+    // per AccountStatusEvent.Listener
+    @Override
+    public void fired(AccountStatusEvent evt) {
+        if(evt instanceof AccountStatusEvent.NoRoles)
+            startActivity(new Intent(this, LimboActivity.class));
     }
 
 }

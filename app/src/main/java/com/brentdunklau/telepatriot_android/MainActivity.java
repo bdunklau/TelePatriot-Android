@@ -1,6 +1,7 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -20,6 +21,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -27,7 +29,7 @@ import com.google.android.gms.tasks.Task;
 import com.squareup.picasso.Picasso;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, AccountStatusEvent.Listener {
 
     private String TAG = "MainActivity";
 
@@ -38,7 +40,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        User.getInstance().addAccountStatusEventListener(this);
 
 /*
         Holdover from back when everything was an activity.  This is how we were closing down the
@@ -209,5 +211,12 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "un-assigning mission item");
             unassignMissionItem();
         }
+    }
+
+    // per AccountStatusEvent.Listener
+    @Override
+    public void fired(AccountStatusEvent evt) {
+        if(evt instanceof AccountStatusEvent.NoRoles)
+            startActivity(new Intent(this, LimboActivity.class));
     }
 }

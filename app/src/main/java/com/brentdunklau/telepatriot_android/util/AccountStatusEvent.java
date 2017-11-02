@@ -1,5 +1,8 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by bdunklau on 10/2/2017.
  */
@@ -35,5 +38,16 @@ public class AccountStatusEvent {
         this.event = event;
     }
 
+    // make the Activities be Listeners so that when stuff happens in the User object,
+    // we can switch screens accordingly
+    public interface Listener {
+        public void fired(AccountStatusEvent evt);
+    }
+
+    public static class NoRoles extends AccountStatusEvent {
+        NoRoles() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "No roles assigned");
+        }
+    }
 
 }
