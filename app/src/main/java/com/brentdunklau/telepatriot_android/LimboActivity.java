@@ -9,8 +9,6 @@ import android.widget.Button;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.AccountStatusEventHolder;
-import com.brentdunklau.telepatriot_android.util.OneTime;
-import com.brentdunklau.telepatriot_android.util.RoleAssignedListener;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
@@ -20,7 +18,7 @@ import com.google.firebase.database.FirebaseDatabase;
  * Created by bdunklau on 10/1/17.
  */
 
-public class LimboActivity extends BaseActivity implements RoleAssignedListener, OneTime {
+public class LimboActivity extends BaseActivity /*implements RoleAssignedListener, OneTime*/ {
 
     protected String TAG = "LimboActivity";
     private FirebaseRecyclerAdapter<AccountStatusEvent, AccountStatusEventHolder> mAdapter;
@@ -40,7 +38,7 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
         // should not be null because we don't even get here till the user
         // has logged in and been sent here from MainActivity.onActivityResult()
         mFirebaseAuth = FirebaseAuth.getInstance();
-        User.getInstance().addRoleAssignedListener(this);
+
         String uid = User.getInstance().getUid();//mFirebaseAuth.getCurrentUser().getUid();
         final String name = User.getInstance().getName();//mFirebaseAuth.getCurrentUser().getDisplayName();
         final String msg = name + ", welcome to TelePatriot.  Because you are a new user, an admin " +
@@ -87,6 +85,8 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
         mAdapter.cleanup();
     }
 
+    // Might want to replace RoleAssignedListener with AccountStatusEvent.Listener
+    // See User.java for usage
     public void roleAssigned(String role) {
         Intent it = new Intent(this, MainActivity.class);
         startActivity(it);
