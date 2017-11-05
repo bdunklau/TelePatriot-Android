@@ -15,7 +15,7 @@ exports.sheetId = ( url => {
     var i1 = url.indexOf("/d/")+3
     var i2 = url.indexOf("/edit")
     if(i2 == -1) {
-        // on iPhone, the url will not contain "/edit"
+        // on iPhone, the url will not contain "/edit" 
         return url.substring(i1)
     }
     else {
