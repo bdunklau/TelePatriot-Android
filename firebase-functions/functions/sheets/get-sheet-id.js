@@ -14,8 +14,11 @@ exports.sheetId = ( url => {
     var end = "/edit"
     var i1 = url.indexOf("/d/")+3
     var i2 = url.indexOf("/edit")
-    var sheetId = url.substring(i1, i2)
-    //var same = sheetId == expId
-    //console.log("same sheet id: ", same)
-    return sheetId
+    if(i2 == -1) {
+        // on iPhone, the url will not contain "/edit"
+        return url.substring(i1)
+    }
+    else {
+        return url.substring(i1, i2)
+    }
 })
