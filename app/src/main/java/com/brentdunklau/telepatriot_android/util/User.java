@@ -1,7 +1,9 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import android.accounts.Account;
 import android.support.annotation.NonNull;
 
+import com.google.android.gms.auth.AccountChangeEvent;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -32,7 +34,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private MissionDetail missionItem;
     private ChildEventListener childEventListener;
     private static User singleton;
-    private List<RoleAssignedListener> roleAssignedListeners = new ArrayList<RoleAssignedListener>();
+    private List<AccountStatusEvent.Listener> accountStatusEventListeners = new ArrayList<AccountStatusEvent.Listener>();
 
     public static User getInstance() {
         if(singleton == null) {
@@ -54,6 +56,10 @@ public class User implements FirebaseAuth.AuthStateListener {
         return FirebaseAuth.getInstance().getCurrentUser();
     }
 
+
+    /**
+     * THIS METHOD IS STARTING TO LOOK LIKE A JUNK DRAWER - CLEAN IT UP
+     */
     private void login(/*FirebaseUser firebaseUser*/) {
         /**
          * NOTE: No point in checking to see if the user is logged in already via getFirebaseUser() != null
@@ -63,13 +69,37 @@ public class User implements FirebaseAuth.AuthStateListener {
         childEventListener = new ChildEventAdapter();
         final String name = getName();
 
+        database.getReference("/no_roles/"+getUid()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // if dataSnapshot is null, then the user has been assigned to a role
+                // if not null, then we need to send the user to LimboActivity
+                Object o = dataSnapshot.getValue();
+                if(o != null ) {
+                    // send to LimboActivity
+                    fireNoRolesEvent();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
         userRef = database.getReference("/users/"+getUid());
         // redundant because we're getting roles and topics below also
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        // Don't just listen for the SingleValueEvent because this method gets called before the trigger
+        // can write to the /users node
+        // BUUUUUUUT this also gets called when anything happens to the user's account including when
+        // the account is DELETED.  That's a serious "code smell" to be executing code in the login() method
+        // when an account is deleted.
+        userRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 UserBean ub = dataSnapshot.getValue(UserBean.class);
-                User.this.recruiter_id = ub.getRecruiter_id();
+                if(ub != null)
+                    User.this.recruiter_id = ub.getRecruiter_id();
             }
 
             @Override
@@ -113,6 +143,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     private void onSignout() {
         if(userRef == null)
             return;
+
+        accountStatusEventListeners.clear();
 
         userRef.removeEventListener(childEventListener);
 
@@ -230,7 +262,6 @@ public class User implements FirebaseAuth.AuthStateListener {
     public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
         FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
         if(firebaseUser != null) {
-            String name = firebaseUser.getDisplayName();
             login();
         }
         else {
@@ -243,8 +274,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
             boolean notAssignedYet = !isAdmin && !isDirector && !isVolunteer;
             doRole(dataSnapshot.getKey(), true);
-            if(notAssignedYet)
-                User.this.fireRoleAssignedEvent(dataSnapshot.getKey());
+            fireRoleAdded(dataSnapshot.getKey());
         }
 
         private void doRole(String role, boolean val) {
@@ -264,6 +294,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         @Override
         public void onChildRemoved(DataSnapshot dataSnapshot) {
             doRole(dataSnapshot.getKey(), false);
+            fireRoleAdded(dataSnapshot.getKey());
         }
 
         @Override
@@ -277,22 +308,33 @@ public class User implements FirebaseAuth.AuthStateListener {
         }
     }
 
-    void fireRoleAssignedEvent(String role) {
-        List<RoleAssignedListener> removeThese = new ArrayList<RoleAssignedListener>();
-        for(RoleAssignedListener roleAssignedListener : roleAssignedListeners) {
-            roleAssignedListener.roleAssigned(role);
-            if(roleAssignedListener instanceof OneTime)
-                removeThese.add(roleAssignedListener);
-        }
-        // remove any OneTime listeners...
-        for(RoleAssignedListener rem : removeThese) {
-            boolean removed = roleAssignedListeners.remove(rem);
-            if(removed) ; // just for debugging
+    public void addAccountStatusEventListener(AccountStatusEvent.Listener l) {
+        if(!accountStatusEventListeners.contains(l))
+            accountStatusEventListeners.add(l);
+    }
+
+    // fired when the user is recorded under the /no_roles node
+    // When this happens, the user is sent to the LimboActivity screen
+    // assuming he hasn't been deactivated
+    private void fireNoRolesEvent() {
+        AccountStatusEvent.NoRoles nr = new AccountStatusEvent.NoRoles();
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(nr);
         }
     }
 
-    public void addRoleAssignedListener(RoleAssignedListener roleAssignedListener) {
-        roleAssignedListeners.add(roleAssignedListener);
+    private void fireRoleAdded(String role) {
+        AccountStatusEvent.RoleAdded nr = new AccountStatusEvent.RoleAdded(role);
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(nr);
+        }
+    }
+
+    private void fireRoleRemoved(String role) {
+        AccountStatusEvent.RoleRemoved nr = new AccountStatusEvent.RoleRemoved(role);
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(nr);
+        }
     }
 
 }
