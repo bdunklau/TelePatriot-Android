@@ -137,7 +137,7 @@ public class ChatFragment extends BaseFragment {
                 ChatMessage.class,
                 R.layout.chat_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 ChatMessageHolder.class,
-                // NULL -----v  Fix this
+                // NULL -----v  Fix this !
                 myRef.child(chatKey)) {
             @Override
             public void populateViewHolder(ChatMessageHolder holder, ChatMessage chatMessage, int position) {
