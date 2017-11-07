@@ -45,11 +45,14 @@ public class ChatFragment extends BaseFragment {
     View myView;
 
     public ChatFragment() {
-        /**
-         * Whatever calls this constructor has to make sure that User.getInstance().isLoggedIn()
-         */
-        if(User.getInstance().isVolunteerOnly())
-            chatKey = User.getInstance().getUid();
+    }
+
+    /**
+     * All admins and directors will see these messages.  But only volunteer who will
+     * see messages under this node is the user that initiated the chat.
+     */
+    public void userNeedsHelp() {
+        chatKey = "help_"+User.getInstance().getUid();
     }
 
     public void setTo(String toUid) {
@@ -85,6 +88,10 @@ public class ChatFragment extends BaseFragment {
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(chatKey == null)
+                    return;
+                // TODO need to figure out something besides just this
+
                 ChatMessage chatMessage = new ChatMessage(messageEditText.getText().toString(), User.getInstance().getName());
                 myRef.child(chatKey).push().setValue(chatMessage);
                 messageEditText.setText("");
@@ -131,13 +138,15 @@ public class ChatFragment extends BaseFragment {
 
 
     private void doit() {
+        if(chatKey == null)
+            return;
+        // TODO need to figure out something besides just this
 
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<ChatMessage, ChatMessageHolder>(
                 ChatMessage.class,
                 R.layout.chat_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 ChatMessageHolder.class,
-                // NULL -----v  Fix this !
                 myRef.child(chatKey)) {
             @Override
             public void populateViewHolder(ChatMessageHolder holder, ChatMessage chatMessage, int position) {
