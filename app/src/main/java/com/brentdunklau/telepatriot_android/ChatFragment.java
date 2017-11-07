@@ -93,7 +93,7 @@ public class ChatFragment extends BaseFragment {
                 // TODO need to figure out something besides just this
 
                 ChatMessage chatMessage = new ChatMessage(messageEditText.getText().toString(), User.getInstance().getName());
-                myRef.child(chatKey).push().setValue(chatMessage);
+                myRef.child(chatKey).push().setValue(chatMessage); 
                 messageEditText.setText("");
                 mSendButton.setEnabled(false);
             }
