@@ -145,7 +145,7 @@ public class AssignUserFragment extends AdminFragment {
             public void onClick(View view) {
                 // This is a director or admin starting or joining a chat with someone
                 ChatFragment chatFragment = new ChatFragment();
-                chatFragment.setTo(uid);
+                chatFragment.to(uid);
                 FragmentTransaction transaction = fragmentManager.beginTransaction();
                 transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
                 transaction.replace(R.id.content_frame, chatFragment);

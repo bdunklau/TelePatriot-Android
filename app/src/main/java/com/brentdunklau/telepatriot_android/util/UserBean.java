@@ -11,6 +11,18 @@ public class UserBean {
     private String name, email, uid, photoUrl, created, reviewed_by, recruiter_id;
     private Map<String, Object> roles;
 
+    public UserBean() {
+
+    }
+
+    public UserBean(User user) {
+        setName(user.getName());
+        setEmail(user.getEmail());
+        setUid(user.getUid());
+        setPhotoUrl(user.getPhotoURL());
+        // include the rest of the attributes
+    }
+
     public void setName(String name) {
         this.name = name;
     }
