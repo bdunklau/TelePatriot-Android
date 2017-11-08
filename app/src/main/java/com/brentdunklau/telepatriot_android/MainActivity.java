@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
@@ -144,13 +145,7 @@ public class MainActivity extends AppCompatActivity
         } else if( id == R.id.nav_send_petition) {
             fragmentManager.beginTransaction().replace(R.id.content_frame, new SendPetitionFragment()).commit();
         } else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
-            ChatFragment chatFragment = new ChatFragment();
-            chatFragment.userNeedsHelp();
-            FragmentTransaction transaction = fragmentManager.beginTransaction();
-            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
-            transaction.replace(R.id.content_frame, chatFragment);
-            transaction.addToBackStack(null);
-            transaction.commit();
+            doChat();
         } else if (id == R.id.nav_signout) {
             signOut();
         }
@@ -158,6 +153,33 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /**
+     * This method figures out which chat screen we should go to.  If the user is a
+     * volunteer, we send them to ChatFragment.  If the user is a director or admin,
+     * we send them to ChatAllFragment.  ChatAllFragment is where we show a list of users
+     * that the admin/director can then choose from to engage.
+     */
+    private void doChat() {
+        FragmentManager fragmentManager = getFragmentManager();
+        if(User.getInstance().isVolunteerOnly()) {
+            ChatFragment chatFragment = new ChatFragment();
+            chatFragment.userNeedsHelp();
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
+            transaction.replace(R.id.content_frame, chatFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
+        }
+        else {
+            ChatAllFragment f = new ChatAllFragment();
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
+            transaction.replace(R.id.content_frame, f);
+            transaction.addToBackStack(null);
+            transaction.commit();
+        }
     }
 
     private void signOut() {

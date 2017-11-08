@@ -11,6 +11,10 @@ public class UserBean {
     private String name, email, uid, photoUrl, created, reviewed_by, recruiter_id;
     private Map<String, Object> roles;
 
+    public UserBean() {
+
+    }
+
     public void setName(String name) {
         this.name = name;
     }

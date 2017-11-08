@@ -16,6 +16,7 @@ import android.widget.EditText;
 import com.brentdunklau.telepatriot_android.util.ChatMessage;
 import com.brentdunklau.telepatriot_android.util.ChatMessageHolder;
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -42,20 +43,40 @@ public class ChatFragment extends BaseFragment {
     // Probably more important at first (10/13/17) to display timestamps on chat messages
     //private TextView text_whos_typing;
 
+    private static ChatFragment chatFragment;
     View myView;
 
+    public static ChatFragment getInstance() {
+        if(chatFragment == null)
+            chatFragment = new ChatFragment();
+        return chatFragment;
+    }
+
     public ChatFragment() {
+        int i = 1;
     }
 
     /**
-     * All admins and directors will see these messages.  But only volunteer who will
+     * All admins and directors will see these messages.  But the only volunteer who will
      * see messages under this node is the user that initiated the chat.
      */
     public void userNeedsHelp() {
-        chatKey = "help_"+User.getInstance().getUid();
+        chatKey = User.getInstance().getUid();
+        myRef = FirebaseDatabase.getInstance().getReference("chathelp/"+chatKey);
+
+        /**
+         * This is for the admins, so we can display all the users (volunteers) who have
+         * reached out via chat/help.  This is a little unnecessary.  We only NEED to write
+         * this info the first time a user EVER comes to chat/help.  But checking for this information
+         * first, and then only writing it if it doesn't exist, is just more code.  Don't see
+         * much point in that.
+         */
+        myRef.child("name").setValue(User.getInstance().getName());
+        myRef.child("email").setValue(User.getInstance().getEmail());
+        myRef.child("photoUrl").setValue(User.getInstance().getPhotoURL());
     }
 
-    public void setTo(String toUid) {
+    public void to(String toUid) {
         chatKey = toUid;
     }
 
@@ -80,8 +101,9 @@ public class ChatFragment extends BaseFragment {
         mLinearLayoutManager = new LinearLayoutManager(myView.getContext());
         mLinearLayoutManager.setStackFromEnd(true);
 
-
-        myRef = FirebaseDatabase.getInstance().getReference().child("chat");
+        if(myRef == null)
+            myRef = FirebaseDatabase.getInstance().getReference("chathelp/"+chatKey);
+        //myRef = FirebaseDatabase.getInstance().getReference().child("chathelp");
 
         mSendButton = myView.findViewById(R.id.sendButton);
 
@@ -93,7 +115,7 @@ public class ChatFragment extends BaseFragment {
                 // TODO need to figure out something besides just this
 
                 ChatMessage chatMessage = new ChatMessage(messageEditText.getText().toString(), User.getInstance().getName());
-                myRef.child(chatKey).push().setValue(chatMessage); 
+                myRef.child("messages").push().setValue(chatMessage);
                 messageEditText.setText("");
                 mSendButton.setEnabled(false);
             }
@@ -147,7 +169,7 @@ public class ChatFragment extends BaseFragment {
                 ChatMessage.class,
                 R.layout.chat_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 ChatMessageHolder.class,
-                myRef.child(chatKey)) {
+                myRef.child("messages")) {
             @Override
             public void populateViewHolder(ChatMessageHolder holder, ChatMessage chatMessage, int position) {
                 holder.setChatMessage(chatMessage);
