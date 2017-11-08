@@ -11,8 +11,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -146,8 +144,8 @@ public class MainActivity extends AppCompatActivity
         } else if( id == R.id.nav_send_petition) {
             fragmentManager.beginTransaction().replace(R.id.content_frame, new SendPetitionFragment()).commit();
         } else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
-            String uid = User.getInstance().getUid();
             ChatFragment chatFragment = new ChatFragment();
+            chatFragment.userNeedsHelp();
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
             transaction.replace(R.id.content_frame, chatFragment);
