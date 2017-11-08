@@ -200,6 +200,8 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                   var colnames = []
                                   var emailColumn = -1
                                   var phoneColumn = -1
+                                  var threeWayPhoneColumn = -1
+                                  var threeWayNameColumn = -1
                                   for(var c = 0; c < rows[0].length; c++) {
                                         if(rows[0][c].toLowerCase() == 'email') {
                                             emailColumn = c
@@ -208,6 +210,14 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                         else if(isPhoneColumn(rows[0][c])) {
                                             phoneColumn = c
                                             colnames.push("phone")
+                                        }
+                                        else if(is3WayPhoneColumn(rows[0][c])) {
+                                            threeWayPhoneColumn = c
+                                            colnames.push("phone2")
+                                        }
+                                        else if(is3WayNameColumn(rows[0][c])) {
+                                            threeWayNameColumn = c
+                                            colnames.push("name2")
                                         }
                                         else {
                                             colnames.push(rows[0][c].toLowerCase())
@@ -220,13 +230,16 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                         var hasPhone = true;
 
                                         for(var c = 0; c < rows[0].length; c++) {
+                                            // as long as the cell has data in it...
                                             if(rows[r][c]) {
+
+                                                // see if it's the email column so we can strip any " (Yes)" or " (No)" from email strings
                                                 if(c == emailColumn) {
-                                                    // strip any " (Yes)" or " (No)" from email strings
                                                     var stripped = stripYesNo(rows[r][c])
                                                     missionCopy[colnames[c]] = stripped;
                                                 }
                                                 else {
+                                                    // otherwise just store the cell data
                                                     missionCopy[colnames[c]] = rows[r][c];
                                                 }
                                             }
@@ -307,11 +320,46 @@ var isPhoneColumn = function(val) {
 }
 
 
+/**
+If we find a column named "phone2" that's how we'll know this is a 3way call mission
+**/
+var is3WayPhoneColumn = function(val) {
+    return isNamed(val, "phone2")
+}
+
+
+/**
+If we find a column named "phone2" that's how we'll know this is a 3way call mission
+**/
+var is3WayNameColumn = function(val) {
+    return isNamed(val, "name2")
+}
+
+
+var isNamed = function(val, named) {
+    if(!val)
+        return false
+    var lower = val.toLowerCase()
+    if(lower == named)
+        return true
+    else return false
+}
+
+
 // HTTPS function to write new data to CONFIG_DATA_PATH, for testing
 exports.testsheetImport = functions.https.onRequest((req, res) => {
 
   return db.ref(`missions`).push({ sheet_id: HARDCODED_SHEET_ID }).then(
      () => res.status(200).send(
     `Wrote stuff at `+(new Date())));
+});
+
+
+// REPLACE THE FUNCTION BELOW WITH A TRIGGER THAT WILL DELETE MISSION ITEMS
+// (under /mission_items) WHEN THE ASSOCIATE /missions NODE IS REMOVED
+// HTTPS function to write new data to CONFIG_DATA_PATH, for testing
+exports.deleteMissionItems = functions.https.onRequest((req, res) => {
+
+  return db.ref(`mission_items`).remove()
 });
 

@@ -28,6 +28,7 @@ exports.testsheetwrite = sheetsDemo.testsheetwrite
 
 exports.testsheetImport = sheetReader.testsheetImport
 exports.readSpreadsheet = sheetReader.readSpreadsheet
+exports.deleteMissionItems = sheetReader.deleteMissionItems
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
