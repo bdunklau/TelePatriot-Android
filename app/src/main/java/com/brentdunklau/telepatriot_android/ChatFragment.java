@@ -63,7 +63,17 @@ public class ChatFragment extends BaseFragment {
     public void userNeedsHelp() {
         chatKey = User.getInstance().getUid();
         myRef = FirebaseDatabase.getInstance().getReference("chathelp/"+chatKey);
-        myRef.setValue(new UserBean(User.getInstance()));
+
+        /**
+         * This is for the admins, so we can display all the users (volunteers) who have
+         * reached out via chat/help.  This is a little unnecessary.  We only NEED to write
+         * this info the first time a user EVER comes to chat/help.  But checking for this information
+         * first, and then only writing it if it doesn't exist, is just more code.  Don't see
+         * much point in that.
+         */
+        myRef.child("name").setValue(User.getInstance().getName());
+        myRef.child("email").setValue(User.getInstance().getEmail());
+        myRef.child("photoUrl").setValue(User.getInstance().getPhotoURL());
     }
 
     public void to(String toUid) {
