@@ -54,18 +54,19 @@ public class ChatAllFragment extends BaseFragment {
 
         header_chat_list = myView.findViewById(R.id.header_chat_list);
 
-        showUsersWithChats();
+        showUsersWithChats(getFragmentManager(), this);
 
         setHasOptionsMenu(true);
         return myView;
     }
 
-    private void showUsersWithChats() {
+    private void showUsersWithChats(final FragmentManager fragmentManager, final Fragment back) {
         final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("chathelp");
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                doit(ref);
+                //doit(ref);
+                doit(ref, fragmentManager, back);
             }
 
             @Override
@@ -76,8 +77,8 @@ public class ChatAllFragment extends BaseFragment {
 
 
 
-    private void doit(DatabaseReference ref) {
-        final FragmentManager fragmentManager = getFragmentManager();
+    private void doit(DatabaseReference ref, final FragmentManager fragmentManager, final Fragment back) {
+        //final FragmentManager fragmentManager = getFragmentManager();
 
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<UserBean, UserHolder>(
@@ -105,7 +106,35 @@ public class ChatAllFragment extends BaseFragment {
                                 // at the user's roles at /users/uid/roles because we need to set the role switches
                                 // to the right values
                                 String uid = dataSnapshot.getKey();
-                                xxxx(uid, fragmentManager);
+
+                                ChatFragment chat = ChatFragment.getInstance();
+
+                                /*
+                                chat.to(uid);
+                                FragmentTransaction transaction = fragmentManager.beginTransaction();
+                                transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
+                                transaction.replace(R.id.content_frame, chat);
+                                transaction.addToBackStack(null);
+                                transaction.commit();
+                                */
+
+
+                                // Instead of going to an activity, we need to load a fragment...
+                                AssignUserFragment fragment = new AssignUserFragment();
+                                /*
+                                fragment.setUid(uid);
+                                fragment.setFragmentManager(fragmentManager, back);
+                                try {
+                                    FragmentTransaction t1 = fragmentManager.beginTransaction();
+                                    FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
+                                    int res = t2.commit();
+                                    int i=1;
+                                } catch(Throwable t) {
+                                    // TODO don't do this
+                                    t.printStackTrace();
+                                }
+                                */
+
                             }
 
                             @Override
@@ -123,27 +152,6 @@ public class ChatAllFragment extends BaseFragment {
             }
         };
         usersView.setAdapter(mAdapter);
-    }
-
-    private void xxxx(final String uid, final FragmentManager fragmentManager) {
-        Runnable r = new Runnable() {
-            public void run() {
-                try {
-                    String s = "ssss";
-                    ChatFragment chat = ChatFragment.getInstance();
-                    chat.to(uid);
-                    FragmentTransaction transaction = fragmentManager.beginTransaction();
-                    transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
-                    transaction.replace(R.id.content_frame, chat);
-                    transaction.addToBackStack(null);
-                    transaction.commit();
-                } catch( Exception e ) {
-                    // TODO don't do this
-                    e.printStackTrace();
-                }
-            }
-        };
-        new Handler().post(r);
     }
 
     @Override
