@@ -63,15 +63,16 @@ public class LauncherActivity extends BaseActivity implements AccountStatusEvent
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
-
-                ////////////////////////////////////////////////////////////////////////////////
-                // What if the user has no roles yet?  They need to go to the LimboActivity screen
-                ////////////////////////////////////////////////////////////////////////////////
-
-                //startActivity(new Intent(this, MainActivity.class));
-
-
-                User.getInstance().addAccountStatusEventListener(this);
+                if(User.getInstance().hasAnyRole()) {
+                    startActivity(new Intent(this, MainActivity.class));
+                }
+                else {
+                    // We only do this if the user is brand new and doesn't have any roles yet.
+                    // When the user is brand new, we send them to the LimboActivity screen
+                    // where they just have to sit and wait for an admin to let them in.
+                    // Look at fired(AccountStatusEvent evt) below...
+                    User.getInstance().addAccountStatusEventListener(this);
+                }
 
             } else {
                 // user not authenticated
@@ -82,6 +83,8 @@ public class LauncherActivity extends BaseActivity implements AccountStatusEvent
     }
 
     // per AccountStatusEvent.Listener
+    // This is what gets called by virtue of this call
+    //    above: User.getInstance().addAccountStatusEventListener(this);
     @Override
     public void fired(AccountStatusEvent evt) {
         if(evt instanceof AccountStatusEvent.NoRoles)

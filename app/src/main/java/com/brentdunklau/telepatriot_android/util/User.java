@@ -258,6 +258,10 @@ public class User implements FirebaseAuth.AuthStateListener {
         return isVolunteer && !isDirector && !isAdmin;
     }
 
+    public boolean hasAnyRole() {
+        return isAdmin || isDirector || isVolunteer;
+    }
+
     @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
         FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
