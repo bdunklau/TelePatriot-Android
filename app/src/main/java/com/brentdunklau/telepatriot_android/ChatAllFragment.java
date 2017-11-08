@@ -107,34 +107,14 @@ public class ChatAllFragment extends BaseFragment {
                                 // to the right values
                                 String uid = dataSnapshot.getKey();
 
+                                // Whoa! This SORTA works on PC but not on the Mac - what is UP with that?
                                 ChatFragment chat = ChatFragment.getInstance();
-
-                                /*
                                 chat.to(uid);
                                 FragmentTransaction transaction = fragmentManager.beginTransaction();
                                 transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
                                 transaction.replace(R.id.content_frame, chat);
                                 transaction.addToBackStack(null);
                                 transaction.commit();
-                                */
-
-
-                                // Instead of going to an activity, we need to load a fragment...
-                                AssignUserFragment fragment = new AssignUserFragment();
-                                /*
-                                fragment.setUid(uid);
-                                fragment.setFragmentManager(fragmentManager, back);
-                                try {
-                                    FragmentTransaction t1 = fragmentManager.beginTransaction();
-                                    FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
-                                    int res = t2.commit();
-                                    int i=1;
-                                } catch(Throwable t) {
-                                    // TODO don't do this
-                                    t.printStackTrace();
-                                }
-                                */
-
                             }
 
                             @Override
