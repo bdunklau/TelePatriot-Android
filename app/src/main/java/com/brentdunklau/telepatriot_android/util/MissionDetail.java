@@ -9,6 +9,7 @@ import com.google.firebase.database.FirebaseDatabase;
 public class MissionDetail {
 
     private String description, email, mission_create_date, mission_id, mission_name, mission_type, name, phone, script, uid, uid_and_active, url, accomplished, active_and_accomplished;
+    private String name2, phone2; // when the spreadsheet has these columns, means 3 way call
     private boolean active;
 
     public MissionDetail() {
@@ -152,5 +153,25 @@ public class MissionDetail {
 
     public void complete(String missionItemId) {
         setState("complete", missionItemId);
+    }
+
+    // when the spreadsheet has these columns, means 3 way call
+    public String getName2() {
+        return name2;
+    }
+
+    // when the spreadsheet has these columns, means 3 way call
+    public void setName2(String name2) {
+        this.name2 = name2;
+    }
+
+    // when the spreadsheet has these columns, means 3 way call
+    public String getPhone2() {
+        return phone2;
+    }
+
+    // when the spreadsheet has these columns, means 3 way call
+    public void setPhone2(String phone2) {
+        this.phone2 = phone2;
     }
 }

@@ -37,7 +37,7 @@ public class GetAMissionFragment extends BaseFragment {
     private String TAG = "GetAMissionFragment";
     private MissionDetail missionDetail;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
-    private Button button_call_person1;
+    private Button button_call_person1, button_call_person2;
     private String missionId, missionItemId;
 
 
@@ -59,6 +59,7 @@ public class GetAMissionFragment extends BaseFragment {
         mission_description = myView.findViewById(R.id.mission_description);
         mission_script = myView.findViewById(R.id.mission_script);
         button_call_person1 = myView.findViewById(R.id.button_call_person1);
+        button_call_person2 = myView.findViewById(R.id.button_call_person2);
 
 
         FirebaseDatabase.getInstance().getReference("mission_items").orderByChild("active_and_accomplished").equalTo("true_new").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -84,6 +85,8 @@ public class GetAMissionFragment extends BaseFragment {
                     button_call_person1.setText(missionDetail.getName()+" "+missionDetail.getPhone());
                     wireUp(button_call_person1, missionDetail);
 
+                    prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
+
                     missionDetail.setAccomplished("in progress");
                     missionDetail.setActive_and_accomplished("true_in progress");
 
@@ -101,6 +104,19 @@ public class GetAMissionFragment extends BaseFragment {
 
         setHasOptionsMenu(true);
         return myView;
+    }
+
+    private void prepareFor3WayCallIfNecessary(MissionDetail missionDetail, Button button) {
+        if(missionDetail.getName2() != null && missionDetail.getPhone2() != null) {
+            // we have a 3way call scenario
+            button.setText(missionDetail.getName2()+" "+missionDetail.getPhone2());
+            // got some work to do here.  Can't just call wireUp() like we do with the first phone button
+            // follow the code and you'll see - some refactoring necessary
+        }
+        else {
+            // not a 3way call scenario, so hide the second phone button
+            button.setVisibility(View.GONE);
+        }
     }
 
     // called when we come back from a call
