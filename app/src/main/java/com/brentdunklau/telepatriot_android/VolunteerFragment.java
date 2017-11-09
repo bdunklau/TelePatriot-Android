@@ -10,8 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import com.brentdunklau.telepatriot_android.test.TestVolunteerFragment;
-
 /**
  * Created by bdunklau on 10/11/17.
  */
@@ -33,7 +31,7 @@ public class VolunteerFragment extends BaseFragment {
 
         button_get_a_mission = myView.findViewById(R.id.button_get_a_mission);
 
-        wireUp(button_get_a_mission, new GetAMissionFragment());
+        wireUp(button_get_a_mission, new MyMissionFragment());
 
         /*****
          * Probably should put this in a separate area just for developers

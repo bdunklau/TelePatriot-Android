@@ -81,7 +81,7 @@ public class MissionItemWrapUpFragment extends BaseFragment {
 
     private void submitWrapUpAndGetAnother(View v) {
         User.getInstance().submitWrapUp(mission_item_outcome.getSelectedItem()+"", edit_text_notes.getText()+"");
-        gotoFragment(new GetAMissionFragment());
+        gotoFragment(new MyMissionFragment());
     }
 
 

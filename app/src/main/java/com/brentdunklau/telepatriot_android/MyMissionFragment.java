@@ -1,7 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
@@ -32,9 +31,9 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/26/17.
  */
 
-public class GetAMissionFragment extends BaseFragment {
+public class MyMissionFragment extends BaseFragment {
 
-    private String TAG = "GetAMissionFragment";
+    private String TAG = "MyMissionFragment";
     private MissionDetail missionDetail;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
     private Button button_call_person1, button_call_person2;
@@ -53,7 +52,7 @@ public class GetAMissionFragment extends BaseFragment {
      *
      */
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.get_a_mission_fragment, container, false);
+        myView = inflater.inflate(R.layout.my_mission_fragment, container, false);
 
         mission_name = myView.findViewById(R.id.heading_mission_name);
         mission_description = myView.findViewById(R.id.mission_description);

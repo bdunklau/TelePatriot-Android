@@ -14,7 +14,7 @@ public class BaseFragment extends Fragment {
     private String TAG = "BaseFragment";
     protected boolean doSuper = true;
 
-    // GetAMissionFragment overrides this.  So when any other fragment resumes,
+    // MyMissionFragment overrides this.  So when any other fragment resumes,
     // we release the user's currently assigned mission item back to the queue
     // for others to work
     @Override
