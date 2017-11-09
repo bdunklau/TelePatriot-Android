@@ -28,7 +28,8 @@ import com.google.android.gms.tasks.Task;
 import com.squareup.picasso.Picasso;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, AccountStatusEvent.Listener {
+        implements NavigationView.OnNavigationItemSelectedListener, AccountStatusEvent.Listener,
+        MissionItemWrapUpFragment.QuitListener {
 
     private String TAG = "MainActivity";
 
@@ -180,6 +181,12 @@ public class MainActivity extends AppCompatActivity
             transaction.addToBackStack(null);
             transaction.commit();
         }
+    }
+
+
+    // per MissionItemWrapUpFragment.QuitListener
+    public void quit() {
+        signOut();
     }
 
     private void signOut() {

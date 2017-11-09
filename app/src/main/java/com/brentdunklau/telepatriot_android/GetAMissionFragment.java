@@ -37,7 +37,7 @@ public class GetAMissionFragment extends BaseFragment {
     private String TAG = "GetAMissionFragment";
     private MissionDetail missionDetail;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
-    private Button button_call_person1;
+    private Button button_call_person1, button_call_person2;
     private String missionId, missionItemId;
 
 
@@ -59,6 +59,7 @@ public class GetAMissionFragment extends BaseFragment {
         mission_description = myView.findViewById(R.id.mission_description);
         mission_script = myView.findViewById(R.id.mission_script);
         button_call_person1 = myView.findViewById(R.id.button_call_person1);
+        button_call_person2 = myView.findViewById(R.id.button_call_person2);
 
 
         FirebaseDatabase.getInstance().getReference("mission_items").orderByChild("active_and_accomplished").equalTo("true_new").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -84,6 +85,8 @@ public class GetAMissionFragment extends BaseFragment {
                     button_call_person1.setText(missionDetail.getName()+" "+missionDetail.getPhone());
                     wireUp(button_call_person1, missionDetail);
 
+                    prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
+
                     missionDetail.setAccomplished("in progress");
                     missionDetail.setActive_and_accomplished("true_in progress");
 
@@ -101,6 +104,18 @@ public class GetAMissionFragment extends BaseFragment {
 
         setHasOptionsMenu(true);
         return myView;
+    }
+
+    private void prepareFor3WayCallIfNecessary(MissionDetail missionDetail, Button button) {
+        if(missionDetail.getName2() != null && missionDetail.getPhone2() != null) {
+            // we have a 3way call scenario
+            button.setText(missionDetail.getName2()+" "+missionDetail.getPhone2());
+            wireUp2(button, missionDetail);
+        }
+        else {
+            // not a 3way call scenario, so hide the second phone button
+            button.setVisibility(View.GONE);
+        }
     }
 
     // called when we come back from a call
@@ -164,6 +179,15 @@ public class GetAMissionFragment extends BaseFragment {
         });
     }
 
+    private void wireUp2(Button button, final MissionDetail missionDetail) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                call2(missionDetail);
+            }
+        });
+    }
+
     /*
     private void completeCallIfAppropriate() {
         if(missionDetail == null)
@@ -206,6 +230,24 @@ public class GetAMissionFragment extends BaseFragment {
         String volunteerPhone = getVolunteerPhone();
         String supporterName = missionDetail.getName();
         MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
+        ref.push().setValue(m);
+        ref.child(missionDetail.getPhone()).push().setValue(m);
+
+        startActivity(intent);
+    }
+
+    // call the name2/phone2 person
+    private void call2(MissionDetail missionDetail) {
+        checkPermission();
+        //setMissionItemState("calling");
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+        String eventType = "is calling";
+        String volunteerPhone = getVolunteerPhone();
+        String name2 = missionDetail.getName2();
+        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone2(), volunteerPhone, name2);
         ref.push().setValue(m);
         ref.child(missionDetail.getPhone()).push().setValue(m);
 

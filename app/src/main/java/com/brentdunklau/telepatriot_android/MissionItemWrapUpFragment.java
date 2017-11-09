@@ -1,6 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
-import android.app.FragmentManager;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -19,9 +19,10 @@ import com.brentdunklau.telepatriot_android.util.User;
 
 public class MissionItemWrapUpFragment extends BaseFragment {
 
+    private QuitListener quitListener;
     private String TAG = "MissionItemWrapUpFrag";
     private EditText edit_text_notes;
-    private Button button_mission_item_wrap_up;
+    private Button button_submit_get_another, button_submit_and_quit;
     private Spinner mission_item_outcome;
     View myView;
 
@@ -38,13 +39,21 @@ public class MissionItemWrapUpFragment extends BaseFragment {
         myView = inflater.inflate(R.layout.mission_item_wrap_up_fragment, container, false);
 
         edit_text_notes = myView.findViewById(R.id.edit_text_notes);
-        button_mission_item_wrap_up = myView.findViewById(R.id.button_mission_item_wrap_up);
+        button_submit_get_another = myView.findViewById(R.id.button_submit_get_another);
+        button_submit_and_quit = myView.findViewById(R.id.button_submit_and_quit);
         mission_item_outcome = myView.findViewById(R.id.mission_item_outcome);
 
-        button_mission_item_wrap_up.setOnClickListener(new View.OnClickListener() {
+        button_submit_get_another.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                submitWrapUp(v);
+                submitWrapUpAndGetAnother(v);
+            }
+        });
+
+        button_submit_and_quit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                submitWrapUpAndQuit(v);
             }
         });
 
@@ -53,9 +62,33 @@ public class MissionItemWrapUpFragment extends BaseFragment {
     }
 
 
-    private void submitWrapUp(View v) {
+    public interface QuitListener {
+        public void quit();
+    }
+
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        try {
+            quitListener = (QuitListener) context; // basically, this is MainActivity
+        }
+        catch(ClassCastException e) {
+            // TODO don't do this
+            e.printStackTrace();
+        }
+    }
+
+    private void submitWrapUpAndGetAnother(View v) {
         User.getInstance().submitWrapUp(mission_item_outcome.getSelectedItem()+"", edit_text_notes.getText()+"");
         gotoFragment(new GetAMissionFragment());
+    }
+
+
+    private void submitWrapUpAndQuit(View v) {
+        User.getInstance().submitWrapUp(mission_item_outcome.getSelectedItem()+"", edit_text_notes.getText()+"");
+        if(quitListener != null)
+            quitListener.quit(); // basically, this is MainActivity.signOut().  See onAttach()
     }
 
 
