@@ -110,8 +110,7 @@ public class GetAMissionFragment extends BaseFragment {
         if(missionDetail.getName2() != null && missionDetail.getPhone2() != null) {
             // we have a 3way call scenario
             button.setText(missionDetail.getName2()+" "+missionDetail.getPhone2());
-            // got some work to do here.  Can't just call wireUp() like we do with the first phone button
-            // follow the code and you'll see - some refactoring necessary
+            wireUp2(button, missionDetail);
         }
         else {
             // not a 3way call scenario, so hide the second phone button
@@ -180,6 +179,15 @@ public class GetAMissionFragment extends BaseFragment {
         });
     }
 
+    private void wireUp2(Button button, final MissionDetail missionDetail) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                call2(missionDetail);
+            }
+        });
+    }
+
     /*
     private void completeCallIfAppropriate() {
         if(missionDetail == null)
@@ -222,6 +230,24 @@ public class GetAMissionFragment extends BaseFragment {
         String volunteerPhone = getVolunteerPhone();
         String supporterName = missionDetail.getName();
         MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
+        ref.push().setValue(m);
+        ref.child(missionDetail.getPhone()).push().setValue(m);
+
+        startActivity(intent);
+    }
+
+    // call the name2/phone2 person
+    private void call2(MissionDetail missionDetail) {
+        checkPermission();
+        //setMissionItemState("calling");
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+        String eventType = "is calling";
+        String volunteerPhone = getVolunteerPhone();
+        String name2 = missionDetail.getName2();
+        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone2(), volunteerPhone, name2);
         ref.push().setValue(m);
         ref.child(missionDetail.getPhone()).push().setValue(m);
 
