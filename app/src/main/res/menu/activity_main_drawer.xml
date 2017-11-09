@@ -4,16 +4,16 @@
     <group android:checkableBehavior="single">
                 <item
                     android:id="@+id/nav_volunteer_layout"
-                    android:icon="@drawable/ic_menu_camera"
-                    android:title="Volunteer View" />
+                    android:icon="@drawable/ic_menu_slideshow"
+                    android:title="Get Your Mission" />
                 <item
                     android:id="@+id/nav_director_layout"
-                    android:icon="@drawable/ic_menu_gallery"
-                    android:title="Director View" />
+                    android:icon="@drawable/ic_menu_slideshow"
+                    android:title="Directors" />
                 <item
                     android:id="@+id/nav_admin_layout"
                     android:icon="@drawable/ic_menu_slideshow"
-                    android:title="Admin View" />
+                    android:title="Admins" />
     </group>
 
 
