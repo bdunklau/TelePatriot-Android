@@ -8,7 +8,9 @@ Increment versionCode and versionName
 Menu: Build -> Generate Signed APK...
 Pops up a dialog where we select the module = app
 Click Next
-Key store path:  /Users/bdunklau/.android/debug.keystore
+Key store path:  /Users/bdunklau/.android/debug.keystore <-- CAN'T JUST USE ANY KEYSTORE
+                                                             HAVE TO USE THIS ONE.  THERE'S A COPY
+                                                             OF IT ON THE THUMB DRIVE ALSO.
 Key store password: android
 Key alias:  androiddebugkey
 Key password:  android
