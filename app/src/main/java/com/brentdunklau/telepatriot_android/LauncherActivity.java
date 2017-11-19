@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.User;
@@ -19,6 +21,7 @@ import java.util.Arrays;
 public class LauncherActivity extends BaseActivity implements AccountStatusEvent.Listener {
 
     private static final int RC_SIGN_IN = 1;
+    private Button button_get_started;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +31,19 @@ public class LauncherActivity extends BaseActivity implements AccountStatusEvent
         // screen.  We're either going to go to the Login screen provided by
         // FirebaseUI or we're going to go to MainActivity
         setContentView(R.layout.activity_launcher);
+
+        button_get_started = findViewById(R.id.button_get_started);
+        button_get_started.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getStarted();
+            }
+        });
+
+        getStarted();
+    }
+
+    private void getStarted() {
 
         if(User.getInstance().isLoggedIn()) {
             // then we can skip this and go straight to MainActivity

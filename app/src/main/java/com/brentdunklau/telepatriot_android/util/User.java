@@ -298,7 +298,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         @Override
         public void onChildRemoved(DataSnapshot dataSnapshot) {
             doRole(dataSnapshot.getKey(), false);
-            fireRoleAdded(dataSnapshot.getKey());
+            fireRoleRemoved(dataSnapshot.getKey());
         }
 
         @Override
