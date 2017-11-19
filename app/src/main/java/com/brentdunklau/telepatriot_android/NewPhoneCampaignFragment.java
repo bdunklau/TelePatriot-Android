@@ -53,6 +53,12 @@ public class NewPhoneCampaignFragment extends BaseFragment {
         submit_new_phone_campaign.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                boolean dataMissing = edit_mission_name == null || edit_mission_name.getText().toString().trim().equalsIgnoreCase("")
+                        || edit_new_phone_campaign == null || edit_new_phone_campaign.getText().toString().trim().equalsIgnoreCase("");
+
+                if(dataMissing)
+                    return; // basically the same thing as making the button disable.  This way is just easier to code.
+
                 DatabaseReference ref = FirebaseDatabase.getInstance().getReference("missions");
                 boolean active = false;
                 PhoneCampaignCreated missionCreated = new PhoneCampaignCreated(User.getInstance(), edit_mission_name.getText().toString(), edit_new_phone_campaign.getText().toString(), active);
