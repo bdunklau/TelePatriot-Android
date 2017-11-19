@@ -58,6 +58,7 @@ public class DirectorFragment extends BaseFragment {
         try {
             FragmentTransaction t = fragmentManager.beginTransaction();
             t.replace(R.id.content_frame, fragment);
+            t.addToBackStack(fragment.getClass().getName());
             t.commit();
         } catch(Throwable t) {
             // TODO show alert dialog or  something - not this
@@ -77,11 +78,14 @@ public class DirectorFragment extends BaseFragment {
         FragmentManager fragmentManager = getFragmentManager();
         switch(item.getItemId()) {
             case(R.id.menu_missions):
-                fragmentManager.beginTransaction().replace(R.id.content_frame, new MissionsFragment()).commit();
+                Fragment fragment = new MissionsFragment();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
                 return true;
             case(R.id.menu_teams):
+                fragment = new TeamsFragment();
                 fragmentManager.beginTransaction()
-                        .replace(R.id.content_frame, new TeamsFragment())
+                        .replace(R.id.content_frame, fragment)
+                        .addToBackStack(fragment.getClass().getName())
                         .commit();
                 return true;
             default: return super.onOptionsItemSelected(item);

@@ -133,8 +133,9 @@ public class MissionListFragment extends BaseFragment {
                                     //fragment.setFragmentManager(fragmentManager, MissionListFragment.this);
                                     try {
                                         FragmentTransaction t1 = fragmentManager.beginTransaction();
-                                        FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
-                                        int res = t2.commit();
+                                        t1.replace(R.id.content_frame, fragment);
+                                        t1.addToBackStack(fragment.getClass().getName());
+                                        int res = t1.commit();
                                         int i = 1;
                                     } catch (Throwable t) {
                                         // TODO don't do this

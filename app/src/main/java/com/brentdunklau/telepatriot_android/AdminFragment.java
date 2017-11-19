@@ -51,6 +51,7 @@ public class AdminFragment extends BaseFragment {
         try {
             FragmentTransaction t = fragmentManager.beginTransaction();
             t.replace(R.id.content_frame, fragment);
+            t.addToBackStack(fragment.getClass().getName());
             t.commit();
         } catch(Throwable t) {
             // TODO show alert dialog or  something - not this
@@ -68,16 +69,24 @@ public class AdminFragment extends BaseFragment {
         FragmentManager fragmentManager = getFragmentManager();
         switch(item.getItemId()) {
             case(R.id.list_unassigned_users):
-                fragmentManager.beginTransaction().replace(R.id.content_frame, new UnassignedUsersFragment()).commit();
+                Fragment fragment = new UnassignedUsersFragment();
+                fragmentManager.beginTransaction()
+                        .replace(R.id.content_frame, fragment)
+                        .addToBackStack(fragment.getClass().getName())
+                        .commit();
                 return true;
             case(R.id.list_users):
+                fragment = new ListUsersFragment();
                 fragmentManager.beginTransaction()
-                        .replace(R.id.content_frame, new ListUsersFragment())
+                        .replace(R.id.content_frame, fragment)
+                        .addToBackStack(fragment.getClass().getName())
                         .commit();
                 return true;
             case(R.id.search_users):
+                fragment = new SearchUsersFragment();
                 fragmentManager.beginTransaction()
-                        .replace(R.id.content_frame, new SearchUsersFragment())
+                        .replace(R.id.content_frame, fragment)
+                        .addToBackStack(fragment.getClass().getName())
                         .commit();
                 return true;
             default: return super.onOptionsItemSelected(item);

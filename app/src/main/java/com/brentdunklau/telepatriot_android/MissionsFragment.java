@@ -65,6 +65,7 @@ public class MissionsFragment extends DirectorFragment {
         try {
             FragmentTransaction t = fragmentManager.beginTransaction();
             t.replace(R.id.content_frame, fragment);
+            t.addToBackStack(fragment.getClass().getName());
             t.commit();
         } catch(Throwable t) {
             // TODO show alert dialog or  something - not this

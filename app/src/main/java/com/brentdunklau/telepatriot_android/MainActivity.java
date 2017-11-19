@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -136,15 +137,18 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         android.app.FragmentManager fragmentManager = getFragmentManager();
 
-
         if (id == R.id.nav_volunteer_layout) {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new MyMissionFragment()).commit();
+            Fragment fragment = new MyMissionFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_director_layout) {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new DirectorFragment()).commit();
+            Fragment fragment = new DirectorFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_admin_layout) {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new AdminFragment()).commit();
+            Fragment fragment = new AdminFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if( id == R.id.nav_send_petition) {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new SendPetitionFragment()).commit();
+            Fragment fragment = new SendPetitionFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
             doChat();
         } else if (id == R.id.nav_signout) {
@@ -163,6 +167,7 @@ public class MainActivity extends AppCompatActivity
      * that the admin/director can then choose from to engage.
      */
     private void doChat() {
+
         FragmentManager fragmentManager = getFragmentManager();
         if(User.getInstance().isVolunteerOnly()) {
             ChatFragment chatFragment = new ChatFragment();
@@ -170,15 +175,15 @@ public class MainActivity extends AppCompatActivity
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
             transaction.replace(R.id.content_frame, chatFragment);
-            transaction.addToBackStack(null);
+            transaction.addToBackStack(chatFragment.getClass().getName());
             transaction.commit();
         }
         else {
-            ChatAllFragment f = new ChatAllFragment();
+            ChatAllFragment chatAllFragment = new ChatAllFragment();
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
-            transaction.replace(R.id.content_frame, f);
-            transaction.addToBackStack(null);
+            transaction.replace(R.id.content_frame, chatAllFragment);
+            transaction.addToBackStack(chatAllFragment.getClass().getName());
             transaction.commit();
         }
     }

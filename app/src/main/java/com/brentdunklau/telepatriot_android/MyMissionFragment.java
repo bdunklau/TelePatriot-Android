@@ -1,6 +1,7 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
@@ -132,8 +133,8 @@ public class MyMissionFragment extends BaseFragment {
         // call
         if(missionDetail != null && missionDetail._isAccomplished()) {
             FragmentManager fragmentManager = getFragmentManager();
-
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new MissionItemWrapUpFragment()).commit();
+            Fragment fragment = new MissionItemWrapUpFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
     }
 

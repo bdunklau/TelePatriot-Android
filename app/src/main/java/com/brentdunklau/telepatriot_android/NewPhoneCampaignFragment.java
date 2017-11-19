@@ -47,9 +47,8 @@ public class NewPhoneCampaignFragment extends BaseFragment {
         edit_mission_name = myView.findViewById(R.id.edit_mission_name);
 
         // TODO get rid of this test code
-
-        edit_mission_name.setText("Montana Mission "+new SimpleDateFormat("h:mm").format(new Date()));
-        edit_new_phone_campaign.setText("https://docs.google.com/spreadsheets/d/1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs/edit#gid=0");
+        //edit_mission_name.setText("Montana Mission "+new SimpleDateFormat("h:mm").format(new Date()));
+        //edit_new_phone_campaign.setText("https://docs.google.com/spreadsheets/d/1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs/edit#gid=0");
 
         submit_new_phone_campaign.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,7 +56,6 @@ public class NewPhoneCampaignFragment extends BaseFragment {
                 DatabaseReference ref = FirebaseDatabase.getInstance().getReference("missions");
                 boolean active = false;
                 PhoneCampaignCreated missionCreated = new PhoneCampaignCreated(User.getInstance(), edit_mission_name.getText().toString(), edit_new_phone_campaign.getText().toString(), active);
-                //ref.push().child("mission_events").push().setValue(missionCreated);
 
                 InputMethodManager imm = (InputMethodManager) myView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(submit_new_phone_campaign.getWindowToken(), 0);
@@ -65,10 +63,12 @@ public class NewPhoneCampaignFragment extends BaseFragment {
                 ref.push().setValue(missionCreated).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-
+                        Fragment fragment = new AllMyMissionsFragment();
                         FragmentManager fragmentManager = getFragmentManager();
                         FragmentTransaction t1 = fragmentManager.beginTransaction();
-                        FragmentTransaction t2 = t1.replace(R.id.content_frame, new AllMyMissionsFragment());
+                        FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
+                        // not adding to back stack here because that would send the user back to the page
+                        // where create the mission.  Not sure if I really want to do that.
                         t2.commit();
                     }
                 });
