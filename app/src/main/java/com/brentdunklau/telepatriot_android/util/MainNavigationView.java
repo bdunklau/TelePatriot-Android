@@ -21,10 +21,22 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
 
     public MainNavigationView(Context ctx) {
         super(ctx);
+        /**
+         * If you wait till inflateMenu to listen for role added events, that will be
+         * too late.  And the result will be: The slide out menu won't have ANY of the
+         * core menu items: My Mission, Directors, and Admins
+         */
+        User.getInstance().addAccountStatusEventListener(this);
     }
 
     public MainNavigationView(Context ctx, AttributeSet attributeSet) {
         super(ctx, attributeSet);
+        /**
+         * If you wait till inflateMenu to listen for role added events, that will be
+         * too late.  And the result will be: The slide out menu won't have ANY of the
+         * core menu items: My Mission, Directors, and Admins
+         */
+        User.getInstance().addAccountStatusEventListener(this);
     }
 
     @Override
@@ -41,7 +53,8 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
                 item.setVisible(false);
         }
 
-        User.getInstance().addAccountStatusEventListener(this);
+        //User.getInstance().addAccountStatusEventListener(this); // this is too late.  The user has already logged in
+        // and roles have already been discovered
 
         /*********
         Menu menu = getMenu();
