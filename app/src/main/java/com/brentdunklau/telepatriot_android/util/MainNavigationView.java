@@ -46,25 +46,17 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
         // start out by setting menu items to invisible for all roles.
         // Then, when the user logs in, we listen for role added events and
         // make menu items visible corresponding to the user's role(s)
-        List<String> roles = Arrays.asList("Volunteer", "Director", "Admin");
-        for(String role : roles) {
+        Map<String, Boolean> roles = new HashMap<String, Boolean>();
+        roles.put("Volunteer", User.getInstance().isVolunteer());
+        roles.put("Director", User.getInstance().isDirector());
+        roles.put("Admin", User.getInstance().isAdmin());
+        for(String role : roles.keySet()) {
             MenuItem item = findMenuItemForRole(role);
-            if(item != null)
-                item.setVisible(false);
+            if(item != null) {
+                boolean bool = roles.get(role);
+                item.setVisible(bool);
+            }
         }
-
-        //User.getInstance().addAccountStatusEventListener(this); // this is too late.  The user has already logged in
-        // and roles have already been discovered
-
-        /*********
-        Menu menu = getMenu();
-        int size = menu.size();
-        for(int i = 0; i < size; i++) {
-            MenuItem item = menu.getItem(i);
-            String title = item.getTitle().toString();
-            items.put(title, item);
-        }
-         ************/
 
     }
 
