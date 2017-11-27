@@ -6,7 +6,9 @@ import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,6 +30,16 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
     @Override
     public void inflateMenu(int resId) {
         super.inflateMenu(resId);
+
+        // start out by setting menu items to invisible for all roles.
+        // Then, when the user logs in, we listen for role added events and
+        // make menu items visible corresponding to the user's role(s)
+        List<String> roles = Arrays.asList("Volunteer", "Director", "Admin");
+        for(String role : roles) {
+            MenuItem item = findMenuItemForRole(role);
+            if(item != null)
+                item.setVisible(false);
+        }
 
         User.getInstance().addAccountStatusEventListener(this);
 
