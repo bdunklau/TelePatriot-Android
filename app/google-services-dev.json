@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "739385355816",
+    "firebase_url": "https://telepatriot-dev.firebaseio.com",
+    "project_id": "telepatriot-dev",
+    "storage_bucket": "telepatriot-dev.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739385355816:android:b3dc29ad8f1ce855",
+        "android_client_info": {
+          "package_name": "com.brentdunklau.telepatriot_android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "739385355816-a1dd1p1d4210e3vr46mh6r7d2ii71i8h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhdf-VJrCYIQXDf6fY3xS_VU--f2UCeek"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
