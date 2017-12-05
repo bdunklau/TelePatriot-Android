@@ -1,27 +1,43 @@
 {
   "project_info": {
-    "project_number": "739385355816",
-    "firebase_url": "https://telepatriot-dev.firebaseio.com",
-    "project_id": "telepatriot-dev",
-    "storage_bucket": "telepatriot-dev.appspot.com"
+    "project_number": "377732711004",
+    "firebase_url": "https://telepatriot-bd737.firebaseio.com",
+    "project_id": "telepatriot-bd737",
+    "storage_bucket": "telepatriot-bd737.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:739385355816:android:b3dc29ad8f1ce855",
+        "mobilesdk_app_id": "1:377732711004:android:b3dc29ad8f1ce855",
         "android_client_info": {
           "package_name": "com.brentdunklau.telepatriot_android"
         }
       },
       "oauth_client": [
         {
-          "client_id": "739385355816-a1dd1p1d4210e3vr46mh6r7d2ii71i8h.apps.googleusercontent.com",
+          "client_id": "377732711004-treopk54qcceaj2qt1riv45fqfbc5dsc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.brentdunklau.telepatriot_android",
+            "certificate_hash": "cff3c6a15e55f342a888318e117da344c981d4a7"
+          }
+        },
+        {
+          "client_id": "377732711004-ffpfnki1f7d084prk6010of0f9v82pes.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.brentdunklau.telepatriot_android",
+            "certificate_hash": "200ba4bfcaa501205efc6b742efaeeb9a64fd75a"
+          }
+        },
+        {
+          "client_id": "377732711004-bap6eu3jmefke76gbud433c3od72lab1.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDhdf-VJrCYIQXDf6fY3xS_VU--f2UCeek"
+          "current_key": "AIzaSyD1I3xq3_nYZEPnQJEDteHv4h5kMd3dE3Q"
         }
       ],
       "services": {
@@ -29,8 +45,13 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "377732711004-bap6eu3jmefke76gbud433c3od72lab1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
           "status": 2

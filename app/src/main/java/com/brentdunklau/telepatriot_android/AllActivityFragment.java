@@ -65,7 +65,14 @@ public class AllActivityFragment extends BaseFragment {
     // see MyMissionFragment.call() and .call2()
     // see also User.completeMissionItem()
     private void showMissionActivity() {
-        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity").child("all"); // i.e. actual human activities like making phone calls
+
+        // we want to move away from this...
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity"); // i.e. actual human activities like making phone calls
+
+        // This is what we want to move to
+        //final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity").child("all"); // i.e. actual human activities like making phone calls
+
+
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
