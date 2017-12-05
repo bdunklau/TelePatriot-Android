@@ -209,8 +209,8 @@ public class User implements FirebaseAuth.AuthStateListener {
         String volunteerPhone = myPhone;
         String supporterName = missionItem.getName();
         MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), volunteerPhone, supporterName);
-        ref.push().setValue(m);
-        ref.child(missionItem.getPhone()).push().setValue(m);
+        ref.child("all").push().setValue(m);
+        ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
     }
 
     public String getName() {
