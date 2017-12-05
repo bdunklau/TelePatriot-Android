@@ -35,3 +35,6 @@ exports.missionActivation = missions.missionActivation
 
 const missionDeleter = require('./sheets/mission-deleter.js')
 exports.missionDeletion = missionDeleter.missionDeletion
+
+// temp/test
+exports.copyNode = sheetReader.copyNode

@@ -22,7 +22,7 @@ import org.w3c.dom.Text;
 
 public class MissionHolder extends RecyclerView.ViewHolder {
 
-    TextView mission_name, mission_type, mission_create_date, mission_created_by;
+    TextView mission_name, mission_type, mission_create_date, mission_created_by, names_and_numbers_loaded;
 
     private SwitchCompat activeSwitch;
 
@@ -36,6 +36,7 @@ public class MissionHolder extends RecyclerView.ViewHolder {
         mission_type = itemView.findViewById(R.id.mission_type);
         mission_create_date = itemView.findViewById(R.id.mission_create_date);
         mission_created_by = itemView.findViewById(R.id.mission_created_by);
+        names_and_numbers_loaded = itemView.findViewById(R.id.names_and_numbers_loaded);
 
 
         activeSwitch = itemView.findViewById(R.id.switch_active);
@@ -57,6 +58,7 @@ public class MissionHolder extends RecyclerView.ViewHolder {
         mission_type.setText(mission.getMission_type());
         mission_create_date.setText("Created on "+mission.getMission_create_date());
         mission_created_by.setText("By "+mission.getName());
+        names_and_numbers_loaded.setText("Loaded "+mission.getCount_items_imported() + " of " + mission.getCount_in_spreadsheet()+" names/numbers");
 
         activeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override

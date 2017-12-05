@@ -46,10 +46,6 @@ public class NewPhoneCampaignFragment extends BaseFragment {
         edit_new_phone_campaign = myView.findViewById(R.id.edit_new_phone_campaign);
         edit_mission_name = myView.findViewById(R.id.edit_mission_name);
 
-        // TODO get rid of this test code
-        //edit_mission_name.setText("Montana Mission "+new SimpleDateFormat("h:mm").format(new Date()));
-        //edit_new_phone_campaign.setText("https://docs.google.com/spreadsheets/d/1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs/edit#gid=0");
-
         submit_new_phone_campaign.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -57,7 +53,7 @@ public class NewPhoneCampaignFragment extends BaseFragment {
                         || edit_new_phone_campaign == null || edit_new_phone_campaign.getText().toString().trim().equalsIgnoreCase("");
 
                 if(dataMissing)
-                    return; // basically the same thing as making the button disable.  This way is just easier to code.
+                    return; // basically the same thing as making the button disabled.  This way is just easier to code.
 
                 DatabaseReference ref = FirebaseDatabase.getInstance().getReference("missions");
                 boolean active = false;
@@ -66,6 +62,8 @@ public class NewPhoneCampaignFragment extends BaseFragment {
                 InputMethodManager imm = (InputMethodManager) myView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(submit_new_phone_campaign.getWindowToken(), 0);
 
+                // Writing to the /missions/{missionId} node cause a trigger to fire.
+                // See firebase-functions/functions/sheets/import-sheet.js : exports.readSpreadsheet
                 ref.push().setValue(missionCreated).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {

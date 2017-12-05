@@ -23,19 +23,6 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-/*
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
-
-        // DON'T THINK THE FIRST TWO CONDITIONS EVER GET CALLED.  IT'S ALWAYS THE LAST ONE
-        if (intent.getAction().equals("android.intent.action.NEW_OUTGOING_CALL")) {
-            handleOutgoing(intent, ref);
-        }
-        else if (intent.getAction().equals("android.intent.action.ACTION_CALL")) {
-            handleIncoming(intent, ref);
-        }
-        else
-            */
-
         if(intent.getAction().equals("android.intent.action.PHONE_STATE")) {
             handlePhoneState(context, intent);
         }

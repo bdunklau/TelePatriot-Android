@@ -230,8 +230,9 @@ public class MyMissionFragment extends BaseFragment {
         String volunteerPhone = getVolunteerPhone();
         String supporterName = missionDetail.getName();
         MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
-        ref.push().setValue(m);
-        ref.child(missionDetail.getPhone()).push().setValue(m);
+        // see also User.completeMissionItem()
+        ref.child("all").push().setValue(m);
+        ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
 
         startActivity(intent);
     }
@@ -248,8 +249,9 @@ public class MyMissionFragment extends BaseFragment {
         String volunteerPhone = getVolunteerPhone();
         String name2 = missionDetail.getName2();
         MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone2(), volunteerPhone, name2);
-        ref.push().setValue(m);
-        ref.child(missionDetail.getPhone()).push().setValue(m);
+        // see also User.completeMissionItem()
+        ref.child("all").push().setValue(m);
+        ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
 
         startActivity(intent);
     }

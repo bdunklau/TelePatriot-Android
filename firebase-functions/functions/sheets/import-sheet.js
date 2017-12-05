@@ -23,12 +23,12 @@ const db = admin.database();
 const CONFIG_CLIENT_ID = functions.config().googleapi.client_id;
 const CONFIG_CLIENT_SECRET = functions.config().googleapi.client_secret;
 const CONFIG_SHEET_ID = functions.config().googleapi.sheet_id;
+// The OAuth Callback Redirect.
+const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //`https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
 
 const HARDCODED_SHEET_ID = '1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs'
 const HARDCODED_MISSION_ID = '2'
 
-// The OAuth Callback Redirect.
-const FUNCTIONS_REDIRECT = `https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
 
 // setup for authGoogleAPI
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
@@ -187,7 +187,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                             missionStuff.script = rows[0][0]
 
                             request.range = 'Sheet1'
-                            // another inner callback, this time to get read each row of people
+                            // another inner callback, this time to read each row of people
                             sheets.spreadsheets.values.get(request, (err, response) => {
                                   if (err) {
                                       console.log(`The API returned an error: ${err}`);
@@ -224,7 +224,12 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                         }
                                   }
 
+                                  var count_in_spreadsheet = 0;
+                                  dbref.child('count_items_imported').set(0) // just initialize value
+                                  dbref.child('count_in_spreadsheet').set(0) // just initialize value
+
                                   for(var r = 1; r < rows.length; r++) {
+                                        var count_items_imported = 0; // not sure why this has to be inside the 'for' loop, but it does
 
                                         var missionCopy = JSON.parse(JSON.stringify(missionStuff))
                                         var hasPhone = true;
@@ -252,16 +257,26 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                         }
 
                                         if(hasPhone) {
+                                            ++count_in_spreadsheet
+
                                             // compound key: capture the status of the mission (new, in progress, complete) together
                                             // with the active status (true/false) to figure out if this mission item is suitable
                                             // for assigning to a volunteer.
                                             // It's suitable if active_and_accomplished: true_new
                                             missionCopy['accomplished'] = "new"
                                             missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
-                                            adminRef.root.child('mission_items').push().set(missionCopy)
+                                            adminRef.root.child('mission_items').push().set(missionCopy).then(() => {
+                                                // Now what I'd like to do here is keep track of how many mission_items got
+                                                // written so that we can present the count to the user for confirmation
+                                                dbref.child('count_items_imported').set(++count_items_imported)
+                                            })
+
+
                                         }
 
                                   }
+                                  // track/compare this value with mission_items_imported.  They should be the same
+                                  dbref.child('count_in_spreadsheet').set(count_in_spreadsheet)
 
                             });
 
@@ -286,6 +301,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
             //
             // I dunno ...maybe
             //
+            // looks like this was never finished
             var mission_event = {date: date.asCentralTime()}
         })
         .catch((err) => {
@@ -362,4 +378,21 @@ exports.deleteMissionItems = functions.https.onRequest((req, res) => {
 
   return db.ref(`mission_items`).remove()
 });
+
+
+// temp function to backup everything under /activity over to /activity_backup
+// This works but the browser seems to hang and never stop spinning
+exports.copyNode = functions.https.onRequest((req, res) => {
+
+    var from = req.query.from
+    var to = req.query.to
+
+    return db.ref(`${from}`).once('value', snapshot => {
+         // WOW look how easy it is to back up a node !
+         db.ref(`${to}`).set(snapshot.val())
+
+         // future work: would be neat to have a url that takes a 'from' and 'to'
+         // so we could back up any node we want to any other node
+    });
+})
 

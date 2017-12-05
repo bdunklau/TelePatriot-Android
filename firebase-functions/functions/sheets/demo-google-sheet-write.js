@@ -19,13 +19,18 @@ You do that from the command line on local pc, from the firebase-functions/funct
 
 The command looks like this:
 
-firebase functions:config:set googleapi.client_id="****EXPLAINED BELOW****" googleapi.client_secret="****EXPLAINED BELOW****"
+firebase functions:config:set googleapi.client_id="****EXPLAINED BELOW****" googleapi.client_secret="****EXPLAINED BELOW****" googleapi.function_redirect="****EXPLAINED BELOW****"
 
-Here's how you get the client id and client secret
+
+Here's how you get the client id, client secret and function_redirect values...
 1.  Go here https://console.developers.google.com/apis/credentials?project=telepatriot-bd737
 2.  Scroll down to the "OAuth 2.0 client IDs" section
 3.  click the edit pencil next to Web client 2 (or whatever we're using lately)
 4.  client id and client secret are listed at the top
+5.  The function_redirect value is listed under "Authorized redirect URIs"
+    For prod, it should be:  https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback
+    For dev, it should be:   https://us-central1-telepatriot-dev.cloudfunctions.net/oauthcallback
+
 
 If you have to create a new OAuth 2.0 client ID, here's how you do it.
 1.  Go here https://console.developers.google.com/apis/credentials?project=telepatriot-bd737
@@ -48,6 +53,8 @@ Function URL (testsheetwrite): https://us-central1-telepatriot-bd737.cloudfuncti
 
 Point your browser to the first url to call the authgoogleapi function (which is further down in this script):
 https://us-central1-telepatriot-bd737.cloudfunctions.net/authgoogleapi
+or on telepatriot-dev...
+https://us-central1-telepatriot-dev.cloudfunctions.net/authgoogleapi
 
 This URL asks google for credentials that are needed to read and write to google sheets
 
@@ -83,20 +90,17 @@ const db = admin.database();
 // googleapi.client_id = Google API client ID,
 // googleapi.client_secret = client secret, and
 // googleapi.sheet_id = Google Sheet id (long string in middle of sheet URL)
-//
-// run this on local command line...
-// CAN'T PUT CLIENT SECRET HERE BECAUSE OF GITHUB.
-// firebase functions:config:set googleapi.client_id="****SEE INSTRUCTIONS****" googleapi.client_secret="****SEE INSTRUCTIONS****"
 
 const CONFIG_CLIENT_ID = functions.config().googleapi.client_id;
 const CONFIG_CLIENT_SECRET = functions.config().googleapi.client_secret;
 const CONFIG_SHEET_ID = functions.config().googleapi.sheet_id;
+// The OAuth Callback Redirect.
+const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //`https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
+
 
 const HARDCODED_SHEET_ID = '178GnEv36vJ_2Odke_JvRHwNI3nS48bfV23jWak4F1Dc'
 const HARDCODED_MISSION_ID = '1'
 
-// The OAuth Callback Redirect.
-const FUNCTIONS_REDIRECT = `https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
 
 // setup for authGoogleAPI
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];

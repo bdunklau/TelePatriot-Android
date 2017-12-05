@@ -26,9 +26,10 @@
 
         <LinearLayout
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="160dp"
             android:layout_marginLeft="5dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:weightSum="1">
 
             <TextView
                 android:id="@+id/mission_name"
@@ -91,6 +92,19 @@
                 android:gravity="left"
                 android:text="created by"
                 android:textSize="12sp"/>
+
+            <TextView
+                android:id="@+id/names_and_numbers_loaded"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/mission_created_by"
+                android:layout_marginBottom="10dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_weight="0.30"
+                android:gravity="left"
+                android:text="Name &amp; Numbers"
+                android:textSize="12sp" />
 
         </LinearLayout>
 
