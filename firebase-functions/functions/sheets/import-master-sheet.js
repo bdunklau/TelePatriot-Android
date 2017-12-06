@@ -3,12 +3,14 @@
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const google = require('googleapis')
+const sheets = google.sheets('v4')
 const sheetIdUtil = require('./get-sheet-id')
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
+var adminRef
 
 exports.readMasterSpreadsheet = functions.database.ref(`master_missions/{missionId}`).onWrite(
   event => {
@@ -27,7 +29,7 @@ exports.readMasterSpreadsheet = functions.database.ref(`master_missions/{mission
     var masterMissionStuff = {}
 
     var sheet_id = event.data.val().sheet_id
-    var adminRef = event.data.adminRef
+    adminRef = event.data.adminRef
 
     return readPromise(event.data.ref,
                        event.data.adminRef,
@@ -76,91 +78,255 @@ function getAuthorizedClient() {
     });
 }
 
+// This "2" version takes sheet_id as parameter
+// checks if oauthTokens have been loaded into memory, and if not, retrieves them
+function getAuthorizedClient2(sheet_id) {
+    console.log('getAuthorizedClient(): oauthTokens: ', oauthTokens)
+      /* commented this out because was getting "Promise.success is not a function"
+      if (oauthTokens) {
+        return Promise.success(functionsOauthClient);
+      }
+      */
+    return db.ref(DB_TOKEN_PATH).once('value').then(snapshot => {
+        oauthTokens = snapshot.val();
+        functionsOauthClient.credentials = oauthTokens;
+        return {client: functionsOauthClient, sheet_id: sheet_id};
+    })
+    .catch((err) => { console.log("error in getAuthorizedClient(): ", err)
+    });
+}
+
 
 
 function readPromise(dbref, adminRef, masterMissionStuff, requestWithoutAuth) {
     console.log('import-master-sheet.js: readPromise: entered')
 
+    const request = requestWithoutAuth;
+    request.range = 'Sheet1'
+
     return new Promise((resolve, reject) => {
         console.log('readPromise: new Promise(): entered')
-        const sheets = google.sheets('v4');
 
         getAuthorizedClient().then(client => {
-
-            const request = requestWithoutAuth;
             request.auth = client;
-            request.range = 'Sheet1'
-            var missionsAndData = {} // keyed by the mission name, i.e. "Test Idaho SD 34 - Brent Hill"
-                                     // value is a [] of all the mission items from each sheet's Sheet1
-            sheets.spreadsheets.values.get(request, (err, response) => {
-                /********************
-                if (err) {
-                    console.log(`The API returned an error: ${err}`);
-                    return reject();
-                }
-
-                var rows = response.values;
-                var colnames = []
-                var legislatorColumn = -1 // url column
-                var campaignNameColumn = -1
-                for(var c = 0; c < rows[0].length; c++) {
-                    if(rows[0][c].toLowerCase() == 'legislator') {
-                        legislatorColumn = c
-                        colnames.push(rows[0][c].toLowerCase())
-                    }
-                    else if(rows[0][c].toLowerCase() == 'campaign name') {
-                        campaignNameColumn = c
-                        colnames.push(rows[0][c].toLowerCase())
-                    }
-
-                }
-
-                for(var r = 1; r < rows.length; r++) {
-                    // at each row, we need to read the url on that row...
-                    var url = rows[r][legislatorColumn]
-                    var sheet_id = sheetIdUtil.sheetId(url)
-                    var missionName = rows[r][campaignNameColumn]
-
-                    new Promise((resolve, reject) => {
-                        sheets.spreadsheets.values.get(request, (err, response) => {})
-                        console.log("r = "+r+" : response = ", response)
-                        return resolve(response)
-                    })
-                    .then((xxxx) => { console.log("xxxx = ", xxxx)  })
-                    .catch((err) => {
-                        // This is where we should write a mission_event indicating the mission failed to save
-                        console.log('Uh oh! Error caught in row loop: ', err); reject()
-                    });
-
-
-                }
-                *******************/
-
-
-            })
-
-            console.log("return resolve(response), where response = ", response)
-
-            return resolve(response)
-
-        })
-        .then((theResponse) => {
-            console.log("XXXXXXCXXXXXXXXXXXXXXXXXXXXXXXX")
-            console.log("theResponse : ", theResponse)
-        })
-        .then(() => {
+            sheets.spreadsheets.values.get(request, getMasterSheetCallback)
         })
         .catch((err) => {
-            console.log('Uh oh! Error in the outer block: ', err); reject()
+            console.log('Uh oh! Error in the outer block: ', err);
         });
 
+        return resolve(true)
     })
     .catch((err) => {
         // This is where we should write a mission_event indicating the mission failed to save
-        console.log('Uh oh! Error caught towards the end: ', err); reject()
+        console.log('Uh oh! Error caught towards the end: ', err);
     });
 }
 
+
+
+var tempUrls = []
+var allMissionItems = [] // might move away from this
+var masterList = {}
+
+var getMasterSheetCallback = function(err, response) {
+    if (err) {
+        console.log(`getMasterSheetCallback(): The API returned an error: ${err}`);
+        return
+    }
+
+    var rows = response.values;
+    var colnames = []
+    var legislatorColumn = -1 // url column
+    var campaignNameColumn = -1
+    for(var c = 0; c < rows[0].length; c++) {
+        if(rows[0][c].toLowerCase() == 'legislator') {
+            legislatorColumn = c
+            colnames.push(rows[0][c].toLowerCase())
+        }
+        else if(rows[0][c].toLowerCase() == 'campaign name') {
+            campaignNameColumn = c
+            colnames.push(rows[0][c].toLowerCase())
+        }
+
+    }
+
+    console.log("rows.length = ", rows.length)
+
+    for(var r = 1; r < rows.length; r++) {
+        // at each row, we need to read the url on that row...
+        var url = rows[r][legislatorColumn]
+        var sheet_id = sheetIdUtil.sheetId(url)
+        var missionName = rows[r][campaignNameColumn]
+        tempUrls.push({url: url, missionName: missionName})
+        console.log("tempUrls.push(): {url: url, missionName: missionName} = ", {url: url, missionName: missionName})
+
+        // Now read each spreadsheet...
+        getAuthorizedClient2(sheet_id).then(stuff => {
+            var client = stuff.client
+            var sheet_id = stuff.sheet_id
+            var request = { spreadsheetId: sheet_id }
+            request.auth = client;
+            request.range = 'Description'
+            console.log("different sheet_id?... ", sheet_id)
+            sheets.spreadsheets.values.get(request, function(err, response) { // first, get mission description
+                if (err) {
+                    console.log(`getMissionDescriptionCallback(): The API returned an error: ${err}`)
+                }
+
+                console.log("CHECK THIS request.spreadsheetId = ", request.spreadsheetId) // looks like we're able to get the sheetId this way !
+                masterList[request.spreadsheetId] = {}
+
+                var rows = response.values;
+                if(rows.length > 0 && rows[0].length > 0) {
+                    masterList[request.spreadsheetId]['description'] = rows[0][0]
+
+                    getScript(masterList, request.spreadsheetId, request)
+
+                }
+            })
+        })
+    }
+}
+
+
+var getScript = function(masterList, sheetId, request) {
+
+    request.range = 'Script'
+    console.log('readPromise: looking for mission Script: check client = ', client)
+    sheets.spreadsheets.values.get(request, (err, response) => {
+        if (err) {
+            console.log(`getScript(): The API returned an error: ${err}`);
+            return
+        }
+
+        var rows = response.values;
+        masterList[sheetId]['script'] = '';
+        if(rows.length > 0 && rows[0].length > 0) {
+            masterList[sheetId]['script'] = rows[0][0]
+        }
+
+        readMissionItems(masterList[sheetId], request)
+    })
+}
+
+
+var readMissionItems = function(missionStuff, request) {
+    request.range = 'Sheet1'
+    // another inner callback, this time to get read each row of people
+    sheets.spreadsheets.values.get(request, (err, response) => {
+        if (err) {
+            console.log(`readMissionItems(): The API returned an error while trying to read mission items: ${err}`)
+            return
+        }
+
+        var rows = response.values;
+        var columnInfo = getMissionColumnInfo(rows)
+
+        for(var r = 1; r < rows.length; r++) {
+            var missionItemRowInfo = eachMissionItem(rows, adminRef, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
+            saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef)
+        }
+    })
+}
+
+
+var eachMissionItem = function(masterList, rows, adminRef, emailColumn, phoneColumn, missionStuff) {
+
+    var missionCopy = JSON.parse(JSON.stringify(missionStuff))
+    var hasPhone = true;
+
+    for(var c = 0; c < rows[0].length; c++) {
+        // as long as the cell has data in it...
+        if(rows[r][c]) {
+
+            // see if it's the email column so we can strip any " (Yes)" or " (No)" from email strings
+            if(c == emailColumn) {
+                var stripped = stripYesNo(rows[r][c])
+                missionCopy[colnames[c]] = stripped;
+            }
+            else {
+                // otherwise just store the cell data
+                missionCopy[colnames[c]] = rows[r][c];
+            }
+        }
+        else if(c == phoneColumn) {
+            // The if block above was false, meaning no data in that cell
+            // So are we on the phone column?  If so, skip the whole row - don't
+            // write it to the database because we can't call this person anyway
+            hasPhone = false
+        }
+    }
+
+    return {hasPhone: hasPhone, missionCopy: missionCopy}
+}
+
+
+var saveIfHasPhone = function(hasPhone, missionCopy, adminRef) {
+    if(hasPhone) {
+        // compound key: capture the status of the mission (new, in progress, complete) together
+        // with the active status (true/false) to figure out if this mission item is suitable
+        // for assigning to a volunteer.
+        // It's suitable if active_and_accomplished: true_new
+        missionCopy['accomplished'] = "new"
+        missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
+        //adminRef.root.child('mission_items').push().set(missionCopy)
+
+        console.log("missionCopy = ", missionCopy)
+    }
+}
+
+
+var getMissionColumnInfo = function(rows) {
+
+    var colnames = []
+    var emailColumn = -1
+    var phoneColumn = -1
+    var threeWayPhoneColumn = -1
+    var threeWayNameColumn = -1
+    for(var c = 0; c < rows[0].length; c++) {
+        if(rows[0][c].toLowerCase() == 'email') {
+            emailColumn = c
+            colnames.push(rows[0][c].toLowerCase())
+        }
+        else if(isPhoneColumn(rows[0][c])) {
+            phoneColumn = c
+            colnames.push("phone")
+        }
+        else if(is3WayPhoneColumn(rows[0][c])) {
+            threeWayPhoneColumn = c
+            colnames.push("phone2")
+        }
+        else if(is3WayNameColumn(rows[0][c])) {
+            threeWayNameColumn = c
+            colnames.push("name2")
+        }
+        else {
+            colnames.push(rows[0][c].toLowerCase())
+        }
+    }
+
+    return {colnames: colnames,
+            emailColumn: emailColumnm,
+            phoneColumn: phoneColumn,
+            threeWayPhoneColumn: threeWayPhoneColumn,
+            threeWayNameColumn: threeWayNameColumn}
+}
+
+
+var getMissionSheetCallback = function(err, response) {
+    console.log("getMissionSheetCallback ---------------")
+
+    var rows = response.values;
+    for(var r = 1; r < rows.length; r++) {
+        allMissionItems.push(rows[r])
+        // sanity check...
+        if(r == rows.length -1) {
+            console.log("rows["+r+"] = ", rows[r])
+        }
+    }
+    console.log("allMissionItems.length = ", allMissionItems.length)
+}
 
 
 // HTTPS function to write new data to CONFIG_DATA_PATH, for testing

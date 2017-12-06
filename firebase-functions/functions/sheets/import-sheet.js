@@ -227,7 +227,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                   ************/
 
                                   for(var r = 1; r < rows.length; r++) {
-                                        var missionItemRowInfo = eachMissionItem(rows, adminRef, columnInfo.emailColumn, columnInfo.phoneColumn)
+                                        var missionItemRowInfo = eachMissionItem(rows, adminRef, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
                                         /*****************
                                         var missionCopy = JSON.parse(JSON.stringify(missionStuff))
                                         var hasPhone = true;
@@ -340,7 +340,7 @@ var getMissionColumnInfo = function(rows) {
 }
 
 
-var eachMissionItem = function(rows, adminRef, emailColumn, phoneColumn) {
+var eachMissionItem = function(rows, adminRef, emailColumn, phoneColumn, missionStuff) {
 
     var missionCopy = JSON.parse(JSON.stringify(missionStuff))
     var hasPhone = true;
