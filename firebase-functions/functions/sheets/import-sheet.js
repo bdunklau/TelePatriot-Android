@@ -23,12 +23,11 @@ const db = admin.database();
 const CONFIG_CLIENT_ID = functions.config().googleapi.client_id;
 const CONFIG_CLIENT_SECRET = functions.config().googleapi.client_secret;
 const CONFIG_SHEET_ID = functions.config().googleapi.sheet_id;
+// The OAuth Callback Redirect.
+const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //`https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
 
 const HARDCODED_SHEET_ID = '1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs'
 const HARDCODED_MISSION_ID = '2'
-
-// The OAuth Callback Redirect.
-const FUNCTIONS_REDIRECT = `https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
 
 // setup for authGoogleAPI
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
@@ -197,6 +196,8 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                   //console.log('readPromise:  response: ', response)
 
                                   var rows = response.values;
+                                  var columnInfo = getMissionColumnInfo(rows)
+                                  /***************
                                   var colnames = []
                                   var emailColumn = -1
                                   var phoneColumn = -1
@@ -223,9 +224,11 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                             colnames.push(rows[0][c].toLowerCase())
                                         }
                                   }
+                                  ************/
 
                                   for(var r = 1; r < rows.length; r++) {
-
+                                        var missionItemRowInfo = eachMissionItem(rows, adminRef, columnInfo.emailColumn, columnInfo.phoneColumn)
+                                        /*****************
                                         var missionCopy = JSON.parse(JSON.stringify(missionStuff))
                                         var hasPhone = true;
 
@@ -250,7 +253,10 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                                 hasPhone = false
                                             }
                                         }
+                                        **************/
 
+                                        saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef)
+                                        /***************
                                         if(hasPhone) {
                                             // compound key: capture the status of the mission (new, in progress, complete) together
                                             // with the active status (true/false) to figure out if this mission item is suitable
@@ -260,6 +266,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                             missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
                                             adminRef.root.child('mission_items').push().set(missionCopy)
                                         }
+                                        ************/
 
                                   }
 
@@ -293,6 +300,87 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
             console.log('Uh oh! Error caught in appendPromise(): ', err); reject()
         });
     });
+}
+
+
+var getMissionColumnInfo = function(rows) {
+
+    var colnames = []
+    var emailColumn = -1
+    var phoneColumn = -1
+    var threeWayPhoneColumn = -1
+    var threeWayNameColumn = -1
+    for(var c = 0; c < rows[0].length; c++) {
+        if(rows[0][c].toLowerCase() == 'email') {
+            emailColumn = c
+            colnames.push(rows[0][c].toLowerCase())
+        }
+        else if(isPhoneColumn(rows[0][c])) {
+            phoneColumn = c
+            colnames.push("phone")
+        }
+        else if(is3WayPhoneColumn(rows[0][c])) {
+            threeWayPhoneColumn = c
+            colnames.push("phone2")
+        }
+        else if(is3WayNameColumn(rows[0][c])) {
+            threeWayNameColumn = c
+            colnames.push("name2")
+        }
+        else {
+            colnames.push(rows[0][c].toLowerCase())
+        }
+    }
+
+    return {colnames: colnames,
+            emailColumn: emailColumnm,
+            phoneColumn: phoneColumn,
+            threeWayPhoneColumn: threeWayPhoneColumn,
+            threeWayNameColumn: threeWayNameColumn}
+}
+
+
+var eachMissionItem = function(rows, adminRef, emailColumn, phoneColumn) {
+
+    var missionCopy = JSON.parse(JSON.stringify(missionStuff))
+    var hasPhone = true;
+
+    for(var c = 0; c < rows[0].length; c++) {
+        // as long as the cell has data in it...
+        if(rows[r][c]) {
+
+            // see if it's the email column so we can strip any " (Yes)" or " (No)" from email strings
+            if(c == emailColumn) {
+                var stripped = stripYesNo(rows[r][c])
+                missionCopy[colnames[c]] = stripped;
+            }
+            else {
+                // otherwise just store the cell data
+                missionCopy[colnames[c]] = rows[r][c];
+            }
+        }
+        else if(c == phoneColumn) {
+            // The if block above was false, meaning no data in that cell
+            // So are we on the phone column?  If so, skip the whole row - don't
+            // write it to the database because we can't call this person anyway
+            hasPhone = false
+        }
+    }
+
+    return {hasPhone: hasPhone, missionCopy: missionCopy}
+}
+
+
+var saveIfHasPhone = function(hasPhone, missionCopy, adminRef) {
+    if(hasPhone) {
+        // compound key: capture the status of the mission (new, in progress, complete) together
+        // with the active status (true/false) to figure out if this mission item is suitable
+        // for assigning to a volunteer.
+        // It's suitable if active_and_accomplished: true_new
+        missionCopy['accomplished'] = "new"
+        missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
+        adminRef.root.child('mission_items').push().set(missionCopy)
+    }
 }
 
 

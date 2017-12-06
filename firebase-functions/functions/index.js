@@ -33,5 +33,10 @@ exports.deleteMissionItems = sheetReader.deleteMissionItems
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
 
-const missionDeleter = require('./sheets/mission-deleter.js')
+const missionDeleter = require('./sheets/mission-deleter')
 exports.missionDeletion = missionDeleter.missionDeletion
+
+const masterSpreadsheetReader = require('./sheets/import-master-sheet')
+exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
+exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
+
