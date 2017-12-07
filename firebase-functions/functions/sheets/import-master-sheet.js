@@ -370,7 +370,7 @@ var getMissionSheetCallback = function(err, response) {
 }
 
 
-// HTTPS function to write new data to CONFIG_DATA_PATH, for testing
+// test/dev function
 exports.testReadMasterSpreadsheet = functions.https.onRequest((req, res) => {
 
     var url = req.query.url

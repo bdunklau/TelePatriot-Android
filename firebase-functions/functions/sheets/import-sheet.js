@@ -227,7 +227,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                   ************/
 
                                   for(var r = 1; r < rows.length; r++) {
-                                        var missionItemRowInfo = eachMissionItem(rows, adminRef, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
+                                        var missionItemRowInfo = eachMissionItem(r, rows, adminRef, columnInfo.colnames, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
                                         /*****************
                                         var missionCopy = JSON.parse(JSON.stringify(missionStuff))
                                         var hasPhone = true;
@@ -255,7 +255,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                         }
                                         **************/
 
-                                        saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef)
+                                        saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef, dbref)
                                         /***************
                                         if(hasPhone) {
                                             // compound key: capture the status of the mission (new, in progress, complete) together
@@ -333,14 +333,14 @@ var getMissionColumnInfo = function(rows) {
     }
 
     return {colnames: colnames,
-            emailColumn: emailColumnm,
+            emailColumn: emailColumn,
             phoneColumn: phoneColumn,
             threeWayPhoneColumn: threeWayPhoneColumn,
             threeWayNameColumn: threeWayNameColumn}
 }
 
 
-var eachMissionItem = function(rows, adminRef, emailColumn, phoneColumn, missionStuff) {
+var eachMissionItem = function(r, rows, adminRef, colnames, emailColumn, phoneColumn, missionStuff) {
 
     var missionCopy = JSON.parse(JSON.stringify(missionStuff))
     var hasPhone = true;
@@ -371,7 +371,7 @@ var eachMissionItem = function(rows, adminRef, emailColumn, phoneColumn, mission
 }
 
 
-var saveIfHasPhone = function(hasPhone, missionCopy, adminRef) {
+var saveIfHasPhone = function(hasPhone, missionCopy, adminRef, dbref) {
     if(hasPhone) {
         // compound key: capture the status of the mission (new, in progress, complete) together
         // with the active status (true/false) to figure out if this mission item is suitable
@@ -379,7 +379,10 @@ var saveIfHasPhone = function(hasPhone, missionCopy, adminRef) {
         // It's suitable if active_and_accomplished: true_new
         missionCopy['accomplished'] = "new"
         missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
-        adminRef.root.child('mission_items').push().set(missionCopy)
+
+        // trying something different...
+        //adminRef.root.child('mission_items').push().set(missionCopy)
+        dbref.child('mission_items').push().set(missionCopy)
     }
 }
 
@@ -450,4 +453,64 @@ exports.deleteMissionItems = functions.https.onRequest((req, res) => {
 
   return db.ref(`mission_items`).remove()
 });
+
+
+// test/dev function
+exports.testReadSpreadsheet = functions.https.onRequest((req, res) => {
+
+    var url = req.query.url
+    var mission_name = req.query.mission_name
+
+    var sheet_id = sheetIdUtil.sheetId(url)
+
+    var mission = { //mission_id:
+                    active: false,
+                    description: 'todo',
+                    //mission_create_date:,
+                    mission_name: mission_name,
+                    mission_type: 'Phone Campaign',
+                    name: 'Brent Dunklau',
+                    uid: 'MdaK0ltYeue0oGYF6gdks5S0yFh2',
+                    uid_and_active: 'MdaK0ltYeue0oGYF6gdks5S0yFh2_false',
+                    url: url,
+                    mark_for_merge: true // <-- notice new attribute (12/7/17)
+                   }
+
+    return db.ref(`missions`).push(mission).then(
+        () => {
+            var stuff = 'OK<P/>req.query.url = '+url
+            stuff += '<P/>sheet_id = '+sheet_id
+            res.status(200).send(stuff)
+        }
+    )
+
+})
+
+// test/dev function
+exports.testMergeMissions = functions.https.onRequest((req, res) => {
+
+    // query for all missions with mark_for_merge=true
+    return db.ref(`missions`).orderByChild(`mark_for_merge`).equalTo(true).once('value').then(snapshot => {
+        var vals = []
+        var mis = []
+        snapshot.forEach(function (xx) {
+            //console.log("xx.val() = ", xx.val())
+            vals.push(xx.val())
+            for(var mi in xx.val().mission_items) {
+                mis.push(mi)
+            }
+            // xx.val() -> It's the node under a mission_id, i.e. {active: true, description: 'TP Test 1', mission_items:[...], ... }
+        })
+        return mis
+    }).then(
+              (vals) => {
+                  var stuff = 'OK'
+                  for(var m in vals) {
+                      stuff += '<P/>m.name?... = '+m.name
+                  }
+                  res.status(200).send(stuff)
+              }
+          )
+
+})
 
