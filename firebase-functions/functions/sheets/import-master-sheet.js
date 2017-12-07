@@ -180,7 +180,7 @@ var getMasterSheetCallback = function(err, response) {
                 var rows = response.values;
                 if(rows.length > 0 && rows[0].length > 0) {
                     masterList[request.spreadsheetId]['description'] = rows[0][0]
-
+                    //adminRef.root.child('master_mission_info').push().set({description: rows[0][0]}) // works
                     getScript(masterList, request.spreadsheetId, request)
 
                 }
@@ -193,7 +193,6 @@ var getMasterSheetCallback = function(err, response) {
 var getScript = function(masterList, sheetId, request) {
 
     request.range = 'Script'
-    console.log('readPromise: looking for mission Script: check client = ', client)
     sheets.spreadsheets.values.get(request, (err, response) => {
         if (err) {
             console.log(`getScript(): The API returned an error: ${err}`);
@@ -204,14 +203,15 @@ var getScript = function(masterList, sheetId, request) {
         masterList[sheetId]['script'] = '';
         if(rows.length > 0 && rows[0].length > 0) {
             masterList[sheetId]['script'] = rows[0][0]
+            //adminRef.root.child('master_mission_info').push().set({script: rows[0][0]}) // works
         }
 
-        readMissionItems(masterList[sheetId], request)
+        readMissionItems(sheetId, masterList[sheetId], request)
     })
 }
 
 
-var readMissionItems = function(missionStuff, request) {
+var readMissionItems = function(sheetId, missionStuff, request) {
     request.range = 'Sheet1'
     // another inner callback, this time to get read each row of people
     sheets.spreadsheets.values.get(request, (err, response) => {
@@ -224,14 +224,17 @@ var readMissionItems = function(missionStuff, request) {
         var columnInfo = getMissionColumnInfo(rows)
 
         for(var r = 1; r < rows.length; r++) {
-            var missionItemRowInfo = eachMissionItem(rows, adminRef, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
-            saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef)
+            var missionItemRowInfo = eachMissionItem(r, rows, adminRef, columnInfo.colnames, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
+            saveIfHasPhone(sheetId, masterList, missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef)
         }
     })
 }
 
 
-var eachMissionItem = function(masterList, rows, adminRef, emailColumn, phoneColumn, missionStuff) {
+var eachMissionItem = function(r, rows, adminRef, colnames, emailColumn, phoneColumn, missionStuff) {
+
+    // works but only needed for testing/dev
+    adminRef.root.child('master_mission_info').push().set({missionStuff: missionStuff})
 
     var missionCopy = JSON.parse(JSON.stringify(missionStuff))
     var hasPhone = true;
@@ -262,7 +265,7 @@ var eachMissionItem = function(masterList, rows, adminRef, emailColumn, phoneCol
 }
 
 
-var saveIfHasPhone = function(hasPhone, missionCopy, adminRef) {
+var saveIfHasPhone = function(sheetId, masterList, hasPhone, missionCopy, adminRef) {
     if(hasPhone) {
         // compound key: capture the status of the mission (new, in progress, complete) together
         // with the active status (true/false) to figure out if this mission item is suitable
@@ -270,9 +273,10 @@ var saveIfHasPhone = function(hasPhone, missionCopy, adminRef) {
         // It's suitable if active_and_accomplished: true_new
         missionCopy['accomplished'] = "new"
         missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
-        //adminRef.root.child('mission_items').push().set(missionCopy)
+        //adminRef.root.child('master_mission_items').push().set(missionCopy) // temp, remove
 
-        console.log("missionCopy = ", missionCopy)
+        //console.log("missionCopy = ", missionCopy)
+        masterList[sheetId].push(missionCopy)
     }
 }
 
@@ -307,11 +311,48 @@ var getMissionColumnInfo = function(rows) {
     }
 
     return {colnames: colnames,
-            emailColumn: emailColumnm,
+            emailColumn: emailColumn,
             phoneColumn: phoneColumn,
             threeWayPhoneColumn: threeWayPhoneColumn,
             threeWayNameColumn: threeWayNameColumn}
 }
+
+
+var isPhoneColumn = function(val) {
+    if(!val)
+        return false
+    var lower = val.toLowerCase()
+    if(lower == "phone" || lower == "phone#" || lower == "phone number" || lower == "phone num" || lower == "phone #")
+        return true
+    else return false
+}
+
+
+/**
+If we find a column named "phone2" that's how we'll know this is a 3way call mission
+**/
+var is3WayPhoneColumn = function(val) {
+    return isNamed(val, "phone2")
+}
+
+
+/**
+If we find a column named "phone2" that's how we'll know this is a 3way call mission
+**/
+var is3WayNameColumn = function(val) {
+    return isNamed(val, "name2")
+}
+
+
+var isNamed = function(val, named) {
+    if(!val)
+        return false
+    var lower = val.toLowerCase()
+    if(lower == named)
+        return true
+    else return false
+}
+
 
 
 var getMissionSheetCallback = function(err, response) {
