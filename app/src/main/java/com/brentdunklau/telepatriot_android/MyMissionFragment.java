@@ -62,7 +62,9 @@ public class MyMissionFragment extends BaseFragment {
         button_call_person2 = myView.findViewById(R.id.button_call_person2);
 
 
-        FirebaseDatabase.getInstance().getReference("mission_items").orderByChild("active_and_accomplished").equalTo("true_new").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
+        // TODO won't always be this...
+        String team = "The Cavalry";     // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
+        FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items").orderByChild("group_number").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
@@ -187,30 +189,6 @@ public class MyMissionFragment extends BaseFragment {
             }
         });
     }
-
-    /*
-    private void completeCallIfAppropriate() {
-        if(missionDetail == null)
-            return;
-        if("new".equalsIgnoreCase(missionDetail.getAccomplished()))
-            return;
-        if("in progress".equalsIgnoreCase(missionDetail.getAccomplished()))
-            return;
-        setMissionItemState("complete");
-    }
-    */
-
-    /*
-    private void makeMissionItemAvailable() {
-        if(missionDetail == null)
-            return;
-        if("new".equalsIgnoreCase(missionDetail.getAccomplished()))
-            return;
-        if("calling".equalsIgnoreCase(missionDetail.getAccomplished()))
-            return;
-        setMissionItemState("new");
-    }
-    */
 
     private void call(MissionDetail missionDetail) {
         checkPermission();

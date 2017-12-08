@@ -40,7 +40,8 @@ public class MissionsFragment extends DirectorFragment {
         btnAllMissions = myView.findViewById(R.id.button_all_missions);
         btnAllActivity = myView.findViewById(R.id.button_all_activity);
 
-        wireUp(btnNewPhoneCampaign, new NewPhoneCampaignFragment());
+        //wireUp(btnNewPhoneCampaign, new NewPhoneCampaignFragment());
+        wireUp(btnNewPhoneCampaign, new ChooseSpreadsheetTypeFragment());
         wireUp(btnMyActiveMissions, new MyActiveMissionsFragment());
         wireUp(btnAllActiveMissions, new AllActiveMissionsFragment());
         wireUp(btnAllMyMissions, new AllMyMissionsFragment());

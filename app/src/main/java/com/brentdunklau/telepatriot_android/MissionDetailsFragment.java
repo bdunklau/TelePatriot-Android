@@ -69,7 +69,8 @@ public class MissionDetailsFragment extends BaseFragment {
             return;
 
         try {
-            final Query ref = FirebaseDatabase.getInstance().getReference("/mission_items").orderByChild("mission_id").equalTo(missionId);
+            String team = "The Cavalry"; // TODO won't always be this
+            final Query ref = FirebaseDatabase.getInstance().getReference("/teams/"+team+"/mission_items").orderByChild("mission_id").equalTo(missionId);
 
             ValueEventListener v2 = new ValueEventListener() {
                 @Override

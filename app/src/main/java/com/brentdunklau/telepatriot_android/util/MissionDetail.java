@@ -8,9 +8,24 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class MissionDetail {
 
-    private String description, email, mission_create_date, mission_id, mission_name, mission_type, name, phone, script, uid, uid_and_active, url, accomplished, active_and_accomplished;
+    private String description;
+    private String email;
+    private String mission_create_date;
+    private String mission_complete_date;
+    private String mission_id;
+    private String mission_name;
+    private String mission_type;
+    private String name;
+    private String phone;
+    private String script;
+    private String uid;
+    private String uid_and_active;
+    private String url;
+    private String accomplished;
+    private String active_and_accomplished;
     private String name2, phone2; // when the spreadsheet has these columns, means 3 way call
     private boolean active;
+    private Integer  group_number, number_of_missions_in_master_mission;
 
     public MissionDetail() {
 
@@ -173,5 +188,29 @@ public class MissionDetail {
     // when the spreadsheet has these columns, means 3 way call
     public void setPhone2(String phone2) {
         this.phone2 = phone2;
+    }
+
+    public Integer getGroup_number() {
+        return group_number;
+    }
+
+    public void setGroup_number(Integer group_number) {
+        this.group_number = group_number;
+    }
+
+    public Integer getNumber_of_missions_in_master_mission() {
+        return number_of_missions_in_master_mission;
+    }
+
+    public void setNumber_of_missions_in_master_mission(Integer number_of_missions_in_master_mission) {
+        this.number_of_missions_in_master_mission = number_of_missions_in_master_mission;
+    }
+
+    public String getMission_complete_date() {
+        return mission_complete_date;
+    }
+
+    public void setMission_complete_date(String mission_complete_date) {
+        this.mission_complete_date = mission_complete_date;
     }
 }
