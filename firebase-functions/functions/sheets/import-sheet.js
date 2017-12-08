@@ -102,6 +102,10 @@ exports.readSpreadsheet = functions.database.ref(`teams/{teamname}/missions/{mis
 
     console.log('event.data.val() = ', event.data.val())
     var uid = event.data.val().uid
+    var number_of_missions_in_master_mission
+    if(event.data.val().number_of_missions_in_master_mission)
+        number_of_missions_in_master_mission = event.data.val().number_of_missions_in_master_mission
+    else number_of_missions_in_master_mission = 1
 
     var missionStuff = {mission_id: event.params.missionId,
                         active: event.data.val().active,
@@ -113,7 +117,8 @@ exports.readSpreadsheet = functions.database.ref(`teams/{teamname}/missions/{mis
                         script: event.data.val().script,           // don't have this yet, not ready
                         uid: event.data.val().uid,
                         uid_and_active: event.data.val().uid_and_active,
-                        url: event.data.val().url
+                        url: event.data.val().url,
+                        number_of_missions_in_master_mission: number_of_missions_in_master_mission
                         }
 
     event.data.ref.child('mission_create_date').set(date.asCentralTime())
@@ -199,7 +204,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
             })
 
 
-            return resolve(response);
+            return resolve();
 
         })
         .then(() => { dbref.child('sheet_id').set(requestWithoutAuth.spreadsheetId) })
@@ -300,6 +305,7 @@ exports.saveIfHasPhone = function(hasPhone, missionCopy, adminRef, dbref) {
         missionCopy['accomplished'] = "new"
         missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
 
+        // this is writing to /teams/{team}/missions/{missionId}
         dbref.child('mission_items').push().set(missionCopy)
     }
 }
@@ -424,7 +430,7 @@ exports.testMergeMissions = functions.https.onRequest((req, res) => {
                 missionInfo.mission_items[key]['group_number'] = groupNumber
                 mis.push(missionInfo.mission_items[key])
                 ++iii
-                db.ref(`teams/The Cavalry/merged_mission_items/${key}`).set(missionInfo.mission_items[key])
+                db.ref(`teams/The Cavalry/mission_items/${key}`).set(missionInfo.mission_items[key])
             }
         })
         return {list: mis, count: snapshot.numChildren()} // <-- this is the arg that is passed to the second then() function
@@ -442,20 +448,6 @@ exports.testMergeMissions = functions.https.onRequest((req, res) => {
                     })
                     res.status(200).send(stuff)
                 })
-
-                    /************** this works but now let's try a query
-                  var vals = obj.list
-                  var count = obj.count
-                  var json = JSON.stringify(vals)
-                  //stuff += '<P/>JSON.stringify(vals) ?... = '+json
-                  for(var m in vals) {
-                      var missionItem = vals[m]
-                      //if(missionItem) stuff += '<P/>JSON.stringify(missionItem)?... = '+JSON.stringify(missionItem)
-                      if(missionItem.name) stuff += '<P/>missionItem.name?... = '+missionItem.name
-                  }
-                  stuff += '<P/>count = '+count
-                  *************/
-                  res.status(200).send(stuff)
             }
     )
 

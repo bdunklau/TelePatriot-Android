@@ -39,6 +39,7 @@ exports.readMasterSpreadsheet = functions.database.ref(`teams/{teamname}/master_
     created_by_uid = event.data.val().uid
     team = event.params.teamname
     mark_for_merge = event.data.val().mark_for_merge
+    var sheet_id = sheetIdUtil.sheetId(event.data.val().url)
 
     var masterMissionStuff = { master_mission_id: event.params.master_mission_id,
                              active: event.data.val().active,
@@ -50,12 +51,12 @@ exports.readMasterSpreadsheet = functions.database.ref(`teams/{teamname}/master_
                              uid: created_by_uid,
                              uid_and_active: created_by_uid+'_false',
                              url: event.data.val().url,
-                             sheet_id: event.data.val().sheet_id,
+                             sheet_id: sheet_id,
                              mark_for_merge: mark_for_merge // <-- notice new attribute (12/7/17)
                             }
 
     return readPromise(masterMissionStuff,
-                       { spreadsheetId: event.data.val().sheet_id });
+                       { spreadsheetId: sheet_id });
 
 })
 
@@ -187,8 +188,12 @@ var getMasterSheetCallback = function(err, response) {
                     uid: created_by_uid,  // how do we get this?
                     uid_and_active: created_by_uid+'_false',
                     url: url,
-                    mark_for_merge: mark_for_merge // <-- notice new attribute (12/7/17)
+                    sheet_id: sheet_id,
+                    mark_for_merge: true, // <-- notice new attribute (12/7/17)
+                    number_of_missions_in_master_mission: rows.length-1 // <-- notice new attribute (12/7/17)
                    }
+                   // number_of_missions_in_master_mission will be used as the modulus when determining
+                   // what the group_number should be for each mission_item
 
         db.ref(`teams/${team}/missions`).push(mission);
 
@@ -214,7 +219,7 @@ exports.testReadMasterSpreadsheet = functions.https.onRequest((req, res) => {
                     uid: creator_uid,
                     uid_and_active: creator_uid+'_false',
                     url: url,
-                    sheet_id: sheet_id,
+                    //sheet_id: sheet_id, // determine this in the onWrite() trigger
                     mark_for_merge: true // <-- notice new attribute (12/7/17)
                    }
 

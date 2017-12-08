@@ -31,7 +31,7 @@ public class MyActiveMissionsFragment extends MissionListFragment {
 
     public MyActiveMissionsFragment() {
         this.title = "My Active Missions";
-        this.ref = FirebaseDatabase.getInstance().getReference("missions");
+        this.ref = FirebaseDatabase.getInstance().getReference("teams/The Cavalry/missions");
         this.query = this.ref.orderByChild("uid_and_active").equalTo(User.getInstance().getUid()+"_true");
     }
 
