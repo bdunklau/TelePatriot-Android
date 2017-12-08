@@ -42,3 +42,8 @@ const masterSpreadsheetReader = require('./sheets/import-master-sheet')
 exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
 exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
 
+const dbadmin = require('./dbadmin')
+exports.insert = dbadmin.insert
+exports.update = dbadmin.update
+exports.query = dbadmin.query
+
