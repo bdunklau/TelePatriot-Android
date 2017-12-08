@@ -164,8 +164,14 @@ var getMasterSheetCallback = function(err, response) {
 
     }
 
-    console.log("rows.length = ", rows.length)
+    var number_of_missions_in_master_mission = 0
+    for(var r = 1; r < rows.length; r++) {
+        if(url) {
+            ++number_of_missions_in_master_mission
+        }
+    }
 
+    console.log("rows.length = ", rows.length)
     for(var r = 1; r < rows.length; r++) {
         // now we need to get the url and mission name from each line
         // and write to a /teams/{teamname}/missions/{missionId} node and then
@@ -175,8 +181,6 @@ var getMasterSheetCallback = function(err, response) {
         var url = rows[r][legislatorColumn]
         var sheet_id = sheetIdUtil.sheetId(url)
         var mission_name = rows[r][campaignNameColumn]
-
-
 
         var mission = { //mission_id:
                     active: false,
@@ -190,7 +194,7 @@ var getMasterSheetCallback = function(err, response) {
                     url: url,
                     sheet_id: sheet_id,
                     mark_for_merge: true, // <-- notice new attribute (12/7/17)
-                    number_of_missions_in_master_mission: rows.length-1 // <-- notice new attribute (12/7/17)
+                    number_of_missions_in_master_mission: number_of_missions_in_master_mission // <-- notice new attribute (12/7/17)
                    }
                    // number_of_missions_in_master_mission will be used as the modulus when determining
                    // what the group_number should be for each mission_item
