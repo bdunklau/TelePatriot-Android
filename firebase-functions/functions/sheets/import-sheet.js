@@ -86,7 +86,7 @@ function getAuthorizedClient() {
 
 
 // trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
-exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite(
+exports.readSpreadsheet = functions.database.ref(`teams/{teamname}/missions/{missionId}`).onWrite(
   event => {
 
     // Only edit data when it is first created.
@@ -227,8 +227,8 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                   ************/
 
                                   for(var r = 1; r < rows.length; r++) {
-                                        var missionItemRowInfo = eachMissionItem(r, rows, adminRef, columnInfo.colnames, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
-                                        /*****************
+                                        var missionItemRowInfo = exports.eachMissionItem(r, rows, adminRef, columnInfo.colnames, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
+                                       /*****************
                                         var missionCopy = JSON.parse(JSON.stringify(missionStuff))
                                         var hasPhone = true;
 
@@ -255,7 +255,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                         }
                                         **************/
 
-                                        saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef, dbref)
+                                        exports.saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef, dbref)
                                         /***************
                                         if(hasPhone) {
                                             // compound key: capture the status of the mission (new, in progress, complete) together
@@ -340,7 +340,7 @@ var getMissionColumnInfo = function(rows) {
 }
 
 
-var eachMissionItem = function(r, rows, adminRef, colnames, emailColumn, phoneColumn, missionStuff) {
+exports.eachMissionItem = function(r, rows, adminRef, colnames, emailColumn, phoneColumn, missionStuff) {
 
     var missionCopy = JSON.parse(JSON.stringify(missionStuff))
     var hasPhone = true;
@@ -371,7 +371,9 @@ var eachMissionItem = function(r, rows, adminRef, colnames, emailColumn, phoneCo
 }
 
 
-var saveIfHasPhone = function(hasPhone, missionCopy, adminRef, dbref) {
+exports.saveIfHasPhone = function(hasPhone, missionCopy, adminRef, dbref) {
+    console.log("hasPhone = ", hasPhone)
+
     if(hasPhone) {
         // compound key: capture the status of the mission (new, in progress, complete) together
         // with the active status (true/false) to figure out if this mission item is suitable
@@ -456,6 +458,9 @@ exports.deleteMissionItems = functions.https.onRequest((req, res) => {
 
 
 // test/dev function
+// Demonstrates reading a spreadsheet.  See also the onWrite trigger function above
+// named readSpreadsheet().  That function is what actually reads the spreadsheet
+// and writes each row under a mission_items node under the /teams/{teamname}/mission/{missionId}
 exports.testReadSpreadsheet = functions.https.onRequest((req, res) => {
 
     var url = req.query.url
@@ -476,7 +481,7 @@ exports.testReadSpreadsheet = functions.https.onRequest((req, res) => {
                     mark_for_merge: true // <-- notice new attribute (12/7/17)
                    }
 
-    return db.ref(`missions`).push(mission).then(
+    return db.ref(`teams/The Cavalry/missions`).push(mission).then(
         () => {
             var stuff = 'OK<P/>req.query.url = '+url
             stuff += '<P/>sheet_id = '+sheet_id
@@ -490,27 +495,53 @@ exports.testReadSpreadsheet = functions.https.onRequest((req, res) => {
 exports.testMergeMissions = functions.https.onRequest((req, res) => {
 
     // query for all missions with mark_for_merge=true
-    return db.ref(`missions`).orderByChild(`mark_for_merge`).equalTo(true).once('value').then(snapshot => {
-        var vals = []
+    return db.ref(`teams/The Cavalry/missions`).orderByChild(`mark_for_merge`).equalTo(true).once('value').then(snapshot => {
         var mis = []
-        snapshot.forEach(function (xx) {
-            //console.log("xx.val() = ", xx.val())
-            vals.push(xx.val())
-            for(var mi in xx.val().mission_items) {
-                mis.push(mi)
+        console.log("snapshot.numChildren() = ", snapshot.numChildren()) // perfect, tells us how many missions are marked to be merged
+                                                                         // not mission_items, but missions
+        snapshot.forEach(function (child) {
+            var iii = 0;
+            var missionInfo = child.val()
+            for(var key in missionInfo.mission_items) {
+
+                var groupNumber = iii % snapshot.numChildren()
+                missionInfo.mission_items[key]['group_number'] = groupNumber
+                mis.push(missionInfo.mission_items[key])
+                ++iii
+                db.ref(`teams/The Cavalry/merged_mission_items/${key}`).set(missionInfo.mission_items[key])
             }
-            // xx.val() -> It's the node under a mission_id, i.e. {active: true, description: 'TP Test 1', mission_items:[...], ... }
         })
-        return mis
-    }).then(
-              (vals) => {
-                  var stuff = 'OK'
+        return {list: mis, count: snapshot.numChildren()} // <-- this is the arg that is passed to the second then() function
+    })
+
+    // This 'then' function below is just to provide a sanity check to confirm the results of the action above
+    .then(
+            (returnValueFromFirstThenFunction) => { // returnValueFromFirstThenFunction isn't used below
+                var stuff = 'OK'
+                return db.ref(`teams/The Cavalry/merged_mission_items`).orderByChild(`group_number`).once('value').then(snapshot => {
+                    snapshot.forEach(function (child) {
+                        var missionItemId = child.key
+                        var missionItem = child.val()
+                        stuff += '<P/>missionItemId = '+ missionItemId +'  missionItem.name = '+missionItem.name+"  missionItem.group_number = "+missionItem.group_number
+                    })
+                    res.status(200).send(stuff)
+                })
+
+                    /************** this works but now let's try a query
+                  var vals = obj.list
+                  var count = obj.count
+                  var json = JSON.stringify(vals)
+                  //stuff += '<P/>JSON.stringify(vals) ?... = '+json
                   for(var m in vals) {
-                      stuff += '<P/>m.name?... = '+m.name
+                      var missionItem = vals[m]
+                      //if(missionItem) stuff += '<P/>JSON.stringify(missionItem)?... = '+JSON.stringify(missionItem)
+                      if(missionItem.name) stuff += '<P/>missionItem.name?... = '+missionItem.name
                   }
+                  stuff += '<P/>count = '+count
+                  *************/
                   res.status(200).send(stuff)
-              }
-          )
+            }
+    )
 
 })
 
