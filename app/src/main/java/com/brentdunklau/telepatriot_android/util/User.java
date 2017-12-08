@@ -204,6 +204,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         ref.child("completed_by_uid").setValue(getUid());
         ref.child("completed_by_name").setValue(getName());
         ref.child("mission_complete_date").setValue(new SimpleDateFormat("EEE d, yyyy h:mm a z").format(new Date()));
+        ref.child("uid_and_active").setValue(getUid()+"_false");
         missionItemId = null;
         missionItem = null;
     }
