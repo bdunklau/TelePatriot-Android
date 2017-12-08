@@ -66,9 +66,6 @@ const CONFIG_SHEET_ID = functions.config().googleapi.sheet_id;
 // The OAuth Callback Redirect.
 const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //`https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
 
-//const HARDCODED_SHEET_ID = '1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs'
-//const HARDCODED_MISSION_ID = '2'
-
 // setup for authGoogleAPI
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 var OAuth2 = google.auth.OAuth2;
