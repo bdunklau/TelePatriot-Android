@@ -29,9 +29,21 @@ exports.testsheetwrite = sheetsDemo.testsheetwrite
 exports.testsheetImport = sheetReader.testsheetImport
 exports.readSpreadsheet = sheetReader.readSpreadsheet
 exports.deleteMissionItems = sheetReader.deleteMissionItems
+exports.testReadSpreadsheet = sheetReader.testReadSpreadsheet
+exports.testMergeMissions = sheetReader.testMergeMissions
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
 
-const missionDeleter = require('./sheets/mission-deleter.js')
+const missionDeleter = require('./sheets/mission-deleter')
 exports.missionDeletion = missionDeleter.missionDeletion
+
+const masterSpreadsheetReader = require('./sheets/import-master-sheet')
+exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
+exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
+
+const dbadmin = require('./dbadmin')
+exports.insert = dbadmin.insert
+exports.update = dbadmin.update
+exports.query = dbadmin.query
+

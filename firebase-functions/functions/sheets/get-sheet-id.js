@@ -10,6 +10,10 @@ exports.sheetId = ( url => {
     //var url = "https://docs.google.com/spreadsheets/d/178GnEv36vJ_2Odke_JvRHwNI3nS48bfV23jWak4F1Dc/edit#gid=0"
     //var expId = "178GnEv36vJ_2Odke_JvRHwNI3nS48bfV23jWak4F1Dc"
 
+    if(!url) {
+        console.log("get-sheet-id: returning early because url is ", url)
+        return
+    }
     var begin = "/d/"
     var end = "/edit"
     var i1 = url.indexOf("/d/")+3
