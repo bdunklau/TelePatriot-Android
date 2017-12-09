@@ -119,8 +119,10 @@ function getAuthorizedClient2(sheet_id) {
 function readPromise(masterMissionStuff, requestWithoutAuth) {
     console.log('import-master-sheet.js: readPromise: entered')
 
-    const request = requestWithoutAuth;
+    const request = requestWithoutAuth
     request.range = 'Sheet1'
+    //request.valueRenderOption = 'FORMULA' // you COULD do this but you don't want it because you could have other
+                                            // column with formulas when what you really want there are the visible values
 
     return new Promise((resolve, reject) => {
         console.log('readPromise: new Promise(): entered')
@@ -150,11 +152,11 @@ var getMasterSheetCallback = function(err, response) {
 
     var rows = response.values;
     var colnames = []
-    var legislatorColumn = -1 // url column
+    var urlColumn = -1 // url column
     var campaignNameColumn = -1
     for(var c = 0; c < rows[0].length; c++) {
-        if(rows[0][c].toLowerCase() == 'legislator') {
-            legislatorColumn = c
+        if(rows[0][c].toLowerCase() == 'url') {
+            urlColumn = c
             colnames.push(rows[0][c].toLowerCase())
         }
         else if(rows[0][c].toLowerCase() == 'campaign name') {
@@ -166,42 +168,82 @@ var getMasterSheetCallback = function(err, response) {
 
     var number_of_missions_in_master_mission = 0
     for(var r = 1; r < rows.length; r++) {
-        if(url) {
+        var theval = rows[r][urlColumn]
+        if(theval && isUrl(theval)) {
             ++number_of_missions_in_master_mission
         }
+        // instead of console.log() - just for testing/debugging
+        //db.ref(`logs`).push().set({number_of_missions_in_master_mission: number_of_missions_in_master_mission})
     }
 
-    console.log("rows.length = ", rows.length)
     for(var r = 1; r < rows.length; r++) {
         // now we need to get the url and mission name from each line
         // and write to a /teams/{teamname}/missions/{missionId} node and then
         // let the onWrite() trigger in import-sheet.js handle the rest of the
         // importing
         // at each row, we need to read the url on that row...
-        var url = rows[r][legislatorColumn]
-        var sheet_id = sheetIdUtil.sheetId(url)
-        var mission_name = rows[r][campaignNameColumn]
+        var urlVal = rows[r][urlColumn]
+        if(urlVal && isUrl(urlVal)) {
 
-        var mission = { //mission_id:
-                    active: false,
-                    description: 'todo',
-                    //mission_create_date:,
-                    mission_name: mission_name,
-                    mission_type: 'Phone Campaign',
-                    name: created_by_name,
-                    uid: created_by_uid,  // how do we get this?
-                    uid_and_active: created_by_uid+'_false',
-                    url: url,
-                    sheet_id: sheet_id,
-                    mark_for_merge: true, // <-- notice new attribute (12/7/17)
-                    number_of_missions_in_master_mission: number_of_missions_in_master_mission // <-- notice new attribute (12/7/17)
-                   }
-                   // number_of_missions_in_master_mission will be used as the modulus when determining
-                   // what the group_number should be for each mission_item
+            var url = getUrl(urlVal)
 
-        db.ref(`teams/${team}/missions`).push(mission);
+            var sheet_id = sheetIdUtil.sheetId(url)
+            var mission_name = rows[r][campaignNameColumn]
+
+            var mission = { //mission_id:
+                        active: false,
+                        description: 'todo',
+                        //mission_create_date:,
+                        mission_name: mission_name,
+                        mission_type: 'Phone Campaign',
+                        name: created_by_name,
+                        uid: created_by_uid,  // how do we get this?
+                        uid_and_active: created_by_uid+'_false',
+                        url: url,
+                        sheet_id: sheet_id,
+                        mark_for_merge: true, // <-- notice new attribute (12/7/17)
+                        number_of_missions_in_master_mission: number_of_missions_in_master_mission // <-- notice new attribute (12/7/17)
+                       }
+                       // number_of_missions_in_master_mission will be used as the modulus when determining
+                       // what the group_number should be for each mission_item
+
+            db.ref(`teams/${team}/missions`).push(mission);
+
+        }
 
     }
+}
+
+
+var isUrl = function(val) {
+    if(!val) {
+        db.ref(`logs`).push().set({thing: "return false early because val does not exist"})
+        return false
+    }
+    else {
+        var hyperlink = '=hyperlink("'
+        var lower = val.toLowerCase().trim()
+        if(lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith(hyperlink)) return true
+        else {
+            db.ref(`logs`).push().set({thing: "return false because val does not start right: "+val})
+            return false
+        }
+    }
+}
+
+
+var getUrl = function(val) {
+    if(!val) return
+    var lower = val.toLowerCase().trim()
+    var thisstr = '=hyperlink("'
+    if(lower.startsWith(thisstr)) {
+        lower = lower.substring(thisstr.length)
+        var quoteIdx = lower.indexOf('"')
+        if(quoteIdx != -1)
+            lower = lower.substring(0, quoteIdx)
+        return lower
+    }
+    else return val
 }
 
 
