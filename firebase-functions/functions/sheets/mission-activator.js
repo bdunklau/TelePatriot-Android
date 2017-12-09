@@ -32,50 +32,54 @@ exports.missionActivation = functions.database.ref("teams/{team}/missions/{missi
     // New as of 12/8/17 - When we activate missions, THIS is the point at which we write mission_items
     // to the tree, not before
 
-    // iterate over /teams/{team}/missions/{missionId}/mission_items
-    var updates = {};
-    return event.data.adminRef.root.child(`teams/${team}/missions/${missionId}/mission_items`).once('value').then(snapshot => {
+    // Also new as of 12/8/17, when we DEACTIVATE missions, we DELETE those mission items
+    // from teams/${team}/missions/${missionId}/mission_items because now, this node ONLY contains active missions
 
-        var counter = 0
-        snapshot.forEach(function (child) { // FYI, child is a DataSnapshot
-            ++counter
-            var key = child.key
-            var val = JSON.stringify(child.val())
-            var copy = JSON.parse(val)
+    // if we are activating this mission...
+    if(active) {
 
-            copy.active = active
-            copy.uid_and_active = uid_and_active
-            copy.active_and_accomplished = active+"_"+child.val().accomplished
-            copy.group_number = calculateGroupNumber(copy, counter)
+        // iterate over /teams/{team}/missions/{missionId}/mission_items
+        var updates = {};
+        return event.data.adminRef.root.child(`teams/${team}/missions/${missionId}/mission_items`).once('value').then(snapshot => {
 
-            // only write to this node if the mission item is active and new...
-            if(copy.active_and_accomplished == 'true_new')
-                adminRef.root.child(`teams/${team}/mission_items/${key}`).set(copy)
+            var counter = 0
+            snapshot.forEach(function (child) { // FYI, child is a DataSnapshot
+                ++counter
+                var key = child.key
+                var val = JSON.stringify(child.val())
+                var copy = JSON.parse(val)
 
-            updates["teams/"+team+"/missions/"+missionId+"/mission_items/"+key+"/active"] = active
-            updates["teams/"+team+"/missions/"+missionId+"/mission_items/"+key+"/uid_and_active"] = uid_and_active
-            updates["teams/"+team+"/missions/"+missionId+"/mission_items/"+key+"/active_and_accomplished"] = active+"_"+child.val().accomplished
+                copy.active = active
+                copy.uid_and_active = uid_and_active
+                copy.active_and_accomplished = active+"_"+child.val().accomplished
+                copy.group_number = calculateGroupNumber(copy, counter)
 
-            // just for debugging...
-            //adminRef.root.child("logs").push().set({team: team, missionId: missionId, key: key, active: active, uid_and_active: uid_and_active, active_and_accomplished: active+"_"+child.val().accomplished})
+                // only write to this node if the mission item is active and new...
+                if(copy.active_and_accomplished == 'true_new')
+                    adminRef.root.child(`teams/${team}/mission_items/${key}`).set(copy)
+
+                updates["teams/"+team+"/missions/"+missionId+"/mission_items/"+key+"/active"] = active
+                updates["teams/"+team+"/missions/"+missionId+"/mission_items/"+key+"/uid_and_active"] = uid_and_active
+                updates["teams/"+team+"/missions/"+missionId+"/mission_items/"+key+"/active_and_accomplished"] = active+"_"+child.val().accomplished
+
+                // just for debugging...
+                //adminRef.root.child("logs").push().set({team: team, missionId: missionId, key: key, active: active, uid_and_active: uid_and_active, active_and_accomplished: active+"_"+child.val().accomplished})
+            })
+            return adminRef.root.update(updates)
         })
-        return adminRef.root.update(updates)
-    })
 
-    // set active, uid_and_active, and active_and_accomplished
+    }
+    // if we are DE-activating this mission...
+    else {
+        // delete all nodes under teams/${team}/missions/${missionId}/mission_items for this mission
+        var mref = event.data.adminRef.root.child(`teams/${team}/mission_items`)
+        mref.orderByChild('mission_id').equalTo(missionId).once('value').then(snapshot => {
+            snapshot.forEach(function (child) {
+                mref.child(child.key).remove()
+            })
+        })
+    }
 
-    // COPY these nodes over to /teams/{team}/mission_items
-
-    /***********
-    return adminRef.root.child(`teams/${team}/mission_items`).orderByChild('mission_id').equalTo(missionId).on('child_added', function(snapshot) {
-        console.log("missionActivation: snapshot.key = ", snapshot.key)
-        console.log("missionActivation: snapshot.val() = ", snapshot.val())
-        updates["mission_items/"+snapshot.key+"/active"] = active
-        updates["mission_items/"+snapshot.key+"/uid_and_active"] = uid_and_active
-        updates["mission_items/"+snapshot.key+"/active_and_accomplished"] = active+"_"+snapshot.val().accomplished
-        return adminRef.root.update(updates)
-    });
-    ***********/
 })
 
 var calculateGroupNumber = function(mission_item, counter) {
