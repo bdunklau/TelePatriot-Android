@@ -7,8 +7,8 @@ android {
         applicationId "com.brentdunklau.telepatriot_android"
         minSdkVersion 23
         targetSdkVersion 26
-        versionCode 15
-        versionName "15"
+        versionCode 17
+        versionName "17"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

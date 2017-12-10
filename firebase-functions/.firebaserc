@@ -1,7 +1,8 @@
 {
   "projects": {
     "default": "telepatriot-bd737",
-    "telepatriot-dev": "telepatriot-bd737",
-    "staging": "telepatriot-bd737"
+    "telepatriot-dev": "telepatriot-dev",
+    "staging": "telepatriot-bd737",
+    "telepatriot-prod": "telepatriot-bd737"
   }
 }

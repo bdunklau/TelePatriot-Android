@@ -16,6 +16,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,7 +31,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     private boolean isAdmin, isDirector, isVolunteer;
-    private String recruiter_id, missionItemId;
+    private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
     private ChildEventListener childEventListener;
     private static User singleton;
@@ -174,6 +175,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     public void setCurrentMissionItem(String missionItemId, MissionDetail missionItem) {
         this.missionItemId = missionItemId;
         this.missionItem = missionItem;
+        this.missionId = missionItem.getMission_id();
     }
 
     public MissionDetail getCurrentMissionItem() {
@@ -190,11 +192,19 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     // called from MissionItemWrapUpFragment when the user submit the notes at the end of a call
     public void submitWrapUp(String outcome, String notes) {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("mission_items/"+missionItemId);
+        // TODO won't always be this...
+        String team = "The Cavalry";
+        FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items/"+missionItemId).removeValue();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions/"+missionId+"/mission_items/"+missionItemId);
+        ref.child("accomplished").setValue("complete");
+        ref.child("active").setValue(false);
+        ref.child("active_and_accomplished").setValue("false_complete");
         ref.child("outcome").setValue(outcome);
         ref.child("notes").setValue(notes);
         ref.child("completed_by_uid").setValue(getUid());
         ref.child("completed_by_name").setValue(getName());
+        ref.child("mission_complete_date").setValue(new SimpleDateFormat("EEE d, yyyy h:mm a z").format(new Date()));
+        ref.child("uid_and_active").setValue(getUid()+"_false");
         missionItemId = null;
         missionItem = null;
     }
