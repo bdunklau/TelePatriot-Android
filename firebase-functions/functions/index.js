@@ -46,4 +46,6 @@ const dbadmin = require('./dbadmin')
 exports.insert = dbadmin.insert
 exports.update = dbadmin.update
 exports.query = dbadmin.query
+exports.copy = dbadmin.copy
+exports.deleteNodes = dbadmin.deleteNodes
 

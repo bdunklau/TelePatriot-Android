@@ -1,3 +1,14 @@
+FIRST make sure you are pointing to the right database...
+Android Studio - Project perspective - expand "app"
+Open google-services-prod.json
+Ctrl-A Ctrl-C to copy everything
+Open google-services.json
+Ctrl-A to highlight everything
+Ctrl-V to paste the production configuration into this file
+
+Now you're ready to build.
+
+
 On Mac, in Android Studio,
 Menu: Build -> Make Project (not sure if this is actually required)
 Go to the Android perspective
