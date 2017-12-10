@@ -162,8 +162,9 @@ public class MissionDetail {
     public void setState(String state, String missionItemId) {
         setAccomplished(state);
         setActive_and_accomplished(isActive()+"_"+state);
-        FirebaseDatabase.getInstance().getReference("mission_items/"+missionItemId).setValue(this);
-
+        // TODO won't always be this...
+        String team = "The Cavalry";
+        FirebaseDatabase.getInstance().getReference("/teams/"+team+"/mission_items/"+missionItemId).setValue(this);
     }
 
     public void complete(String missionItemId) {

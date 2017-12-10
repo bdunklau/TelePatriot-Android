@@ -203,7 +203,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         ref.child("notes").setValue(notes);
         ref.child("completed_by_uid").setValue(getUid());
         ref.child("completed_by_name").setValue(getName());
-        ref.child("mission_complete_date").setValue(new SimpleDateFormat("EEE d, yyyy h:mm a z").format(new Date()));
+        ref.child("mission_complete_date").setValue(new SimpleDateFormat("MMM d, yyyy h:mm a z").format(new Date()));
         ref.child("uid_and_active").setValue(getUid()+"_false");
         missionItemId = null;
         missionItem = null;
@@ -214,13 +214,15 @@ public class User implements FirebaseAuth.AuthStateListener {
             return;
         missionItem.complete(missionItemId);
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+        // TODO won't always be this...
+        String team = "The Cavalry";
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
 
         String volunteerPhone = myPhone;
         String supporterName = missionItem.getName();
         MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), volunteerPhone, supporterName);
-        ref.push().setValue(m);
-        ref.child(missionItem.getPhone()).push().setValue(m);
+        ref.child("all").push().setValue(m);
+        ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
     }
 
     public String getName() {
