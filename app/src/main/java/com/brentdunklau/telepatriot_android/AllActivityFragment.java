@@ -63,7 +63,9 @@ public class AllActivityFragment extends BaseFragment {
 
 
     private void showMissionActivity() {
-        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity").child("all"); // i.e. actual human activities like making phone calls
+        // TODO won't always be this...
+        String team = "The Cavalry";
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity").child("all"); // i.e. actual human activities like making phone calls
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
