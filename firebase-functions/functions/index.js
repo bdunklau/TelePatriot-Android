@@ -45,7 +45,11 @@ exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpread
 const dbadmin = require('./dbadmin')
 exports.insert = dbadmin.insert
 exports.update = dbadmin.update
-exports.query = dbadmin.query
+exports.queryActive = dbadmin.queryActive
+exports.queryInactive = dbadmin.queryInactive
 exports.copy = dbadmin.copy
 exports.deleteNodes = dbadmin.deleteNodes
+exports.deleteAttributes = dbadmin.deleteAttributes
+exports.addGroupNumbers = dbadmin.addGroupNumbers
+exports.migrateMissions = dbadmin.migrateMissions
 
