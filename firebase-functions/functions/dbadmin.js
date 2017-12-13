@@ -236,8 +236,38 @@ exports.addGroupNumbers = functions.https.onRequest((req, res) => {
 })
 
 
+// to make sure that migrateMissions works, we have to test on the dev db first,
+// which means we have to prepare the dev db by making it look like the prod db...
+exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res) => {
+
+    // make backup:  copy /teams/The Cavalry/master_missions to /teams/The Cavalry/master_missions_bak
+
+    // make backup:  copy /teams/The Cavalry/missions to /teams/The Cavalry/missions_bak
+
+    // make backup:  copy /teams/The Cavalry/mission_items to /teams/The Cavalry/mission_items_bak
+
+    // copy /teams/The Cavalry/missions to /missions
+
+    // copy all /teams/The Cavalry/missions/{mission_id}/mission_items to /mission_items
+
+    // make some /mission_items active and other inactive
+
+    // delete group_number from all /mission_items
+
+    // delete mark_for_merge from all /mission_items
+
+    // delete number_of_missions_in_master_mission from all /mission_items
+
+    // ************   WHAT ELSE ??  *************************
+})
+
+
 
 exports.migrateMissions = functions.https.onRequest((req, res) => {
+
+    // make backup:  copy /missions to /missions_bak
+
+    // make backup:  copy /mission_items to /mission_items_bak
 
     // copy /missions to /teams/The Cavalry/missions
 
@@ -249,6 +279,8 @@ exports.migrateMissions = functions.https.onRequest((req, res) => {
 
     // WHAT ABOUT group_number AND mark_for_merge ????
 
+
+    // ************   WHAT ELSE ??  *************************
 })
 
 
