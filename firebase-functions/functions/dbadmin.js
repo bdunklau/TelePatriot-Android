@@ -244,6 +244,10 @@ exports.addGroupNumbers = functions.https.onRequest((req, res) => {
 // which means we have to prepare the dev db by making it look like the prod db...
 exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res) => {
 
+
+    // DO WE NEED TO CREATE/SIMULATE SOME "in progress" /mission_items ?????
+
+
     var status = ''
 
     // restore backup:  Copy /teams/The Cavalry/missions_bak over to /missions
@@ -351,10 +355,6 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
 
 
 
-
-
-
-    // ************   WHAT ELSE ??  *************************
 })
 
 
@@ -363,21 +363,99 @@ exports.migrateMissions = functions.https.onRequest((req, res) => {
 
     // make backup:  copy /missions to /missions_bak
 
-    // make backup:  copy /mission_items to /mission_items_bak
+    // make backup:  copy /mission_items to /mission_items_bak - THESE ARE ALREADY MADE
+
+
+    var status = ''
 
     // copy /missions to /teams/The Cavalry/missions
 
-    // delete mission_items under each of the /teams/The Cavalry/missions - because of trigger that create the mission_items nodes
+    return db.ref(`/missions`).once('value').then(snapshot => {
+        db.ref(`/teams/The Cavalry/missions`).set(snapshot.val())
+        status += '<P/>OK copied /missions to /teams/The Cavalry/missions'
+    })
+    .then(() => {
+        // insert:  mark_for_merge = true  (the only missions we have are Idaho missions)
+        // insert:  number_of_missions_in_master_mission = 15
+        return db.ref(`/teams/The Cavalry/missions`).once('value').then(snapshot => {
+            snapshot.forEach(function (missionNode) {
+                db.ref(`/teams/The Cavalry/missions`).child(missionNode.key).child('mark_for_merge').set(true)
+                db.ref(`/teams/The Cavalry/missions`).child(missionNode.key).child('number_of_missions_in_master_mission').set(15)
+                status += '<P/>OK set /teams/The Cavalry/missions/'+missionNode.key+'/mark_for_merge = true'
+                status += '<P/>OK set /teams/The Cavalry/missions/'+missionNode.key+'/number_of_missions_in_master_mission = 15'
+            })
+        })
+    })
+    .then(() => {
+        res.status(200).send(status)
+    })
+
+
+
 
     // copy mission_items from /mission_items to the right mission...  /teams/The Cavalry/missions/{mission_id}/mission_items
 
-    // copy active mission_items from /mission_items to /teams/The Cavalry/mission_items
-
-    // WHAT ABOUT group_number AND mark_for_merge ????
+    // insert:  Iterate over every mission item under:  /teams/The Cavalry/missions/{mission_id}/mission_items
+    //          and set number_of_missions_in_master_mission = 15
+    //
+    // OOOPS - new mission_item attributes:  completed_by_name, completed_by_uid, mission_complete_date, notes, outcome
+    //          figure this out later - we CAN get this info
+    //
+    // copy active mission_items from /mission_items to /teams/The Cavalry/mission_items, active_and_accomplished=true_new
+    //      BUT THEY DON'T HAVE group_number's  !!!!!!!!!!!
 
 
     // ************   WHAT ELSE ??  *************************
 })
+
+
+// run this separately because mission_items are inserted via trigger, which happens after
+// the migrateMissions function tries to delete them
+exports.deleteMissionItems = functions.https.onRequest((req, res) => {
+
+    var status = ''
+
+    // delete mission_items under each of the /teams/The Cavalry/missions - because there's a trigger that create the mission_items nodes
+    //      We don't want these nodes created by the trigger in this case.  We want them created by this script, by copying the right nodes
+    //      from /mission_items
+    var mref = db.ref(`/teams/The Cavalry/missions`)
+    return mref.once('value').then(snapshot => {
+        snapshot.forEach(function (missionNode) {
+            mref.child(missionNode.key).child('mission_items').remove()
+            status += '<P/>OK deleted /teams/The Cavalry/missions/'+missionNode.key+'/mission_items'
+        })
+    })
+    .then(() => {
+        res.status(200).send(status)
+    })
+})
+
+
+// copy mission_items from /mission_items to the right mission...  /teams/The Cavalry/missions/{mission_id}/mission_items
+exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
+
+    var status = ''
+
+    var sref = db.ref(`/teams/The Cavalry/missions`)
+    var mref = db.ref(`/mission_items`)
+    return mref.once('value').then(snapshot => {
+        snapshot.forEach(function (missionItemNode) {
+            var missionId = missionItemNode.val().mission_id
+            sref.child(missionId).child('mission_items').child(missionItemNode.key).set(missionItemNode.val())
+            status += '<P/>OK copied /mission_items/'+missionItemNode.key+' to /teams/The Cavalry/missions/'+missionId+'/mission_items/'+missionItemNode.key
+
+            // copy number_of_missions_in_master_mission value
+            sref.child(missionId).once('value').then(s2 => {
+                sref.child(missionId).child('mission_items').child(missionItemNode.key).child('number_of_missions_in_master_mission').set(s2.val().number_of_missions_in_master_mission)
+            })
+        })
+    })
+    .then(() => {
+        res.status(200).send(status)
+    })
+})
+
+
 
 
 
