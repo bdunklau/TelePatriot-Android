@@ -240,23 +240,122 @@ exports.addGroupNumbers = functions.https.onRequest((req, res) => {
 // which means we have to prepare the dev db by making it look like the prod db...
 exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res) => {
 
+    var status = ''
+
     // make backup:  copy /teams/The Cavalry/master_missions to /teams/The Cavalry/master_missions_bak
+    return db.ref(`/teams/The Cavalry/master_missions`).once('value').then(snapshot => {
+        db.ref(`/teams/The Cavalry/master_missions_bak`).set(snapshot.val())
+        status += '<P/>OK copied /teams/The Cavalry/master_missions to /teams/The Cavalry/master_missions_bak'
+    })
+    .then(() => {
+        // make backup:  copy /teams/The Cavalry/missions to /teams/The Cavalry/missions_bak
+        return db.ref(`/teams/The Cavalry/missions`).once('value').then(s2 => {
+            db.ref(`/teams/The Cavalry/missions_bak`).set(s2.val())
+            status += '<P/>OK copied /teams/The Cavalry/missions to /teams/The Cavalry/missions_bak'
+        })
+    })
+    .then(() => {
+        // make backup:  copy /teams/The Cavalry/mission_items to /teams/The Cavalry/mission_items_bak
+        return db.ref(`/teams/The Cavalry/mission_items`).once('value').then(snapshot => {
+            db.ref(`/teams/The Cavalry/mission_items_bak`).set(snapshot.val())
+            status += '<P/>OK copied /teams/The Cavalry/mission_items to /teams/The Cavalry/mission_items_bak'
+        })
+    })
+    .then(() => {
+        // copy /teams/The Cavalry/missions to /missions
+        return db.ref(`/teams/The Cavalry/missions`).once('value').then(s2 => {
+            db.ref(`/missions`).set(s2.val())
+            status += '<P/>OK copied /teams/The Cavalry/missions to /missions'
+        })
+        .then(() => {
+            return db.ref(`/missions`).once('value').then(s2 => {
+                s2.forEach(function (missionNode) {
+                    db.ref(`/missions`).child(missionNode.key).child(`mission_items`).once('value').then(snap => {
+                        snap.forEach(function (missionItemNode) {
+                            db.ref(`/mission_items`).child(missionItemNode.key).set(missionItemNode.val())
+                            status += '<P/>OK copied /missions/'+missionNode.key+'/mission_items/'+missionItemNode.key+' to /mission_items/'+missionItemNode.key
+                        })
+                    })
+                })
+            })
+            .then(() => {
+                // delete the mission_items node under each mission in /missions because that's how prod is now
+                return db.ref(`/missions`).once('value').then(snap => {
+                    snap.forEach(function (child) {
+                        db.ref(`/missions`).child(child.key).child(`mission_items`).remove()
+                        status += '<P/>OK delete /missions/'+child.key+'/mission_items'
+                    })
+                })
+            })
 
-    // make backup:  copy /teams/The Cavalry/missions to /teams/The Cavalry/missions_bak
+            /************
+            return s2.forEach(function (missionNode) {
+                db.ref(`/teams/The Cavalry/missions`).child(missionNode.key).child(`mission_items`).once('value').then(s3 => {
+                    if(s3.numChildren() < 2) {
+                        status += '<P/>NOT GOOD - under /teams/The Cavalry/missions/'+missionNode.key+'/mission_items only '+s3.numChildren()+' nodes found'
+                    }
+                    s3.forEach(function (missionItemNode) {
+                        db.ref(`/mission_items`).child(missionItemNode.key).set(missionItemNode.val())
+                        status += '<P/>OK copied /teams/The Cavalry/missions/'+missionNode.key+'/mission_items/'+missionItemNode.key+' to /mission_items/'+missionItemNode.key
+                    })
+                })
+            })
+            *********/
 
-    // make backup:  copy /teams/The Cavalry/mission_items to /teams/The Cavalry/mission_items_bak
+        })
 
-    // copy /teams/The Cavalry/missions to /missions
+    })
+    .then(() => {
+        // delete /teams/The Cavalry/missions because prod does not have this
+        status += '<P/>OK deleted /teams/The Cavalry/missions'
+        return db.ref(`/teams/The Cavalry/missions`).remove()
+    })
+    .then(() => {
+        // delete /teams/The Cavalry/mission_items because prod does not have this
+        status += '<P/>OK deleted /teams/The Cavalry/mission_items'
+        return db.ref(`/teams/The Cavalry/mission_items`).remove()
+    })
+    .then(() => {
+        // make some /mission_items active and others inactive
+        // what missions will we make active? mission_name=TP Test 1, TP Test 2
+        return db.ref(`/mission_items`).orderByChild(`mission_name`).equalTo("TP Test 1").once('value').then(s2 => {
+            s2.forEach(function (child) {
+                db.ref(`/mission_items`).child(child.key).child('active_and_accomplised').set('true_new')
+                status += '<P/>OK set /mission_items/'+child.key+'/active_and_accomplised = true_new'
+            })
+        })
+        .then(() => {
+            db.ref(`/mission_items`).orderByChild(`mission_name`).equalTo("TP Test 2").once('value').then(s2 => {
+                s2.forEach(function (child) {
+                    db.ref(`/mission_items`).child(child.key).child('active_and_accomplised').set('true_new')
+                    status += '<P/>OK set /mission_items/'+child.key+'/active_and_accomplised = true_new'
+                })
+            })
+        })
+    })
+    .then(() => {
+        // delete group_number from all /mission_items
+        // delete mark_for_merge from all /mission_items
+        // delete number_of_missions_in_master_mission from all /mission_items
+        return db.ref(`/mission_items`).once('value').then(s2 => {
+            s2.forEach(function (child) {
+                db.ref(`/mission_items`).child(child.key).child('group_number').remove()
+                db.ref(`/mission_items`).child(child.key).child('mark_for_merge').remove()
+                db.ref(`/mission_items`).child(child.key).child('number_of_missions_in_master_mission').remove()
+                status += '<P/>OK deleted /mission_items/'+child.key+'/group_number, /mark_for_merge, and /number_of_missions_in_master_mission'
+            })
+        })
+    })
+    /*********
+        **********/
+    .then(() => {
+        res.status(200).send(status)
+    })
 
-    // copy all /teams/The Cavalry/missions/{mission_id}/mission_items to /mission_items
 
-    // make some /mission_items active and other inactive
 
-    // delete group_number from all /mission_items
 
-    // delete mark_for_merge from all /mission_items
 
-    // delete number_of_missions_in_master_mission from all /mission_items
 
     // ************   WHAT ELSE ??  *************************
 })
@@ -271,7 +370,7 @@ exports.migrateMissions = functions.https.onRequest((req, res) => {
 
     // copy /missions to /teams/The Cavalry/missions
 
-    // delete mission_items under each of the /teams/The Cavalry/missions
+    // delete mission_items under each of the /teams/The Cavalry/missions - because of trigger that create the mission_items nodes
 
     // copy mission_items from /mission_items to the right mission...  /teams/The Cavalry/missions/{mission_id}/mission_items
 
