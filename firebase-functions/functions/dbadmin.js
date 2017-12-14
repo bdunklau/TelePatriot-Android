@@ -236,36 +236,32 @@ exports.addGroupNumbers = functions.https.onRequest((req, res) => {
 })
 
 
-// to make sure that migrateMissions works, we have to test on the dev db first,
+// CONFIRMED by comparing the dev db with the prod db.  The function below creates
+// /missions and /mission_items in the dev db that are identical to the nodes in the prod
+// database.  So now, we can actually work on the script that converts the old format to
+// the new format.  And we can do it on the dev db first, which was the whole point of this script.
+// To make sure that migrateMissions works, we have to test on the dev db first,
 // which means we have to prepare the dev db by making it look like the prod db...
 exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res) => {
 
     var status = ''
 
-    // make backup:  copy /teams/The Cavalry/master_missions to /teams/The Cavalry/master_missions_bak
-    return db.ref(`/teams/The Cavalry/master_missions`).once('value').then(snapshot => {
-        db.ref(`/teams/The Cavalry/master_missions_bak`).set(snapshot.val())
-        status += '<P/>OK copied /teams/The Cavalry/master_missions to /teams/The Cavalry/master_missions_bak'
+    // restore backup:  Copy /teams/The Cavalry/missions_bak over to /missions
+    return db.ref(`/teams/The Cavalry/missions_bak`).once('value').then(snapshot => {
+        db.ref(`/missions`).set(snapshot.val())
+        status += '<P/>OK copied /teams/The Cavalry/missions_bak to /missions'
     })
     .then(() => {
-        // make backup:  copy /teams/The Cavalry/missions to /teams/The Cavalry/missions_bak
-        return db.ref(`/teams/The Cavalry/missions`).once('value').then(s2 => {
-            db.ref(`/teams/The Cavalry/missions_bak`).set(s2.val())
-            status += '<P/>OK copied /teams/The Cavalry/missions to /teams/The Cavalry/missions_bak'
-        })
-    })
-    .then(() => {
-        // make backup:  copy /teams/The Cavalry/mission_items to /teams/The Cavalry/mission_items_bak
-        return db.ref(`/teams/The Cavalry/mission_items`).once('value').then(snapshot => {
-            db.ref(`/teams/The Cavalry/mission_items_bak`).set(snapshot.val())
-            status += '<P/>OK copied /teams/The Cavalry/mission_items to /teams/The Cavalry/mission_items_bak'
-        })
-    })
-    .then(() => {
-        // copy /teams/The Cavalry/missions to /missions
-        return db.ref(`/teams/The Cavalry/missions`).once('value').then(s2 => {
-            db.ref(`/missions`).set(s2.val())
-            status += '<P/>OK copied /teams/The Cavalry/missions to /missions'
+        // delete group_number from all /missions
+        // delete mark_for_merge from all /missions
+        // delete number_of_missions_in_master_mission from all /missions
+        return db.ref(`/missions`).once('value').then(s2 => {
+            s2.forEach(function (child) {
+                db.ref(`/missions`).child(child.key).child('group_number').remove()
+                db.ref(`/missions`).child(child.key).child('mark_for_merge').remove()
+                db.ref(`/missions`).child(child.key).child('number_of_missions_in_master_mission').remove()
+                status += '<P/>OK deleted /missions/'+child.key+'/group_number, /mark_for_merge, and /number_of_missions_in_master_mission'
+            })
         })
         .then(() => {
             return db.ref(`/missions`).once('value').then(s2 => {
@@ -278,57 +274,58 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
                     })
                 })
             })
-            .then(() => {
-                // delete the mission_items node under each mission in /missions because that's how prod is now
-                return db.ref(`/missions`).once('value').then(snap => {
-                    snap.forEach(function (child) {
-                        db.ref(`/missions`).child(child.key).child(`mission_items`).remove()
-                        status += '<P/>OK delete /missions/'+child.key+'/mission_items'
-                    })
+        })
+        .then(() => {
+            // delete the mission_items node under each mission in /missions because that's how prod is now
+            return db.ref(`/missions`).once('value').then(snap => {
+                snap.forEach(function (child) {
+                    db.ref(`/missions`).child(child.key).child(`mission_items`).remove()
+                    status += '<P/>OK delete /missions/'+child.key+'/mission_items'
                 })
             })
-
-            /************
-            return s2.forEach(function (missionNode) {
-                db.ref(`/teams/The Cavalry/missions`).child(missionNode.key).child(`mission_items`).once('value').then(s3 => {
-                    if(s3.numChildren() < 2) {
-                        status += '<P/>NOT GOOD - under /teams/The Cavalry/missions/'+missionNode.key+'/mission_items only '+s3.numChildren()+' nodes found'
-                    }
-                    s3.forEach(function (missionItemNode) {
-                        db.ref(`/mission_items`).child(missionItemNode.key).set(missionItemNode.val())
-                        status += '<P/>OK copied /teams/The Cavalry/missions/'+missionNode.key+'/mission_items/'+missionItemNode.key+' to /mission_items/'+missionItemNode.key
-                    })
-                })
-            })
-            *********/
-
         })
 
-    })
-    .then(() => {
-        // delete /teams/The Cavalry/missions because prod does not have this
-        status += '<P/>OK deleted /teams/The Cavalry/missions'
-        return db.ref(`/teams/The Cavalry/missions`).remove()
-    })
-    .then(() => {
-        // delete /teams/The Cavalry/mission_items because prod does not have this
-        status += '<P/>OK deleted /teams/The Cavalry/mission_items'
-        return db.ref(`/teams/The Cavalry/mission_items`).remove()
     })
     .then(() => {
         // make some /mission_items active and others inactive
         // what missions will we make active? mission_name=TP Test 1, TP Test 2
         return db.ref(`/mission_items`).orderByChild(`mission_name`).equalTo("TP Test 1").once('value').then(s2 => {
             s2.forEach(function (child) {
-                db.ref(`/mission_items`).child(child.key).child('active_and_accomplised').set('true_new')
-                status += '<P/>OK set /mission_items/'+child.key+'/active_and_accomplised = true_new'
+                db.ref(`/mission_items`).child(child.key).child('active').set(true)
+                db.ref(`/mission_items`).child(child.key).child('active_and_accomplished').set('true_new')
+                status += '<P/>OK set /mission_items/'+child.key+'/active = true'
+                status += '<P/>OK set /mission_items/'+child.key+'/active_and_accomplished = true_new'
             })
         })
         .then(() => {
-            db.ref(`/mission_items`).orderByChild(`mission_name`).equalTo("TP Test 2").once('value').then(s2 => {
+            return db.ref(`/mission_items`).orderByChild(`mission_name`).equalTo("TP Test 2").once('value').then(s2 => {
                 s2.forEach(function (child) {
-                    db.ref(`/mission_items`).child(child.key).child('active_and_accomplised').set('true_new')
-                    status += '<P/>OK set /mission_items/'+child.key+'/active_and_accomplised = true_new'
+                    db.ref(`/mission_items`).child(child.key).child('active').set(true)
+                    db.ref(`/mission_items`).child(child.key).child('active_and_accomplished').set('true_new')
+                    status += '<P/>OK set /mission_items/'+child.key+'/active = true'
+                    status += '<P/>OK set /mission_items/'+child.key+'/active_and_accomplished = true_new'
+                })
+            })
+        })
+        .then(() => {
+            // for consistency, set the "TP Test 1" and "TP Test 2" MISSIONS also to be active
+            return db.ref(`/missions`).orderByChild(`mission_name`).equalTo("TP Test 1").once('value').then(s2 => {
+                s2.forEach(function (child) {
+                    db.ref(`/missions`).child(child.key).child('active').set(true)
+                    db.ref(`/missions`).child(child.key).child('uid_and_active').set(child.val().uid+'_true')
+                    status += '<P/>OK set /missions/'+child.key+'/active = true'
+                    status += '<P/>OK set /missions/'+child.key+'/uid_and_active = '+child.val().uid+'_true'
+                })
+            })
+        })
+        .then(() => {
+            // for consistency, set the "TP Test 1" and "TP Test 2" MISSIONS also to be active
+            return db.ref(`/missions`).orderByChild(`mission_name`).equalTo("TP Test 2").once('value').then(s2 => {
+                s2.forEach(function (child) {
+                    db.ref(`/missions`).child(child.key).child('active').set(true)
+                    db.ref(`/missions`).child(child.key).child('uid_and_active').set(child.val().uid+'_true')
+                    status += '<P/>OK set /missions/'+child.key+'/active = true'
+                    status += '<P/>OK set /missions/'+child.key+'/uid_and_active = '+child.val().uid+'_true'
                 })
             })
         })
