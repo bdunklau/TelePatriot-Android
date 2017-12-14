@@ -450,11 +450,20 @@ exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
             })
         })
     })
+    // also copy all /mission_items over to /teams/The Cavalry/mission_items, and then, delete all the mission_items that are "complete"
+    .then(() => {
+
+        return db.ref(`/mission_items`).orderByChild('active').equalTo(true).once('value').then(snapshot => {
+            var ct = snapshot.numChildren()
+            db.ref(`/teams/The Cavalry/mission_items`).set(snapshot.val())
+            status += '<P/>OK copied '+ct+' mission_items from /mission_items to /teams/The Cavalry/mission_items'
+        })
+
+    })
     .then(() => {
         res.status(200).send(status)
     })
 })
-
 
 
 
