@@ -1,0 +1,7 @@
+On Windows
+cd C:\Users\bdunklau\AndroidStudioProjects\TelePatriot-Android\firebase-functions\functions
+C:\Users\bdunklau\AndroidStudioProjects\TelePatriot-Android\firebase-functions\functions> firebase deploy
+
+
+
+On Mac, path to workspace is different (TelePatriot3)

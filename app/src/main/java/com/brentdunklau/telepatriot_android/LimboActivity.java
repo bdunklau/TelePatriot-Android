@@ -9,8 +9,6 @@ import android.widget.Button;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.AccountStatusEventHolder;
-import com.brentdunklau.telepatriot_android.util.OneTime;
-import com.brentdunklau.telepatriot_android.util.RoleAssignedListener;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
@@ -20,7 +18,7 @@ import com.google.firebase.database.FirebaseDatabase;
  * Created by bdunklau on 10/1/17.
  */
 
-public class LimboActivity extends BaseActivity implements RoleAssignedListener, OneTime {
+public class LimboActivity extends BaseActivity implements AccountStatusEvent.Listener /*RoleAssignedListener, OneTime*/ {
 
     protected String TAG = "LimboActivity";
     private FirebaseRecyclerAdapter<AccountStatusEvent, AccountStatusEventHolder> mAdapter;
@@ -32,6 +30,8 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_limbo);
 
+        User.getInstance().addAccountStatusEventListener(this);
+
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         accountStatusEvents = (RecyclerView) findViewById(R.id.account_status_events);
         accountStatusEvents.setLayoutManager(new LinearLayoutManager(this));
@@ -40,7 +40,7 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
         // should not be null because we don't even get here till the user
         // has logged in and been sent here from MainActivity.onActivityResult()
         mFirebaseAuth = FirebaseAuth.getInstance();
-        User.getInstance().addRoleAssignedListener(this);
+
         String uid = User.getInstance().getUid();//mFirebaseAuth.getCurrentUser().getUid();
         final String name = User.getInstance().getName();//mFirebaseAuth.getCurrentUser().getDisplayName();
         final String msg = name + ", welcome to TelePatriot.  Because you are a new user, an admin " +
@@ -87,8 +87,10 @@ public class LimboActivity extends BaseActivity implements RoleAssignedListener,
         mAdapter.cleanup();
     }
 
-    public void roleAssigned(String role) {
-        Intent it = new Intent(this, MainActivity.class);
-        startActivity(it);
+    // per AccountStatusEvent.Listener
+    @Override
+    public void fired(AccountStatusEvent evt) {
+        if(evt instanceof AccountStatusEvent.RoleAdded)
+            startActivity(new Intent(this, MainActivity.class));
     }
 }

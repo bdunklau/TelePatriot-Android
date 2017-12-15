@@ -8,8 +8,12 @@ import java.util.Map;
 
 public class UserBean {
 
-    private String name, email, uid, photoUrl, created, reviewed_by;
+    private String name, email, uid, photoUrl, created, reviewed_by, recruiter_id;
     private Map<String, Object> roles;
+
+    public UserBean() {
+
+    }
 
     public void setName(String name) {
         this.name = name;
@@ -69,5 +73,13 @@ public class UserBean {
 
     public boolean isRole(String role) {
         return roles != null && roles.containsKey(role);
+    }
+
+    public String getRecruiter_id() {
+        return recruiter_id;
+    }
+
+    public void setRecruiter_id(String recruiter_id) {
+        this.recruiter_id = recruiter_id;
     }
 }

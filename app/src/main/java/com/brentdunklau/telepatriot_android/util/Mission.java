@@ -8,7 +8,7 @@ import android.provider.ContactsContract;
 
 public class Mission {
 
-    private String mission_create_date, mission_name, mission_type, name, uid, uid_and_active;
+    private String mission_create_date, mission_name, mission_type, name, uid, uid_and_active, description, script;
     private boolean active;
 
     public Mission() {
@@ -69,5 +69,21 @@ public class Mission {
 
     public void setUid_and_active(String uid_and_active) {
         this.uid_and_active = uid_and_active;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getScript() {
+        return script;
+    }
+
+    public void setScript(String script) {
+        this.script = script;
     }
 }

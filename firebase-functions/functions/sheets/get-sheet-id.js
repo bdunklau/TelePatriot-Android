@@ -10,12 +10,19 @@ exports.sheetId = ( url => {
     //var url = "https://docs.google.com/spreadsheets/d/178GnEv36vJ_2Odke_JvRHwNI3nS48bfV23jWak4F1Dc/edit#gid=0"
     //var expId = "178GnEv36vJ_2Odke_JvRHwNI3nS48bfV23jWak4F1Dc"
 
+    if(!url) {
+        console.log("get-sheet-id: returning early because url is ", url)
+        return
+    }
     var begin = "/d/"
     var end = "/edit"
     var i1 = url.indexOf("/d/")+3
     var i2 = url.indexOf("/edit")
-    var sheetId = url.substring(i1, i2)
-    //var same = sheetId == expId
-    //console.log("same sheet id: ", same)
-    return sheetId
+    if(i2 == -1) {
+        // on iPhone, the url will not contain "/edit"
+        return url.substring(i1)
+    }
+    else {
+        return url.substring(i1, i2)
+    }
 })

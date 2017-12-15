@@ -19,7 +19,7 @@ import android.widget.Button;
  * Created by bdunklau on 10/11/17.
  */
 
-public class DirectorFragment extends Fragment {
+public class DirectorFragment extends BaseFragment {
 
     Button button_missions;
     Button button_teams;
@@ -34,8 +34,11 @@ public class DirectorFragment extends Fragment {
         button_missions = myView.findViewById(R.id.button_missions);
         button_teams = myView.findViewById(R.id.button_teams);
 
-        wireUp(button_missions, new MissionsFragment());
-        wireUp(button_teams, new TeamsFragment());
+        MissionsFragment missionsFragment = new MissionsFragment();
+        TeamsFragment teamsFragment = new TeamsFragment();
+
+        wireUp(button_missions, missionsFragment);
+        wireUp(button_teams, teamsFragment);
 
         setHasOptionsMenu(true);
         return myView;
@@ -55,6 +58,7 @@ public class DirectorFragment extends Fragment {
         try {
             FragmentTransaction t = fragmentManager.beginTransaction();
             t.replace(R.id.content_frame, fragment);
+            t.addToBackStack(fragment.getClass().getName());
             t.commit();
         } catch(Throwable t) {
             // TODO show alert dialog or  something - not this
@@ -74,11 +78,14 @@ public class DirectorFragment extends Fragment {
         FragmentManager fragmentManager = getFragmentManager();
         switch(item.getItemId()) {
             case(R.id.menu_missions):
-                fragmentManager.beginTransaction().replace(R.id.content_frame, new MissionsFragment()).commit();
+                Fragment fragment = new MissionsFragment();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
                 return true;
             case(R.id.menu_teams):
+                fragment = new TeamsFragment();
                 fragmentManager.beginTransaction()
-                        .replace(R.id.content_frame, new TeamsFragment())
+                        .replace(R.id.content_frame, fragment)
+                        .addToBackStack(fragment.getClass().getName())
                         .commit();
                 return true;
             default: return super.onOptionsItemSelected(item);

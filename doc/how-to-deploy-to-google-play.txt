@@ -1,0 +1,59 @@
+FIRST make sure you are pointing to the right database...
+Android Studio - Project perspective - expand "app"
+Open google-services-prod.json
+Ctrl-A Ctrl-C to copy everything
+Open google-services.json
+Ctrl-A to highlight everything
+Ctrl-V to paste the production configuration into this file
+
+Now you're ready to build.
+
+
+On Mac, in Android Studio,
+Menu: Build -> Make Project (not sure if this is actually required)
+Go to the Android perspective
+Expand Gradle Scripts
+open build.gradle (Module: app)
+Increment versionCode and versionName
+
+Menu: Build -> Generate Signed APK...
+Pops up a dialog where we select the module = app
+Click Next
+Key store path:  /Users/bdunklau/.android/debug.keystore <-- CAN'T JUST USE ANY KEYSTORE
+                                                             HAVE TO USE THIS ONE.  THERE'S A COPY
+                                                             OF IT ON THE THUMB DRIVE ALSO.
+Key store password: android
+Key alias:  androiddebugkey
+Key password:  android
+Next
+
+APK Destination folder: /Users/bdunklau/AndroidStudioProjects/TelePatriot3/app (can be anything)
+Build Type: release
+Flavors:  leave blank
+Signature Versions:
+    V1 (Jar Signature) - check this box
+    V2 (Full APK Signature) - check this box
+Finish
+
+When finished, there will be a notification in the lower right of Android Studio that says:
+    Generate Signed APK
+    APK(s) generated successfully
+    Reveal in Finder
+
+Click Reveal in Finder
+
+In Chrome, go to:  https://play.google.com/apps/publish/?account=5642622797825919121#ManageReleasesPlace:p=com.brentdunklau.telepatriot_android
+
+Click either Manage Production, Manage Beta or Manage Alpha - whichever env you want to deploy to
+
+Click Create Release
+
+Drag the app-release.apk from Finder into the section named "APKs to add"
+
+Scroll to the bottom to the section called "What's new in this release?"
+Enter some notes.  They will appear in the Play store.
+
+Click Save
+Click Review
+Click START ROLLOUT TO ALPHA/BETA/PRODUCTION
+

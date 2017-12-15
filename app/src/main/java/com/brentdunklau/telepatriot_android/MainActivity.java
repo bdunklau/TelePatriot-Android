@@ -1,6 +1,9 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -18,6 +21,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -25,7 +29,11 @@ import com.google.android.gms.tasks.Task;
 import com.squareup.picasso.Picasso;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, AccountStatusEvent.Listener,
+        MissionItemWrapUpFragment.QuitListener {
+
+    private String TAG = "MainActivity";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +41,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        User.getInstance().addAccountStatusEventListener(this);
 
 /*
         Holdover from back when everything was an activity.  This is how we were closing down the
@@ -129,21 +137,20 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         android.app.FragmentManager fragmentManager = getFragmentManager();
 
-
         if (id == R.id.nav_volunteer_layout) {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new VolunteerFragment()).commit();
+            Fragment fragment = new MyMissionFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_director_layout) {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new DirectorFragment()).commit();
+            Fragment fragment = new DirectorFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_admin_layout) {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, new AdminFragment()).commit();
+            Fragment fragment = new AdminFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        } else if( id == R.id.nav_send_petition) {
+            Fragment fragment = new SendPetitionFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
-            String uid = User.getInstance().getUid();
-            ChatFragment chatFragment = new ChatFragment();
-            FragmentTransaction transaction = fragmentManager.beginTransaction();
-            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
-            transaction.replace(R.id.content_frame, chatFragment);
-            transaction.addToBackStack(null);
-            transaction.commit();
+            doChat();
         } else if (id == R.id.nav_signout) {
             signOut();
         }
@@ -153,6 +160,40 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    /**
+     * This method figures out which chat screen we should go to.  If the user is a
+     * volunteer, we send them to ChatFragment.  If the user is a director or admin,
+     * we send them to ChatAllFragment.  ChatAllFragment is where we show a list of users
+     * that the admin/director can then choose from to engage.
+     */
+    private void doChat() {
+
+        FragmentManager fragmentManager = getFragmentManager();
+        if(User.getInstance().isVolunteerOnly()) {
+            ChatFragment chatFragment = new ChatFragment();
+            chatFragment.userNeedsHelp();
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
+            transaction.replace(R.id.content_frame, chatFragment);
+            transaction.addToBackStack(chatFragment.getClass().getName());
+            transaction.commit();
+        }
+        else {
+            ChatAllFragment chatAllFragment = new ChatAllFragment();
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
+            transaction.replace(R.id.content_frame, chatAllFragment);
+            transaction.addToBackStack(chatAllFragment.getClass().getName());
+            transaction.commit();
+        }
+    }
+
+
+    // per MissionItemWrapUpFragment.QuitListener
+    public void quit() {
+        signOut();
+    }
+
     private void signOut() {
         AuthUI aui = AuthUI.getInstance();
         aui.signOut(this)
@@ -160,16 +201,54 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         Log.d("MainActivity", "USER LOGGED OUT");
-                        /*
-                        // https://stackoverflow.com/a/14002030
-                        Intent intent = new Intent(MainActivity.this, LauncherActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        intent.putExtra("EXIT", true);
-                        startActivity(intent);
-                        finish();
-                        */
                         finishAffinity();
                     }
                 });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause");
+        //handleCurrentMissionItem();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop");
+        //handleCurrentMissionItem();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy");
+        handleCurrentMissionItem();
+    }
+
+    private boolean userInTheMiddleOfSomething() {
+        boolean hasMission = User.getInstance().getCurrentMissionItem() != null;
+        return hasMission;
+    }
+
+    private void unassignMissionItem() {
+        User.getInstance().unassignCurrentMissionItem();
+    }
+
+    private void handleCurrentMissionItem() {
+        if(userInTheMiddleOfSomething()) {
+            // alert the user that he should skip/dismiss the current mission?
+            // why do that?  why can't we just un-assign the mission FOR them?
+            Log.d(TAG, "un-assigning mission item");
+            unassignMissionItem();
+        }
+    }
+
+    // per AccountStatusEvent.Listener
+    @Override
+    public void fired(AccountStatusEvent evt) {
+        if(evt instanceof AccountStatusEvent.NoRoles)
+            startActivity(new Intent(this, LimboActivity.class));
     }
 }

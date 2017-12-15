@@ -27,7 +27,9 @@ public class AllMissionsFragment extends MissionListFragment {
 
     public AllMissionsFragment() {
         this.title = "All Missions";
-        this.ref = FirebaseDatabase.getInstance().getReference("missions");
+        // TODO won't always be this...
+        String team = "The Cavalry";
+        this.ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions");
         this.query = this.ref;
     }
 

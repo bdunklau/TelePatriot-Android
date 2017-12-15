@@ -9,7 +9,7 @@ const notifications = require('./notifications')
 const roles = require('./roles')
 const topics = require('./topics')
 const sheetsDemo = require('./sheets/demo-google-sheet-write')
-const importDemo = require('./sheets/demo-import-sheet')
+const sheetReader = require('./sheets/import-sheet')
 
 exports.messagestuff = onmessage.pushMessages
 exports.userCreated = createModule.createUserAccount
@@ -26,5 +26,38 @@ exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
 
-exports.testsheetImport = importDemo.testsheetImport
-exports.readSpreadsheet = importDemo.readSpreadsheet
+exports.testsheetImport = sheetReader.testsheetImport
+exports.readSpreadsheet = sheetReader.readSpreadsheet
+exports.deleteMissionItems = sheetReader.deleteMissionItems
+exports.testReadSpreadsheet = sheetReader.testReadSpreadsheet
+exports.testMergeMissions = sheetReader.testMergeMissions
+
+const missions = require('./sheets/mission-activator')
+exports.missionActivation = missions.missionActivation
+
+const missionDeleter = require('./sheets/mission-deleter')
+exports.missionDeletion = missionDeleter.missionDeletion
+
+const masterSpreadsheetReader = require('./sheets/import-master-sheet')
+exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
+exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
+
+const dbadmin = require('./dbadmin')
+exports.insert = dbadmin.insert
+exports.update = dbadmin.update
+exports.selectDistinct = dbadmin.selectDistinct
+exports.query = dbadmin.query
+exports.queryActive = dbadmin.queryActive
+exports.queryInactive = dbadmin.queryInactive
+exports.copy = dbadmin.copy
+exports.deleteNodes = dbadmin.deleteNodes
+exports.deleteAttributes = dbadmin.deleteAttributes
+
+/***********/
+exports.prepareDevDatabaseToTestMigration = dbadmin.prepareDevDatabaseToTestMigration
+exports.migrateMissions = dbadmin.migrateMissions
+exports.deleteMissionItems = dbadmin.deleteMissionItems
+exports.copyOverMissionItems = dbadmin.copyOverMissionItems
+exports.addGroupNumbers = dbadmin.addGroupNumbers
+/*********/
+

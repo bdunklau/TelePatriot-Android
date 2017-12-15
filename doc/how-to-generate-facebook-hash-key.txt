@@ -1,0 +1,13 @@
+Go to the Terminal in Android Studio
+
+On Mac, I think you can run this from any directory:
+
+keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore | openssl sha1 -binary | openssl base64
+
+On Windows, might have to nav to the folder containing keytool.exe
+Here's how you find that directory...
+File -> Other Settings -> Default Project Structure
+
+keytool -exportcert -alias androiddebugkey -keystore c:\Users\bdunklau\.android\debug.keystore | openssl sha1 -binary | openssl base64
+
+password:  android
