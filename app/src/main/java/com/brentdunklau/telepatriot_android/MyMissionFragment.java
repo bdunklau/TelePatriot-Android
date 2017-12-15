@@ -37,7 +37,7 @@ public class MyMissionFragment extends BaseFragment {
     private String TAG = "MyMissionFragment";
     private MissionDetail missionDetail;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
-    private Button button_call_person1, button_call_person2;
+    private Button button_call_person1, button_call_person2, button_switch_teams;
     private String missionId, missionItemId;
 
 
@@ -60,6 +60,16 @@ public class MyMissionFragment extends BaseFragment {
         mission_script = myView.findViewById(R.id.mission_script);
         button_call_person1 = myView.findViewById(R.id.button_call_person1);
         button_call_person2 = myView.findViewById(R.id.button_call_person2);
+        button_switch_teams = myView.findViewById(R.id.button_switch_teams);
+
+        button_switch_teams.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FragmentManager fragmentManager = getFragmentManager();
+                Fragment fragment = new SwitchTeamsFragment();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+            }
+        });
 
 
         // TODO won't always be this...
