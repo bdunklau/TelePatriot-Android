@@ -204,38 +204,6 @@ exports.deleteAttributes = functions.https.onRequest((req, res) => {
 })
 
 
-// example: for adding group_number attribute to all mission_items in prod database
-exports.addGroupNumbers = functions.https.onRequest((req, res) => {
-
-    var node = req.query.node
-    var attribute = "group_number"
-    var modulus = 15
-
-    var ok = node && attribute
-
-    if(!ok) {
-        return res.status(200).send("Request parms needed for this function: <P/> node")
-    }
-    else {
-        // ok, normal operation
-        var mref = db.ref(`${node}`)
-        return mref.once('value').then(snapshot => {
-            var childCount = snapshot.numChildren()
-            var added = 0
-            snapshot.forEach(function (child) {
-                var group_number = added % modulus
-                mref.child(child.key).child(attribute).set(group_number)
-                ++added
-            })
-
-            res.status(200).send("Added: "+added+" of the "+childCount+" "+attribute+" nodes of "+node)
-        })
-
-    }
-
-})
-
-
 // CONFIRMED by comparing the dev db with the prod db.  The function below creates
 // /missions and /mission_items in the dev db that are identical to the nodes in the prod
 // database.  So now, we can actually work on the script that converts the old format to
@@ -441,7 +409,20 @@ exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
     var mref = db.ref(`/mission_items`)
     return mref.once('value').then(snapshot => {
         snapshot.forEach(function (missionItemNode) {
+
+            if(!missionItemNode.key) {
+                status += '<P/>============================================================================='
+                status += '<P/> ERROR missionItemNode.key = '+missionItemNode.key + ' this is bad - fix code'
+                status += '<P/>============================================================================='
+            }
+
             var missionId = missionItemNode.val().mission_id
+            if(!missionId) {
+                status += '<P/>============================================================================='
+                status += '<P/> ERROR missionItemNode.val().mission_id = '+missionItemNode.val().mission_id + ' for missionItemNode.key = '+missionItemNode.key
+                status += '<P/>============================================================================='
+            }
+
             sref.child(missionId).child('mission_items').child(missionItemNode.key).set(missionItemNode.val())
             status += '<P/>OK copied /mission_items/'+missionItemNode.key+' to /teams/The Cavalry/missions/'+missionId+'/mission_items/'+missionItemNode.key
 
@@ -457,10 +438,12 @@ exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
     // also copy all /mission_items over to /teams/The Cavalry/mission_items, and then, delete all the mission_items that are "complete"
     .then(() => {
 
-        return db.ref(`/mission_items`).orderByChild('active').equalTo(true).once('value').then(snapshot => {
+        return db.ref(`/mission_items`).orderByChild('active_and_accomplished').equalTo("true_new").once('value').then(snapshot => {
             var ct = snapshot.numChildren()
-            db.ref(`/teams/The Cavalry/mission_items`).set(snapshot.val())
-            status += '<P/>OK copied '+ct+' mission_items from /mission_items to /teams/The Cavalry/mission_items'
+            snapshot.forEach(function(child) {
+                db.ref(`/teams/The Cavalry/mission_items`).child(child.key).set(child.val())
+                status += '<P/>OK copied '+ct+' mission_items from /mission_items to /teams/The Cavalry/mission_items'
+            })
         })
 
     })
@@ -483,6 +466,9 @@ exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
     })
     .then(() => {
         res.status(200).send(status)
+    })
+    .catch(function(e) {
+        res.status(200).send(status+'<P/>ERROR: '+e)
     })
 
 })
