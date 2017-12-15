@@ -111,23 +111,34 @@ var addPeopleByEmail = function(team, emails, stuff, callback) {
     var log = db.ref(`logs`)
     var userCount = emails.length
     var iter = 0
-    emails.forEach(function(addr) {
-        ref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
-            snapshot.forEach(function(user) {
-                var name = user.val().name
-                var email = user.val().email
-                teamref.child(user.key).set({name: name, email: email})
-                ref.child(user.key).child('teams').child(team).set(true)
-                stuff += '<P/>OK added '+name+' ('+email+') to /teams/'+team+'/members'
-                stuff += '<P/>OK added team: '+team+' to '+name+'\'s list of teams'
-            })
+    stuff += '<P/>Try adding these people: '+emails
+    try {
+        emails.forEach(function(addr) {
+            stuff += '<P/>in loop:  Try adding this person: '+addr
+            ref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
+                snapshot.forEach(function(user) {
+                    var name = user.val().name
+                    var email = user.val().email
+                    teamref.child(user.key).set({name: name, email: email})
+                    ref.child(user.key).child('teams').child(team).set(true)
+                    stuff += '<P/>OK added '+name+' ('+email+') to /teams/'+team+'/members'
+                    stuff += '<P/>OK added team: '+team+' to '+name+'\'s list of teams'
+                })
 
-            ++iter
-            if(iter == userCount) {
-                callback(stuff)
-            }
+                ++iter
+                if(iter == userCount) {
+                    callback(stuff)
+                }
+            })
         })
-    })
+    }
+    catch(e) {
+        stuff += "<P/>=================================================================="
+        stuff += "<P/>ERROR "+e
+        stuff += "<P/>=================================================================="
+
+        callback(stuff)
+    }
 }
 
 
@@ -174,18 +185,27 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
 
 // for production, to put everyone in the Cavalry that is already a user
 exports.backfillCavalry = functions.https.onRequest((req, res) => {
-    var stuff = menu
+    var stuff = ''
 
     var team = "The Cavalry"
     var ref = db.ref(`users`)
     ref.once('value').then(snapshot => {
         snapshot.forEach(function(child /* a user */) {
             var email = child.val().email
-            addPeopleByEmail(team, [email], stuff, function(info) { stuff += info })
+            if(!email) {
+                stuff += '<P/>Hmmm - this person has no email address: '+child.key+' '+JSON.stringify(child.val())
+            }
+            else {
+                stuff += '<P/>try adding this person: child.val().email = '+email
+                addPeopleByEmail(team, [email], stuff, function(info) { stuff += info })
+            }
         })
     })
     .then(() => {
-        res.status(200).send(stuff)
+        res.status(200).send(menu+stuff)
+    })
+    .catch(function(e) {
+        res.status(200).send(menu+stuff+'<P/>ERROR: '+e)
     })
 
 })

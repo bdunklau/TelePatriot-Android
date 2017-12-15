@@ -65,6 +65,5 @@ exports.prepareDevDatabaseToTestMigration = dbadmin.prepareDevDatabaseToTestMigr
 exports.migrateMissions = dbadmin.migrateMissions
 exports.deleteMissionItems = dbadmin.deleteMissionItems
 exports.copyOverMissionItems = dbadmin.copyOverMissionItems
-exports.addGroupNumbers = dbadmin.addGroupNumbers
 exports.backfillCavalry = teams.backfillCavalry // temp/one-time function for production
 /*********/
