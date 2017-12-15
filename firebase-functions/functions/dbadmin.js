@@ -209,7 +209,7 @@ exports.addGroupNumbers = functions.https.onRequest((req, res) => {
 
     var node = req.query.node
     var attribute = "group_number"
-    var modulus = 5
+    var modulus = 15
 
     var ok = node && attribute
 
@@ -435,6 +435,7 @@ exports.deleteMissionItems = functions.https.onRequest((req, res) => {
 exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
 
     var status = ''
+    var number_of_missions_in_master_mission = 15 // default, might be overridden below
 
     var sref = db.ref(`/teams/The Cavalry/missions`)
     var mref = db.ref(`/mission_items`)
@@ -446,7 +447,10 @@ exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
 
             // copy number_of_missions_in_master_mission value
             sref.child(missionId).once('value').then(s2 => {
-                sref.child(missionId).child('mission_items').child(missionItemNode.key).child('number_of_missions_in_master_mission').set(s2.val().number_of_missions_in_master_mission)
+                if(s2.val().number_of_missions_in_master_mission) {
+                    number_of_missions_in_master_mission = s2.val().number_of_missions_in_master_mission
+                }
+                sref.child(missionId).child('mission_items').child(missionItemNode.key).child('number_of_missions_in_master_mission').set(number_of_missions_in_master_mission)
             })
         })
     })
@@ -461,8 +465,88 @@ exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
 
     })
     .then(() => {
+        // add node: number_of_missions_in_master_mission to each  /teams/The Cavalry/mission_items
+        // add node: number_of_missions_in_master_mission to each  /teams/The Cavalry/mission_items
+        var mref = db.ref(`/teams/The Cavalry/mission_items`)
+        return mref.once('value').then(snapshot => {
+            var iter = 0
+            snapshot.forEach(function (child) {
+                var group_number = iter % number_of_missions_in_master_mission
+                ++iter
+                mref.child(child.key).child('number_of_missions_in_master_mission').set(number_of_missions_in_master_mission)
+                mref.child(child.key).child('group_number').set(group_number)
+                status += '<P/>OK added number_of_missions_in_master_mission='+number_of_missions_in_master_mission+' to /teams/The Cavalry/mission_items/'+child.key
+                status += '<P/>OK added group_number='+group_number+' to /teams/The Cavalry/mission_items/'+child.key
+            })
+        })
+
+    })
+    .then(() => {
         res.status(200).send(status)
     })
+
+})
+
+
+exports.selectDistinct = functions.https.onRequest((req, res) => {
+    var status = ''
+
+    var node = req.query.node
+    var attribute = req.query.attribute
+    if(!node || !attribute) {
+        status += 'Required request parameters: <P/> node <P/> attribute'
+        res.status(200).send(status)
+    }
+    else {
+        var values = []
+        status += "<P/>node: "+node+"<P/>attribute: "+attribute+"<P/>values..."
+        return db.ref(`${node}`).orderByChild(attribute).once('value').then(snapshot => {
+            snapshot.forEach(function (child) {
+                var theval = child.val()[attribute]
+                if(values.indexOf(theval) == -1) {
+                    values.push(theval)
+                    status += '<P/>'+theval
+                }
+            })
+        })
+        .then(() => {
+            res.status(200).send(status)
+        })
+    }
+})
+
+
+exports.query = functions.https.onRequest((req, res) => {
+    var status = ''
+
+    var node = req.query.node
+    if(!node) {
+        status += 'Required request parameters: <P/> node<P/> optional: attribute<P/> optional: value'
+        res.status(200).send(status)
+    }
+    else {
+        var attribute = req.query.attribute
+        var value = req.query.value
+        var nodeInfo = node
+
+        var theref = db.ref(`${node}`)
+        if(attribute && value) {
+            nodeInfo += ' where '+attribute+' = '+value
+            theref = db.ref(`${node}`).orderByChild(attribute).equalTo(value)
+        }
+
+        return theref.once('value').then(snapshot => {
+            var ct = snapshot.numChildren()
+            status += '<P/>There are '+ct+' children of '+nodeInfo
+            status += '<P/>'+node+' as json string...<br/>'+JSON.stringify(snapshot.val())
+            snapshot.forEach(function (child) {
+                status += '<P/>child node: key='+child.key+' value = '+JSON.stringify(child.val())
+            })
+        })
+        .then(() => {
+            res.status(200).send(status)
+        })
+    }
 })
 
 
