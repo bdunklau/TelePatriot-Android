@@ -42,6 +42,13 @@ const masterSpreadsheetReader = require('./sheets/import-master-sheet')
 exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
 exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
 
+const teams = require('./teams')
+exports.manageTeams = teams.manageTeams // contains links to all the other team functions
+exports.createTeam = teams.createTeam
+exports.deleteTeam = teams.deleteTeam
+exports.addPeopleToTeam = teams.addPeopleToTeam
+exports.removePeopleFromTeam = teams.removePeopleFromTeam
+
 const dbadmin = require('./dbadmin')
 exports.insert = dbadmin.insert
 exports.update = dbadmin.update
@@ -59,12 +66,5 @@ exports.migrateMissions = dbadmin.migrateMissions
 exports.deleteMissionItems = dbadmin.deleteMissionItems
 exports.copyOverMissionItems = dbadmin.copyOverMissionItems
 exports.addGroupNumbers = dbadmin.addGroupNumbers
+exports.backfillCavalry = teams.backfillCavalry // temp/one-time function for production
 /*********/
-
-const teams = require('./teams')
-exports.manageTeams = teams.manageTeams // contains links to all the other team functions
-exports.createTeam = teams.createTeam
-exports.deleteTeam = teams.deleteTeam
-exports.addPeopleToTeam = teams.addPeopleToTeam
-exports.removePeopleFromTeam = teams.removePeopleFromTeam
-

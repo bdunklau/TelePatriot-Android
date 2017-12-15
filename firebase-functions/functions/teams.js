@@ -75,6 +75,8 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
     }
     else {
         var emails = email.split(',')
+        addPeopleByEmail(team, emails, stuff, function(info) { res.status(200).send(info) } )
+        /************
         var teamref = db.ref(`teams/${team}/members`)
         var ref = db.ref(`users`)
         var log = db.ref(`logs`)
@@ -97,9 +99,36 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
                 }
             })
         })
+        ************/
 
     }
 })
+
+
+var addPeopleByEmail = function(team, emails, stuff, callback) {
+    var teamref = db.ref(`teams/${team}/members`)
+    var ref = db.ref(`users`)
+    var log = db.ref(`logs`)
+    var userCount = emails.length
+    var iter = 0
+    emails.forEach(function(addr) {
+        ref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
+            snapshot.forEach(function(user) {
+                var name = user.val().name
+                var email = user.val().email
+                teamref.child(user.key).set({name: name, email: email})
+                ref.child(user.key).child('teams').child(team).set(true)
+                stuff += '<P/>OK added '+name+' ('+email+') to /teams/'+team+'/members'
+                stuff += '<P/>OK added team: '+team+' to '+name+'\'s list of teams'
+            })
+
+            ++iter
+            if(iter == userCount) {
+                callback(stuff)
+            }
+        })
+    })
+}
 
 
 exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
@@ -140,6 +169,25 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
         })
 
     }
+})
+
+
+// for production, to put everyone in the Cavalry that is already a user
+exports.backfillCavalry = functions.https.onRequest((req, res) => {
+    var stuff = menu
+
+    var team = "The Cavalry"
+    var ref = db.ref(`users`)
+    ref.once('value').then(snapshot => {
+        snapshot.forEach(function(child /* a user */) {
+            var email = child.val().email
+            addPeopleByEmail(team, [email], stuff, function(info) { stuff += info })
+        })
+    })
+    .then(() => {
+        res.status(200).send(stuff)
+    })
+
 })
 
 
