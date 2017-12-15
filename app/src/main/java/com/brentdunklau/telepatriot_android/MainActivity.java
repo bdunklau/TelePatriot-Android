@@ -149,9 +149,11 @@ public class MainActivity extends AppCompatActivity
         } else if( id == R.id.nav_send_petition) {
             Fragment fragment = new SendPetitionFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-        } else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
+        } /******
+        else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
             doChat();
-        } else if (id == R.id.nav_signout) {
+        } *****/
+        else if (id == R.id.nav_signout) {
             signOut();
         }
 
