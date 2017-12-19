@@ -104,10 +104,11 @@ public class MyMissionFragment extends BaseFragment {
                     missionDetail.setAccomplished("in progress");
                     missionDetail.setActive_and_accomplished("true_in progress");
 
-                    // maybe...
-                    //userMissions.child(missionItemId).setValue(missionDetail); // new
+                    // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
+                    // and save the original value in group_number_was
+                    missionDetail.setGroup_number_was(missionDetail.getGroup_number());
+                    missionDetail.setGroup_number(999999);
 
-                    //dataSnapshot.getRef().child(missionItemId).removeValue(); //.setValue(missionDetail);
                     dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
                 }
 

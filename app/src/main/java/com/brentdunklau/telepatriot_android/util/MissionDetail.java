@@ -25,7 +25,9 @@ public class MissionDetail {
     private String active_and_accomplished;
     private String name2, phone2; // when the spreadsheet has these columns, means 3 way call
     private boolean active;
-    private Integer  group_number, number_of_missions_in_master_mission;
+    private Integer group_number;
+    private Integer group_number_was;
+    private Integer number_of_missions_in_master_mission;
 
     public MissionDetail() {
 
@@ -196,6 +198,14 @@ public class MissionDetail {
 
     public void setGroup_number(Integer group_number) {
         this.group_number = group_number;
+    }
+
+    public Integer getGroup_number_was() {
+        return group_number_was;
+    }
+
+    public void setGroup_number_was(Integer group_number_was) {
+        this.group_number_was = group_number_was;
     }
 
     public Integer getNumber_of_missions_in_master_mission() {
