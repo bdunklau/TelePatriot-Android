@@ -353,7 +353,9 @@ exports.resetCurrentTeam = functions.database.ref('/users/{uid}/current_team').o
         return event.data.adminRef.root.child(`/users/${uid}/teams`).limitToFirst(1).once('value').then(snapshot => {
             var otherTeamsExist = snapshot.val()
             if(otherTeamsExist) {
-                event.data.adminRef.root.child(`/users/${uid}/current_team`).set(snapshot.val())
+                var currentTeam = {}
+                currentTeam[team_name] = {team_name: team_name}
+                event.data.adminRef.root.child(`/users/${uid}/current_team`).set(currentTeam)
             }
         })
     }
