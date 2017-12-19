@@ -71,8 +71,11 @@ public class MyMissionFragment extends BaseFragment {
             }
         });
 
-
         String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
+
+        // maybe...
+        //final DatabaseReference userMissions = FirebaseDatabase.getInstance().getReference("users/"+User.getInstance().getUid()+"/teams/"+team+"/mission_items");
+
         FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items").orderByChild("group_number").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -101,6 +104,10 @@ public class MyMissionFragment extends BaseFragment {
                     missionDetail.setAccomplished("in progress");
                     missionDetail.setActive_and_accomplished("true_in progress");
 
+                    // maybe...
+                    //userMissions.child(missionItemId).setValue(missionDetail); // new
+
+                    //dataSnapshot.getRef().child(missionItemId).removeValue(); //.setValue(missionDetail);
                     dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
                 }
 

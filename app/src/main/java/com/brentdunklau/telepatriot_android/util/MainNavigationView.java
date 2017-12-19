@@ -9,6 +9,7 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 
 import com.brentdunklau.telepatriot_android.R;
 
@@ -118,6 +119,16 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
             MenuItem item = menu.getItem(i);
             if( item.getTitle().toString().equalsIgnoreCase(title) )
                 return item;
+            else if(item.getSubMenu() != null) {
+                SubMenu subMenu = item.getSubMenu();
+                int subsize = subMenu.size();
+                for(int j=0; j < subsize; j++) {
+                    MenuItem subitem = subMenu.getItem(j);
+                    if(subitem.getTitle().toString().equalsIgnoreCase(title)) {
+                        return subitem;
+                    }
+                }
+            }
         }
         return null;
     }
