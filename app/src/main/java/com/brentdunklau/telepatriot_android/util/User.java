@@ -148,12 +148,16 @@ public class User implements FirebaseAuth.AuthStateListener {
         userRef.child("current_team").limitToFirst(1).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                String team_name = dataSnapshot.getKey();
+                String team_name = dataSnapshot.getKey(); // don't end up using this here
                 // team nodes are keyed by the team name and they also have a "team_name" node
                 // under the key that is also the name of the team.  The team_name node is so
                 // that we can take advantage of the deserialization function built in to firebase
+                database.getReference("temp").push().setValue("about to create Team");
                 Team team = dataSnapshot.getValue(Team.class);
-                setCurrentTeam(team);
+                database.getReference("temp").push().setValue("ok: created Team");
+                //setCurrentTeam(team);
+                User.this.currentTeam = team;
+                fireTeamSelected(User.this.currentTeam);
             }
 
             @Override
@@ -369,7 +373,9 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public void setCurrentTeam(Team currentTeam) {
-        this.currentTeam = currentTeam;
+        HashMap map = new HashMap();
+        map.put(currentTeam.getTeam_name(), currentTeam);
+        userRef.child("current_team").setValue(map);
         fireTeamSelected(currentTeam);
     }
 

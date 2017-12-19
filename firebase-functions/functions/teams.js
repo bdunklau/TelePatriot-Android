@@ -234,6 +234,10 @@ var addPeopleByEmail = function(team, emails, stuff, callback) {
 }
 
 
+// TODO Needs to be a trigger that delete users and teams from each others nodes
+// Don't tie them together here.  The problem with this approach is that if you manually
+// delete a user-team association in one node, without a trigger, you have just
+// compromised the data integrity
 exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
 
     // allow for these req parms
@@ -317,7 +321,9 @@ exports.setCurrentTeam = functions.database.ref('/users/{uid}/teams/{team_name}'
             if(!snapshot.val()) {
                 // just for debugging...
                 //event.data.adminRef.root.child(`temp_log`).push().set({msg: "snapshot.val() does not exist"})
-                currentTeamRef.set({team_name: team_name})
+                var currentTeam = {}
+                currentTeam[team_name] = {team_name: team_name}
+                currentTeamRef.set(currentTeam)
             }
         })
     }
@@ -375,10 +381,10 @@ exports.backfillCavalry = functions.https.onRequest((req, res) => {
         })
     })
     .then(() => {
-        res.status(200).send(menu+stuff)
+        res.status(200).send(menu("The Cavalry")+stuff)
     })
     .catch(function(e) {
-        res.status(200).send(menu+stuff+'<P/>ERROR: '+e)
+        res.status(200).send(menu("The Cavalry")+stuff+'<P/>ERROR: '+e)
     })
 
 })

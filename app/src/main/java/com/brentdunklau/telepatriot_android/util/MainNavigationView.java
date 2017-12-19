@@ -33,6 +33,12 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
          * core menu items: My Mission, Directors, and Admins
          */
         User.getInstance().addAccountStatusEventListener(this);
+
+        // hack / missed notification.  User fires an accountStatusEvent from this
+        // block in User.login():  userRef.child("current_team")...
+        // but that happens before we have added this class as a listener on that event
+        MenuItem it = getMenu().findItem(R.id.nav_switch_teams);
+        it.setTitle("Team: "+User.getInstance().getCurrentTeamName());
     }
 
     public MainNavigationView(Context ctx, AttributeSet attributeSet) {
@@ -43,6 +49,12 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
          * core menu items: My Mission, Directors, and Admins
          */
         User.getInstance().addAccountStatusEventListener(this);
+
+        // hack / missed notification.  User fires an accountStatusEvent from this
+        // block in User.login():  userRef.child("current_team")...
+        // but that happens before we have added this class as a listener on that event
+        MenuItem it = getMenu().findItem(R.id.nav_switch_teams);
+        it.setTitle("Team: "+User.getInstance().getCurrentTeamName());
     }
 
     @Override
