@@ -1,10 +1,17 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import android.accounts.Account;
 import android.content.Context;
 import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
+
+import com.brentdunklau.telepatriot_android.R;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,6 +34,12 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
          * core menu items: My Mission, Directors, and Admins
          */
         User.getInstance().addAccountStatusEventListener(this);
+
+        // hack / missed notification.  User fires an accountStatusEvent from this
+        // block in User.login():  userRef.child("current_team")...
+        // but that happens before we have added this class as a listener on that event
+        MenuItem it = getMenu().findItem(R.id.nav_switch_teams);
+        it.setTitle("Team: "+User.getInstance().getCurrentTeamName());
     }
 
     public MainNavigationView(Context ctx, AttributeSet attributeSet) {
@@ -37,6 +50,12 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
          * core menu items: My Mission, Directors, and Admins
          */
         User.getInstance().addAccountStatusEventListener(this);
+
+        // hack / missed notification.  User fires an accountStatusEvent from this
+        // block in User.login():  userRef.child("current_team")...
+        // but that happens before we have added this class as a listener on that event
+        MenuItem it = getMenu().findItem(R.id.nav_switch_teams);
+        it.setTitle("Team: "+User.getInstance().getCurrentTeamName());
     }
 
     @Override
@@ -79,6 +98,12 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
             if(item != null)
                 item.setVisible(false);
         }
+        else if(evt instanceof AccountStatusEvent.TeamSelected) { // also fires when the user logs in, so we always have a team to display to the user
+            // find MenuItem you want to change
+            MenuItem it = menu.findItem(R.id.nav_switch_teams);
+            it.setTitle("Team: "+evt.getEvent());
+        }
+
     }
 
     private MenuItem findMenuItemForRole(String role) {
@@ -94,6 +119,16 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
             MenuItem item = menu.getItem(i);
             if( item.getTitle().toString().equalsIgnoreCase(title) )
                 return item;
+            else if(item.getSubMenu() != null) {
+                SubMenu subMenu = item.getSubMenu();
+                int subsize = subMenu.size();
+                for(int j=0; j < subsize; j++) {
+                    MenuItem subitem = subMenu.getItem(j);
+                    if(subitem.getTitle().toString().equalsIgnoreCase(title)) {
+                        return subitem;
+                    }
+                }
+            }
         }
         return null;
     }

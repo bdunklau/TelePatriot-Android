@@ -48,6 +48,11 @@ exports.createTeam = teams.createTeam
 exports.deleteTeam = teams.deleteTeam
 exports.addPeopleToTeam = teams.addPeopleToTeam
 exports.removePeopleFromTeam = teams.removePeopleFromTeam
+exports.viewMembers = teams.viewMembers
+exports.setCurrentTeam = teams.setCurrentTeam
+exports.resetCurrentTeam = teams.resetCurrentTeam
+exports.syncWithUsersListOfTeams = teams.syncWithUsersListOfTeams
+
 
 const dbadmin = require('./dbadmin')
 exports.insert = dbadmin.insert

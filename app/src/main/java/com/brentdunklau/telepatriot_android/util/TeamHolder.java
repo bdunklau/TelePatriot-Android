@@ -22,9 +22,18 @@ public class TeamHolder extends RecyclerView.ViewHolder {
     public TeamHolder(View itemView) {
         super(itemView);
         team_name = itemView.findViewById(R.id.team_name);
+
+        // https://stackoverflow.com/a/41629505
+        //listener set on ENTIRE ROW, you may set on individual components within a row.
+        itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mClickListener.onItemClick(v, getAdapterPosition());
+            }
+        });
     }
 
-    public void setMission(final Team team, final DatabaseReference ref) {
+    public void setTeam_name(final Team team, final DatabaseReference ref) {
         // set TextView elements here
         team_name.setText(team.getTeam_name());
     }

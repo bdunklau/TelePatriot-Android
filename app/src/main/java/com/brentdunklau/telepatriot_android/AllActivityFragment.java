@@ -16,6 +16,7 @@ import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionHolder;
 import com.brentdunklau.telepatriot_android.util.MissionItemEvent;
 import com.brentdunklau.telepatriot_android.util.MissionItemEventHolder;
+import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -63,8 +64,7 @@ public class AllActivityFragment extends BaseFragment {
 
 
     private void showMissionActivity() {
-        // TODO won't always be this...
-        String team = "The Cavalry";
+        String team = User.getInstance().getCurrentTeam().getTeam_name();
         final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity").child("all"); // i.e. actual human activities like making phone calls
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
