@@ -279,6 +279,83 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
 })
 
 
+// When a user is added as a member of a team, add this team to the user's list of teams also
+// That way, the new team will show up in SwitchTeamsVC
+exports.syncWithUsersListOfTeams = functions.database.ref('/teams/{team_name}/members/{uid}').onWrite(event => {
+
+    var uid = event.params.uid
+    var team_name = event.params.team_name
+
+    var teamAdded = event.data.exists()
+    var teamDeleted = !event.data.exists() && event.data.previous.exists()
+
+    if(teamAdded) {
+        return event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).setValue({team_name: team_name})
+    }
+    else if(teamDeleted) {
+        return event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).remove()
+    }
+})
+
+
+// When a user is assigned to a team, we should check to see if the user has a "current_team" node yet
+// Because the user always needs to have a current_team designated if at all possible.
+exports.setCurrentTeam = functions.database.ref('/users/{uid}/teams/{team_name}').onWrite( event => {
+
+    var uid = event.params.uid
+    var team_name = event.params.team_name
+
+    var teamAdded = event.data.exists()
+    var teamDeleted = !event.data.exists() && event.data.previous.exists()
+
+    if(teamAdded) {
+        //event.data.adminRef.root.child(`temp_log`).push().set({msg: "event.data.exists()"})
+        // query to see if we have a current_team yet
+        // We will only set current_team to the new team if there is no current_team node yet
+        var currentTeamRef = event.data.adminRef.root.child(`/users/${uid}/current_team`)
+        return currentTeamRef.once('value').then(snapshot => {
+            if(!snapshot.val()) {
+                // just for debugging...
+                //event.data.adminRef.root.child(`temp_log`).push().set({msg: "snapshot.val() does not exist"})
+                currentTeamRef.set({team_name: team_name})
+            }
+        })
+    }
+    else if(teamDeleted) {
+        // means the node was deleted - make sure it wasn't the team marked as the current_team
+        // If it's the same team as the current_team, then delete the current_team node too
+        // which means we probably need a trigger on current_team to detect when it's deleted so
+        // we can go get another one.
+        //event.data.adminRef.root.child(`temp_log`).push().set({msg: "event.data.exists() does not exist"})
+        var currentTeamRef = event.data.adminRef.root.child(`/users/${uid}/current_team`)
+        return currentTeamRef.once('value').then(snapshot => {
+            if(snapshot.val() && snapshot.val().team_name == team_name) {
+                currentTeamRef.remove()
+            }
+        })
+    }
+
+});
+
+
+// only reset the current_team when the current_team node has been deleted
+exports.resetCurrentTeam = functions.database.ref('/users/{uid}/current_team').onWrite(event => {
+    var uid = event.params.uid
+    var currentTeamDeleted = !event.data.exists() && event.data.previous.exists()
+    if(currentTeamDeleted) {
+        // go find the first team in the list and make that the new current_team
+        return event.data.adminRef.root.child(`/users/${uid}/teams`).limitToFirst(1).once('value').then(snapshot => {
+            var otherTeamsExist = snapshot.val()
+            if(otherTeamsExist) {
+                event.data.adminRef.root.child(`/users/${uid}/current_team`).set(snapshot.val())
+            }
+        })
+    }
+    else return false;
+})
+
+
+// This is a throw-away/one-time use function
 // for production, to put everyone in the Cavalry that is already a user
 exports.backfillCavalry = functions.https.onRequest((req, res) => {
     var stuff = ''

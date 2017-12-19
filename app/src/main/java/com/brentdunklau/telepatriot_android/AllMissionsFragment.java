@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionHolder;
+import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -27,8 +28,7 @@ public class AllMissionsFragment extends MissionListFragment {
 
     public AllMissionsFragment() {
         this.title = "All Missions";
-        // TODO won't always be this...
-        String team = "The Cavalry";
+        String team = User.getInstance().getCurrentTeam().getTeam_name();
         this.ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions");
         this.query = this.ref;
     }

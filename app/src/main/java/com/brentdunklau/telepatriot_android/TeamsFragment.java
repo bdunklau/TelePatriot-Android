@@ -152,7 +152,7 @@ public class TeamsFragment extends BaseFragment {
                 query) {
             @Override
             public void populateViewHolder(TeamHolder holder, Team team, int position) {
-                holder.setMission(team, this.getRef(position)); // https://stackoverflow.com/a/45731532
+                holder.setTeam_name(team, this.getRef(position)); // https://stackoverflow.com/a/45731532
             }
 
 

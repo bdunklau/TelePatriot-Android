@@ -65,8 +65,8 @@ public class NewPhoneCampaignFragment extends BaseFragment {
                 if(dataMissing)
                     return; // basically the same thing as making the button disable.  This way is just easier to code.
 
-                // TODO The team won't always be "The Cavalry"
-                String team = "The Cavalry";
+
+                String team = User.getInstance().getCurrentTeam().getTeam_name();
                 String missionNode = containsNamesAndNumbers ? "missions" : "master_missions";
                 DatabaseReference ref = FirebaseDatabase.getInstance().getReference("/teams/"+team+"/"+missionNode);
                 boolean active = false;

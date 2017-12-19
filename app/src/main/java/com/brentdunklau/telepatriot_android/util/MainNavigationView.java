@@ -1,10 +1,16 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import android.accounts.Account;
 import android.content.Context;
 import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.brentdunklau.telepatriot_android.R;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -79,6 +85,12 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
             if(item != null)
                 item.setVisible(false);
         }
+        else if(evt instanceof AccountStatusEvent.TeamSelected) { // also fires when the user logs in, so we always have a team to display to the user
+            // find MenuItem you want to change
+            MenuItem it = menu.findItem(R.id.nav_switch_teams);
+            it.setTitle("Team: "+evt.getEvent());
+        }
+
     }
 
     private MenuItem findMenuItemForRole(String role) {

@@ -60,20 +60,19 @@ public class MyMissionFragment extends BaseFragment {
         mission_script = myView.findViewById(R.id.mission_script);
         button_call_person1 = myView.findViewById(R.id.button_call_person1);
         button_call_person2 = myView.findViewById(R.id.button_call_person2);
-        button_switch_teams = myView.findViewById(R.id.button_switch_teams);
 
+        button_switch_teams = myView.findViewById(R.id.button_switch_teams);
         button_switch_teams.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                FragmentManager fragmentManager = getFragmentManager();
-                Fragment fragment = new SwitchTeamsFragment();
-                fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+            Fragment fragment = new SwitchTeamsFragment();
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
             }
         });
 
 
-        // TODO won't always be this...
-        String team = "The Cavalry";     // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
+        String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
         FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items").orderByChild("group_number").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -213,8 +212,7 @@ public class MyMissionFragment extends BaseFragment {
         // Writing to the database here just gives the directors the cool visual of seeing the
         // call start and then seeing it end
 
-        // TODO won't always be this...
-        String team = "The Cavalry";
+        String team = User.getInstance().getCurrentTeamName();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
         String eventType = "is calling";
         String volunteerPhone = getVolunteerPhone();
@@ -233,8 +231,7 @@ public class MyMissionFragment extends BaseFragment {
         Intent intent = new Intent(Intent.ACTION_CALL);
         intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
 
-        // TODO won't always be this...
-        String team = "The Cavalry";
+        String team = User.getInstance().getCurrentTeamName();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
         String eventType = "is calling";
         String volunteerPhone = getVolunteerPhone();

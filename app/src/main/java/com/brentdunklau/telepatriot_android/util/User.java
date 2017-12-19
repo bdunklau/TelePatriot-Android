@@ -30,9 +30,13 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     private FirebaseDatabase database;
     private DatabaseReference userRef;
+    //private List<String> teamNames = new ArrayList<String>();
     private boolean isAdmin, isDirector, isVolunteer;
     private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
+
+    private Team currentTeam;
+    //private List<Team> teams = new ArrayList<Team>();
     private ChildEventListener childEventListener;
     private static User singleton;
     private List<AccountStatusEvent.Listener> accountStatusEventListeners = new ArrayList<AccountStatusEvent.Listener>();
@@ -139,6 +143,39 @@ public class User implements FirebaseAuth.AuthStateListener {
 
             }
         });
+
+
+        userRef.child("current_team").limitToFirst(1).addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                String team_name = dataSnapshot.getKey();
+                // team nodes are keyed by the team name and they also have a "team_name" node
+                // under the key that is also the name of the team.  The team_name node is so
+                // that we can take advantage of the deserialization function built in to firebase
+                Team team = dataSnapshot.getValue(Team.class);
+                setCurrentTeam(team);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
     }
 
     private void onSignout() {
@@ -192,8 +229,7 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     // called from MissionItemWrapUpFragment when the user submit the notes at the end of a call
     public void submitWrapUp(String outcome, String notes) {
-        // TODO won't always be this...
-        String team = "The Cavalry";
+        String team = User.getInstance().getCurrentTeamName();
         FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items/"+missionItemId).removeValue();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions/"+missionId+"/mission_items/"+missionItemId);
         ref.child("accomplished").setValue("complete");
@@ -215,8 +251,7 @@ public class User implements FirebaseAuth.AuthStateListener {
             return;
         missionItem.complete(missionItemId);
 
-        // TODO won't always be this...
-        String team = "The Cavalry";
+        String team = User.getInstance().getCurrentTeamName();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
 
         String volunteerPhone = myPhone;
@@ -325,6 +360,19 @@ public class User implements FirebaseAuth.AuthStateListener {
         }
     }
 
+    public Team getCurrentTeam() {
+        return currentTeam;
+    }
+
+    public String getCurrentTeamName() {
+        return currentTeam != null ? currentTeam.getTeam_name() : "No Team Selected";
+    }
+
+    public void setCurrentTeam(Team currentTeam) {
+        this.currentTeam = currentTeam;
+        fireTeamSelected(currentTeam);
+    }
+
     public void addAccountStatusEventListener(AccountStatusEvent.Listener l) {
         if(!accountStatusEventListeners.contains(l))
             accountStatusEventListeners.add(l);
@@ -351,6 +399,13 @@ public class User implements FirebaseAuth.AuthStateListener {
         AccountStatusEvent.RoleRemoved nr = new AccountStatusEvent.RoleRemoved(role);
         for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
             l.fired(nr);
+        }
+    }
+
+    private void fireTeamSelected(Team team) {
+        AccountStatusEvent.TeamSelected evt = new AccountStatusEvent.TeamSelected(team.getTeam_name());
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
         }
     }
 

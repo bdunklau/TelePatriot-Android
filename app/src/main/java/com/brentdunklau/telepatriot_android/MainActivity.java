@@ -38,10 +38,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         User.getInstance().addAccountStatusEventListener(this);
+
 
 /*
         Holdover from back when everything was an activity.  This is how we were closing down the
@@ -85,6 +87,7 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
 
         View navHeaderView = navigationView.getHeaderView(0);  // https://stackoverflow.com/a/38418531
         final TextView text_user_name = (TextView)navHeaderView.findViewById(R.id.text_user_name);
@@ -137,7 +140,11 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         android.app.FragmentManager fragmentManager = getFragmentManager();
 
-        if (id == R.id.nav_volunteer_layout) {
+        if (id == R.id.nav_switch_teams) {
+            Fragment fragment = new SwitchTeamsFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
+        else if (id == R.id.nav_volunteer_layout) {
             Fragment fragment = new MyMissionFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_director_layout) {

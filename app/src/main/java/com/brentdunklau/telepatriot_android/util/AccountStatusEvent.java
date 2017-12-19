@@ -62,4 +62,22 @@ public class AccountStatusEvent {
         }
     }
 
+    public static class TeamSelected extends AccountStatusEvent {
+        TeamSelected(String team_name) {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), team_name);
+        }
+    }
+
+    public static class TeamAdded extends AccountStatusEvent {
+        TeamAdded(String team_name) {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), team_name);
+        }
+    }
+
+    public static class TeamRemoved extends AccountStatusEvent {
+        TeamRemoved(String team_name) {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), team_name);
+        }
+    }
+
 }
