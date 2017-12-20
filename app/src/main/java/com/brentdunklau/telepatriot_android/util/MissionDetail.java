@@ -158,6 +158,10 @@ public class MissionDetail {
     }
 
     public void unassign(String missionItemId) {
+        // New as of Dec 2017: When we unassign a mission item, we have to set group_number
+        // back to group_number_was.  Otherwise, group_number will stay at 999999 and forever be at
+        // the end of the queue
+        setGroup_number(getGroup_number_was());
         setState("new", missionItemId);
     }
 
