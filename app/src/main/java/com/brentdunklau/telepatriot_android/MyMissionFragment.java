@@ -71,20 +71,36 @@ public class MyMissionFragment extends BaseFragment {
             }
         });
 
-        String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
 
-        // maybe...
-        //final DatabaseReference userMissions = FirebaseDatabase.getInstance().getReference("users/"+User.getInstance().getUid()+"/teams/"+team+"/mission_items");
+        // just start out this way by default so we don't get the ugly screen flash
+        // that shows the user buttons and labels that don't make sense
+        indicateNoMissionsAvailable();
+
+
+        String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
 
         FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items").orderByChild("group_number").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.getChildrenCount() == 0) {
+                    indicateNoMissionsAvailable();
+                    return; // we should indicate no missions available for the user
+                }
+
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
                     missionItemId = child.getKey();
 
                     missionDetail = child.getValue(MissionDetail.class);
-                    if(missionDetail == null)
+
+                    // if all we got was a 999999, then this item is being worked by someone else and
+                    // there basically are no more missions for this user
+                    if(missionDetail == null || missionDetail.getGroup_number() == 999999) {
+                        indicateNoMissionsAvailable();
                         return; // we should indicate no missions available for the user
+                    }
+
+                    // set fields back to visible if they were previously set to View.GONE
+                    setFieldsVisible();
 
                     User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
 
@@ -104,10 +120,11 @@ public class MyMissionFragment extends BaseFragment {
                     missionDetail.setAccomplished("in progress");
                     missionDetail.setActive_and_accomplished("true_in progress");
 
-                    // maybe...
-                    //userMissions.child(missionItemId).setValue(missionDetail); // new
+                    // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
+                    // and save the original value in group_number_was
+                    missionDetail.setGroup_number_was(missionDetail.getGroup_number());
+                    missionDetail.setGroup_number(999999);
 
-                    //dataSnapshot.getRef().child(missionItemId).removeValue(); //.setValue(missionDetail);
                     dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
                 }
 
@@ -122,6 +139,34 @@ public class MyMissionFragment extends BaseFragment {
 
         setHasOptionsMenu(true);
         return myView;
+    }
+
+    private void indicateNoMissionsAvailable() {
+        // hide the call buttons
+        button_call_person1.setVisibility(View.GONE);
+        button_call_person2.setVisibility(View.GONE);
+        // hide the description and the script fields
+        mission_name.setVisibility(View.GONE);
+        mission_script.setVisibility(View.GONE);
+        myView.findViewById(R.id.heading_mission_description).setVisibility(View.GONE);
+        myView.findViewById(R.id.heading_mission_script).setVisibility(View.GONE);
+
+        // leave the switch teams button visible
+
+        // rather than hide the mission description TextView, we'll repurpose
+        // it to show a message to the user indicating that there are no missions
+        // in this team at this time.
+        // This is the same text you'll see on the iPhone version - MyMissionViewController
+        mission_description.setText("No missions found yet for this team...");
+    }
+
+    private void setFieldsVisible() {
+        button_call_person1.setVisibility(View.VISIBLE);
+        button_call_person2.setVisibility(View.VISIBLE);
+        mission_name.setVisibility(View.VISIBLE);
+        mission_script.setVisibility(View.VISIBLE);
+        myView.findViewById(R.id.heading_mission_description).setVisibility(View.VISIBLE);
+        myView.findViewById(R.id.heading_mission_script).setVisibility(View.VISIBLE);
     }
 
     private void prepareFor3WayCallIfNecessary(MissionDetail missionDetail, Button button) {
