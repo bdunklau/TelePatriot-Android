@@ -1,3 +1,10 @@
+MAKE SURE YOU'RE DEPLOYING TO THE RIGHT DEV/PROD ENVIRONMENT:
+
+firebase use telepatriot-dev
+        -OR-
+firebase use telepatriot-prod
+
+
 On Windows
 cd C:\Users\bdunklau\AndroidStudioProjects\TelePatriot-Android\firebase-functions\functions
 C:\Users\bdunklau\AndroidStudioProjects\TelePatriot-Android\firebase-functions\functions> firebase deploy

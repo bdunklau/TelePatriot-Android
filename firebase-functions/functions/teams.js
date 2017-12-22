@@ -7,24 +7,16 @@ const admin = require('firebase-admin')
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
-var menu = function(team_name) {
-    if(!team_name || team_name == '') {
-        var menu = '<P/><a href="/manageTeams">View All Teams</a>'
-        menu += '<P/><a href="/createTeam">Create Team</a>'
-        menu += '<P/><hr/>'
-        return menu
-    }
-    else {
-        var menu = '<P/><a href="/manageTeams">View All Teams</a>'
-        menu += '<P/><a href="/createTeam">Create Team</a>'
-        menu += '<P/><hr/>'
-        return menu
-    }
+var menu = function() {
+    var menu = '<P/><a href="/manageTeams">View All Teams</a>'
+    menu += '<P/><a href="/createTeam">Create Team</a>'
+    menu += '<P/><hr/>'
+    return menu
 }
 
 
 var table = function(rows) {
-    var html = '<table>'
+    var html = '<table width="100%">'
     for(var i=0; i < rows.length; i++) {
         html += rows[i]
     }
@@ -39,21 +31,33 @@ var row = function(cells) {
     return html += '</tr>'
 }
 
-var cell = function(data) {
-    return '<td>' + data + '</td>'
+var cell = function(data, colspan) {
+    return '<td valign="top" colspan="'+colspan+'">' + data + '</td>'
+}
+
+var form = function(url, buttonHtml, fieldHtml) {
+    return '<form method="post" action="'+url+'">'+buttonHtml+fieldHtml+'</form>'
+}
+
+var submitButton = function(text) {
+    return '<input type="submit" value="'+text+'"/>'
+}
+
+var fieldHtml = function(name) {
+    return '<input type="text" name="'+name+'"/>'
 }
 
 
 exports.manageTeams = functions.https.onRequest((req, res) => {
 
-    var stuff = menu('')
+    var stuff = menu()
 
     db.ref(`teams`).once('value').then(snapshot => {
         var rows = []
         snapshot.forEach(function(child) {
-            var team_name = cell(child.val().team_name)
-            var view_members = cell('<a href="/viewMembers?team='+child.val().team_name+'">View Members</a>')
-            //var deleteTeam = cell('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/deleteTeam?name='+child.val().team_name+'">!!! Delete Team !!!</a>')
+            var team_name = cell(child.val().team_name, 1)
+            var view_members = cell('<a href="/viewMembers?team='+child.val().team_name+'">View Members</a>', 1)
+            //var deleteTeam = cell('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/deleteTeam?name='+child.val().team_name+'">!!! Delete Team !!!</a>', 1)
             var tr = row([team_name, view_members/*, deleteTeam*/])
             rows.push(tr)
         })
@@ -68,7 +72,7 @@ exports.viewMembers = functions.https.onRequest((req, res) => {
 
     var team_name = req.query.team
 
-    var stuff = menu(team_name)
+    var stuff = menu()
 
     return listMembers(team_name).then(html => {
         return res.status(200).send(html)
@@ -78,29 +82,57 @@ exports.viewMembers = functions.https.onRequest((req, res) => {
 
 var listMembers = function(team_name) {
 
-    var stuff = menu(team_name)
+    var stuff = menu()
 
     return db.ref(`teams`).child(team_name).child(`members`).once('value').then(snapshot => {
         var rows = []
-        var header = row(cell(team_name + ' - Members'))
+        var header = row(cell(team_name + ' - Members', 1))
         rows.push(header)
+        var field = fieldHtml('copyteam')
+        var button = submitButton('Copy '+team_name)
+        var frm = form('/copyTeam?team='+team_name, button, field)
+        var cll = cell(frm, 1)
+        rows.push(row([cll]))
+        var rowsInner = []
         snapshot.forEach(function(child) {
-            var deleteLink = cell('<a href="/removePeopleFromTeam?team='+team_name+'&email='+child.val().email+'">Remove</a>')
-            var member = cell(child.val().name)
-            var email = cell(child.val().email)
+            var deleteLink = cell('<a href="/removePeopleFromTeam?team='+team_name+'&email='+child.val().email+'">Remove</a>', 1)
+            var member = cell(child.val().name, 1)
+            var email = cell(child.val().email, 1)
             var tr = row([deleteLink, member, email])
-            rows.push(tr)
+            rowsInner.push(tr)
         })
+        var left = cell(table(rowsInner), 1)
+        var right = cell('<form method="post" action="/addPeopleToTeam?team='+team_name+'"><textarea rows="20" cols="40" name="email" placeholder="Enter one email address\nper line"></textarea><P/><input type="submit" value="Add People"></form>', 1)
+        var rowA = row([left, right])
+        rows.push(rowA)
+
         var html = table(rows)
-        html += '<form method="post" action="/addPeopleToTeam?team='+team_name+'"><input type="text" name="email" size="200"><P/><input type="submit" value="Add People"></form>'
         return stuff+html
     })
 }
 
 
+exports.copyTeam = functions.https.onRequest((req, res) => {
+    var team_name = req.query.team
+    var new_team = req.body.copyteam
+
+    return db.ref(`/teams/${team_name}`).once('value').then(snapshot => {
+        var copy = snapshot.val()
+        copy.team_name = new_team
+        db.ref(`/teams/${new_team}`).set(copy)
+    })
+    .then(() => {
+        return listMembers(new_team).then(html => {
+            return res.status(200).send(html)
+        })
+    })
+
+})
+
+
 exports.createTeam = functions.https.onRequest((req, res) => {
 
-    var stuff = menu('')
+    var stuff = menu()
     // allow for these req parms
     //      node
     var name = req.query.name
@@ -124,7 +156,7 @@ exports.deleteTeam = functions.https.onRequest((req, res) => {
     //      node
     var name = req.query.name
 
-    var stuff = menu(name)
+    var stuff = menu()
 
     if(!name) {
         return res.status(200).send(stuff+"<P/>These request parms are required: <P/> name")
@@ -150,7 +182,7 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
         email = emailForm
     }
 
-    var stuff = menu(team)
+    var stuff = menu()
 
 
     if(!team || !email) {
@@ -160,7 +192,7 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
         return res.status(200).send(stuff+"<P/>These request parms are required: <P/> team<P/> email (comma-sep list)<P/>req.body = "+JSON.stringify(req.body))
     }
     else {
-        var emails = email.split(',')
+        var emails = email.split('\n')
         addPeopleByEmail(team, emails, stuff, function(info) {
             //res.status(200).send(info)
 
@@ -168,30 +200,6 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
                 return res.status(200).send(html)
             })
         } )
-        /************
-        var teamref = db.ref(`teams/${team}/members`)
-        var ref = db.ref(`users`)
-        var log = db.ref(`logs`)
-        var userCount = emails.length
-        var iter = 0
-        emails.forEach(function(addr) {
-            ref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
-                snapshot.forEach(function(user) {
-                    var name = user.val().name
-                    var email = user.val().email
-                    teamref.child(user.key).set({name: name, email: email})
-                    ref.child(user.key).child('teams').child(team).set(true)
-                    stuff += '<P/>OK added '+name+' ('+email+') to /teams/'+team+'/members'
-                    stuff += '<P/>OK added team: '+team+' to '+name+'\'s list of teams'
-                })
-
-                ++iter
-                if(iter == userCount) {
-                    res.status(200).send(stuff)
-                }
-            })
-        })
-        ************/
 
     }
 })
@@ -205,7 +213,8 @@ var addPeopleByEmail = function(team, emails, stuff, callback) {
     var iter = 0
     stuff += '<P/>Try adding these people: '+emails
     try {
-        emails.forEach(function(addr) {
+        emails.forEach(function(addrUntrimmed) {
+            var addr = addrUntrimmed.trim()
             stuff += '<P/>in loop:  Try adding this person: '+addr
             ref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
                 snapshot.forEach(function(user) {
@@ -245,19 +254,20 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
     var team = req.query.team
     var email = req.query.email
 
-    var stuff = menu(team)
+    var stuff = menu()
 
     if(!team || !email) {
         return res.status(200).send(stuff+"<P/>These request parms are required: <P/> team<P/> email (comma-sep list)")
     }
     else {
-        var emails = email.split(',')
+        var emails = email.split('\n')
         var teamref = db.ref(`teams/${team}/members`)
         var ref = db.ref(`users`)
         var log = db.ref(`logs`)
         var userCount = emails.length
         var iter = 0
-        emails.forEach(function(addr) {
+        emails.forEach(function(addrUntrimmed) {
+            var addr = addrUntrimmed.trim()
             ref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
                 snapshot.forEach(function(user) {
                     var name = user.val().name
@@ -383,10 +393,10 @@ exports.backfillCavalry = functions.https.onRequest((req, res) => {
         })
     })
     .then(() => {
-        res.status(200).send(menu("The Cavalry")+stuff)
+        res.status(200).send(menu()+stuff)
     })
     .catch(function(e) {
-        res.status(200).send(menu("The Cavalry")+stuff+'<P/>ERROR: '+e)
+        res.status(200).send(menu()+stuff+'<P/>ERROR: '+e)
     })
 
 })
