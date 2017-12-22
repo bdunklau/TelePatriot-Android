@@ -28,7 +28,7 @@ Key password:  android
 Next
 
 APK Destination folder: /Users/bdunklau/AndroidStudioProjects/TelePatriot3/app (can be anything)
-Build Type: release
+Build Type: release (tried "debug" on 12/20/17 to see if it would correct the Google login bug)
 Flavors:  leave blank
 Signature Versions:
     V1 (Jar Signature) - check this box

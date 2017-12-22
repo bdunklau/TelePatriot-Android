@@ -1,0 +1,26 @@
+On a Mac in xcode
+
+FIRST make sure you are pointing to the prod database:
+Go to AppDelegate.init() and make sure this line is uncommented:
+    let filePath = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist")
+
+
+Click the top-most TelePatriot node on the left to bring up project config settings
+Click General
+In the first section, Identity, increment version and build number
+
+Product -> Archive
+After the build succeeds, a dialog box will pop up showing this build and all past builds
+Select the build
+Click "Upload to App Store..."
+App Store distribution options:  take the defaults
+Re-sign TelePatriot:  choose to automatically manage signing
+Review TelePatriot.ipa content:  choose Upload
+
+Go to iTunesConnect
+bdunklau@yahoo.com / Je......
+Go to My Apps
+Click TestFlight tab (also maybe Activity tab)
+You will see the build you just uploaded probably in a "Processing" state
+
+
