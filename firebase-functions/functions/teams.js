@@ -7,107 +7,84 @@ const admin = require('firebase-admin')
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
-var menu = function() {
-    var menu = '<P/><a href="/manageTeams">View All Teams</a>'
-    menu += '<P/><a href="/createTeam">Create Team</a>'
-    menu += '<P/><hr/>'
-    return menu
-}
-
-
-var table = function(rows) {
-    var html = '<table width="100%">'
-    for(var i=0; i < rows.length; i++) {
-        html += rows[i]
-    }
-    return html += '</table>'
-}
-
-var row = function(cells) {
-    var html = '<tr>'
-    for(var i=0; i < cells.length; i++) {
-        html += cells[i]
-    }
-    return html += '</tr>'
-}
-
-var cell = function(data, colspan) {
-    return '<td valign="top" colspan="'+colspan+'">' + data + '</td>'
-}
-
-var form = function(url, buttonHtml, fieldHtml) {
-    return '<form method="post" action="'+url+'">'+buttonHtml+fieldHtml+'</form>'
-}
-
-var submitButton = function(text) {
-    return '<input type="submit" value="'+text+'"/>'
-}
-
-var fieldHtml = function(name) {
-    return '<input type="text" name="'+name+'"/>'
-}
-
 
 exports.manageTeams = functions.https.onRequest((req, res) => {
 
-    var stuff = menu()
-
-    db.ref(`teams`).once('value').then(snapshot => {
-        var rows = []
-        snapshot.forEach(function(child) {
-            var team_name = cell(child.val().team_name, 1)
-            var view_members = cell('<a href="/viewMembers?team='+child.val().team_name+'">View Members</a>', 1)
-            //var deleteTeam = cell('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/deleteTeam?name='+child.val().team_name+'">!!! Delete Team !!!</a>', 1)
-            var tr = row([team_name, view_members/*, deleteTeam*/])
-            rows.push(tr)
-        })
-        var tbl = table(rows)
-        return res.status(200).send(stuff+tbl)
+    return listTeams('', '')
+    .then(teamListHtml => {
+        var html = '<html><head></head><body><table width="100%"><tr><td colspan="33%">' + teamListHtml + '</td><td colspan="33%">&nbsp;</td><td colspan="33%">&nbsp;</td></tr></table></body></html>'
+        return res.status(200).send(html)
     })
 
 })
+
+
+var listTeams = function(stuff, current_team) {
+
+    return db.ref(`teams`).once('value').then(snapshot => {
+        stuff += '<table><tr><td><b>All Teams</b></td></tr>'
+        snapshot.forEach(function(child) {
+            stuff += '<tr>'
+            stuff += '<td><a href="/viewMembers?team='+child.val().team_name+'">'+child.val().team_name+'</a></td>'
+            if(current_team && current_team != '') {
+                stuff += '<td><a href="/copyMembers?from_team='+current_team+'&to_team='+child.val().team_name+'">&lt;-- Add '+current_team+' members to this team</a></td>'
+            }
+            //var deleteTeam = cell('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/deleteTeam?name='+child.val().team_name+'">!!! Delete Team !!!</a>', 1)
+            stuff += '</tr>'
+        })
+        stuff += '</table>'
+        return stuff
+    })
+}
 
 
 exports.viewMembers = functions.https.onRequest((req, res) => {
 
     var team_name = req.query.team
 
-    var stuff = menu()
-
-    return listMembers(team_name).then(html => {
+    return showTheWholePage(team_name).then(html => {
         return res.status(200).send(html)
     })
+
 })
+
+
+var showTheWholePage = function(team_name) {
+
+    return listTeams('', team_name)
+    .then(teamListHtml => {
+        return listMembers(team_name)
+        .then(memberListHtml => {
+            // show the "add people" text area
+            var stuff = '<table><tr>'
+            stuff += '<td><form method="post" action="/addPeopleToTeam?team='+team_name+'"><textarea rows="20" cols="40" name="email" placeholder="Enter one email address\nper line"></textarea><P/><input type="submit" value="Add People to '+team_name+' Team"></form></td>'
+            stuff += '</tr></table>'
+            return '<table width="100%"><tr><td colspan="33%" valign="top">'+teamListHtml+'</td><td valign="top">'+memberListHtml+'</td><td valign="top">'+stuff+'</td></tr></table>'
+        })
+    })
+    .then(html => {
+        return '<html><head></head><body>'+html+'</body></html>'
+    })
+}
 
 
 var listMembers = function(team_name) {
 
-    var stuff = menu()
+    var stuff = ''
 
     return db.ref(`teams`).child(team_name).child(`members`).once('value').then(snapshot => {
-        var rows = []
-        var header = row(cell(team_name + ' - Members', 1))
-        rows.push(header)
-        var field = fieldHtml('copyteam')
-        var button = submitButton('Copy '+team_name)
-        var frm = form('/copyTeam?team='+team_name, button, field)
-        var cll = cell(frm, 1)
-        rows.push(row([cll]))
-        var rowsInner = []
-        snapshot.forEach(function(child) {
-            var deleteLink = cell('<a href="/removePeopleFromTeam?team='+team_name+'&email='+child.val().email+'">Remove</a>', 1)
-            var member = cell(child.val().name, 1)
-            var email = cell(child.val().email, 1)
-            var tr = row([deleteLink, member, email])
-            rowsInner.push(tr)
-        })
-        var left = cell(table(rowsInner), 1)
-        var right = cell('<form method="post" action="/addPeopleToTeam?team='+team_name+'"><textarea rows="20" cols="40" name="email" placeholder="Enter one email address\nper line"></textarea><P/><input type="submit" value="Add People"></form>', 1)
-        var rowA = row([left, right])
-        rows.push(rowA)
+        stuff += '<table><tr><td colspan="3"><b>Team: '+team_name+'</b></td></tr>'
+        stuff += '<tr><td colspan="3"><form method="post" action="/copyTeam?team='+team_name+'"><input type="submit" value="Copy '+team_name+'"/>&nbsp;&nbsp;<input type="text" name="copyteam"/></form></td></tr>'
 
-        var html = table(rows)
-        return stuff+html
+        snapshot.forEach(function(child) {
+            stuff += '<tr>'
+            stuff += '<td><a href="/removePeopleFromTeam?team='+team_name+'&email='+child.val().email+'">Remove</a></td>'
+            stuff += '<td>'+child.val().name+'</td>'
+            stuff += '<td>'+child.val().email+'</td>'
+            stuff += '</tr>'
+        })
+        stuff += '</table>'
+        return stuff
     })
 }
 
@@ -122,7 +99,7 @@ exports.copyTeam = functions.https.onRequest((req, res) => {
         db.ref(`/teams/${new_team}`).set(copy)
     })
     .then(() => {
-        return listMembers(new_team).then(html => {
+        return showTheWholePage(team_name).then(html => {
             return res.status(200).send(html)
         })
     })
@@ -130,9 +107,29 @@ exports.copyTeam = functions.https.onRequest((req, res) => {
 })
 
 
+exports.copyMembers = functions.https.onRequest((req, res) => {
+    var from_team = req.query.from_team
+    var to_team = req.query.to_team
+
+    return db.ref(`teams`).child(from_team).child(`members`).once('value').then(snapshot => {
+        snapshot.forEach(function(child) {
+            var uid = child.key
+            db.ref(`teams`).child(to_team).child(`members`).child(uid).set(child.val())
+        })
+    })
+    .then(() => {
+        return showTheWholePage(to_team).then(html => {
+            return res.status(200).send(html)
+        })
+    })
+
+})
+
+
+// kinda don't need createTeam anymore because we have copyTeam
 exports.createTeam = functions.https.onRequest((req, res) => {
 
-    var stuff = menu()
+    var stuff = ''
     // allow for these req parms
     //      node
     var name = req.query.name
@@ -156,7 +153,7 @@ exports.deleteTeam = functions.https.onRequest((req, res) => {
     //      node
     var name = req.query.name
 
-    var stuff = menu()
+    var stuff = ''
 
     if(!name) {
         return res.status(200).send(stuff+"<P/>These request parms are required: <P/> name")
@@ -182,7 +179,7 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
         email = emailForm
     }
 
-    var stuff = menu()
+    var stuff = ''
 
 
     if(!team || !email) {
@@ -194,9 +191,8 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
     else {
         var emails = email.split('\n')
         addPeopleByEmail(team, emails, stuff, function(info) {
-            //res.status(200).send(info)
 
-            return listMembers(team).then(html => {
+            return showTheWholePage(team).then(html => {
                 return res.status(200).send(html)
             })
         } )
@@ -254,41 +250,29 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
     var team = req.query.team
     var email = req.query.email
 
-    var stuff = menu()
+    var stuff = ''
 
     if(!team || !email) {
         return res.status(200).send(stuff+"<P/>These request parms are required: <P/> team<P/> email (comma-sep list)")
     }
     else {
-        var emails = email.split('\n')
         var teamref = db.ref(`teams/${team}/members`)
         var ref = db.ref(`users`)
-        var log = db.ref(`logs`)
-        var userCount = emails.length
-        var iter = 0
-        emails.forEach(function(addrUntrimmed) {
-            var addr = addrUntrimmed.trim()
-            ref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
-                snapshot.forEach(function(user) {
-                    var name = user.val().name
-                    var email = user.val().email
-                    teamref.child(user.key).remove()
-                    ref.child(user.key).child('teams').child(team).remove()
-                    stuff += '<P/>OK removed '+name+' ('+email+') from /teams/'+team+'/members' // not displaying this anymore
-                    stuff += '<P/>OK remove team: '+team+' from '+name+'\'s list of teams'      // not displaying this anymore
-                })
 
-                ++iter
-                if(iter == userCount) {
-                    //res.status(200).send(stuff)
+        ref.orderByChild('email').equalTo(email).once('value').then(snapshot => {
+            snapshot.forEach(function(user) {
+                var name = user.val().name
+                var email = user.val().email
+                teamref.child(user.key).remove()
+                ref.child(user.key).child('teams').child(team).remove()
+                stuff += '<P/>OK removed '+name+' ('+email+') from /teams/'+team+'/members' // not displaying this anymore
+                stuff += '<P/>OK remove team: '+team+' from '+name+'\'s list of teams'      // not displaying this anymore
+            })
 
-                    return listMembers(team).then(html => {
-                        return res.status(200).send(html)
-                    })
-                }
+            return showTheWholePage(team).then(html => {
+                return res.status(200).send(html)
             })
         })
-
     }
 })
 
@@ -393,10 +377,10 @@ exports.backfillCavalry = functions.https.onRequest((req, res) => {
         })
     })
     .then(() => {
-        res.status(200).send(menu()+stuff)
+        res.status(200).send(stuff)
     })
     .catch(function(e) {
-        res.status(200).send(menu()+stuff+'<P/>ERROR: '+e)
+        res.status(200).send(stuff+'<P/>ERROR: '+e)
     })
 
 })

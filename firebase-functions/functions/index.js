@@ -45,6 +45,7 @@ exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpread
 const teams = require('./teams')
 exports.manageTeams = teams.manageTeams // contains links to all the other team functions
 exports.copyTeam = teams.copyTeam
+exports.copyMembers = teams.copyMembers
 exports.createTeam = teams.createTeam
 exports.deleteTeam = teams.deleteTeam
 exports.addPeopleToTeam = teams.addPeopleToTeam
