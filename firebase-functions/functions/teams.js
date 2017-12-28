@@ -127,6 +127,8 @@ exports.copyMembers = functions.https.onRequest((req, res) => {
 
 
 // kinda don't need createTeam anymore because we have copyTeam
+// Not part of the /manageTeams page at the moment (12/27/17)
+// commented out in index.js
 exports.createTeam = functions.https.onRequest((req, res) => {
 
     var stuff = ''
@@ -203,7 +205,7 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
 
 var addPeopleByEmail = function(team, emails, stuff, callback) {
     var teamref = db.ref(`teams/${team}/members`)
-    var ref = db.ref(`users`)
+    var userref = db.ref(`users`)
     var log = db.ref(`logs`)
     var userCount = emails.length
     var iter = 0
@@ -212,12 +214,13 @@ var addPeopleByEmail = function(team, emails, stuff, callback) {
         emails.forEach(function(addrUntrimmed) {
             var addr = addrUntrimmed.trim()
             stuff += '<P/>in loop:  Try adding this person: '+addr
-            ref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
+            userref.orderByChild('email').equalTo(addr).once('value').then(snapshot => {
                 snapshot.forEach(function(user) {
                     var name = user.val().name
                     var email = user.val().email
+                    // TODO do this with a trigger
                     teamref.child(user.key).set({name: name, email: email})
-                    ref.child(user.key).child('teams').child(team).set({team_name: team})
+                    //userref.child(user.key).child('teams').child(team).set({team_name: team})
                     stuff += '<P/>OK added '+name+' ('+email+') to /teams/'+team+'/members'
                     stuff += '<P/>OK added team: '+team+' to '+name+'\'s list of teams'
                 })
@@ -257,21 +260,20 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
     }
     else {
         var teamref = db.ref(`teams/${team}/members`)
-        var ref = db.ref(`users`)
-
-        ref.orderByChild('email').equalTo(email).once('value').then(snapshot => {
-            snapshot.forEach(function(user) {
-                var name = user.val().name
-                var email = user.val().email
-                teamref.child(user.key).remove()
-                ref.child(user.key).child('teams').child(team).remove()
-                stuff += '<P/>OK removed '+name+' ('+email+') from /teams/'+team+'/members' // not displaying this anymore
-                stuff += '<P/>OK remove team: '+team+' from '+name+'\'s list of teams'      // not displaying this anymore
+        var userref = db.ref(`users`)
+        return teamref.orderByChild('email').equalTo(email).once('value').then(snapshot => {
+            snapshot.forEach(function(child) {
+                var userId = child.key
+                teamref.child(userId).remove()
             })
-
+        })
+        .then(() => {
             return showTheWholePage(team).then(html => {
                 return res.status(200).send(html)
             })
+        })
+        .catch(function(e) {
+            res.status(200).send('<P/>ERROR: '+e)
         })
     }
 })
@@ -279,19 +281,55 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
 
 // When a user is added as a member of a team, add this team to the user's list of teams also
 // That way, the new team will show up in SwitchTeamsVC
-exports.syncWithUsersListOfTeams = functions.database.ref('/teams/{team_name}/members/{uid}').onWrite(event => {
+exports.updateTeamListUnderUsers = functions.database.ref('/teams/{team_name}/members/{uid}').onWrite(event => {
 
     var uid = event.params.uid
     var team_name = event.params.team_name
 
-    var teamAdded = event.data.exists()
-    var teamDeleted = !event.data.exists() && event.data.previous.exists()
+    // These conditions make sure that we don't have this trigger, and the one below, getting into
+    // an infinite loop.  The first condition makes sure that the person we're dealing
+    // with was either inserted or deleted, but not just updated.
+    var memberAddedUnderTeamNode = event.data.exists() && !event.data.previous.exists()
+    var memberDeletedUnderTeamNode = !event.data.exists() && event.data.previous.exists()
 
-    if(teamAdded) {
-        return event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).setValue({team_name: team_name})
+    if(memberAddedUnderTeamNode) {
+        /*return*/ event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).set({team_name: team_name})
+        var logmsg = 'Set /users/'+uid+'/teams/'+team_name+' = {team_name: '+team_name+'}'
+        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
     }
-    else if(teamDeleted) {
-        return event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).remove()
+    else if(memberDeletedUnderTeamNode) {
+        /*return*/ event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).remove()
+        var logmsg = 'Removed /users/'+uid+'/teams/'+team_name
+        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
+    }
+})
+
+
+
+exports.updateMemberListUnderTeams = functions.database.ref('/users/{uid}/teams/{team_name}').onWrite(event => {
+
+    var uid = event.params.uid
+    var team_name = event.params.team_name
+
+    // These conditions make sure that we don't have this trigger, and the one below, getting into
+    // an infinite loop.  The first condition makes sure that the team we're dealing
+    // with was either inserted or deleted, but not just updated.
+    var teamAddedUnderUserNode = event.data.exists() && !event.data.previous.exists()
+    var teamDeletedUnderUserNode = !event.data.exists() && event.data.previous.exists()
+
+    if(teamAddedUnderUserNode) {
+        event.data.adminRef.root.child(`/users/${uid}`).once('value').then(snapshot => {
+            var name = snapshot.val().name
+            var email = snapshot.val().email
+            event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).set({name: name, email: email})
+            var logmsg = 'Set /teams/'+team_name+'/members/'+uid+' = {name: '+name+', email: '+email+'}'
+            event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
+        })
+    }
+    else if(teamDeletedUnderUserNode) {
+        event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).remove()
+        var logmsg = 'Removed /teams/'+team_name+'/members/'+uid
+        event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
     }
 })
 
@@ -355,35 +393,5 @@ exports.resetCurrentTeam = functions.database.ref('/users/{uid}/current_team').o
     }
     else return false;
 })
-
-
-// This is a throw-away/one-time use function
-// for production, to put everyone in the Cavalry that is already a user
-exports.backfillCavalry = functions.https.onRequest((req, res) => {
-    var stuff = ''
-
-    var team = "The Cavalry"
-    var ref = db.ref(`users`)
-    ref.once('value').then(snapshot => {
-        snapshot.forEach(function(child /* a user */) {
-            var email = child.val().email
-            if(!email) {
-                stuff += '<P/>Hmmm - this person has no email address: '+child.key+' '+JSON.stringify(child.val())
-            }
-            else {
-                stuff += '<P/>try adding this person: child.val().email = '+email
-                addPeopleByEmail(team, [email], stuff, function(info) { stuff += info })
-            }
-        })
-    })
-    .then(() => {
-        res.status(200).send(stuff)
-    })
-    .catch(function(e) {
-        res.status(200).send(stuff+'<P/>ERROR: '+e)
-    })
-
-})
-
 
 

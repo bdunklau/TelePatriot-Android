@@ -48,12 +48,17 @@ exports.copyTeam = teams.copyTeam
 exports.copyMembers = teams.copyMembers
 exports.createTeam = teams.createTeam
 exports.deleteTeam = teams.deleteTeam
+// Not part of the /manageTeams page at the moment (12/27/17)
+//exports.createTeam = teams.createTeam
+// DANGEROUS - because missions and activity are under a team's node
+//exports.deleteTeam = teams.deleteTeam
 exports.addPeopleToTeam = teams.addPeopleToTeam
 exports.removePeopleFromTeam = teams.removePeopleFromTeam
 exports.viewMembers = teams.viewMembers
 exports.setCurrentTeam = teams.setCurrentTeam
 exports.resetCurrentTeam = teams.resetCurrentTeam
-exports.syncWithUsersListOfTeams = teams.syncWithUsersListOfTeams
+exports.updateMemberListUnderTeams = teams.updateMemberListUnderTeams
+exports.updateTeamListUnderUsers = teams.updateTeamListUnderUsers
 
 
 const dbadmin = require('./dbadmin')
@@ -72,5 +77,4 @@ exports.prepareDevDatabaseToTestMigration = dbadmin.prepareDevDatabaseToTestMigr
 exports.migrateMissions = dbadmin.migrateMissions
 exports.deleteMissionItems = dbadmin.deleteMissionItems
 exports.copyOverMissionItems = dbadmin.copyOverMissionItems
-exports.backfillCavalry = teams.backfillCavalry // temp/one-time function for production
 /*********/
