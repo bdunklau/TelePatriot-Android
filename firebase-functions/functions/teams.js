@@ -21,14 +21,20 @@ exports.manageTeams = functions.https.onRequest((req, res) => {
 
 var listTeams = function(stuff, current_team) {
 
-    return db.ref(`teams`).once('value').then(snapshot => {
-        stuff += '<table><tr><td><b>All Teams</b></td></tr>'
+    return db.ref(`teams`).orderByChild('team_name').once('value').then(snapshot => {
+        stuff += '<table><tr><td colspan="2"><b>All Teams</b></td></tr>'
+        stuff += '<tr><td colspan="2"><form method="post" action="/createTeam"><input type="submit" value="Create Team"/>&nbsp;&nbsp;<input type="text" name="team_name" placeholder="New Team"/></form></td></tr>'
         snapshot.forEach(function(child) {
             stuff += '<tr>'
-            stuff += '<td><a href="/viewMembers?team='+child.val().team_name+'">'+child.val().team_name+'</a></td>'
-            if(current_team && current_team != '') {
-                stuff += '<td><a href="/copyMembers?from_team='+current_team+'&to_team='+child.val().team_name+'">&lt;-- Add '+current_team+' members to this team</a></td>'
+            stuff += '<td style="font-family:Arial;font-size:12px" valign="top"><a href="/viewMembers?team='+child.val().team_name+'">'+child.val().team_name+'</a></td>'
+            if(current_team && current_team.trim() != '') {
+                if(current_team.trim() != child.val().team_name) {
+                    stuff += '<td valign="middle"><form method="post" action="/copyMembers?from_team='+current_team+'&to_team='+child.val().team_name+'"><input type="submit" value="Add '+current_team+' members to '+child.val().team_name+'"></form></td>'
+                    //stuff += '<td><a href="/copyMembers?from_team='+current_team+'&to_team='+child.val().team_name+'">&lt;-- Add '+current_team+' members to this team</a></td>'
+                }
+                else { stuff += '<td>&nbsp;</td>' }
             }
+            else { stuff += '<td>&nbsp;</td>' }
             //var deleteTeam = cell('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/deleteTeam?name='+child.val().team_name+'">!!! Delete Team !!!</a>', 1)
             stuff += '</tr>'
         })
@@ -57,7 +63,7 @@ var showTheWholePage = function(team_name) {
         .then(memberListHtml => {
             // show the "add people" text area
             var stuff = '<table><tr>'
-            stuff += '<td><form method="post" action="/addPeopleToTeam?team='+team_name+'"><textarea rows="20" cols="40" name="email" placeholder="Enter one email address\nper line"></textarea><P/><input type="submit" value="Add People to '+team_name+' Team"></form></td>'
+            stuff += '<td><form method="post" action="/addPeopleToTeam?team='+team_name+'"><textarea rows="20" cols="40" name="email" placeholder="Enter one email address\nper line\n\nTHESE PEOPLE MUST ALREADY HAVE \nTELEPATRIOT ACCOUNTS\n\nIf you enter an email address that is not an existing TelePatriot user, this person will not be added to the team"></textarea><P/><input type="submit" value="Add People to '+team_name+' Team"></form></td>'
             stuff += '</tr></table>'
             return '<table width="100%"><tr><td colspan="33%" valign="top">'+teamListHtml+'</td><td valign="top">'+memberListHtml+'</td><td valign="top">'+stuff+'</td></tr></table>'
         })
@@ -74,7 +80,7 @@ var listMembers = function(team_name) {
 
     return db.ref(`teams`).child(team_name).child(`members`).once('value').then(snapshot => {
         stuff += '<table><tr><td colspan="3"><b>Team: '+team_name+'</b></td></tr>'
-        stuff += '<tr><td colspan="3"><form method="post" action="/copyTeam?team='+team_name+'"><input type="submit" value="Copy '+team_name+'"/>&nbsp;&nbsp;<input type="text" name="copyteam"/></form></td></tr>'
+        stuff += '<tr><td colspan="3"><form method="post" action="/copyTeam?team='+team_name+'"><input type="submit" value="Copy '+team_name+'"/>&nbsp;&nbsp;<input type="text" name="copyteam" placeholder="New Team"/></form></td></tr>'
 
         snapshot.forEach(function(child) {
             stuff += '<tr>'
@@ -90,16 +96,42 @@ var listMembers = function(team_name) {
 
 
 exports.copyTeam = functions.https.onRequest((req, res) => {
-    var team_name = req.query.team
-    var new_team = req.body.copyteam
+    var team_name_untrimmed = req.query.team
+    var new_team_untrimmed = req.body.copyteam
 
-    return db.ref(`/teams/${team_name}`).once('value').then(snapshot => {
-        var copy = snapshot.val()
-        copy.team_name = new_team
-        db.ref(`/teams/${new_team}`).set(copy)
+    if(!team_name_untrimmed || team_name_untrimmed.trim() == '' || !new_team_untrimmed || new_team_untrimmed.trim() == ''
+        || team_name_untrimmed.trim() == new_team_untrimmed.trim()) {
+
+        db.ref(`/templog`).push().set({result: 'copy team returned early', team_name: team_name_untrimmed, new_team: new_team_untrimmed})
+        return showTheWholePage(team_name_untrimmed).then(html => {
+                  return res.status(200).send(html)
+              })
+    }
+
+    var team_name = team_name_untrimmed.trim()
+    var new_team = stripSpecialChars(new_team_untrimmed.trim())
+
+    // make sure the user isn't trying to do a "save as" on top of a team that already exists - that would be bad
+    return db.ref(`/teams/${new_team}`).once('value').then(snapshot => {
+        db.ref(`/templog`).push().set({result: 'check snapshot.val()', snapshot_val: snapshot.val()})
+        if(!snapshot.val()) {
+            // this team doesn't exist yet, so we're ok to save the current team as this new team
+
+            db.ref(`/teams/${team_name}`).once('value').then(snapshot => {
+                var copy = snapshot.val()
+                copy.team_name = new_team
+                db.ref(`/teams/${new_team}/team_name`).set(new_team)
+                return snapshot
+            })
+            .then(snapshot => {
+                var members = snapshot.val().members
+                db.ref(`/teams/${new_team}/members`).set(members)
+            })
+
+        }
     })
     .then(() => {
-        return showTheWholePage(team_name).then(html => {
+        return showTheWholePage(new_team).then(html => {
             return res.status(200).send(html)
         })
     })
@@ -134,16 +166,25 @@ exports.createTeam = functions.https.onRequest((req, res) => {
     var stuff = ''
     // allow for these req parms
     //      node
-    var name = req.query.name
+    var team_name_untrimmed = req.body.team_name
 
-
-    if(!name) {
+    if(!team_name_untrimmed || team_name_untrimmed.trim() == '') {
         return res.status(200).send(stuff+"<P/>These request parms are required: <P/> name")
     }
     else {
-        db.ref(`/teams/${name}`).set({team_name: name})
-        stuff += '<P/>OK created team: '+name
-        return res.status(200).send(stuff)
+        var team_name = stripSpecialChars(team_name_untrimmed.trim())
+        // have to make sure the team doesn't already exist, OR IT WILL BE OVERWRITTEN !
+        return db.ref(`/teams/${team_name}`).once('value').then(snapshot => {
+            if(!snapshot.val()) {
+                // this team doesn't exist yet, so we're ok to create it
+                db.ref(`/teams/${team_name}`).set({team_name: team_name})
+            }
+        })
+        .then(() => {
+            return showTheWholePage(team_name).then(html => {
+                return res.status(200).send(html)
+            })
+        })
     }
 
 })
@@ -318,7 +359,7 @@ exports.updateMemberListUnderTeams = functions.database.ref('/users/{uid}/teams/
     var teamDeletedUnderUserNode = !event.data.exists() && event.data.previous.exists()
 
     if(teamAddedUnderUserNode) {
-        event.data.adminRef.root.child(`/users/${uid}`).once('value').then(snapshot => {
+        return event.data.adminRef.root.child(`/users/${uid}`).once('value').then(snapshot => {
             var name = snapshot.val().name
             var email = snapshot.val().email
             event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).set({name: name, email: email})
@@ -329,7 +370,7 @@ exports.updateMemberListUnderTeams = functions.database.ref('/users/{uid}/teams/
     else if(teamDeletedUnderUserNode) {
         event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).remove()
         var logmsg = 'Removed /teams/'+team_name+'/members/'+uid
-        event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
+        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
     }
 })
 
@@ -393,5 +434,12 @@ exports.resetCurrentTeam = functions.database.ref('/users/{uid}/current_team').o
     }
     else return false;
 })
+
+
+var stripSpecialChars = function(str) {
+    //special chars are . # $ [ ] / \ " '
+    str = str.replace(/[.#$\[\]\/\\"']/g, '');
+    return str
+}
 
 
