@@ -1,8 +1,12 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
@@ -79,6 +83,11 @@ public class LauncherActivity extends BaseActivity implements AccountStatusEvent
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
+
+                // check for phone permission here because the app is crashing on the first phone
+                // call.  We are asking for permission too late.
+                checkPhoneCallPermission();
+
                 if(User.getInstance().hasAnyRole()) {
                     startActivity(new Intent(this, MainActivity.class));
                 }
@@ -105,6 +114,38 @@ public class LauncherActivity extends BaseActivity implements AccountStatusEvent
     public void fired(AccountStatusEvent evt) {
         if(evt instanceof AccountStatusEvent.NoRoles)
             startActivity(new Intent(this, LimboActivity.class));
+    }
+
+
+    // https://developer.android.com/training/permissions/requesting.html
+    private void checkPhoneCallPermission() {
+        checkPermission(android.Manifest.permission.CALL_PHONE);
+    }
+
+    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(this, androidPermission)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) this, androidPermission)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{androidPermission},
+                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
     }
 
 }

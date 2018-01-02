@@ -339,11 +339,17 @@ public class MyMissionFragment extends BaseFragment {
     }
 
 
+    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
+    // an app crash on the very first phone call.  Thinking that I'm requesting permission
+    // too late ... ?
     // https://developer.android.com/training/permissions/requesting.html
     private void checkPermission() {
         checkPermission(android.Manifest.permission.CALL_PHONE);
     }
 
+    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
+    // an app crash on the very first phone call.  Thinking that I'm requesting permission
+    // too late ... ?
     private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
         if (ContextCompat.checkSelfPermission(myView.getContext(), androidPermission)
                 != PackageManager.PERMISSION_GRANTED) {
