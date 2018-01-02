@@ -23,16 +23,6 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/button_switch_teams"
-        android:layout_width="368dp"
-        android:layout_height="48dp"
-        android:layout_weight="0.13"
-        android:text="Switch Teams"
-        tools:layout_editor_absoluteX="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/scroll_mission_details"
-        android:layout_marginBottom="8dp" />
-
     <ScrollView
         android:id="@+id/scroll_mission_details"
         android:layout_width="0dp"
@@ -42,10 +32,10 @@
         android:layout_marginStart="3dp"
         android:layout_marginTop="2dp"
         android:background="#ddffffff"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/heading_mission_name"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintVertical_bias="1.0"
         tools:layout_constraintBottom_creator="1"
         tools:layout_constraintLeft_creator="1"
@@ -119,6 +109,16 @@
                 android:paddingLeft="45dp"
                 android:text="call person2"
                 android:textColor="#ffffff" />
+
+
+
+            <Button
+                android:id="@+id/button_switch_teams"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Switch Teams"
+                 />
 
 
         </LinearLayout>
