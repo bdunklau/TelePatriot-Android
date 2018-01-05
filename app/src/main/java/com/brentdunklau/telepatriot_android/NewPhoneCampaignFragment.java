@@ -31,6 +31,7 @@ import java.util.Date;
 
 public class NewPhoneCampaignFragment extends BaseFragment {
 
+    boolean containsNamesAndNumbers, linksToOtherSpreadsheets;
     Button submit_new_phone_campaign;
     EditText edit_new_phone_campaign, edit_mission_name;
     private LinearLayoutManager mLinearLayoutManager;
@@ -41,6 +42,11 @@ public class NewPhoneCampaignFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.new_phone_campaign_fragment, container, false);
+
+        Bundle b = this.getArguments();
+        if(b.getString("spreadsheetType", "contains names and numbers").equalsIgnoreCase("contains names and numbers"))
+            containsNamesAndNumbers = true;
+        else linksToOtherSpreadsheets = true;
 
         submit_new_phone_campaign = myView.findViewById(R.id.submit_new_phone_campaign);
         edit_new_phone_campaign = myView.findViewById(R.id.edit_new_phone_campaign);
@@ -55,8 +61,12 @@ public class NewPhoneCampaignFragment extends BaseFragment {
                 if(dataMissing)
                     return; // basically the same thing as making the button disabled.  This way is just easier to code.
 
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("missions");
+
+                String team = User.getInstance().getCurrentTeam().getTeam_name();
+                String missionNode = containsNamesAndNumbers ? "missions" : "master_missions";
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("/teams/"+team+"/"+missionNode);
                 boolean active = false;
+
                 PhoneCampaignCreated missionCreated = new PhoneCampaignCreated(User.getInstance(), edit_mission_name.getText().toString(), edit_new_phone_campaign.getText().toString(), active);
 
                 InputMethodManager imm = (InputMethodManager) myView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);

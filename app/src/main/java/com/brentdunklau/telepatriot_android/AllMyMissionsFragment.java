@@ -28,7 +28,7 @@ public class AllMyMissionsFragment extends MissionListFragment {
 
     public AllMyMissionsFragment() {
         this.title = "All My Missions";
-        this.ref = FirebaseDatabase.getInstance().getReference("missions");
+        this.ref = FirebaseDatabase.getInstance().getReference("teams/"+User.getInstance().getCurrentTeam().getTeam_name()+"/missions");
         this.query = this.ref.orderByChild("uid").equalTo(User.getInstance().getUid());
     }
 

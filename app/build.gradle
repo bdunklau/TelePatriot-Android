@@ -5,10 +5,10 @@ android {
     buildToolsVersion "26.0.1"
     defaultConfig {
         applicationId "com.brentdunklau.telepatriot_android"
-        minSdkVersion 23
+        minSdkVersion 17
         targetSdkVersion 26
-        versionCode 15
-        versionName "15"
+        versionCode 23
+        versionName "23"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

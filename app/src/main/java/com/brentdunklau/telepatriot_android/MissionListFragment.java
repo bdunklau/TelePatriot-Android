@@ -73,7 +73,7 @@ public class MissionListFragment extends BaseFragment {
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                doit(ref);
+                doit();
             }
 
             @Override
@@ -83,7 +83,7 @@ public class MissionListFragment extends BaseFragment {
     }
 
 
-    private void doit(DatabaseReference ref) {
+    private void doit() {
 
         final FragmentManager fragmentManager = getFragmentManager();
 

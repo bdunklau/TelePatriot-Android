@@ -16,6 +16,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,9 +30,13 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     private FirebaseDatabase database;
     private DatabaseReference userRef;
+    //private List<String> teamNames = new ArrayList<String>();
     private boolean isAdmin, isDirector, isVolunteer;
-    private String recruiter_id, missionItemId;
+    private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
+
+    private Team currentTeam;
+    //private List<Team> teams = new ArrayList<Team>();
     private ChildEventListener childEventListener;
     private static User singleton;
     private List<AccountStatusEvent.Listener> accountStatusEventListeners = new ArrayList<AccountStatusEvent.Listener>();
@@ -138,6 +143,43 @@ public class User implements FirebaseAuth.AuthStateListener {
 
             }
         });
+
+
+        userRef.child("current_team").limitToFirst(1).addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                String team_name = dataSnapshot.getKey(); // don't end up using this here
+                // team nodes are keyed by the team name and they also have a "team_name" node
+                // under the key that is also the name of the team.  The team_name node is so
+                // that we can take advantage of the deserialization function built in to firebase
+                database.getReference("temp").push().setValue("about to create Team");
+                Team team = dataSnapshot.getValue(Team.class);
+                database.getReference("temp").push().setValue("ok: created Team");
+                //setCurrentTeam(team);
+                User.this.currentTeam = team;
+                fireTeamSelected(User.this.currentTeam);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
     }
 
     private void onSignout() {
@@ -174,6 +216,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     public void setCurrentMissionItem(String missionItemId, MissionDetail missionItem) {
         this.missionItemId = missionItemId;
         this.missionItem = missionItem;
+        this.missionId = missionItem.getMission_id();
     }
 
     public MissionDetail getCurrentMissionItem() {
@@ -190,26 +233,34 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     // called from MissionItemWrapUpFragment when the user submit the notes at the end of a call
     public void submitWrapUp(String outcome, String notes) {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("mission_items/"+missionItemId);
+        String team = User.getInstance().getCurrentTeamName();
+        FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items/"+missionItemId).removeValue();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions/"+missionId+"/mission_items/"+missionItemId);
+        ref.child("accomplished").setValue("complete");
+        ref.child("active").setValue(false);
+        ref.child("active_and_accomplished").setValue("false_complete");
         ref.child("outcome").setValue(outcome);
         ref.child("notes").setValue(notes);
         ref.child("completed_by_uid").setValue(getUid());
         ref.child("completed_by_name").setValue(getName());
+        ref.child("mission_complete_date").setValue(new SimpleDateFormat("MMM d, yyyy h:mm a z").format(new Date()));
+        ref.child("uid_and_active").setValue(getUid()+"_false");
         missionItemId = null;
         missionItem = null;
     }
 
+    // similar to AppDelegate.onCallEnded() on iOS
     public void completeMissionItem(String myPhone) {
         if(missionItem == null || missionItemId == null)
             return;
         missionItem.complete(missionItemId);
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+        String team = User.getInstance().getCurrentTeamName();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
 
         String volunteerPhone = myPhone;
         String supporterName = missionItem.getName();
         MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), volunteerPhone, supporterName);
-        //  see AllActivityFragment.showMissionActivity()
         ref.child("all").push().setValue(m);
         ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
     }
@@ -313,6 +364,21 @@ public class User implements FirebaseAuth.AuthStateListener {
         }
     }
 
+    public Team getCurrentTeam() {
+        return currentTeam;
+    }
+
+    public String getCurrentTeamName() {
+        return currentTeam != null ? currentTeam.getTeam_name() : "No Team Selected";
+    }
+
+    public void setCurrentTeam(Team currentTeam) {
+        HashMap map = new HashMap();
+        map.put(currentTeam.getTeam_name(), currentTeam);
+        userRef.child("current_team").setValue(map);
+        fireTeamSelected(currentTeam);
+    }
+
     public void addAccountStatusEventListener(AccountStatusEvent.Listener l) {
         if(!accountStatusEventListeners.contains(l))
             accountStatusEventListeners.add(l);
@@ -339,6 +405,13 @@ public class User implements FirebaseAuth.AuthStateListener {
         AccountStatusEvent.RoleRemoved nr = new AccountStatusEvent.RoleRemoved(role);
         for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
             l.fired(nr);
+        }
+    }
+
+    private void fireTeamSelected(Team team) {
+        AccountStatusEvent.TeamSelected evt = new AccountStatusEvent.TeamSelected(team.getTeam_name());
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
         }
     }
 

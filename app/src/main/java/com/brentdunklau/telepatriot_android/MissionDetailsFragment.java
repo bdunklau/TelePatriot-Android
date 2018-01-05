@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionDetail;
 import com.brentdunklau.telepatriot_android.util.MissionDetailHolder;
+import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -69,7 +70,8 @@ public class MissionDetailsFragment extends BaseFragment {
             return;
 
         try {
-            final Query ref = FirebaseDatabase.getInstance().getReference("/mission_items").orderByChild("mission_id").equalTo(missionId);
+            String team = User.getInstance().getCurrentTeamName();
+            final Query ref = FirebaseDatabase.getInstance().getReference("/teams/"+team+"/mission_items").orderByChild("mission_id").equalTo(missionId);
 
             ValueEventListener v2 = new ValueEventListener() {
                 @Override

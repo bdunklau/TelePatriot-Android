@@ -29,12 +29,52 @@ exports.testsheetwrite = sheetsDemo.testsheetwrite
 exports.testsheetImport = sheetReader.testsheetImport
 exports.readSpreadsheet = sheetReader.readSpreadsheet
 exports.deleteMissionItems = sheetReader.deleteMissionItems
+exports.testReadSpreadsheet = sheetReader.testReadSpreadsheet
+exports.testMergeMissions = sheetReader.testMergeMissions
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
 
-const missionDeleter = require('./sheets/mission-deleter.js')
+const missionDeleter = require('./sheets/mission-deleter')
 exports.missionDeletion = missionDeleter.missionDeletion
 
-// temp/test
-exports.copyNode = sheetReader.copyNode
+const masterSpreadsheetReader = require('./sheets/import-master-sheet')
+exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
+exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
+
+const teams = require('./teams')
+exports.manageTeams = teams.manageTeams // contains links to all the other team functions
+exports.copyTeam = teams.copyTeam
+exports.copyMembers = teams.copyMembers
+exports.createTeam = teams.createTeam
+exports.deleteTeam = teams.deleteTeam
+// Not part of the /manageTeams page at the moment (12/27/17)
+//exports.createTeam = teams.createTeam
+// DANGEROUS - because missions and activity are under a team's node
+//exports.deleteTeam = teams.deleteTeam
+exports.addPeopleToTeam = teams.addPeopleToTeam
+exports.removePeopleFromTeam = teams.removePeopleFromTeam
+exports.viewMembers = teams.viewMembers
+exports.setCurrentTeam = teams.setCurrentTeam
+exports.resetCurrentTeam = teams.resetCurrentTeam
+exports.updateMemberListUnderTeams = teams.updateMemberListUnderTeams
+exports.updateTeamListUnderUsers = teams.updateTeamListUnderUsers
+
+
+const dbadmin = require('./dbadmin')
+exports.insert = dbadmin.insert
+exports.update = dbadmin.update
+exports.selectDistinct = dbadmin.selectDistinct
+exports.query = dbadmin.query
+exports.queryActive = dbadmin.queryActive
+exports.queryInactive = dbadmin.queryInactive
+exports.copy = dbadmin.copy
+exports.deleteNodes = dbadmin.deleteNodes
+exports.deleteAttributes = dbadmin.deleteAttributes
+
+/***********/
+exports.prepareDevDatabaseToTestMigration = dbadmin.prepareDevDatabaseToTestMigration
+exports.migrateMissions = dbadmin.migrateMissions
+exports.deleteMissionItems = dbadmin.deleteMissionItems
+exports.copyOverMissionItems = dbadmin.copyOverMissionItems
+/*********/

@@ -29,7 +29,6 @@ const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //`ht
 const HARDCODED_SHEET_ID = '1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs'
 const HARDCODED_MISSION_ID = '2'
 
-
 // setup for authGoogleAPI
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 var OAuth2 = google.auth.OAuth2;
@@ -87,7 +86,7 @@ function getAuthorizedClient() {
 
 
 // trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
-exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite(
+exports.readSpreadsheet = functions.database.ref(`teams/{teamname}/missions/{missionId}`).onWrite(
   event => {
 
     // Only edit data when it is first created.
@@ -103,8 +102,10 @@ exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite
 
     console.log('event.data.val() = ', event.data.val())
     var uid = event.data.val().uid
-    //var millis = date.asMillis()
-    //var status = 'not started'
+    var number_of_missions_in_master_mission
+    if(event.data.val().number_of_missions_in_master_mission)
+        number_of_missions_in_master_mission = event.data.val().number_of_missions_in_master_mission
+    else number_of_missions_in_master_mission = 1
 
     var missionStuff = {mission_id: event.params.missionId,
                         active: event.data.val().active,
@@ -116,22 +117,13 @@ exports.readSpreadsheet = functions.database.ref(`missions/{missionId}`).onWrite
                         script: event.data.val().script,           // don't have this yet, not ready
                         uid: event.data.val().uid,
                         uid_and_active: event.data.val().uid_and_active,
-                        url: event.data.val().url
+                        url: event.data.val().url,
+                        number_of_missions_in_master_mission: number_of_missions_in_master_mission
                         }
 
     event.data.ref.child('mission_create_date').set(date.asCentralTime())
-    //event.data.ref.child('uid_date_status').set(uid+'_'+millis+'_'+status)
     event.data.ref.child('uid_and_active').set(uid+'_'+event.data.val().active)
 
-
-    //var missionId = event.params.missionId
-    //var mission_type = event.data.val().mission_type
-    //var mission_name = event.data.val().mission_name
-    //event.data.adminRef.root.child(`missions/${missionId}/mission_type`).set(mission_type)
-    //event.data.adminRef.root.child(`missions/${missionId}/mission_name`).set(mission_name)
-
-    //console.log('readSpreadsheet: event.data.val(): ', event.data.val())
-    //var missionId = event.params.missionId
     var sheet_id = sheetIdUtil.sheetId(event.data.val().url)
     var adminRef = event.data.adminRef
 
@@ -194,92 +186,15 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                                       return reject();
                                   }
 
-                                  //console.log('readPromise:  response: ', response)
-
                                   var rows = response.values;
-                                  var colnames = []
-                                  var emailColumn = -1
-                                  var phoneColumn = -1
-                                  var threeWayPhoneColumn = -1
-                                  var threeWayNameColumn = -1
-                                  for(var c = 0; c < rows[0].length; c++) {
-                                        if(rows[0][c].toLowerCase() == 'email') {
-                                            emailColumn = c
-                                            colnames.push(rows[0][c].toLowerCase())
-                                        }
-                                        else if(isPhoneColumn(rows[0][c])) {
-                                            phoneColumn = c
-                                            colnames.push("phone")
-                                        }
-                                        else if(is3WayPhoneColumn(rows[0][c])) {
-                                            threeWayPhoneColumn = c
-                                            colnames.push("phone2")
-                                        }
-                                        else if(is3WayNameColumn(rows[0][c])) {
-                                            threeWayNameColumn = c
-                                            colnames.push("name2")
-                                        }
-                                        else {
-                                            colnames.push(rows[0][c].toLowerCase())
-                                        }
-                                  }
-
-                                  var count_in_spreadsheet = 0;
-                                  dbref.child('count_items_imported').set(0) // just initialize value
-                                  dbref.child('count_in_spreadsheet').set(0) // just initialize value
+                                  var columnInfo = getMissionColumnInfo(rows)
 
                                   for(var r = 1; r < rows.length; r++) {
-                                        var count_items_imported = 0; // not sure why this has to be inside the 'for' loop, but it does
-
-                                        var missionCopy = JSON.parse(JSON.stringify(missionStuff))
-                                        var hasPhone = true;
-
-                                        for(var c = 0; c < rows[0].length; c++) {
-                                            // as long as the cell has data in it...
-                                            if(rows[r][c]) {
-
-                                                // see if it's the email column so we can strip any " (Yes)" or " (No)" from email strings
-                                                if(c == emailColumn) {
-                                                    var stripped = stripYesNo(rows[r][c])
-                                                    missionCopy[colnames[c]] = stripped;
-                                                }
-                                                else {
-                                                    // otherwise just store the cell data
-                                                    missionCopy[colnames[c]] = rows[r][c];
-                                                }
-                                            }
-                                            else if(c == phoneColumn) {
-                                                // The if block above was false, meaning no data in that cell
-                                                // So are we on the phone column?  If so, skip the whole row - don't
-                                                // write it to the database because we can't call this person anyway
-                                                hasPhone = false
-                                            }
-                                        }
-
-                                        if(hasPhone) {
-                                            ++count_in_spreadsheet
-
-                                            // compound key: capture the status of the mission (new, in progress, complete) together
-                                            // with the active status (true/false) to figure out if this mission item is suitable
-                                            // for assigning to a volunteer.
-                                            // It's suitable if active_and_accomplished: true_new
-                                            missionCopy['accomplished'] = "new"
-                                            missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
-                                            adminRef.root.child('mission_items').push().set(missionCopy).then(() => {
-                                                // Now what I'd like to do here is keep track of how many mission_items got
-                                                // written so that we can present the count to the user for confirmation
-                                                dbref.child('count_items_imported').set(++count_items_imported)
-                                            })
-
-
-                                        }
-
+                                        var missionItemRowInfo = exports.eachMissionItem(r, rows, adminRef, columnInfo.colnames, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
+                                        exports.saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef, dbref)
                                   }
-                                  // track/compare this value with mission_items_imported.  They should be the same
-                                  dbref.child('count_in_spreadsheet').set(count_in_spreadsheet)
 
                             });
-
 
                         } // if(rows.length > 0 && rows[0].length > 0)
                     })
@@ -289,7 +204,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
             })
 
 
-            return resolve(response);
+            return resolve();
 
         })
         .then(() => { dbref.child('sheet_id').set(requestWithoutAuth.spreadsheetId) })
@@ -301,7 +216,6 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
             //
             // I dunno ...maybe
             //
-            // looks like this was never finished
             var mission_event = {date: date.asCentralTime()}
         })
         .catch((err) => {
@@ -309,6 +223,91 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
             console.log('Uh oh! Error caught in appendPromise(): ', err); reject()
         });
     });
+}
+
+
+var getMissionColumnInfo = function(rows) {
+
+    var colnames = []
+    var emailColumn = -1
+    var phoneColumn = -1
+    var threeWayPhoneColumn = -1
+    var threeWayNameColumn = -1
+    for(var c = 0; c < rows[0].length; c++) {
+        if(rows[0][c].toLowerCase() == 'email') {
+            emailColumn = c
+            colnames.push(rows[0][c].toLowerCase())
+        }
+        else if(isPhoneColumn(rows[0][c])) {
+            phoneColumn = c
+            colnames.push("phone")
+        }
+        else if(is3WayPhoneColumn(rows[0][c])) {
+            threeWayPhoneColumn = c
+            colnames.push("phone2")
+        }
+        else if(is3WayNameColumn(rows[0][c])) {
+            threeWayNameColumn = c
+            colnames.push("name2")
+        }
+        else {
+            colnames.push(rows[0][c].toLowerCase())
+        }
+    }
+
+    return {colnames: colnames,
+            emailColumn: emailColumn,
+            phoneColumn: phoneColumn,
+            threeWayPhoneColumn: threeWayPhoneColumn,
+            threeWayNameColumn: threeWayNameColumn}
+}
+
+
+exports.eachMissionItem = function(r, rows, adminRef, colnames, emailColumn, phoneColumn, missionStuff) {
+
+    var missionCopy = JSON.parse(JSON.stringify(missionStuff))
+    var hasPhone = true;
+
+    for(var c = 0; c < rows[0].length; c++) {
+        // as long as the cell has data in it...
+        if(rows[r][c]) {
+
+            // see if it's the email column so we can strip any " (Yes)" or " (No)" from email strings
+            if(c == emailColumn) {
+                var stripped = stripYesNo(rows[r][c])
+                missionCopy[colnames[c]] = stripped;
+            }
+            else {
+                // otherwise just store the cell data
+                missionCopy[colnames[c]] = rows[r][c];
+            }
+        }
+        else if(c == phoneColumn) {
+            // The if block above was false, meaning no data in that cell
+            // So are we on the phone column?  If so, skip the whole row - don't
+            // write it to the database because we can't call this person anyway
+            hasPhone = false
+        }
+    }
+
+    return {hasPhone: hasPhone, missionCopy: missionCopy}
+}
+
+
+exports.saveIfHasPhone = function(hasPhone, missionCopy, adminRef, dbref) {
+    console.log("hasPhone = ", hasPhone)
+
+    if(hasPhone) {
+        // compound key: capture the status of the mission (new, in progress, complete) together
+        // with the active status (true/false) to figure out if this mission item is suitable
+        // for assigning to a volunteer.
+        // It's suitable if active_and_accomplished: true_new
+        missionCopy['accomplished'] = "new"
+        missionCopy['active_and_accomplished'] = "false_new"  // <--- not ready to be assigned because the mission isn't active yet
+
+        // this is writing to /teams/{team}/missions/{missionId}
+        dbref.child('mission_items').push().set(missionCopy)
+    }
 }
 
 
@@ -380,19 +379,77 @@ exports.deleteMissionItems = functions.https.onRequest((req, res) => {
 });
 
 
-// temp function to backup everything under /activity over to /activity_backup
-// This works but the browser seems to hang and never stop spinning
-exports.copyNode = functions.https.onRequest((req, res) => {
+// test/dev function
+// Demonstrates reading a spreadsheet.  See also the onWrite trigger function above
+// named readSpreadsheet().  That function is what actually reads the spreadsheet
+// and writes each row under a mission_items node under the /teams/{teamname}/mission/{missionId}
+exports.testReadSpreadsheet = functions.https.onRequest((req, res) => {
 
-    var from = req.query.from
-    var to = req.query.to
+    var url = req.query.url
+    var mission_name = req.query.mission_name
 
-    return db.ref(`${from}`).once('value', snapshot => {
-         // WOW look how easy it is to back up a node !
-         db.ref(`${to}`).set(snapshot.val())
+    var sheet_id = sheetIdUtil.sheetId(url)
 
-         // future work: would be neat to have a url that takes a 'from' and 'to'
-         // so we could back up any node we want to any other node
-    });
+    var mission = { //mission_id:
+                    active: false,
+                    description: 'todo',
+                    //mission_create_date:,
+                    mission_name: mission_name,
+                    mission_type: 'Phone Campaign',
+                    name: 'Brent Dunklau',
+                    uid: 'MdaK0ltYeue0oGYF6gdks5S0yFh2',
+                    uid_and_active: 'MdaK0ltYeue0oGYF6gdks5S0yFh2_false',
+                    url: url,
+                    mark_for_merge: true // <-- notice new attribute (12/7/17)
+                   }
+
+    return db.ref(`teams/The Cavalry/missions`).push(mission).then(
+        () => {
+            var stuff = 'OK<P/>req.query.url = '+url
+            stuff += '<P/>sheet_id = '+sheet_id
+            res.status(200).send(stuff)
+        }
+    )
+
+})
+
+// test/dev function
+exports.testMergeMissions = functions.https.onRequest((req, res) => {
+
+    // query for all missions with mark_for_merge=true
+    return db.ref(`teams/The Cavalry/missions`).orderByChild(`mark_for_merge`).equalTo(true).once('value').then(snapshot => {
+        var mis = []
+        console.log("snapshot.numChildren() = ", snapshot.numChildren()) // perfect, tells us how many missions are marked to be merged
+                                                                         // not mission_items, but missions
+        snapshot.forEach(function (child) {
+            var iii = 0;
+            var missionInfo = child.val()
+            for(var key in missionInfo.mission_items) {
+
+                var groupNumber = iii % snapshot.numChildren()
+                missionInfo.mission_items[key]['group_number'] = groupNumber
+                mis.push(missionInfo.mission_items[key])
+                ++iii
+                db.ref(`teams/The Cavalry/mission_items/${key}`).set(missionInfo.mission_items[key])
+            }
+        })
+        return {list: mis, count: snapshot.numChildren()} // <-- this is the arg that is passed to the second then() function
+    })
+
+    // This 'then' function below is just to provide a sanity check to confirm the results of the action above
+    .then(
+            (returnValueFromFirstThenFunction) => { // returnValueFromFirstThenFunction isn't used below
+                var stuff = 'OK'
+                return db.ref(`teams/The Cavalry/merged_mission_items`).orderByChild(`group_number`).once('value').then(snapshot => {
+                    snapshot.forEach(function (child) {
+                        var missionItemId = child.key
+                        var missionItem = child.val()
+                        stuff += '<P/>missionItemId = '+ missionItemId +'  missionItem.name = '+missionItem.name+"  missionItem.group_number = "+missionItem.group_number
+                    })
+                    res.status(200).send(stuff)
+                })
+            }
+    )
+
 })
 

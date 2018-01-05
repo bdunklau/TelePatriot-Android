@@ -8,9 +8,26 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class MissionDetail {
 
-    private String description, email, mission_create_date, mission_id, mission_name, mission_type, name, phone, script, uid, uid_and_active, url, accomplished, active_and_accomplished;
+    private String description;
+    private String email;
+    private String mission_create_date;
+    private String mission_complete_date;
+    private String mission_id;
+    private String mission_name;
+    private String mission_type;
+    private String name;
+    private String phone;
+    private String script;
+    private String uid;
+    private String uid_and_active;
+    private String url;
+    private String accomplished;
+    private String active_and_accomplished;
     private String name2, phone2; // when the spreadsheet has these columns, means 3 way call
     private boolean active;
+    private Integer group_number;
+    private Integer group_number_was;
+    private Integer number_of_missions_in_master_mission;
 
     public MissionDetail() {
 
@@ -141,14 +158,18 @@ public class MissionDetail {
     }
 
     public void unassign(String missionItemId) {
+        // New as of Dec 2017: When we unassign a mission item, we have to set group_number
+        // back to group_number_was.  Otherwise, group_number will stay at 999999 and forever be at
+        // the end of the queue
+        setGroup_number(getGroup_number_was());
         setState("new", missionItemId);
     }
 
     public void setState(String state, String missionItemId) {
         setAccomplished(state);
         setActive_and_accomplished(isActive()+"_"+state);
-        FirebaseDatabase.getInstance().getReference("mission_items/"+missionItemId).setValue(this);
-
+        String team = User.getInstance().getCurrentTeamName();
+        FirebaseDatabase.getInstance().getReference("/teams/"+team+"/mission_items/"+missionItemId).setValue(this);
     }
 
     public void complete(String missionItemId) {
@@ -173,5 +194,37 @@ public class MissionDetail {
     // when the spreadsheet has these columns, means 3 way call
     public void setPhone2(String phone2) {
         this.phone2 = phone2;
+    }
+
+    public Integer getGroup_number() {
+        return group_number;
+    }
+
+    public void setGroup_number(Integer group_number) {
+        this.group_number = group_number;
+    }
+
+    public Integer getGroup_number_was() {
+        return group_number_was;
+    }
+
+    public void setGroup_number_was(Integer group_number_was) {
+        this.group_number_was = group_number_was;
+    }
+
+    public Integer getNumber_of_missions_in_master_mission() {
+        return number_of_missions_in_master_mission;
+    }
+
+    public void setNumber_of_missions_in_master_mission(Integer number_of_missions_in_master_mission) {
+        this.number_of_missions_in_master_mission = number_of_missions_in_master_mission;
+    }
+
+    public String getMission_complete_date() {
+        return mission_complete_date;
+    }
+
+    public void setMission_complete_date(String mission_complete_date) {
+        this.mission_complete_date = mission_complete_date;
     }
 }

@@ -37,7 +37,7 @@ public class MyMissionFragment extends BaseFragment {
     private String TAG = "MyMissionFragment";
     private MissionDetail missionDetail;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
-    private Button button_call_person1, button_call_person2;
+    private Button button_call_person1, button_call_person2, button_switch_teams;
     private String missionId, missionItemId;
 
 
@@ -61,49 +61,147 @@ public class MyMissionFragment extends BaseFragment {
         button_call_person1 = myView.findViewById(R.id.button_call_person1);
         button_call_person2 = myView.findViewById(R.id.button_call_person2);
 
-
-        FirebaseDatabase.getInstance().getReference("mission_items").orderByChild("active_and_accomplished").equalTo("true_new").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
+        button_switch_teams = myView.findViewById(R.id.button_switch_teams);
+        button_switch_teams.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    missionItemId = child.getKey();
-
-                    missionDetail = child.getValue(MissionDetail.class);
-                    if(missionDetail == null)
-                        return; // we should indicate no missions available for the user
-
-                    User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
-
-                    String missionName = missionDetail.getMission_name();
-                    String missionDescription = missionDetail.getDescription();
-                    String missionScript = missionDetail.getScript();
-
-                    mission_name.setText(missionName);
-                    mission_description.setText(missionDescription);
-                    mission_script.setText(missionScript);
-                    button_call_person1.setVisibility(View.VISIBLE);
-                    button_call_person1.setText(missionDetail.getName()+" "+missionDetail.getPhone());
-                    wireUp(button_call_person1, missionDetail);
-
-                    prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
-
-                    missionDetail.setAccomplished("in progress");
-                    missionDetail.setActive_and_accomplished("true_in progress");
-
-                    dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
-                }
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public void onClick(View view) {
+                Fragment fragment = new SwitchTeamsFragment();
+                FragmentManager fragmentManager = getFragmentManager();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
             }
         });
 
 
+        // BUG FIX:  If you choose My Mission, then swipe to get the menu, then touch My Mission again, you will "orphan"
+        // the mission you were currently working.  That orphan mission will be stuck in an in-progress state with a group_number
+        // of 999999 meaning no one else will be assigned that mission either.
+        //
+        // To fix, just check and see if the user already has a current mission item and use it if they do
+        MissionDetail missionItem = User.getInstance().getCurrentMissionItem();
+        if (missionItem != null) {
+            workThis(missionItem);
+        }
+
+        else {
+
+
+            // just start out this way by default so we don't get the ugly screen flash
+            // that shows the user buttons and labels that don't make sense
+            indicateNoMissionsAvailable();
+
+
+            String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
+
+            FirebaseDatabase.getInstance().getReference("teams/" + team + "/mission_items").orderByChild("group_number").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.getChildrenCount() == 0) {
+                        indicateNoMissionsAvailable();
+                        return; // we should indicate no missions available for the user
+                    }
+
+                    for (DataSnapshot child : dataSnapshot.getChildren()) {
+                        missionItemId = child.getKey();
+
+                        missionDetail = child.getValue(MissionDetail.class);
+
+                        // if all we got was a 999999, then this item is being worked by someone else and
+                        // there basically are no more missions for this user
+                        if (missionDetail == null || missionDetail.getGroup_number() == 999999) {
+                            indicateNoMissionsAvailable();
+                            return; // we should indicate no missions available for the user
+                        }
+
+                        // set fields back to visible if they were previously set to View.GONE
+                        setFieldsVisible();
+
+                        User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
+
+                        String missionName = missionDetail.getMission_name();
+                        String missionDescription = missionDetail.getDescription();
+                        String missionScript = missionDetail.getScript();
+
+                        mission_name.setText(missionName);
+                        mission_description.setText(missionDescription);
+                        mission_script.setText(missionScript);
+                        button_call_person1.setVisibility(View.VISIBLE);
+                        button_call_person1.setText(missionDetail.getName() + " " + missionDetail.getPhone());
+                        wireUp(button_call_person1, missionDetail);
+
+                        prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
+
+                        missionDetail.setAccomplished("in progress");
+                        missionDetail.setActive_and_accomplished("true_in progress");
+
+                        // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
+                        // and save the original value in group_number_was
+                        missionDetail.setGroup_number_was(missionDetail.getGroup_number());
+                        missionDetail.setGroup_number(999999);
+
+                        dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
+                    }
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+
+
+        } // else  that belongs to if(missionItem != null) {
+
+
         setHasOptionsMenu(true);
         return myView;
+    }
+
+    private void workThis(MissionDetail missionItem) {
+
+        // set fields back to visible if they were previously set to View.GONE
+        setFieldsVisible();
+
+        String missionName = missionItem.getMission_name();
+        String missionDescription = missionItem.getDescription();
+        String missionScript = missionItem.getScript();
+
+        mission_name.setText(missionName);
+        mission_description.setText(missionDescription);
+        mission_script.setText(missionScript);
+        button_call_person1.setVisibility(View.VISIBLE);
+        button_call_person1.setText(missionItem.getName() + " " + missionItem.getPhone());
+        wireUp(button_call_person1, missionItem);
+
+        prepareFor3WayCallIfNecessary(missionItem, button_call_person2);
+    }
+
+    private void indicateNoMissionsAvailable() {
+        // hide the call buttons
+        button_call_person1.setVisibility(View.GONE);
+        button_call_person2.setVisibility(View.GONE);
+        // hide the description and the script fields
+        mission_name.setVisibility(View.GONE);
+        mission_script.setVisibility(View.GONE);
+        myView.findViewById(R.id.heading_mission_description).setVisibility(View.GONE);
+        myView.findViewById(R.id.heading_mission_script).setVisibility(View.GONE);
+
+        // leave the switch teams button visible
+
+        // rather than hide the mission description TextView, we'll repurpose
+        // it to show a message to the user indicating that there are no missions
+        // in this team at this time.
+        // This is the same text you'll see on the iPhone version - MyMissionViewController
+        mission_description.setText("No missions found yet for this team...");
+    }
+
+    private void setFieldsVisible() {
+        button_call_person1.setVisibility(View.VISIBLE);
+        button_call_person2.setVisibility(View.VISIBLE);
+        mission_name.setVisibility(View.VISIBLE);
+        mission_script.setVisibility(View.VISIBLE);
+        myView.findViewById(R.id.heading_mission_description).setVisibility(View.VISIBLE);
+        myView.findViewById(R.id.heading_mission_script).setVisibility(View.VISIBLE);
     }
 
     private void prepareFor3WayCallIfNecessary(MissionDetail missionDetail, Button button) {
@@ -188,30 +286,6 @@ public class MyMissionFragment extends BaseFragment {
         });
     }
 
-    /*
-    private void completeCallIfAppropriate() {
-        if(missionDetail == null)
-            return;
-        if("new".equalsIgnoreCase(missionDetail.getAccomplished()))
-            return;
-        if("in progress".equalsIgnoreCase(missionDetail.getAccomplished()))
-            return;
-        setMissionItemState("complete");
-    }
-    */
-
-    /*
-    private void makeMissionItemAvailable() {
-        if(missionDetail == null)
-            return;
-        if("new".equalsIgnoreCase(missionDetail.getAccomplished()))
-            return;
-        if("calling".equalsIgnoreCase(missionDetail.getAccomplished()))
-            return;
-        setMissionItemState("new");
-    }
-    */
-
     private void call(MissionDetail missionDetail) {
         checkPermission();
         setMissionItemState("calling");
@@ -225,12 +299,12 @@ public class MyMissionFragment extends BaseFragment {
         // Writing to the database here just gives the directors the cool visual of seeing the
         // call start and then seeing it end
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+        String team = User.getInstance().getCurrentTeamName();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
         String eventType = "is calling";
         String volunteerPhone = getVolunteerPhone();
         String supporterName = missionDetail.getName();
         MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
-        // see also User.completeMissionItem()
         ref.child("all").push().setValue(m);
         ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
 
@@ -244,12 +318,12 @@ public class MyMissionFragment extends BaseFragment {
         Intent intent = new Intent(Intent.ACTION_CALL);
         intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("activity");
+        String team = User.getInstance().getCurrentTeamName();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
         String eventType = "is calling";
         String volunteerPhone = getVolunteerPhone();
         String name2 = missionDetail.getName2();
         MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone2(), volunteerPhone, name2);
-        // see also User.completeMissionItem()
         ref.child("all").push().setValue(m);
         ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
 
@@ -265,11 +339,17 @@ public class MyMissionFragment extends BaseFragment {
     }
 
 
+    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
+    // an app crash on the very first phone call.  Thinking that I'm requesting permission
+    // too late ... ?
     // https://developer.android.com/training/permissions/requesting.html
     private void checkPermission() {
         checkPermission(android.Manifest.permission.CALL_PHONE);
     }
 
+    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
+    // an app crash on the very first phone call.  Thinking that I'm requesting permission
+    // too late ... ?
     private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
         if (ContextCompat.checkSelfPermission(myView.getContext(), androidPermission)
                 != PackageManager.PERMISSION_GRANTED) {
