@@ -109,12 +109,12 @@ exports.readSpreadsheet = functions.database.ref(`teams/{teamname}/missions/{mis
 
     var missionStuff = {mission_id: event.params.missionId,
                         active: event.data.val().active,
-                        description: event.data.val().description, // don't have this yet, not ready
+                        description: event.data.val().description, // don't have this yet, not ready.  Written below at:  dbref.child('description').set(rows[0][0])
                         mission_create_date: date.asCentralTime(),
                         mission_name: event.data.val().mission_name,
                         mission_type: event.data.val().mission_type,
                         name: event.data.val().name,
-                        script: event.data.val().script,           // don't have this yet, not ready
+                        script: event.data.val().script,           // don't have this yet, not ready.  Written below at:  dbref.child('script').set(rows[0][0])
                         uid: event.data.val().uid,
                         uid_and_active: event.data.val().uid_and_active,
                         url: event.data.val().url,
@@ -188,12 +188,20 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
 
                                   var rows = response.values;
                                   var columnInfo = getMissionColumnInfo(rows)
+                                  var totalRowsInSpreadsheetWithPhone = 0
 
                                   for(var r = 1; r < rows.length; r++) {
                                         var missionItemRowInfo = exports.eachMissionItem(r, rows, adminRef, columnInfo.colnames, columnInfo.emailColumn, columnInfo.phoneColumn, missionStuff)
-                                        exports.saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, adminRef, dbref)
+                                        if(missionItemRowInfo.hasPhone) { ++totalRowsInSpreadsheetWithPhone }
+                                        exports.saveIfHasPhone(missionItemRowInfo.hasPhone, missionItemRowInfo.missionCopy, dbref)
                                   }
 
+                                  dbref.child('total_rows_in_spreadsheet').set(rows.length - 1) // // -1 so we don't count the header row
+                                  dbref.child('total_rows_in_spreadsheet_with_phone').set(totalRowsInSpreadsheetWithPhone)
+                                  dbref.child('total_rows_activated').set(0)
+                                  dbref.child('total_rows_deactivated').set(totalRowsInSpreadsheetWithPhone)
+                                  dbref.child('total_rows_completed').set(0)
+                                  dbref.child('percent_complete').set(0) // 0 - 100,  see mission-stats.js
                             });
 
                         } // if(rows.length > 0 && rows[0].length > 0)
@@ -294,7 +302,7 @@ exports.eachMissionItem = function(r, rows, adminRef, colnames, emailColumn, pho
 }
 
 
-exports.saveIfHasPhone = function(hasPhone, missionCopy, adminRef, dbref) {
+exports.saveIfHasPhone = function(hasPhone, missionCopy, dbref) {
     console.log("hasPhone = ", hasPhone)
 
     if(hasPhone) {
@@ -385,31 +393,50 @@ exports.deleteMissionItems = functions.https.onRequest((req, res) => {
 // and writes each row under a mission_items node under the /teams/{teamname}/mission/{missionId}
 exports.testReadSpreadsheet = functions.https.onRequest((req, res) => {
 
+    var stuff = ''
     var url = req.query.url
+    var team = req.query.team
     var mission_name = req.query.mission_name
 
-    var sheet_id = sheetIdUtil.sheetId(url)
-
-    var mission = { //mission_id:
-                    active: false,
-                    description: 'todo',
-                    //mission_create_date:,
-                    mission_name: mission_name,
-                    mission_type: 'Phone Campaign',
-                    name: 'Brent Dunklau',
-                    uid: 'MdaK0ltYeue0oGYF6gdks5S0yFh2',
-                    uid_and_active: 'MdaK0ltYeue0oGYF6gdks5S0yFh2_false',
-                    url: url,
-                    mark_for_merge: true // <-- notice new attribute (12/7/17)
-                   }
-
-    return db.ref(`teams/The Cavalry/missions`).push(mission).then(
-        () => {
-            var stuff = 'OK<P/>req.query.url = '+url
-            stuff += '<P/>sheet_id = '+sheet_id
-            res.status(200).send(stuff)
+    if(!url || !team || !mission_name) {
+        return res.status(200).send(stuff+"<P/>These request parms are required: <P/> url<P/> team<P/> mission_name")
+    }
+    else {
+        var sheet_id = sheetIdUtil.sheetId(url)
+        if(!sheet_id) {
+            res.status(200).send(stuff+'<P/>Could not determine sheet Id from url: '+url)
         }
-    )
+        else {
+            var mission = { //mission_id:
+                            active: false,
+                            description: 'todo',
+                            //mission_create_date:,
+                            mission_name: mission_name,
+                            mission_type: 'Phone Campaign',
+                            name: 'Brent Dunklau',
+                            uid: 'MdaK0ltYeue0oGYF6gdks5S0yFh2',
+                            uid_and_active: 'MdaK0ltYeue0oGYF6gdks5S0yFh2_false',
+                            url: url
+                            //, mark_for_merge: true // <-- notice new attribute (12/7/17)
+                            // don't know if we need mark_for_merge ALL the time (1/5/18)
+                           }
+
+            return db.ref(`teams/${team}/missions`).push(mission).then(
+                () => {
+                    var stuff = 'OK'
+                    stuff += '<P/>req.query.team = '+team
+                    stuff += '<P/>req.query.mission_name = '+mission_name
+                    stuff += '<P/>req.query.url = '+url
+                    stuff += '<P/>sheet_id = '+sheet_id
+                    res.status(200).send(stuff)
+                }
+            )
+
+        }
+
+    }
+
+
 
 })
 

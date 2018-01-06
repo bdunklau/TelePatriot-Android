@@ -28,7 +28,7 @@ public class AllMissionsFragment extends MissionListFragment {
 
     public AllMissionsFragment() {
         this.title = "All Missions";
-        String team = User.getInstance().getCurrentTeam().getTeam_name();
+        String team = User.getInstance().getCurrentTeamName();
         this.ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions");
         this.query = this.ref;
     }

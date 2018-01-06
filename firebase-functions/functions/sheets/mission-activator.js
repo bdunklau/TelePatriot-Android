@@ -43,6 +43,7 @@ exports.missionActivation = functions.database.ref("teams/{team}/missions/{missi
         return event.data.adminRef.root.child(`teams/${team}/missions/${missionId}/mission_items`).once('value').then(snapshot => {
 
             var counter = 0
+            var total_rows_activated = 0
             snapshot.forEach(function (child) { // FYI, child is a DataSnapshot
                 ++counter
                 var key = child.key
@@ -52,11 +53,13 @@ exports.missionActivation = functions.database.ref("teams/{team}/missions/{missi
                 copy.active = active
                 copy.uid_and_active = uid_and_active
                 copy.active_and_accomplished = active+"_"+child.val().accomplished
-                copy.group_number = calculateGroupNumber(copy, counter)
+                copy.group_number = counter % 10 // fixed modulus should be ok regardless of how many spreadsheets we load
 
                 // only write to this node if the mission item is active and new...
-                if(copy.active_and_accomplished == 'true_new')
+                if(copy.active_and_accomplished == 'true_new') {
                     adminRef.root.child(`teams/${team}/mission_items/${key}`).set(copy)
+                    ++total_rows_activated
+                }
 
                 updates["teams/"+team+"/missions/"+missionId+"/mission_items/"+key+"/active"] = active
                 updates["teams/"+team+"/missions/"+missionId+"/mission_items/"+key+"/uid_and_active"] = uid_and_active
@@ -65,6 +68,10 @@ exports.missionActivation = functions.database.ref("teams/{team}/missions/{missi
                 // just for debugging...
                 //adminRef.root.child("logs").push().set({team: team, missionId: missionId, key: key, active: active, uid_and_active: uid_and_active, active_and_accomplished: active+"_"+child.val().accomplished})
             })
+            updates["teams/"+team+"/missions/"+missionId+"/total_rows_activated"] = total_rows_activated
+            updates["teams/"+team+"/missions/"+missionId+"/total_rows_deactivated"] = 0
+
+            // good example of multi-path updates
             return adminRef.root.update(updates)
         })
 
@@ -74,18 +81,19 @@ exports.missionActivation = functions.database.ref("teams/{team}/missions/{missi
         // delete all nodes under teams/${team}/missions/${missionId}/mission_items for this mission
         var mref = event.data.adminRef.root.child(`teams/${team}/mission_items`)
         mref.orderByChild('mission_id').equalTo(missionId).once('value').then(snapshot => {
+            var updates = {}
+            var total_rows_deactivated = 0
             snapshot.forEach(function (child) {
                 mref.child(child.key).remove()
+                ++total_rows_deactivated
             })
+
+            updates["teams/"+team+"/missions/"+missionId+"/total_rows_activated"] = 0
+            updates["teams/"+team+"/missions/"+missionId+"/total_rows_deactivated"] = total_rows_deactivated
+
+            // good example of multi-path updates
+            adminRef.root.update(updates)
         })
     }
 
 })
-
-var calculateGroupNumber = function(mission_item, counter) {
-    var modulus = 1
-    if(mission_item.number_of_missions_in_master_mission)
-        modulus =  mission_item.number_of_missions_in_master_mission
-
-    return counter % modulus
-}

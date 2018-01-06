@@ -1,9 +1,19 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import android.util.Log;
+
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 
 /**
  * Created by bdunklau on 10/24/17.
+ *
+ * In hindsight, should have named this class MissionItem
  */
 
 public class MissionDetail {
@@ -28,6 +38,7 @@ public class MissionDetail {
     private Integer group_number;
     private Integer group_number_was;
     private Integer number_of_missions_in_master_mission;
+
 
     public MissionDetail() {
 
@@ -173,7 +184,37 @@ public class MissionDetail {
     }
 
     public void complete(String missionItemId) {
+        updateCompletedCount();
         setState("complete", missionItemId);
+    }
+
+    // source:  https://stackoverflow.com/a/28915836
+    public void updateCompletedCount() {
+        DatabaseReference mref = FirebaseDatabase.getInstance().getReference("/teams/"+User.getInstance().getCurrentTeamName()+"/missions/"+mission_id);
+        mref.child("total_rows_completed").runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(final MutableData currentData) {
+                if (currentData.getValue() == null) {
+                    currentData.setValue(1);
+                } else {
+                    currentData.setValue((Long) currentData.getValue() + 1);
+                }
+
+                return Transaction.success(currentData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError firebaseError, boolean committed, DataSnapshot currentData) {
+                if (firebaseError != null) {
+                    //Log.d("Firebase counter increment failed.");
+                } else {
+                    //Log.d("Firebase counter increment succeeded.");
+                    // update the UI using the value in currentData
+                    //  ...actually, may not need to update UI - may not even be possible here
+                    // but we can listen for changes on the screen where we DO display the completed count !
+                }
+            }
+        });
     }
 
     // when the spreadsheet has these columns, means 3 way call
