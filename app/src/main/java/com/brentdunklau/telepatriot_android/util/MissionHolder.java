@@ -131,7 +131,11 @@ public class MissionHolder extends RecyclerView.ViewHolder {
     }
 
     private void stats2(TextView t, String label, Integer intVal) {
-        String value = intVal != null ? intVal+"%" : "-";
-        t.setText(label+value);
+        if(intVal == null) {
+            t.setText("                   "); // for "legacy" missions that don't keep track of percent_complete - what a hack
+        }
+        else {
+            t.setText(label+intVal+"%");
+        }
     }
 }
