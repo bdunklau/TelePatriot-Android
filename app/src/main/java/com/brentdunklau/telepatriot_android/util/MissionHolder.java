@@ -18,11 +18,23 @@ import org.w3c.dom.Text;
 
 /**
  * Created by bdunklau on 10/18/2017.
+ *
+ *  see  res/layout/mission_summary.xml
  */
 
 public class MissionHolder extends RecyclerView.ViewHolder {
 
     TextView mission_name, mission_type, mission_create_date, mission_created_by;
+    //TextView names_and_numbers_loaded;
+
+    // see also MissionDetail
+    TextView total_rows_in_spreadsheet;
+    TextView total_rows_in_spreadsheet_with_phone;
+    TextView total_rows_activated;
+    TextView total_rows_deactivated;
+    TextView total_rows_completed;
+    TextView percent_complete;
+
 
     private SwitchCompat activeSwitch;
 
@@ -30,12 +42,21 @@ public class MissionHolder extends RecyclerView.ViewHolder {
     private MissionHolder.ClickListener mClickListener;
 
 
+    // see  res/layout/mission_summary.xml
     public MissionHolder(View itemView) {
         super(itemView);
         mission_name = itemView.findViewById(R.id.mission_name);
         mission_type = itemView.findViewById(R.id.mission_type);
         mission_create_date = itemView.findViewById(R.id.mission_create_date);
         mission_created_by = itemView.findViewById(R.id.mission_created_by);
+        //names_and_numbers_loaded = itemView.findViewById(R.id.names_and_numbers_loaded);
+
+        total_rows_in_spreadsheet = itemView.findViewById(R.id.total_rows_in_spreadsheet);
+        total_rows_in_spreadsheet_with_phone = itemView.findViewById(R.id.total_rows_in_spreadsheet_with_phone);
+        total_rows_activated = itemView.findViewById(R.id.total_rows_activated);
+        total_rows_deactivated = itemView.findViewById(R.id.total_rows_deactivated);
+        total_rows_completed = itemView.findViewById(R.id.total_rows_completed);
+        percent_complete = itemView.findViewById(R.id.percent_complete); // total_rows_completed / total_rows_in_spreadsheet_with_phone
 
 
         activeSwitch = itemView.findViewById(R.id.switch_active);
@@ -57,6 +78,14 @@ public class MissionHolder extends RecyclerView.ViewHolder {
         mission_type.setText(mission.getMission_type());
         mission_create_date.setText("Created on "+mission.getMission_create_date());
         mission_created_by.setText("By "+mission.getName());
+        //names_and_numbers_loaded.setText("Loaded "+mission.getCount_items_imported() + " of " + mission.getCount_in_spreadsheet()+" names/numbers");
+
+        stats(total_rows_in_spreadsheet, "Total rows in spreadsheet: ", mission.getTotal_rows_in_spreadsheet());
+        stats(total_rows_in_spreadsheet_with_phone, "Total rows with a phone number: ", mission.getTotal_rows_in_spreadsheet_with_phone());
+        stats(total_rows_activated, "Total rows activated: ", mission.getTotal_rows_activated());
+        stats(total_rows_deactivated, "Total rows inactive: ", mission.getTotal_rows_deactivated());
+        stats(total_rows_completed, "Total rows completed: ", mission.getTotal_rows_completed());
+        stats2(percent_complete, "Complete ", mission.getPercent_complete());
 
         activeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -94,5 +123,19 @@ public class MissionHolder extends RecyclerView.ViewHolder {
                 switchCompat.setText(value ? "Active" : "Inactive");
             }
         });
+    }
+
+    private void stats(TextView t, String label, Integer intVal) {
+        String value = intVal != null ? intVal.toString() : "-";
+        t.setText(label+value);
+    }
+
+    private void stats2(TextView t, String label, Integer intVal) {
+        if(intVal == null) {
+            t.setText("                   "); // for "legacy" missions that don't keep track of percent_complete - what a hack
+        }
+        else {
+            t.setText(label+intVal+"%");
+        }
     }
 }

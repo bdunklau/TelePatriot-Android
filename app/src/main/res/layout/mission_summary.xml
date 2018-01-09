@@ -26,9 +26,11 @@
 
         <LinearLayout
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="250dp"
             android:layout_marginLeft="5dp"
-            android:orientation="vertical">
+            android:layout_marginBottom="10dp"
+            android:orientation="vertical"
+            android:weightSum="1">
 
             <TextView
                 android:id="@+id/mission_name"
@@ -43,19 +45,41 @@
                 android:textSize="18sp" />
 
 
-            <android.support.v7.widget.SwitchCompat
-                android:id="@+id/switch_active"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/second_row"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:theme="@style/SwitchStyleGreen"
-                android:showText="false"
-                android:layout_marginTop="0dp"
-                android:layout_marginLeft="150dp"
-                android:layout_marginRight="5dp"
-                android:layout_alignParentRight="true"
-                android:layout_below="@+id/mission_name"
-                app:switchMinWidth="75dp"
-                android:text="Active" />
+                android:orientation="horizontal"
+                android:layout_below="@+id/mission_name">
+
+                <!--  See MissionHolder.setMission() -->
+                <TextView
+                    android:id="@+id/percent_complete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginTop="5dp"
+                    android:textStyle="bold"
+                    android:textColor="#232323"
+                    android:gravity="left"
+                    android:text="Complete "
+                    android:textSize="16sp" />
+
+
+                <android.support.v7.widget.SwitchCompat
+                    android:id="@+id/switch_active"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:theme="@style/SwitchStyleGreen"
+                    android:showText="false"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginLeft="50dp"
+                    android:layout_marginRight="5dp"
+                    android:layout_alignParentRight="true"
+                    app:switchMinWidth="75dp"
+                    android:text="Active" />
+
+            </LinearLayout>
 
 
             <TextView
@@ -64,7 +88,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="5dp"
                 android:layout_marginTop="0dp"
-                android:layout_below="@+id/switch_active"
+                android:layout_below="@+id/second_row"
                 android:gravity="left"
                 android:text="mission type"
                 android:textSize="12sp" />
@@ -91,6 +115,91 @@
                 android:gravity="left"
                 android:text="created by"
                 android:textSize="12sp"/>
+
+            <!--
+            <TextView
+                android:id="@+id/names_and_numbers_loaded"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/mission_created_by"
+                android:layout_marginBottom="10dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_weight="0.30"
+                android:gravity="left"
+                android:text="Name &amp; Numbers"
+                android:textSize="12sp" />
+            -->
+
+            <!--  See MissionHolder.setMission() -->
+            <TextView
+                android:id="@+id/total_rows_in_spreadsheet"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_below="@+id/mission_created_by"
+                android:layout_marginBottom="0dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="0.30"
+                android:gravity="left"
+                android:text="Total rows in spreadsheet: "
+                android:textSize="12sp" />
+
+            <!--  See MissionHolder.setMission() -->
+            <TextView
+                android:id="@+id/total_rows_in_spreadsheet_with_phone"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_below="@+id/total_rows_in_spreadsheet"
+                android:layout_marginBottom="0dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="0.30"
+                android:gravity="left"
+                android:text="Total rows with a phone number: "
+                android:textSize="12sp" />
+
+            <!--  See MissionHolder.setMission() -->
+            <TextView
+                android:id="@+id/total_rows_activated"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_below="@+id/total_rows_in_spreadsheet_with_phone"
+                android:layout_marginBottom="0dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="0.30"
+                android:gravity="left"
+                android:text="Total rows activated: "
+                android:textSize="12sp" />
+
+            <!--  See MissionHolder.setMission() -->
+            <TextView
+                android:id="@+id/total_rows_deactivated"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_below="@+id/total_rows_activated"
+                android:layout_marginBottom="0dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="0.30"
+                android:gravity="left"
+                android:text="Total rows inactive: "
+                android:textSize="12sp" />
+
+            <!--  See MissionHolder.setMission() -->
+            <TextView
+                android:id="@+id/total_rows_completed"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_below="@+id/total_rows_deactivated"
+                android:layout_marginBottom="0dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="0.30"
+                android:gravity="left"
+                android:text="Total rows completed: "
+                android:textSize="12sp" />
 
         </LinearLayout>
 

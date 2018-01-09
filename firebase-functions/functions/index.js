@@ -78,3 +78,7 @@ exports.migrateMissions = dbadmin.migrateMissions
 exports.deleteMissionItems = dbadmin.deleteMissionItems
 exports.copyOverMissionItems = dbadmin.copyOverMissionItems
 /*********/
+
+
+const missionStats = require('./sheets/mission-stats')
+exports.percentComplete = missionStats.percentComplete

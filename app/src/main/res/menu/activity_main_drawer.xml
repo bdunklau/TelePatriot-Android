@@ -27,6 +27,7 @@
 
     <!-- for more icons, see  https://material.io/icons/   -->
 
+    <!--
     <item android:title="Communicate">
         <menu>
             <item
@@ -34,14 +35,18 @@
                 android:icon="@drawable/ic_share_black_24dp"
                 android:title="Share Petition" />
 
-            <!--
             <item
                 android:id="@+id/nav_chat"
                 android:icon="@drawable/ic_chat_bubble_outline_black_24dp"
                 android:title="Chat/Help" />
-                -->
         </menu>
     </item>
+    -->
+
+
+
+
+
 
     <item android:title="Your Account">
         <menu>

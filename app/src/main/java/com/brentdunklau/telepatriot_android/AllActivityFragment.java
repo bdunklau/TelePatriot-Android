@@ -63,6 +63,8 @@ public class AllActivityFragment extends BaseFragment {
     }
 
 
+    // see MyMissionFragment.call() and .call2()
+    // see also User.completeMissionItem()
     private void showMissionActivity() {
         String team = User.getInstance().getCurrentTeam().getTeam_name();
         final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity").child("all"); // i.e. actual human activities like making phone calls

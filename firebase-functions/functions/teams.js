@@ -283,10 +283,6 @@ var addPeopleByEmail = function(team, emails, stuff, callback) {
 }
 
 
-// TODO Needs to be a trigger that delete users and teams from each others nodes
-// Don't tie them together here.  The problem with this approach is that if you manually
-// delete a user-team association in one node, without a trigger, you have just
-// compromised the data integrity
 exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
 
     // allow for these req parms
