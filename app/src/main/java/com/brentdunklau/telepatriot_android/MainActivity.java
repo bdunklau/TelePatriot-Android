@@ -148,15 +148,20 @@ public class MainActivity extends AppCompatActivity
             Fragment fragment = new MyMissionFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_director_layout) {
-            Fragment fragment = new DirectorFragment();
+            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
+            Fragment fragment = new MissionsFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.nav_admin_layout) {
             Fragment fragment = new AdminFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-        } else if( id == R.id.nav_send_petition) {
+        }
+        /***** take out till it's you now the petition link is correct
+        else if( id == R.id.nav_send_petition) {
             Fragment fragment = new SendPetitionFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-        } /******
+        }
+         *****/
+        /******
         else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
             doChat();
         } *****/

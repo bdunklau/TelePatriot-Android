@@ -20,9 +20,11 @@ import android.widget.Button;
 public class MissionsFragment extends DirectorFragment {
 
     Button btnNewPhoneCampaign;
+    /*****
     Button btnMyActiveMissions;
     Button btnAllActiveMissions;
     Button btnAllMyMissions;
+     ******/
     Button btnAllMissions;
     Button btnAllActivity;
 
@@ -34,17 +36,20 @@ public class MissionsFragment extends DirectorFragment {
         myView = inflater.inflate(R.layout.missions_fragment, container, false);
 
         btnNewPhoneCampaign = myView.findViewById(R.id.button_new_phone_campaign);
+        /****
         btnMyActiveMissions = myView.findViewById(R.id.button_my_active_missions);
         btnAllActiveMissions = myView.findViewById(R.id.button_all_active_missions);
         btnAllMyMissions = myView.findViewById(R.id.button_all_my_missions);
+         ****/
         btnAllMissions = myView.findViewById(R.id.button_all_missions);
         btnAllActivity = myView.findViewById(R.id.button_all_activity);
 
-        //wireUp(btnNewPhoneCampaign, new NewPhoneCampaignFragment());
         wireUp(btnNewPhoneCampaign, new ChooseSpreadsheetTypeFragment());
+        /********
         wireUp(btnMyActiveMissions, new MyActiveMissionsFragment());
         wireUp(btnAllActiveMissions, new AllActiveMissionsFragment());
         wireUp(btnAllMyMissions, new AllMyMissionsFragment());
+         *********/
         wireUp(btnAllMissions, new AllMissionsFragment());
         wireUp(btnAllActivity, new AllActivityFragment());
 

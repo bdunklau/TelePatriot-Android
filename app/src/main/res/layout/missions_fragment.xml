@@ -38,6 +38,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
+    <!--
     <Button
         android:id="@+id/button_my_active_missions"
         android:layout_width="0dp"
@@ -84,6 +85,7 @@
         app:layout_constraintTop_toBottomOf="@+id/button_all_active_missions"
         tools:layout_constraintLeft_creator="1"
         app:layout_constraintLeft_toLeftOf="@+id/button_all_active_missions" />
+        -->
 
     <Button
         android:id="@+id/button_all_missions"
@@ -91,14 +93,16 @@
         android:layout_height="wrap_content"
         android:textColor="#ffffff"
         android:background="@color/com_facebook_blue"
-        android:text="All Missions"
+        android:text="My Active Missions"
         tools:layout_constraintTop_creator="1"
         tools:layout_constraintRight_creator="1"
-        app:layout_constraintRight_toRightOf="@+id/button_all_my_missions"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintRight_toRightOf="parent"
         android:layout_marginTop="10dp"
-        app:layout_constraintTop_toBottomOf="@+id/button_all_my_missions"
+        app:layout_constraintTop_toBottomOf="@+id/button_new_phone_campaign"
         tools:layout_constraintLeft_creator="1"
-        app:layout_constraintLeft_toLeftOf="@+id/button_all_my_missions" />
+        app:layout_constraintLeft_toLeftOf="parent" />
 
     <Button
         android:id="@+id/button_all_activity"
