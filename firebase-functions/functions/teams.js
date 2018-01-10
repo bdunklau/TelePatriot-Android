@@ -83,7 +83,7 @@ var listMembers = function(team_name) {
     return db.ref(`teams`).child(team_name).child(`members`).once('value')
     .then(snapshot => {
         var members = []
-        snapshot.forEach(function(child) {
+        snapshot.forEach(function(child) { 
             var member = {}
             member['name'] = child.val().name
             member['email'] = child.val().email
