@@ -1,5 +1,7 @@
 'use strict';
 
+// lodash dependency declared in firebase-functions/functions/package.json
+const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 
@@ -78,17 +80,36 @@ var listMembers = function(team_name) {
 
     var stuff = ''
 
-    return db.ref(`teams`).child(team_name).child(`members`).once('value').then(snapshot => {
-        stuff += '<table><tr><td colspan="3"><b>Team: '+team_name+'</b></td></tr>'
-        stuff += '<tr><td colspan="3"><form method="post" action="/copyTeam?team='+team_name+'"><input type="submit" value="Copy '+team_name+'"/>&nbsp;&nbsp;<input type="text" name="copyteam" placeholder="New Team"/></form></td></tr>'
-
+    return db.ref(`teams`).child(team_name).child(`members`).once('value')
+    .then(snapshot => {
+        var members = []
         snapshot.forEach(function(child) {
+            var member = {}
+            member['name'] = child.val().name
+            member['email'] = child.val().email
+            if(child.val().phone) member['phone'] = child.val().phone
+            members.push(member)
+        })
+
+        // Don't actually HAVE to sort using lodash.  We could also have just sorted via .orderByChild('name')
+        return _.sortBy(members, 'name')
+    })
+    .then(sortedMembers => {
+        stuff += '<table><tr><td colspan="3"><b>Team: '+team_name+'</b></td></tr>'
+        stuff += '<tr><td colspan="4"><form method="post" action="/copyTeam?team='+team_name+'"><input type="submit" value="Copy '+team_name+'"/>&nbsp;&nbsp;<input type="text" name="copyteam" placeholder="New Team"/></form></td></tr>'
+
+        _.forEach(sortedMembers, function(value) {
             stuff += '<tr>'
-            stuff += '<td><a href="/removePeopleFromTeam?team='+team_name+'&email='+child.val().email+'">Remove</a></td>'
-            stuff += '<td>'+child.val().name+'</td>'
-            stuff += '<td>'+child.val().email+'</td>'
+            stuff += '<td><a href="/removePeopleFromTeam?team='+team_name+'&email='+value.email+'">Remove</a></td>'
+            stuff += '<td>'+value.name+'</td>'
+            stuff += '<td>'+value.email+'</td>'
+            if(value.phone) {
+                stuff += '<td>'+value.phone+'</td>'
+            }
+            else stuff += '<td>&nbsp;</td>'
             stuff += '</tr>'
         })
+
         stuff += '</table>'
         return stuff
     })

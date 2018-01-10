@@ -1,3 +1,4 @@
+// moment-timezone dependency is declared in firebase-functions/functions/package.json
 const moment = require('moment-timezone');
 
 exports.asCentralTime = function() {
