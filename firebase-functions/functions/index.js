@@ -53,12 +53,15 @@ exports.deleteTeam = teams.deleteTeam
 // DANGEROUS - because missions and activity are under a team's node
 //exports.deleteTeam = teams.deleteTeam
 exports.addPeopleToTeam = teams.addPeopleToTeam
+exports.downloadMissionReport = teams.downloadMissionReport
 exports.removePeopleFromTeam = teams.removePeopleFromTeam
 exports.viewMembers = teams.viewMembers
+exports.viewMissions = teams.viewMissions
 exports.setCurrentTeam = teams.setCurrentTeam
 exports.resetCurrentTeam = teams.resetCurrentTeam
 exports.updateMemberListUnderTeams = teams.updateMemberListUnderTeams
 exports.updateTeamListUnderUsers = teams.updateTeamListUnderUsers
+exports.viewMissionReport = teams.viewMissionReport
 
 
 const dbadmin = require('./dbadmin')
