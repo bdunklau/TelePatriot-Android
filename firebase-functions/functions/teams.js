@@ -5,6 +5,9 @@ const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 
+var style = "font-family:Arial;font-size:12px"
+var tableheading = style + ';background-color:#ededed'
+
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
@@ -24,11 +27,13 @@ exports.manageTeams = functions.https.onRequest((req, res) => {
 var listTeams = function(stuff, current_team) {
 
     return db.ref(`teams`).orderByChild('team_name').once('value').then(snapshot => {
-        stuff += '<table><tr><td colspan="2"><b>All Teams</b></td></tr>'
-        stuff += '<tr><td colspan="2"><form method="post" action="/createTeam"><input type="submit" value="Create Team"/>&nbsp;&nbsp;<input type="text" name="team_name" placeholder="New Team"/></form></td></tr>'
+        stuff += '<table><tr><td colspan="4"><b>All Teams</b></td></tr>'
+        stuff += '<tr><td colspan="4"><form method="post" action="/createTeam"><input type="submit" value="Create Team"/>&nbsp;&nbsp;<input type="text" name="team_name" placeholder="New Team"/></form></td></tr>'
         snapshot.forEach(function(child) {
             stuff += '<tr>'
-            stuff += '<td style="font-family:Arial;font-size:12px" valign="top"><a href="/viewMembers?team='+child.val().team_name+'">'+child.val().team_name+'</a></td>'
+            stuff += '<td style="'+style+'" valign="top"><a href="/viewMembers?team='+child.val().team_name+'">Members</a></td>'
+            stuff += '<td style="'+style+'" valign="top"><a href="/viewMissions?team='+child.val().team_name+'">Missions</a></td>'
+            stuff += '<td style="'+style+'" valign="top">'+child.val().team_name+'</td>'
             if(current_team && current_team.trim() != '') {
                 if(current_team.trim() != child.val().team_name) {
                     stuff += '<td valign="middle"><form method="post" action="/copyMembers?from_team='+current_team+'&to_team='+child.val().team_name+'"><input type="submit" value="Add '+current_team+' members to '+child.val().team_name+'"></form></td>'
@@ -57,10 +62,22 @@ exports.viewMembers = functions.https.onRequest((req, res) => {
 })
 
 
+exports.viewMissions = functions.https.onRequest((req, res) => {
+
+    var team_name = req.query.team
+
+    return showTheWholePage_Missions(team_name, '').then(html => {
+        return res.status(200).send(html)
+    })
+
+})
+
+
 var showTheWholePage = function(team_name) {
 
     return listTeams('', team_name)
     .then(teamListHtml => {
+
         return listMembers(team_name)
         .then(memberListHtml => {
             // show the "add people" text area
@@ -69,11 +86,187 @@ var showTheWholePage = function(team_name) {
             stuff += '</tr></table>'
             return '<table width="100%"><tr><td colspan="33%" valign="top">'+teamListHtml+'</td><td valign="top">'+memberListHtml+'</td><td valign="top">'+stuff+'</td></tr></table>'
         })
+
     })
     .then(html => {
         return '<html><head></head><body>'+html+'</body></html>'
     })
 }
+
+
+// show is 'members' or 'missions'
+var showTheWholePage_Missions = function(team_name, mission_id) {
+
+    return listTeams('', team_name)
+    .then(teamListHtml => {
+
+        return listMissions(team_name)
+        .then(missionListHtml => {
+            var pageStuff = {teamListHtml: teamListHtml, missionListHtml: missionListHtml}
+            return pageStuff
+        })
+        .then(pageStuff => {
+            if(!mission_id || mission_id == '') {
+                return '<table width="100%"><tr><td colspan="33%" valign="top">'+pageStuff.teamListHtml+'</td><td valign="top">'+pageStuff.missionListHtml+'</td></tr></table>'
+            }
+            else {
+                return listMissionItems(team_name, mission_id).then(mission_items_html => {
+                    return '<table width="100%"><tr><td colspan="33%" valign="top">'+pageStuff.teamListHtml+'</td><td valign="top">'+pageStuff.missionListHtml+'</td><td valign="top">'+mission_items_html+'</td></tr></table>'
+                })
+            }
+        })
+
+    })
+    .then(html => {
+        return '<html><head></head><body>'+html+'</body></html>'
+    })
+}
+
+
+// should we put this in another js file just to keep the size of this one down?
+var listMissions = function(team_name) {
+    var stuff = ''
+
+    return db.ref(`teams`).child(team_name).child(`missions`).once('value')
+    .then(snapshot => {
+        var missions = []
+        snapshot.forEach(function(child) {
+            var mission = {}
+            mission['active'] = child.val().active
+            // description
+            mission['mission_create_date'] = child.val().mission_create_date
+            // mission_items count ?
+            mission['mission_id'] = child.key
+            mission['mission_name'] = child.val().mission_name
+            mission['mission_type'] = child.val().mission_type
+            mission['name'] = child.val().name
+            mission['percent_complete'] = child.val().percent_complete
+            // script
+            // sheet_id
+            mission['total_rows_activated'] = child.val().total_rows_activated
+            mission['total_rows_completed'] = child.val().total_rows_completed
+            mission['total_rows_deactivated'] = child.val().total_rows_deactivated
+            mission['total_rows_in_spreadsheet'] = child.val().total_rows_in_spreadsheet
+            mission['total_rows_in_spreadsheet_with_phone'] = child.val().total_rows_in_spreadsheet_with_phone
+            // uid
+            // uid_and_active
+            mission['url'] = child.val().url
+            missions.push(mission)
+        })
+        return missions
+    })
+    .then(missions => {
+        stuff += '<table><tr><td colspan="1"><b>'+team_name+' Missions</b></td></tr></table>'
+        stuff += '<table><tr>'
+        stuff += '<th colspan="2" style="'+tableheading+'">Report</th>'
+        stuff += '<th style="'+tableheading+'">Name</th>'
+        stuff += '<th style="'+tableheading+'">Created on</th>'
+        stuff += '<th style="'+tableheading+'">Created by</th>'
+        stuff += '<th style="'+tableheading+'">Complete %</th>'
+        /*******
+        stuff += '<th></th>'
+        stuff += '<th></th>'
+        stuff += '<th></th>'
+        **********/
+        stuff += '</tr>'
+
+        _.forEach(missions, function(value) {
+            stuff += '<tr>'
+            stuff += '<td style="'+style+'"><a href="/viewMissionReport?team='+team_name+'&mission_id='+value.mission_id+'">View</a></td>'
+            stuff += '<td style="'+style+'"><a href="/downloadMissionReport?team='+team_name+'&mission_id='+value.mission_id+'">Download</a></td>'
+            stuff += '<td style="'+style+'">'+value.mission_name+'</td>'
+            stuff += '<td style="'+style+'">'+value.mission_create_date+'</td>'
+            stuff += '<td style="'+style+'">'+value.name+'</td>'
+            stuff += '<td style="'+style+'">'+value.percent_complete+'</td>'
+            stuff += '</tr>'
+        })
+
+        stuff += '</table>'
+        return stuff
+    })
+}
+
+
+var getMissionItems = function(team_name, mission_id) {
+    return db.ref(`/teams/${team_name}/missions/${mission_id}/mission_items`).orderByChild('name').once('value').then(snapshot => {
+        var mission_items = []
+        snapshot.forEach(function(child) {
+            var mission_item = {}
+            mission_item['mission_name'] = child.val().mission_name
+            mission_item['completed_by_name'] = child.val().completed_by_name ? child.val().completed_by_name : ''
+            mission_item['mission_complete_date'] = child.val().mission_complete_date ? child.val().mission_complete_date : ''
+            mission_item['name'] = child.val().name ? child.val().name : '' // the person called
+            mission_item['notes'] = child.val().notes ? child.val().notes : ''
+            mission_item['outcome'] = child.val().outcome ? child.val().outcome : ''
+            mission_item['phone'] = child.val().phone ? child.val().phone : ''
+            mission_items.push(mission_item)
+        })
+        return mission_items
+    })
+}
+
+
+var listMissionItems = function(team_name, mission_id) {
+    return getMissionItems(team_name, mission_id)
+    .then(mission_items => {
+        var stuff = ''
+        stuff += '<table><tr>'
+        stuff += '<th style="'+tableheading+'">Mission</th>'
+        stuff += '<th style="'+tableheading+'">Name</th>'
+        stuff += '<th style="'+tableheading+'">Phone</th>'
+        stuff += '<th style="'+tableheading+'">Called by</th>'
+        stuff += '<th style="'+tableheading+'">Called on</th>'
+        stuff += '<th style="'+tableheading+'">Outcome</th>'
+        stuff += '<th style="'+tableheading+'">Notes</th>'
+        stuff += '</tr>'
+        _.forEach(mission_items, function(value) {
+            stuff += '<tr>'
+            stuff += '<td style="'+style+'">'+value.mission_name+'</td>'
+            stuff += '<td style="'+style+'">'+value.name+'</td>'
+            stuff += '<td style="'+style+'">'+value.phone+'</td>'
+            stuff += '<td style="'+style+'">'+value.completed_by_name+'</td>'
+            stuff += '<td style="'+style+'">'+value.mission_complete_date+'</td>'
+            stuff += '<td style="'+style+'">'+value.outcome+'</td>'
+            stuff += '<td style="'+style+'">'+value.notes+'</td>'
+            stuff += '</tr>'
+        })
+        return stuff += '</table>'
+    })
+}
+
+
+exports.downloadMissionReport = functions.https.onRequest((req, res) => {
+    var team_name = req.query.team
+    var mission_id = req.query.mission_id
+    var mission_name = 'TelePatriotMission.xlsx' // just a default value, expect this to be overwritten below
+
+    return getMissionItems(team_name, mission_id).then(mission_items => {
+        var stuff = '' // csv data
+        stuff = 'Name\tPhone\tCalled by\tCalled on\tOutcome\tNotes\n'
+        _.forEach(mission_items, function(value) {
+            stuff += value.name+'\t'
+            stuff += value.phone+'\t'
+            stuff += value.completed_by_name+'\t'
+            stuff += value.mission_complete_date+'\t'
+            stuff += value.outcome+'\t'
+            stuff += value.notes+'\t'
+            stuff += '\n'
+            mission_name = value.mission_name
+        })
+
+        return res.set({'Content-Type': 'application/vnd.ms-excel', 'Content-Disposition': 'attachment;filename='+mission_name+'.xls'}).status(200).send(stuff)
+    })
+})
+
+
+exports.viewMissionReport = functions.https.onRequest((req, res) => {
+    var team_name = req.query.team
+    var mission_id = req.query.mission_id
+
+    return showTheWholePage_Missions(team_name, mission_id).then(html => {
+        return res.status(200).send(html)
+    })
+})
 
 
 var listMembers = function(team_name) {
@@ -83,7 +276,7 @@ var listMembers = function(team_name) {
     return db.ref(`teams`).child(team_name).child(`members`).once('value')
     .then(snapshot => {
         var members = []
-        snapshot.forEach(function(child) { 
+        snapshot.forEach(function(child) {
             var member = {}
             member['name'] = child.val().name
             member['email'] = child.val().email
@@ -95,16 +288,16 @@ var listMembers = function(team_name) {
         return _.sortBy(members, 'name')
     })
     .then(sortedMembers => {
-        stuff += '<table><tr><td colspan="3"><b>Team: '+team_name+'</b></td></tr>'
+        stuff += '<table><tr><td colspan="4"><b>Team: '+team_name+'</b></td></tr>'
         stuff += '<tr><td colspan="4"><form method="post" action="/copyTeam?team='+team_name+'"><input type="submit" value="Copy '+team_name+'"/>&nbsp;&nbsp;<input type="text" name="copyteam" placeholder="New Team"/></form></td></tr>'
 
         _.forEach(sortedMembers, function(value) {
             stuff += '<tr>'
-            stuff += '<td><a href="/removePeopleFromTeam?team='+team_name+'&email='+value.email+'">Remove</a></td>'
-            stuff += '<td>'+value.name+'</td>'
-            stuff += '<td>'+value.email+'</td>'
+            stuff += '<td><a style="'+style+'" href="/removePeopleFromTeam?team='+team_name+'&email='+value.email+'">Remove</a></td>'
+            stuff += '<td style="'+style+'">'+value.name+'</td>'
+            stuff += '<td style="'+style+'">'+value.email+'</td>'
             if(value.phone) {
-                stuff += '<td>'+value.phone+'</td>'
+                stuff += '<td style="'+style+'">'+value.phone+'</td>'
             }
             else stuff += '<td>&nbsp;</td>'
             stuff += '</tr>'
