@@ -7,6 +7,80 @@ const admin = require('firebase-admin')
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
+// throw-away function
+exports.checkUsers = functions.https.onRequest((req, res) => {
+    return db.ref(`users`).once('value').then(snapshot => {
+        var stuff = '<html><head></head><body><table border="1">'
+        stuff += '<tr>'
+        stuff += '<th>key</th>'
+        stuff += '<th>name</th>'
+        stuff += '<th>email</th>'
+        stuff += '<th>roles</th>'
+        stuff += '</tr>'
+
+        snapshot.forEach(function(child) {
+            var display = false
+            if(!child.val().roles || child.val().roles.length == 0) {
+                return
+            }
+
+            if(child.val().roles.Volunteer && child.val().roles.Volunteer == true) {
+                display = true
+            }
+
+            if(child.val().roles.Director && child.val().roles.Director == true) {
+                display = true
+            }
+
+            if(child.val().roles.Admin && child.val().roles.Admin == true) {
+                display = true
+            }
+
+            /*****
+            if(!display) {
+                return
+            }
+            *****/
+
+
+            stuff += '<tr>'
+            stuff += '<td>'+child.key+'</td>'
+            stuff += '<td>'+child.val().name+'</td>'
+            stuff += '<td>'+child.val().email+'</td>'
+            stuff += '<td>'
+
+            stuff += '<table>'
+            if(child.val().roles.Volunteer && child.val().roles.Volunteer == true) {
+                stuff += '<tr>'
+                stuff += '<td>child.val().roles.Volunteer</td>'
+                stuff += '<td>true</td>'
+                stuff += '</tr>'
+            }
+            if(child.val().roles.Director && child.val().roles.Director == true) {
+                stuff += '<tr>'
+                stuff += '<td>child.val().roles.Director</td>'
+                stuff += '<td>true</td>'
+                stuff += '</tr>'
+            }
+            if(child.val().roles.Admin && child.val().roles.Admin == true) {
+                stuff += '<tr>'
+                stuff += '<td>child.val().roles.Admin</td>'
+                stuff += '<td>true</td>'
+                stuff += '</tr>'
+            }
+            stuff += '</table>'
+
+
+
+            stuff += '</td>'
+
+            stuff += '</tr>'
+        })
+        stuff += '</table></body></html>'
+        res.status(200).send(stuff)
+    })
+})
+
 exports.insert = functions.https.onRequest((req, res) => {
 
     // allow for these req parms

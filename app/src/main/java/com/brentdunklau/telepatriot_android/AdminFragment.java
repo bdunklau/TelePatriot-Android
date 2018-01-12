@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -12,6 +13,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
+
+import com.brentdunklau.telepatriot_android.util.UserBean;
 
 /**
  * Created by bdunklau on 10/11/17.
@@ -19,8 +23,9 @@ import android.widget.Button;
 
 public class AdminFragment extends BaseFragment {
 
+    protected UserBean user;
     Button button_unassigned_users, button_search_users;
-    View myView;
+    protected View myView;
 
     @Nullable
     @Override
@@ -35,6 +40,10 @@ public class AdminFragment extends BaseFragment {
 
         setHasOptionsMenu(true);
         return myView;
+    }
+
+    public void setUser(UserBean user) {
+        this.user = user;
     }
 
     private void wireUp(Button button, final Fragment fragment) {
@@ -91,5 +100,15 @@ public class AdminFragment extends BaseFragment {
                 return true;
             default: return super.onOptionsItemSelected(item);
         }
+    }
+
+    protected void updateLabel(final int Rid, final String text) {
+        Handler h = new Handler();
+        h.post(new Runnable() {
+            @Override
+            public void run() {
+                ((TextView)myView.findViewById(Rid)).setText(text);
+            }
+        });
     }
 }

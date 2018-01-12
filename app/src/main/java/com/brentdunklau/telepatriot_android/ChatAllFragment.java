@@ -88,7 +88,7 @@ public class ChatAllFragment extends BaseFragment {
                 ref) {
             @Override
             public void populateViewHolder(UserHolder holder, UserBean user, int position) {
-                holder.setName(user.getName());
+                holder.setUser(user);
             }
 
 

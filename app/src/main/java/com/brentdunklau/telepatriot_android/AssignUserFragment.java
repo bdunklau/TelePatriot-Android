@@ -37,10 +37,10 @@ public class AssignUserFragment extends AdminFragment {
     private SwitchCompat adminSwitch;
     private SwitchCompat directorSwitch;
     private SwitchCompat volunteerSwitch;
-    private Button okButton, chatButton;
+    private Button okButton;
     private String uid;
     boolean isAdmin, isDirector, isVolunteer;
-    View myView;
+    //View myView;
     private FragmentManager fragmentManager;
     private Fragment back;
 
@@ -139,21 +139,6 @@ public class AssignUserFragment extends AdminFragment {
             }
         });
 
-        chatButton = myView.findViewById(R.id.chat_button);
-        chatButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // This is a director or admin starting or joining a chat with someone
-                ChatFragment chatFragment = new ChatFragment();
-                chatFragment.to(uid);
-                FragmentTransaction transaction = fragmentManager.beginTransaction();
-                transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
-                transaction.replace(R.id.content_frame, chatFragment);
-                transaction.addToBackStack(null);
-                transaction.commit();
-            }
-        });
-
         setHasOptionsMenu(true);
     }
 
@@ -219,16 +204,6 @@ public class AssignUserFragment extends AdminFragment {
             @Override
             public void run() {
                 switchCompat.setChecked(value);
-            }
-        });
-    }
-
-    protected void updateLabel(final int Rid, final String text) {
-        Handler h = new Handler();
-        h.post(new Runnable() {
-            @Override
-            public void run() {
-                ((TextView)myView.findViewById(Rid)).setText(text);
             }
         });
     }
