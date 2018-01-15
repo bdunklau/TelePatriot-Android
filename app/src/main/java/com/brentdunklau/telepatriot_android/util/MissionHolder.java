@@ -72,6 +72,7 @@ public class MissionHolder extends RecyclerView.ViewHolder {
         });
     }
 
+    // In Xcode, the class is MissionSummaryCellTableViewCell
     public void setMission(final Mission mission, final DatabaseReference ref) {
         // set TextView elements here
         mission_name.setText(mission.getMission_name());
