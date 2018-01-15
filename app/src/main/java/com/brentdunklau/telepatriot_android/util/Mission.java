@@ -6,6 +6,7 @@ import android.provider.ContactsContract;
  * Created by bdunklau on 10/18/2017.
  */
 
+// In Xcode, the class is called MissionSummary
 public class Mission {
 
     private String mission_create_date, mission_name, mission_type, name, uid, uid_and_active, description, script;

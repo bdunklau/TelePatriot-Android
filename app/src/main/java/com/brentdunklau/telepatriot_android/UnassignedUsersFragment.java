@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
@@ -12,8 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.brentdunklau.telepatriot_android.util.Mission;
-import com.brentdunklau.telepatriot_android.util.MissionHolder;
 import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.util.UserHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
@@ -73,7 +72,7 @@ public class UnassignedUsersFragment extends AdminFragment {
 
     }
 
-
+    /******
     private void updateLabel(final int rid, final String text) {
         Runnable r = new Runnable() {
             @Override
@@ -83,6 +82,7 @@ public class UnassignedUsersFragment extends AdminFragment {
         };
         new Handler().post(r);
     }
+     ******/
 
 
     private void doit(final DatabaseReference ref) {
@@ -92,12 +92,12 @@ public class UnassignedUsersFragment extends AdminFragment {
         // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
         mAdapter = new FirebaseRecyclerAdapter<UserBean, UserHolder>(
                 UserBean.class,
-                R.layout.list_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
+                R.layout.user_line_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                 UserHolder.class,
                 ref) {
             @Override
             public void populateViewHolder(UserHolder holder, UserBean user, int position) {
-                holder.setName(user.getName());
+                holder.setUser(user);
             }
 
 
@@ -105,6 +105,7 @@ public class UnassignedUsersFragment extends AdminFragment {
             @Override
             public UserHolder onCreateViewHolder(ViewGroup parent, int viewType) {
                 UserHolder viewHolder = super.onCreateViewHolder(parent, viewType);
+
                 viewHolder.setOnClickListener(new UserHolder.ClickListener() {
                     @Override
                     public void onItemClick(View view, int position) {
@@ -116,15 +117,38 @@ public class UnassignedUsersFragment extends AdminFragment {
                                 // to the right values
                                 String uid = dataSnapshot.getKey();
 
+                                AdminFragment next = null;
+                                UserBean ub = dataSnapshot.getValue(UserBean.class);
+                                if(ub.getIs_banned() != null && ub.getIs_banned().booleanValue()) {
+                                    next = new UserIsBannedFragment();
+                                    next.setUser(ub);
+                                    // ugly...
+                                    ((UserIsBannedFragment) next).setFragmentManager(fragmentManager, UnassignedUsersFragment.this);
+                                }
+                                else if(ub.getHas_signed_confidentiality_agreement() == null || !ub.getHas_signed_confidentiality_agreement().booleanValue()) {
+                                    next = new UserMustSignCAFragment();
+                                    next.setUser(ub);
+                                    // ugly...
+                                    ((UserMustSignCAFragment) next).setFragmentManager(fragmentManager, UnassignedUsersFragment.this);
+                                }
+                                else {
+                                    next = new AssignUserFragment();
+                                    ((AssignUserFragment) next).setUid(uid); // ugly - fix this
+                                    ((AssignUserFragment) next).setFragmentManager(fragmentManager, UnassignedUsersFragment.this); // ugly - fix this
+                                }
+
                                 // Instead of going to an activity, we need to load a fragment...
-                                AssignUserFragment fragment = new AssignUserFragment();
-                                fragment.setUid(uid);
-                                fragment.setFragmentManager(fragmentManager, UnassignedUsersFragment.this);
+                                //AssignUserFragment next = new AssignUserFragment();
+                                //next.setUid(uid);
+                                //next.setFragmentManager(fragmentManager, UnassignedUsersFragment.this);
                                 try {
-                                    FragmentTransaction t1 = fragmentManager.beginTransaction();
-                                    FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
-                                    int res = t2.commit();
-                                    int i=1;
+
+                                    fragmentManager.beginTransaction()
+                                            .replace(R.id.content_frame, next)
+                                            .addToBackStack(next.getClass().getName())
+                                            .commit();
+
+
                                 } catch(Throwable t) {
                                     t.printStackTrace();
                                 }

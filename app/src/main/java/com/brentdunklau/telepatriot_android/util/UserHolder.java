@@ -17,13 +17,17 @@ public class UserHolder extends RecyclerView.ViewHolder {
 
     private TextView userField;
     private TextView dateField;
-    private TextView reviewedByField;
+    private TextView has_signed_petition;
+    private TextView has_signed_confidentiality_agreement;
+    private TextView is_banned;
 
     public UserHolder(View itemView) {
         super(itemView);
         userField = itemView.findViewById(R.id.name);
         dateField = itemView.findViewById(R.id.date);
-        reviewedByField = itemView.findViewById(R.id.reviewed_by);
+        has_signed_petition = itemView.findViewById(R.id.has_signed_petition);
+        has_signed_confidentiality_agreement = itemView.findViewById(R.id.has_signed_confidentiality_agreement);
+        is_banned = itemView.findViewById(R.id.is_banned);
 
         // https://stackoverflow.com/a/41629505
         //listener set on ENTIRE ROW, you may set on individual components within a row.
@@ -47,8 +51,50 @@ public class UserHolder extends RecyclerView.ViewHolder {
         mClickListener = clickListener;
     }
 
-    public void setName(String name) {
-        userField.setText(name);
+    public void setUser(UserBean user) {
+        userField.setText(user.getName());
+        dateField.setText("Joined: "+user.getCreated());
+
+        if(user.getHas_signed_petition() == null) {
+            has_signed_petition.setText("  Petition: unknown");
+            has_signed_petition.setCompoundDrawablesWithIntrinsicBounds(R.drawable.warning, 0, 0, 0);
+        }
+        else if(user.getHas_signed_petition().booleanValue()) {
+            has_signed_petition.setText("  Petition: Signed");
+            has_signed_petition.setCompoundDrawablesWithIntrinsicBounds(R.drawable.check, 0, 0, 0);
+        }
+        else  {
+            has_signed_petition.setText("  Petition: Not Signed");
+            has_signed_petition.setCompoundDrawablesWithIntrinsicBounds(R.drawable.warning, 0, 0, 0);
+        }
+
+
+        if(user.getHas_signed_confidentiality_agreement() == null) {
+            has_signed_confidentiality_agreement.setText("  Confidentiality Agreement: unknown");
+            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.error, 0, 0, 0);
+        }
+        else if(user.getHas_signed_confidentiality_agreement().booleanValue()) {
+            has_signed_confidentiality_agreement.setText("  Confidentiality Agreement: Signed");
+            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.check, 0, 0, 0);
+        }
+        else  {
+            has_signed_confidentiality_agreement.setText("  Confidentiality Agreement: Not Signed");
+            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.error, 0, 0, 0);
+        }
+
+
+        if(user.getIs_banned() == null) {
+            is_banned.setText("  Banned: unknown");
+            is_banned.setCompoundDrawablesWithIntrinsicBounds(R.drawable.warning, 0, 0, 0);
+        }
+        else if(user.getIs_banned().booleanValue()) {
+            is_banned.setText("  Banned: Yes");
+            is_banned.setCompoundDrawablesWithIntrinsicBounds(R.drawable.error, 0, 0, 0);
+        }
+        else  {
+            is_banned.setText("  Banned: No");
+            is_banned.setCompoundDrawablesWithIntrinsicBounds(R.drawable.check, 0, 0, 0);
+        }
     }
 
     public void setDate(String date) {
@@ -56,6 +102,6 @@ public class UserHolder extends RecyclerView.ViewHolder {
     }
 
     public void setReviewedBy(String reviewedBy) {
-        reviewedByField.setText(reviewedBy);
+        has_signed_petition.setText(reviewedBy);
     }
 }

@@ -38,7 +38,7 @@
             tools:text="name here" />
 
         <TextView
-            android:id="@+id/reviewed_by"
+            android:id="@+id/has_signed_petition"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"

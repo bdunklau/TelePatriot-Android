@@ -9,6 +9,12 @@ import java.util.Map;
 public class UserBean {
 
     private String name, email, uid, photoUrl, created, reviewed_by, recruiter_id;
+    private Boolean has_signed_petition;
+    private Boolean has_signed_confidentiality_agreement;
+    //private boolean do_not_approve;
+
+    private Boolean is_banned;
+
     private Map<String, Object> roles;
 
     public UserBean() {
@@ -82,4 +88,41 @@ public class UserBean {
     public void setRecruiter_id(String recruiter_id) {
         this.recruiter_id = recruiter_id;
     }
+
+    public Boolean getHas_signed_petition() {
+        return has_signed_petition;
+    }
+
+    public void setHas_signed_petition(Boolean has_signed_petition) {
+        this.has_signed_petition = has_signed_petition;
+    }
+
+    public Boolean getHas_signed_confidentiality_agreement() {
+        return has_signed_confidentiality_agreement;
+    }
+
+    public void setHas_signed_confidentiality_agreement(Boolean has_signed_confidentiality_agreement) {
+        this.has_signed_confidentiality_agreement = has_signed_confidentiality_agreement;
+    }
+
+    public Boolean getIs_banned() {
+        return is_banned;
+    }
+
+    public void setIs_banned(Boolean is_banned) {
+        this.is_banned = is_banned;
+    }
+
+    /******
+    public boolean getDo_not_approve() {
+        boolean banned = is_banned != null && is_banned.booleanValue();
+        boolean not_signed_ca = has_signed_confidentiality_agreement == null || !has_signed_confidentiality_agreement.booleanValue();
+        return banned || not_signed_ca;
+    }
+
+    public boolean canApprove() {
+        return !getDo_not_approve();
+    }
+    *******/
+
 }

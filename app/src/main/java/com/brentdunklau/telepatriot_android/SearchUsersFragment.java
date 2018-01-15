@@ -68,12 +68,12 @@ public class SearchUsersFragment extends BaseFragment {
 
                 firebaseRecyclerAdapter22 = new FirebaseRecyclerAdapter<UserBean, UserHolder>(
                         UserBean.class,
-                        R.layout.list_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
+                        R.layout.user_line_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
                         UserHolder.class,
                         query) {
                     @Override
                     protected void populateViewHolder(final UserHolder holder, final UserBean user, int position) {
-                        holder.setName(user.getName());
+                        holder.setUser(user);
                     }
 
 
@@ -101,10 +101,19 @@ public class SearchUsersFragment extends BaseFragment {
                                         fragment.setUid(uid);
                                         fragment.setFragmentManager(fragmentManager, SearchUsersFragment.this);
                                         try {
+                                            /******
                                             FragmentTransaction t1 = fragmentManager.beginTransaction();
                                             FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
                                             int res = t2.commit();
                                             int i=1;
+                                            ********/
+
+                                            fragmentManager.beginTransaction()
+                                                    .replace(R.id.content_frame, fragment)
+                                                    .addToBackStack(fragment.getClass().getName())
+                                                    .commit();
+
+
                                         } catch(Throwable t) {
                                             // TODO don't do this
                                             t.printStackTrace();

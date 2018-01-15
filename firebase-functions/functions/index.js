@@ -65,6 +65,7 @@ exports.viewMissionReport = teams.viewMissionReport
 
 
 const dbadmin = require('./dbadmin')
+exports.checkUsers = dbadmin.checkUsers
 exports.insert = dbadmin.insert
 exports.update = dbadmin.update
 exports.selectDistinct = dbadmin.selectDistinct
