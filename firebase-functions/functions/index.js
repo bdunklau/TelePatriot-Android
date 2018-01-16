@@ -12,6 +12,7 @@ const sheetsDemo = require('./sheets/demo-google-sheet-write')
 const sheetReader = require('./sheets/import-sheet')
 
 exports.messagestuff = onmessage.pushMessages
+exports.approveUserAccount = createModule.approveUserAccount
 exports.userCreated = createModule.createUserAccount
 exports.userDeleted = deleteModule.deleteUserAccount
 exports.notifyUserCreated = notifications.notifyUserCreated

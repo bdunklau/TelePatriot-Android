@@ -12,3 +12,4 @@ C:\Users\bdunklau\AndroidStudioProjects\TelePatriot-Android\firebase-functions\f
 
 
 On Mac, path to workspace is different (TelePatriot3)
+cd /Users/bdunklau/AndroidStudioProjects/TelePatriot3/firebase-functions/functions

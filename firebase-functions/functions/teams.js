@@ -4,6 +4,7 @@
 const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
+const date = require('./dateformat')
 
 var style = "font-family:Arial;font-size:12px"
 var tableheading = style + ';background-color:#ededed'
@@ -544,14 +545,14 @@ exports.updateTeamListUnderUsers = functions.database.ref('/teams/{team_name}/me
     var memberDeletedUnderTeamNode = !event.data.exists() && event.data.previous.exists()
 
     if(memberAddedUnderTeamNode) {
-        /*return*/ event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).set({team_name: team_name})
+        /*return*/ event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).set({team_name: team_name, date_added: date.asCentralTime()})
         var logmsg = 'Set /users/'+uid+'/teams/'+team_name+' = {team_name: '+team_name+'}'
-        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
+        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: date.asCentralTime()})
     }
     else if(memberDeletedUnderTeamNode) {
         /*return*/ event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).remove()
         var logmsg = 'Removed /users/'+uid+'/teams/'+team_name
-        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
+        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: date.asCentralTime()})
     }
 })
 
@@ -572,15 +573,15 @@ exports.updateMemberListUnderTeams = functions.database.ref('/users/{uid}/teams/
         return event.data.adminRef.root.child(`/users/${uid}`).once('value').then(snapshot => {
             var name = snapshot.val().name
             var email = snapshot.val().email
-            event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).set({name: name, email: email})
+            event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).set({name: name, email: email, date_added: date.asCentralTime()})
             var logmsg = 'Set /teams/'+team_name+'/members/'+uid+' = {name: '+name+', email: '+email+'}'
-            event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
+            event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: date.asCentralTime()})
         })
     }
     else if(teamDeletedUnderUserNode) {
         event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).remove()
         var logmsg = 'Removed /teams/'+team_name+'/members/'+uid
-        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: new Date()})
+        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: date.asCentralTime()})
     }
 })
 

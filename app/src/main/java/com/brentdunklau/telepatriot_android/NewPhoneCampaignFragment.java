@@ -79,11 +79,17 @@ public class NewPhoneCampaignFragment extends BaseFragment {
                     public void onComplete(@NonNull Task<Void> task) {
                         Fragment fragment = new AllMyMissionsFragment();
                         FragmentManager fragmentManager = getFragmentManager();
+
+                        /*******
                         FragmentTransaction t1 = fragmentManager.beginTransaction();
                         FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
-                        // not adding to back stack here because that would send the user back to the page
-                        // where create the mission.  Not sure if I really want to do that.
-                        t2.commit();
+                         *******/
+
+
+                        fragmentManager.beginTransaction()
+                                .replace(R.id.content_frame, fragment)
+                                .addToBackStack(fragment.getClass().getName())
+                                .commit();
                     }
                 });
             }

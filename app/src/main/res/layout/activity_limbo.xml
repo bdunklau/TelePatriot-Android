@@ -33,16 +33,6 @@
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true" />
 
-            <Button
-                android:id="@+id/chat_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginTop="10dp"
-                android:background="#fcd069"
-                android:text="Chat/Help" />
-
 
             <TextView
                 android:id="@+id/txt_account_status"

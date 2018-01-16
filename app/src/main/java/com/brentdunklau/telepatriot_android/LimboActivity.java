@@ -23,7 +23,6 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
     protected String TAG = "LimboActivity";
     private FirebaseRecyclerAdapter<AccountStatusEvent, AccountStatusEventHolder> mAdapter;
     private RecyclerView accountStatusEvents;
-    private Button chat_button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,14 +60,6 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
                 holder.setStatus(evt.getDate(), evt.getEvent());
             }
         };
-
-        chat_button = (Button) findViewById(R.id.chat_button);
-        chat_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                slideOutChatWindow(view);
-            }
-        });
 
         accountStatusEvents.setAdapter(mAdapter);
     }

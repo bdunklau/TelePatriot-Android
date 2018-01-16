@@ -16,6 +16,7 @@ public class UserHolder extends RecyclerView.ViewHolder {
     private UserHolder.ClickListener mClickListener;
 
     private TextView userField;
+    private TextView emailField;
     private TextView dateField;
     private TextView has_signed_petition;
     private TextView has_signed_confidentiality_agreement;
@@ -24,6 +25,7 @@ public class UserHolder extends RecyclerView.ViewHolder {
     public UserHolder(View itemView) {
         super(itemView);
         userField = itemView.findViewById(R.id.name);
+        emailField = itemView.findViewById(R.id.email);
         dateField = itemView.findViewById(R.id.date);
         has_signed_petition = itemView.findViewById(R.id.has_signed_petition);
         has_signed_confidentiality_agreement = itemView.findViewById(R.id.has_signed_confidentiality_agreement);
@@ -53,6 +55,7 @@ public class UserHolder extends RecyclerView.ViewHolder {
 
     public void setUser(UserBean user) {
         userField.setText(user.getName());
+        emailField.setText(user.getEmail());
         dateField.setText("Joined: "+user.getCreated());
 
         if(user.getHas_signed_petition() == null) {
@@ -69,9 +72,16 @@ public class UserHolder extends RecyclerView.ViewHolder {
         }
 
 
+        /**
+         * TODO This may need another look.  We are showing a warning when the conf agreement has
+         * not been signed.  That's ok for new users who are being assigned to a training team.
+         * But do we want to show the error icon when an admin is about to assign someone like this
+         * to a real team?  Don't know.  Both icons get your attention.  The more important thing
+         * is that the app prohibit people like this from being assigned to real teams.
+         */
         if(user.getHas_signed_confidentiality_agreement() == null) {
             has_signed_confidentiality_agreement.setText("  Confidentiality Agreement: unknown");
-            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.error, 0, 0, 0);
+            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.warning, 0, 0, 0);
         }
         else if(user.getHas_signed_confidentiality_agreement().booleanValue()) {
             has_signed_confidentiality_agreement.setText("  Confidentiality Agreement: Signed");
@@ -79,7 +89,7 @@ public class UserHolder extends RecyclerView.ViewHolder {
         }
         else  {
             has_signed_confidentiality_agreement.setText("  Confidentiality Agreement: Not Signed");
-            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.error, 0, 0, 0);
+            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.warning, 0, 0, 0);
         }
 
 

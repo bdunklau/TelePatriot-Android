@@ -125,12 +125,17 @@ public class UnassignedUsersFragment extends AdminFragment {
                                     // ugly...
                                     ((UserIsBannedFragment) next).setFragmentManager(fragmentManager, UnassignedUsersFragment.this);
                                 }
+                                /************
+                                 * 1/15/18 - Security policy: Just because a user hasn't signed the conf agreement, we will still let
+                                 * them in to the app and assign them to a training team.  But we will not let them be assigned to any real
+                                 * teams until they are legal.
                                 else if(ub.getHas_signed_confidentiality_agreement() == null || !ub.getHas_signed_confidentiality_agreement().booleanValue()) {
                                     next = new UserMustSignCAFragment();
                                     next.setUser(ub);
                                     // ugly...
                                     ((UserMustSignCAFragment) next).setFragmentManager(fragmentManager, UnassignedUsersFragment.this);
                                 }
+                                 ***********/
                                 else {
                                     next = new AssignUserFragment();
                                     ((AssignUserFragment) next).setUid(uid); // ugly - fix this
