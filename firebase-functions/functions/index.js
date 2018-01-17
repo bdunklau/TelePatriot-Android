@@ -87,3 +87,9 @@ exports.copyOverMissionItems = dbadmin.copyOverMissionItems
 
 const missionStats = require('./sheets/mission-stats')
 exports.percentComplete = missionStats.percentComplete
+
+const updateUser = require('./updateUser')
+exports.onUserAttributeDeleted = updateUser.onUserAttributeDeleted
+exports.onUserUpdated = updateUser.onUserUpdated
+exports.updateLegal = updateUser.updateLegal
+exports.updateUser = updateUser.updateUser
