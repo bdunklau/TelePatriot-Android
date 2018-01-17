@@ -20,12 +20,17 @@
     <string name="volunteer_view">Volunteer View</string>
 
 
+    <!--
+    In xcode, this list is in WrapUpViewController.swift   At some point, we should probably put this
+    list in the database
+    -->
     <string-array name="outcome_array">
         <item>Voicemail</item>
         <item>Talked on the phone</item>
         <item>3-way call</item>
         <item>Wrong number</item>
         <item>Number disconnected</item>
+        <item>No answer</item>
     </string-array>
 
 </resources>
