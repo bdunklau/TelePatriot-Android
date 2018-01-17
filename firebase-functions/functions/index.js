@@ -78,6 +78,7 @@ exports.deleteNodes = dbadmin.deleteNodes
 exports.deleteAttributes = dbadmin.deleteAttributes
 
 /***********/
+// To tidy things up, we could either get rid of these functions, or move them to fixstuff.js
 exports.prepareDevDatabaseToTestMigration = dbadmin.prepareDevDatabaseToTestMigration
 exports.migrateMissions = dbadmin.migrateMissions
 exports.deleteMissionItems = dbadmin.deleteMissionItems
@@ -93,3 +94,7 @@ exports.onUserAttributeDeleted = updateUser.onUserAttributeDeleted
 exports.onUserUpdated = updateUser.onUserUpdated
 exports.updateLegal = updateUser.updateLegal
 exports.updateUser = updateUser.updateUser
+
+const fixstuff = require('./fixstuff')
+exports.correctPhoneCallOutcomes = fixstuff.correctPhoneCallOutcomes
+
