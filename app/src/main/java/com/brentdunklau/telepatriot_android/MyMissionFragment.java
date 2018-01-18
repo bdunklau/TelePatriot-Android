@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionDetail;
 import com.brentdunklau.telepatriot_android.util.MissionItemEvent;
 import com.brentdunklau.telepatriot_android.util.User;
@@ -37,6 +38,7 @@ public class MyMissionFragment extends BaseFragment {
     private String TAG = "MyMissionFragment";
     private MissionDetail missionDetail;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
+    private TextView heading_mission_progress;
     private Button button_call_person1, button_call_person2, button_switch_teams;
     private String missionId, missionItemId;
 
@@ -56,6 +58,7 @@ public class MyMissionFragment extends BaseFragment {
         myView = inflater.inflate(R.layout.my_mission_fragment, container, false);
 
         mission_name = myView.findViewById(R.id.heading_mission_name);
+        heading_mission_progress = myView.findViewById(R.id.heading_mission_progress);
         mission_description = myView.findViewById(R.id.mission_description);
         mission_script = myView.findViewById(R.id.mission_script);
         button_call_person1 = myView.findViewById(R.id.button_call_person1);
@@ -90,7 +93,7 @@ public class MyMissionFragment extends BaseFragment {
             indicateNoMissionsAvailable();
 
 
-            String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
+            final String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
 
             FirebaseDatabase.getInstance().getReference("teams/" + team + "/mission_items").orderByChild("group_number").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
@@ -111,6 +114,32 @@ public class MyMissionFragment extends BaseFragment {
                             indicateNoMissionsAvailable();
                             return; // we should indicate no missions available for the user
                         }
+
+                        // Get progress info from mission object (have to query for that unfortunately)
+                        // TODO This is an expensive query too.  It returns all mission items for this mission because
+                        // we keep mission_items under each mission
+                        FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                                for (DataSnapshot child : dataSnapshot.getChildren()) {
+
+                                    Mission mission = child.getValue(Mission.class);
+                                    Integer total_rows_completed = mission.getTotal_rows_completed();
+                                    Integer total_rows_with_phone = mission.getTotal_rows_in_spreadsheet_with_phone();
+                                    if(total_rows_completed != null && total_rows_with_phone != null) {
+                                        int calls_remaining = total_rows_with_phone - total_rows_completed;
+                                        Integer percent_complete = mission.getPercent_complete();
+                                        //  have to double up the % sign to escape it ----v
+                                        heading_mission_progress.setText(String.format("%d%% Complete (%d calls remaining)", percent_complete, calls_remaining));
+                                    }
+                                }
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {  }
+                        });
 
                         // set fields back to visible if they were previously set to View.GONE
                         setFieldsVisible();
@@ -229,11 +258,15 @@ public class MyMissionFragment extends BaseFragment {
         // If we are resuming on a mission that is  active_and_accomplished: true_complete,
         // then we need to send the user on to a fragment where they can enter notes on the
         // call
-        if(missionDetail != null && missionDetail._isAccomplished()) {
-            FragmentManager fragmentManager = getFragmentManager();
-            Fragment fragment = new MissionItemWrapUpFragment();
-            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-        }
+        if(missionDetail == null)
+            return;
+        if(!missionDetail._isAccomplished())
+            return;
+
+        FragmentManager fragmentManager = getFragmentManager();
+        Fragment fragment = new MissionItemWrapUpFragment();
+        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+
     }
 
     @Override
