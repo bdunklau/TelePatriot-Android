@@ -48,6 +48,7 @@ exports.manageTeams = teams.manageTeams // contains links to all the other team 
 exports.copyTeam = teams.copyTeam
 exports.copyMembers = teams.copyMembers
 exports.createTeam = teams.createTeam
+exports.deleteMissionItem = teams.deleteMissionItem
 exports.deleteTeam = teams.deleteTeam
 // Not part of the /manageTeams page at the moment (12/27/17)
 //exports.createTeam = teams.createTeam
@@ -58,6 +59,7 @@ exports.downloadMissionReport = teams.downloadMissionReport
 exports.removePeopleFromTeam = teams.removePeopleFromTeam
 exports.viewMembers = teams.viewMembers
 exports.viewMissions = teams.viewMissions
+exports.viewQueue = teams.viewQueue
 exports.setCurrentTeam = teams.setCurrentTeam
 exports.resetCurrentTeam = teams.resetCurrentTeam
 exports.updateMemberListUnderTeams = teams.updateMemberListUnderTeams
@@ -97,4 +99,10 @@ exports.updateUser = updateUser.updateUser
 
 const fixstuff = require('./fixstuff')
 exports.correctPhoneCallOutcomes = fixstuff.correctPhoneCallOutcomes
+exports.fixBadMissionItemRecords = fixstuff.fixBadMissionItemRecords
+
+const userList = require('./userList')
+exports.downloadUsers = userList.downloadUsers
+exports.manageUsers = userList.manageUsers
+exports.updateUser = userList.updateUser
 

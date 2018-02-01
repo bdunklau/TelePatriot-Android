@@ -28,12 +28,13 @@ exports.manageTeams = functions.https.onRequest((req, res) => {
 var listTeams = function(stuff, current_team) {
 
     return db.ref(`teams`).orderByChild('team_name').once('value').then(snapshot => {
-        stuff += '<table><tr><td colspan="4"><b>All Teams</b></td></tr>'
-        stuff += '<tr><td colspan="4"><form method="post" action="/createTeam"><input type="submit" value="Create Team"/>&nbsp;&nbsp;<input type="text" name="team_name" placeholder="New Team"/></form></td></tr>'
+        stuff += '<table><tr><td colspan="5"><b>All Teams</b></td></tr>'
+        stuff += '<tr><td colspan="5"><form method="post" action="/createTeam"><input type="submit" value="Create Team"/>&nbsp;&nbsp;<input type="text" name="team_name" placeholder="New Team"/></form></td></tr>'
         snapshot.forEach(function(child) {
             stuff += '<tr>'
             stuff += '<td style="'+style+'" valign="top"><a href="/viewMembers?team='+child.val().team_name+'">Members</a></td>'
             stuff += '<td style="'+style+'" valign="top"><a href="/viewMissions?team='+child.val().team_name+'">Missions</a></td>'
+            stuff += '<td style="'+style+'" valign="top"><a href="/viewQueue?team='+child.val().team_name+'">Queue</a></td>'
             stuff += '<td style="'+style+'" valign="top">'+child.val().team_name+'</td>'
             if(current_team && current_team.trim() != '') {
                 if(current_team.trim() != child.val().team_name) {
@@ -68,6 +69,17 @@ exports.viewMissions = functions.https.onRequest((req, res) => {
     var team_name = req.query.team
 
     return showTheWholePage_Missions(team_name, '').then(html => {
+        return res.status(200).send(html)
+    })
+
+})
+
+
+exports.viewQueue = functions.https.onRequest((req, res) => {
+
+    var team_name = req.query.team
+
+    return showTheWholePage_Queue(team_name).then(html => {
         return res.status(200).send(html)
     })
 
@@ -124,6 +136,89 @@ var showTheWholePage_Missions = function(team_name, mission_id) {
 }
 
 
+// this is what we show when the user clicks "Queue" next to a team
+// The "Queue" are the /mission_items under a team.  They are the mission_items that haven't been completed yet
+var showTheWholePage_Queue = function(team_name) {
+
+    return listTeams('', team_name)
+    .then(teamListHtml => {
+
+        return listQueue(team_name)
+        .then(missionItemListHtml => {
+            var pageStuff = {teamListHtml: teamListHtml, missionItemListHtml: missionItemListHtml}
+            return pageStuff
+        })
+        .then(pageStuff => {
+            return '<table width="100%"><tr><td colspan="33%" valign="top">'+pageStuff.teamListHtml+'</td><td valign="top">'+pageStuff.missionItemListHtml+'</td></tr></table>'
+
+        })
+
+    })
+    .then(html => {
+        return '<html><head></head><body>'+html+'</body></html>'
+    })
+}
+
+
+
+var listQueue = function(team_name) {
+    var stuff = ''
+
+    // mission_item attributes
+    var attrs = ["accomplished", "active", "active_and_accomplished", "description", "email", "group_number",
+            "mission_create_date", "mission_id", "mission_name", "mission_type", "name", "name2", "number_of_missions_in_master_mission",
+            "phone", "phone2", "script", "uid", "uid_and_active", "url"]
+
+    return db.ref(`teams`).child(team_name).child(`mission_items`).once('value')
+    .then(snapshot => {
+        var mission_items = []
+        snapshot.forEach(function(child) {
+            var mission_item = {}
+            mission_item['mission_item_id'] = child.key
+            _.forEach(attrs, function(attr_name) {
+                mission_item[attr_name] = child.val()[attr_name]
+            })
+            mission_items.push(mission_item)
+        })
+
+        var missionStuff = {active_mission_items: mission_items, mission_item_attribute_names: attrs}
+        return missionStuff
+    })
+    .then(missionStuff => {
+
+        stuff += '<P/>'
+        stuff += '<table><tr><td><b>Active Mission Items for Team: '+team_name+'</b></td></tr></table>'
+        stuff += '<table><tr>'
+        var attr_names = missionStuff.mission_item_attribute_names
+        var mission_items = missionStuff.active_mission_items
+        stuff += '<th style="'+tableheading+'"> </th>'
+        stuff += '<th style="'+tableheading+'">mission_item_id</th>'
+        _.forEach(attr_names, function(attr_name) {
+            stuff += '<th style="'+tableheading+'">'+attr_name+'</th>'
+        })
+        stuff += '</tr>'
+
+        _.forEach(mission_items, function(mission_item) {
+            var mission_item_id = mission_item["mission_item_id"]
+            var mission_id = mission_item["mission_id"]
+            stuff += '<tr>'
+            stuff += '<td style="'+style+'"><a href="/deleteMissionItem?team='+team_name+'&mission_item_id='+mission_item_id+'">delete</a></td>'
+            stuff += '<td style="'+style+'">'+mission_item_id+'</td>'
+            _.forEach(attr_names, function(attr_name) {
+                var val = mission_item[attr_name]
+                if(attr_name == 'description') val = '(description)'
+                else if(attr_name == 'script') val = '(script)'
+                stuff += '<td style="'+style+'">'+val+'</td>'
+            })
+            stuff += '</tr>'
+        })
+        stuff += '</table>'
+        return stuff
+    })
+}
+
+
+
 // should we put this in another js file just to keep the size of this one down?
 var listMissions = function(team_name) {
     var stuff = ''
@@ -164,11 +259,6 @@ var listMissions = function(team_name) {
         stuff += '<th style="'+tableheading+'">Created on</th>'
         stuff += '<th style="'+tableheading+'">Created by</th>'
         stuff += '<th style="'+tableheading+'">Complete %</th>'
-        /*******
-        stuff += '<th></th>'
-        stuff += '<th></th>'
-        stuff += '<th></th>'
-        **********/
         stuff += '</tr>'
 
         _.forEach(missions, function(value) {
@@ -183,9 +273,29 @@ var listMissions = function(team_name) {
         })
 
         stuff += '</table>'
+
         return stuff
     })
 }
+
+
+
+exports.deleteMissionItem = functions.https.onRequest((req, res) => {
+
+    var team_name = req.query.team
+    var mission_id = req.query.mission_id
+    var mission_item_id = req.query.mission_item_id
+
+    return db.ref(`/teams/${team_name}/mission_items/${mission_item_id}`).remove()
+    .then(() => {
+        return showTheWholePage_Queue(team_name).then(html => {
+            return res.status(200).send(html)
+        })
+    })
+
+
+
+})
 
 
 var getMissionItems = function(team_name, mission_id) {

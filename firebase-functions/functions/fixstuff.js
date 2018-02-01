@@ -127,3 +127,29 @@ exports.correctPhoneCallOutcomes = functions.https.onRequest((req, res) => {
     })
 
 })
+
+
+
+// Jan 30, 2018 - Identified a problem where mission_item's had undefined values for just about
+// every attribute.  Not sure what is causing this.  Maybe the record is being written when a call ends
+// that wasn't a TelePatriot call - just a normal phone call.  Experimented by looking at teams that
+// had these incomplete mission_item records.  When the incomplete mission_item records were deleted,
+// the app would start serving up names and numbers again.
+//
+// So the "fix" for now is:  Set this trigger to looking for mission_item.active = undefined
+// and whenever we see this situation, delete this mission_item
+exports.fixBadMissionItemRecords = functions.database.ref('/teams/{team}/mission_items/{mission_item_id}').onWrite(event => {
+
+    // the mission_item was deleted - nothing to fix
+    if (!event.data.exists()) {
+        return;
+    }
+
+    if(!event.data.val().active) {
+        var team = event.params.team
+        var mission_item_id = event.params.mission_item_id
+        return db.ref(`/teams/${team}/mission_items/${mission_item_id}`).remove()
+    }
+    else return true
+
+})
