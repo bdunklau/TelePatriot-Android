@@ -106,9 +106,9 @@
                 android:layout_marginTop="72dp"
                 android:background="@color/com_facebook_blue"
                 android:drawableLeft="@drawable/ic_call_white_24dp"
-                android:drawablePadding="-35dp"
+                android:drawablePadding="-8dp"
                 android:gravity="center"
-                android:paddingLeft="45dp"
+                android:paddingLeft="8dp"
                 android:text="call person1"
                 android:textColor="#ffffff" />
 
@@ -119,9 +119,9 @@
                 android:layout_marginTop="72dp"
                 android:background="@color/com_facebook_blue"
                 android:drawableLeft="@drawable/ic_call_white_24dp"
-                android:drawablePadding="-35dp"
+                android:drawablePadding="-8dp"
                 android:gravity="center"
-                android:paddingLeft="45dp"
+                android:paddingLeft="8dp"
                 android:text="call person2"
                 android:textColor="#ffffff" />
 
