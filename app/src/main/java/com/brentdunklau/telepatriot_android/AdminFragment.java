@@ -3,6 +3,7 @@ package com.brentdunklau.telepatriot_android;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -103,11 +104,17 @@ public class AdminFragment extends BaseFragment {
     }
 
     protected void updateLabel(final int Rid, final String text) {
+        updateLabel(Rid, text, false);
+    }
+
+    protected void updateLabel(final int Rid, final String text, final boolean underline) {
         Handler h = new Handler();
         h.post(new Runnable() {
             @Override
             public void run() {
-                ((TextView)myView.findViewById(Rid)).setText(text);
+                TextView t = (TextView)myView.findViewById(Rid);
+                t.setText(text);
+                if(underline) t.setPaintFlags(t.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
             }
         });
     }

@@ -1,12 +1,19 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ShareCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.SwitchCompat;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +47,7 @@ public class AssignUserFragment extends AdminFragment {
     private Button okButton;
     private String uid;
     boolean isAdmin, isDirector, isVolunteer;
+    Boolean has_signed_petition, has_signed_confidentiality_agreement, is_banned;
     //View myView;
     private FragmentManager fragmentManager;
     private Fragment back;
@@ -101,7 +109,7 @@ public class AssignUserFragment extends AdminFragment {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         database.getReference("users/"+uid+"/account_status_events").push().setValue(reviewingEvent());
 
-        database.getReference("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+        database.getReference("users").child(uid).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 UserBean ub = null;
@@ -115,13 +123,31 @@ public class AssignUserFragment extends AdminFragment {
 
                 if(ub != null) {
                     updateLabel(R.id.text_name, ub.getName());
-                    updateLabel(R.id.text_email, ub.getEmail());
+                    boolean underline = true;
+                    updateLabel(R.id.text_email, ub.getEmail(), underline);
+                    final UserBean ub2 = ub;
+                    final String senderName = User.getInstance().getName();
+                    TextView et = myView.findViewById(R.id.text_email);
+                    et.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            emailSetup(ub2, senderName);
+                        }
+                    });
                     isAdmin = ub.isRole("Admin");
                     isDirector = ub.isRole("Director");
                     isVolunteer = ub.isRole("Volunteer");
                     setSwitch(isAdmin, adminSwitch);
                     setSwitch(isDirector, directorSwitch);
                     setSwitch(isVolunteer, volunteerSwitch);
+                    has_signed_petition = ub.getHas_signed_petition();
+                    has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement();
+                    is_banned = ub.getIs_banned();
+                    setPetitionStatus(has_signed_petition);
+                    setConfidentialityAgreementStatus(has_signed_confidentiality_agreement);
+                    setBannedStatus(is_banned);
+
+                    wireUpSegmentedControlButtons(ub);
                 }
             }
 
@@ -140,6 +166,88 @@ public class AssignUserFragment extends AdminFragment {
         });
 
         setHasOptionsMenu(true);
+    }
+
+    /***
+     * The email content needs to come from the database so that we don't have to put
+     * this stuff on iOS also.
+     * @param ub
+     * @param senderName
+     */
+    private void emailSetup(UserBean ub, String senderName) {
+        String greeting = "%s,<P/>";
+        StringBuffer msg = new StringBuffer(greeting);
+        StringBuffer body = new StringBuffer();
+        if(Boolean.FALSE == ub.getHas_signed_petition()) {
+            body.append("Please sign the Convention of States petition");
+            body.append("<P/>https://www.conventionofstates.com");
+        }
+        if(Boolean.FALSE == ub.getHas_signed_confidentiality_agreement()) {
+            body.append("<P/>Please sign the Confidentiality Agreement");
+            body.append("<P/>https://esign.coslms.com:8443/S/COS/Transaction/Volunteer_Agreement_Manual");
+        }
+
+        String signature = "<P/>%s<br/>TelePatriot Admin<br/>Convention of States";
+        //msg.append(body); // put this back in when you figure out how to construct the body from database queries
+        msg.append(signature);
+        String m = String.format(msg.toString(), ub.getName(), senderName);
+
+        Activity activity = (Activity) myView.getContext();
+
+        ShareCompat.IntentBuilder.from(activity)
+                .setType("message/rfc822")
+                .addEmailTo(ub.getEmail())
+                .setSubject("Re: Your TelePatriot account")
+                //.setText(m)
+                .setHtmlText(m) //If you are using HTML in your body text
+                .setChooserTitle("Send Email")
+                .startChooser();
+    }
+
+    private void setPetitionStatus(Boolean b) {
+        setSegmentedControl(b,
+                R.id.button_petition_yes,
+                R.id.button_petition_no,
+                R.id.button_petition_unknown);
+    }
+
+    private void setConfidentialityAgreementStatus(Boolean b) {
+        setSegmentedControl(b,
+                R.id.button_confidentiality_agreement_yes,
+                R.id.button_confidentiality_agreement_no,
+                R.id.button_confidentiality_agreement_unknown);
+    }
+
+    private void setBannedStatus(Boolean b) {
+        setSegmentedControl(b, R.id.button_banned_yes, R.id.button_banned_no, R.id.button_banned_unknown);
+    }
+
+    private void setSegmentedControl(Boolean triState, int id_yes, int id_no, int id_unknown) {
+        Button yes = myView.findViewById(id_yes);
+        Button no = myView.findViewById(id_no);
+        Button unknown = myView.findViewById(id_unknown);
+        if(triState == null) {
+            sss(unknown, yes, no);
+        }
+        else if(Boolean.TRUE == triState.booleanValue()) {
+            sss(yes, unknown, no);
+        }
+        else {
+            sss(no, yes, unknown);
+        }
+
+    }
+
+    private void sss(Button buttonSelected, Button... buttonsNotSelected) {
+        Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+        Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+
+        buttonSelected.setBackground(selected);
+        buttonSelected.setTextColor(0xFFFFFFFF);
+        for(Button buttonNotSelected : buttonsNotSelected) {
+            buttonNotSelected.setBackground(not_selected);
+            buttonNotSelected.setTextColor(0xFF007AFF);
+        }
     }
 
     private HashMap<String, String> reviewingEvent() {
@@ -173,6 +281,10 @@ public class AssignUserFragment extends AdminFragment {
             unsetRole("Admin");
         }
 
+        setValue(uid, "has_signed_petition", has_signed_petition);
+        setValue(uid, "has_signed_confidentiality_agreement", has_signed_confidentiality_agreement);
+        setValue(uid, "is_banned", is_banned);
+
 
         // as long is something is set, remove the record from the no_roles node
         if(isAdmin || isDirector || isVolunteer)
@@ -184,10 +296,21 @@ public class AssignUserFragment extends AdminFragment {
             ((PassInfo) back).pass(m);
         }
 
+        /********
         FragmentTransaction t1 = fragmentManager.beginTransaction();
         FragmentTransaction t2 = t1.replace(R.id.content_frame, back);
         t2.commit();
+         ********/
 
+
+        fragmentManager.beginTransaction()
+                .replace(R.id.content_frame, back)
+                .addToBackStack(back.getClass().getName())
+                .commit();
+    }
+
+    private void setValue(String uid, String attribute, Boolean value) {
+        FirebaseDatabase.getInstance().getReference("users/"+uid+"/"+attribute).setValue(value);
     }
 
     private void setRole(String role) {
@@ -204,6 +327,218 @@ public class AssignUserFragment extends AdminFragment {
             @Override
             public void run() {
                 switchCompat.setChecked(value);
+            }
+        });
+    }
+
+    private void wireUpSegmentedControlButtons(final UserBean ub) {
+        final Button petition_yes = myView.findViewById(R.id.button_petition_yes);
+        final Button petition_no = myView.findViewById(R.id.button_petition_no);
+        final Button petition_unknown = myView.findViewById(R.id.button_petition_unknown);
+
+        final Button confidentiality_agreement_yes = myView.findViewById(R.id.button_confidentiality_agreement_yes);
+        final Button confidentiality_agreement_no = myView.findViewById(R.id.button_confidentiality_agreement_no);
+        final Button confidentiality_agreement_unknown = myView.findViewById(R.id.button_confidentiality_agreement_unknown);
+
+        final Button banned_yes = myView.findViewById(R.id.button_banned_yes);
+        final Button banned_no = myView.findViewById(R.id.button_banned_no);
+        final Button banned_unknown = myView.findViewById(R.id.button_banned_unknown);
+
+
+        petition_yes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(Boolean.TRUE != ub.getHas_signed_petition()) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    petition_yes.setBackground(selected);
+                    petition_yes.setTextColor(0xFFFFFFFF);
+                    //ub.setHas_signed_petition(true);
+                    has_signed_petition = true;
+
+                    petition_no.setBackground(not_selected);
+                    petition_no.setTextColor(0xFF007AFF);
+
+                    petition_unknown.setBackground(not_selected);
+                    petition_unknown.setTextColor(0xFF007AFF);
+                }
+            }
+        });
+
+
+        petition_no.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(Boolean.FALSE != ub.getHas_signed_petition()) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    petition_no.setBackground(selected);
+                    petition_no.setTextColor(0xFFFFFFFF);
+                    //ub.setHas_signed_petition(false);
+                    has_signed_petition = false;
+
+                    petition_yes.setBackground(not_selected);
+                    petition_yes.setTextColor(0xFF007AFF);
+
+                    petition_unknown.setBackground(not_selected);
+                    petition_unknown.setTextColor(0xFF007AFF);
+                }
+            }
+        });
+
+
+        petition_unknown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(ub.getHas_signed_petition() != null) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    petition_unknown.setBackground(selected);
+                    petition_unknown.setTextColor(0xFFFFFFFF);
+                    //ub.setHas_signed_petition(null);
+                    has_signed_petition = null;
+
+                    petition_yes.setBackground(not_selected);
+                    petition_yes.setTextColor(0xFF007AFF);
+
+                    petition_no.setBackground(not_selected);
+                    petition_no.setTextColor(0xFF007AFF);
+                }
+            }
+        });
+
+
+        confidentiality_agreement_yes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(Boolean.TRUE != ub.getHas_signed_confidentiality_agreement()) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    confidentiality_agreement_yes.setBackground(selected);
+                    confidentiality_agreement_yes.setTextColor(0xFFFFFFFF);
+                    //ub.setHas_signed_confidentiality_agreement(true);
+                    has_signed_confidentiality_agreement = true;
+
+                    confidentiality_agreement_no.setBackground(not_selected);
+                    confidentiality_agreement_no.setTextColor(0xFF007AFF);
+
+                    confidentiality_agreement_unknown.setBackground(not_selected);
+                    confidentiality_agreement_unknown.setTextColor(0xFF007AFF);
+                }
+            }
+        });
+
+
+        confidentiality_agreement_no.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(Boolean.FALSE != ub.getHas_signed_confidentiality_agreement()) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    confidentiality_agreement_no.setBackground(selected);
+                    confidentiality_agreement_no.setTextColor(0xFFFFFFFF);
+                    //ub.setHas_signed_confidentiality_agreement(false);
+                    has_signed_confidentiality_agreement = false;
+
+                    confidentiality_agreement_yes.setBackground(not_selected);
+                    confidentiality_agreement_yes.setTextColor(0xFF007AFF);
+
+                    confidentiality_agreement_unknown.setBackground(not_selected);
+                    confidentiality_agreement_unknown.setTextColor(0xFF007AFF);
+                }
+            }
+        });
+
+
+        confidentiality_agreement_unknown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(ub.getHas_signed_confidentiality_agreement() != null) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    confidentiality_agreement_unknown.setBackground(selected);
+                    confidentiality_agreement_unknown.setTextColor(0xFFFFFFFF);
+                    //ub.setHas_signed_confidentiality_agreement(null);
+                    has_signed_confidentiality_agreement = null;
+
+                    confidentiality_agreement_yes.setBackground(not_selected);
+                    confidentiality_agreement_yes.setTextColor(0xFF007AFF);
+
+                    confidentiality_agreement_no.setBackground(not_selected);
+                    confidentiality_agreement_no.setTextColor(0xFF007AFF);
+                }
+            }
+        });
+
+
+        banned_yes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(Boolean.TRUE != ub.getIs_banned()) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    banned_yes.setBackground(selected);
+                    banned_yes.setTextColor(0xFFFFFFFF);
+                    //ub.setIs_banned(true);
+                    is_banned = true;
+
+                    banned_no.setBackground(not_selected);
+                    banned_no.setTextColor(0xFF007AFF);
+
+                    banned_unknown.setBackground(not_selected);
+                    banned_unknown.setTextColor(0xFF007AFF);
+                }
+            }
+        });
+
+
+        banned_no.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(Boolean.FALSE != ub.getIs_banned()) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    banned_no.setBackground(selected);
+                    banned_no.setTextColor(0xFFFFFFFF);
+                    //ub.setIs_banned(false);
+                    is_banned = false;
+
+                    banned_yes.setBackground(not_selected);
+                    banned_yes.setTextColor(0xFF007AFF);
+
+                    banned_unknown.setBackground(not_selected);
+                    banned_unknown.setTextColor(0xFF007AFF);
+                }
+            }
+        });
+
+
+        banned_unknown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // says: if the value is changing to true...
+                if(ub.getIs_banned() != null) {
+                    Drawable selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_selected, null);
+                    Drawable not_selected = ResourcesCompat.getDrawable(getResources(), R.drawable.segmented_control_not_selected, null);
+                    banned_unknown.setBackground(selected);
+                    banned_unknown.setTextColor(0xFFFFFFFF);
+                    //ub.setIs_banned(null);
+                    is_banned = null;
+
+                    banned_yes.setBackground(not_selected);
+                    banned_yes.setTextColor(0xFF007AFF);
+
+                    banned_no.setBackground(not_selected);
+                    banned_no.setTextColor(0xFF007AFF);
+                }
             }
         });
     }

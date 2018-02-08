@@ -89,7 +89,7 @@ public class UserHolder extends RecyclerView.ViewHolder {
         }
         else  {
             has_signed_confidentiality_agreement.setText("  Confidentiality Agreement: Not Signed");
-            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.warning, 0, 0, 0);
+            has_signed_confidentiality_agreement.setCompoundDrawablesWithIntrinsicBounds(R.drawable.error, 0, 0, 0);
         }
 
 

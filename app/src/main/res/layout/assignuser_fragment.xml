@@ -2,11 +2,18 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="vertical" android:layout_width="fill_parent"
     android:layout_height="match_parent"
     android:background="@drawable/washington_monument"
     tools:context="com.brentdunklau.telepatriot_android.AssignUserFragment">
 
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true">
 
 
     <LinearLayout
@@ -16,75 +23,280 @@
         android:background="#ddffffff">
 
 
-    <TextView
-        android:id="@+id/text_name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginLeft="10dp"
-        android:textSize="18sp"
-        android:textColor="#000000"
-        android:text="TextView" />
+        <TextView
+            android:id="@+id/text_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="10dp"
+            android:textSize="18sp"
+            android:textColor="#000000"
+            android:text="TextView" />
 
-    <TextView
-        android:id="@+id/text_email"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginLeft="10dp"
-        android:text="TextView" />
+        <TextView
+            android:id="@+id/text_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginLeft="10dp"
+            android:text="TextView"
+            android:textColor="#007AFF"/>
 
-    <TextView
-        android:id="@+id/text_note"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="20dp"
-        android:textSize="18sp"
-        android:text="Assign to One or More Groups" />
+        <TextView
+            android:id="@+id/text_note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="16dp"
+            android:text="Assign to One or More Groups"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/switch_volunteer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:theme="@style/SwitchStyleGreen"
-        android:showText="false"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginRight="50dp"
-        app:switchMinWidth="75dp"
-        android:text="Volunteer" />
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/switch_volunteer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:theme="@style/SwitchStyleGreen"
+            android:showText="false"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="100dp"
+            app:switchMinWidth="75dp"
+            android:text="Volunteer" />
 
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/switch_director"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:theme="@style/SwitchStyleGreen"
-        android:showText="false"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginRight="50dp"
-        app:switchMinWidth="75dp"
-        android:text="Director" />
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/switch_director"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:theme="@style/SwitchStyleGreen"
+            android:showText="false"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="100dp"
+            app:switchMinWidth="75dp"
+            android:text="Director" />
 
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/switch_admin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:theme="@style/SwitchStyleGreen"
-        android:showText="false"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginRight="50dp"
-        app:switchMinWidth="75dp"
-        android:text="Admin" />
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/switch_admin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:theme="@style/SwitchStyleGreen"
+            android:showText="false"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="100dp"
+            app:switchMinWidth="75dp"
+            android:text="Admin" />
+
+        <TextView
+            android:id="@+id/text_legal_requirements"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginBottom="0dp"
+            android:textSize="18sp"
+            android:text="Legal Requirements"
+            android:textStyle="bold" />
+
+
+
+
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/text_petition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:textSize="14sp"
+                android:text="Petition"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_petition_yes"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="0dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="Yes"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toLeftOf="@+id/button_petition_no"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_petition_no"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="0dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="No"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toLeftOf="@+id/button_petition_unknown"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_petition_unknown"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="8dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="Unknown"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+        </android.support.constraint.ConstraintLayout>
+
+
+
+
+
+
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/text_confidentiality_agreement"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:textSize="14sp"
+                android:text="Confidentiality"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_confidentiality_agreement_yes"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="0dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="Yes"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toLeftOf="@+id/button_confidentiality_agreement_no"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_confidentiality_agreement_no"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="0dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="No"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toLeftOf="@+id/button_confidentiality_agreement_unknown"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_confidentiality_agreement_unknown"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="8dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="Unknown"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+        </android.support.constraint.ConstraintLayout>
+
+
+
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/banned_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/text_banned"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:textSize="14sp"
+                android:text="Banned"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_banned_yes"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="0dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="Yes"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toLeftOf="@+id/button_banned_no"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_banned_no"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="0dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="No"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toLeftOf="@+id/button_banned_unknown"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_banned_unknown"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginRight="8dp"
+                android:background="@drawable/segmented_control_not_selected"
+                android:text="Unknown"
+                android:textSize="10dp"
+                android:textColor="#007AFF"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="8dp" />
+        </android.support.constraint.ConstraintLayout>
 
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dip"
             android:layout_weight="1"
+            android:layout_marginTop="50dp"
             android:gravity="center|bottom"
             android:orientation="vertical" >
 
@@ -104,5 +316,7 @@
 
         </LinearLayout>
     </LinearLayout>
+
+    </ScrollView>
 
 </LinearLayout>
