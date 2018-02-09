@@ -1,14 +1,17 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.Fragment;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.Mission;
@@ -31,6 +34,7 @@ public class MissionDetailsFragment extends BaseFragment {
 
     private Mission mission;
     private TextView mission_name, mission_event_date, mission_event_type, mission_type, name, uid, mission_description, mission_script;
+    private Button button_delete_mission;
     private String missionId;
     private FirebaseRecyclerAdapter<MissionDetail, MissionDetailHolder> mAdapter;
     private RecyclerView mission_items;
@@ -53,6 +57,16 @@ public class MissionDetailsFragment extends BaseFragment {
         mission_script = myView.findViewById(R.id.mission_script);
         mission_script.setText(mission.getScript());
 
+        button_delete_mission = myView.findViewById(R.id.button_delete_mission);
+        button_delete_mission.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mission == null)
+                    return;
+                alertDeleteMission(mission);
+            }
+        });
+
         // ref:  https://github.com/firebase/FirebaseUI-Android/blob/master/database/README.md
         mission_items = (RecyclerView) myView.findViewById(R.id.mission_items);
         mission_items.setLayoutManager(new LinearLayoutManager(myView.getContext()));
@@ -61,6 +75,28 @@ public class MissionDetailsFragment extends BaseFragment {
 
         setHasOptionsMenu(true);
         return myView;
+    }
+
+
+    private void alertDeleteMission(Mission m) {
+        // Use the Builder class for convenient dialog construction
+        // R.style.AppCompatAlertDialogStyle is defined in styles.xml
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle);
+        builder.setTitle("Delete Mission");
+        builder.setMessage("Are you SURE you want to delete this Mission?\n\nBecause once it's gone - it's GONE")
+                .setPositiveButton("Yes, Delete", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // FIRE ZE MISSILES!
+                    }
+                })
+                .setNegativeButton("Don't Delete", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User cancelled the dialog
+                    }
+                });
+        // Create the AlertDialog object and return it
+        AlertDialog dlg = builder.create();
+        dlg.show();
     }
 
 
