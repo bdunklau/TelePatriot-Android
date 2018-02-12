@@ -57,8 +57,12 @@ exports.missionActivation = functions.database.ref("teams/{team}/missions/{missi
 
                 // These next two lines are kind of a bandaid fix.  The best thing would be to strip out all
                 // non-numeric chars at the time the spreadsheet was read.
-                copy.phone = phone.replace(/\D/g,''); // gets rid of everything that isn't a digit
-                copy.phone2 = phone2.replace(/\D/g,''); // had a problem on iPhones with format (###) ###-####
+                if(phone) {
+                    copy.phone = phone.replace(/\D/g,''); // gets rid of everything that isn't a digit
+                }
+                if(phone2) {
+                    copy.phone2 = phone2.replace(/\D/g,''); // had a problem on iPhones with format (###) ###-####
+                }
 
                 copy.active_and_accomplished = active+"_"+child.val().accomplished
                 copy.group_number = counter % 10 // fixed modulus should be ok regardless of how many spreadsheets we load
