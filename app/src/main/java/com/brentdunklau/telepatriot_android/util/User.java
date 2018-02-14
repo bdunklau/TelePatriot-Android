@@ -251,7 +251,7 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     // similar to AppDelegate.onCallEnded() on iOS
     public void completeMissionItem(String myPhone) {
-        if(missionItem == null || missionItemId == null)
+        if(missionItem == null || missionItemId == null || missionItem._isAccomplished())
             return;
         missionItem.complete(missionItemId);
 
