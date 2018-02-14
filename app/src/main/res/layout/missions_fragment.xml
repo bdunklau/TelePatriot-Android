@@ -93,7 +93,7 @@
         android:layout_height="wrap_content"
         android:textColor="#ffffff"
         android:background="@color/com_facebook_blue"
-        android:text="All Active Missions"
+        android:text="All Missions"
         tools:layout_constraintTop_creator="1"
         tools:layout_constraintRight_creator="1"
         android:layout_marginStart="8dp"
