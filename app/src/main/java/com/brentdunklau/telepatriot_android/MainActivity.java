@@ -3,6 +3,7 @@ package com.brentdunklau.telepatriot_android;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -99,7 +100,21 @@ public class MainActivity extends AppCompatActivity
                 // This is where we set the name, email and profile pick in the Navigation Drawer
                 text_user_name.setText(User.getInstance().getName());
                 text_user_email.setText(User.getInstance().getEmail());
-                Picasso.with(MainActivity.this).load(User.getInstance().getPhotoURL()).fit().into(image_profile_pic);
+                String photoUrl = User.getInstance().getPhotoURL();
+                System.out.println(photoUrl);
+                Log.d("MainActivity", photoUrl);
+                try {
+                    Context ctx = getApplicationContext();
+                    Picasso.with(ctx).setLoggingEnabled(true);
+                    Picasso.with(MainActivity.this).load(photoUrl).fit().into(image_profile_pic);
+
+      // dev:  OK      https://scontent.xx.fbcdn.net/v/t1.0-1/p100x100/15439743_10153884236291370_5482786558312089303_n.jpg?oh=6ed5db40855629a3253f222e3c69e914&oe=5AD064B1
+      // prod: NOT OK  https://scontent.xx.fbcdn.net/v/t1.0-1/p100x100/15439743_10153884236291370_5482786558312089303_n.jpg?oh=447d44d77c8f56f6eb619a21f8ee83ae&oe=5A814AB1
+
+                } catch(Throwable t) {
+                    String msg = t.getMessage();
+                    t.printStackTrace();
+                }
             }
         };
         Handler h = new Handler();

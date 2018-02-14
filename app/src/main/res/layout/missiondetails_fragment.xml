@@ -83,6 +83,19 @@
                 android:text="Mission script" />
 
 
+            <Button
+                android:id="@+id/button_delete_mission"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal|center"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="#FF0000"
+                android:text="Delete Mission"
+                android:textColor="#FFFFFF" />
+
+
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/mission_items"
                 android:layout_width="match_parent"
