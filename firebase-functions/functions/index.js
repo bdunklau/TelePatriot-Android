@@ -106,3 +106,6 @@ exports.downloadUsers = userList.downloadUsers
 exports.manageUsers = userList.manageUsers
 exports.updateUser = userList.updateUser
 
+const twilioCallback = require('./twilio/callback')
+exports.twilioCallback = twilioCallback.twilioCallback
+

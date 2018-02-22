@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "com.brentdunklau.telepatriot_android"
         minSdkVersion 17
@@ -53,6 +53,14 @@ dependencies {
 
     // for image manipulation of profile pics
     compile 'com.squareup.picasso:picasso:2.5.2'
+
+
+
+    //https://www.twilio.com/docs/api/video/android-v2-getting-started
+    // the twilio video library resides on jcenter
+    // NOTE gradle version I'm using is out of date.  Should be using 'implementation' below
+    // not 'compile'
+    implementation 'com.twilio:video-android:2.0.0-beta1'
 }
 
 
