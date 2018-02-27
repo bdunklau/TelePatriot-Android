@@ -24,7 +24,7 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
     var name = email // default value if name not present
     if(event.data.displayName) name = event.data.displayName
     var created = date.asCentralTime()
-    var userrecord = {name:name, photoUrl:photoUrl, email:email, created: created}
+    var userrecord = {name:name, photoUrl:photoUrl, email:email, created: created, account_disposition: "enabled"}
 
     // remember, .set() returns a promise
     // just about everything returns a promise

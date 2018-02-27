@@ -2,6 +2,7 @@
 
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
+const date = require('./dateformat')
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -577,38 +578,77 @@ exports.selectDistinct = functions.https.onRequest((req, res) => {
 
 
 exports.query = functions.https.onRequest((req, res) => {
+})
+
+
+// initially created to add account_disposition=enabled to each child of /users
+exports.addAttributeToChildren = functions.https.onRequest((req, res) => {
     var status = ''
 
-    var node = req.query.node
-    if(!node) {
-        status += 'Required request parameters: <P/> node<P/> optional: attribute<P/> optional: value'
+    var parentNode = req.query.parentNode
+    var attr = req.query.attr
+    var value = req.query.value
+
+
+    if(!parentNode || !attr || !value) {
+        status += 'Required request parameters: <P/> parentNode<P/> attr<P/> value'
         res.status(200).send(status)
     }
+
+
     else {
-        var attribute = req.query.attribute
-        var value = req.query.value
-        var nodeInfo = node
 
-        var theref = db.ref(`${node}`)
-        if(attribute && value) {
-            nodeInfo += ' where '+attribute+' = '+value
-            theref = db.ref(`${node}`).orderByChild(attribute).equalTo(value)
-        }
-
+        var theref = db.ref(`${parentNode}`)
+        var updates = {}
         return theref.once('value').then(snapshot => {
             var ct = snapshot.numChildren()
-            status += '<P/>There are '+ct+' children of '+nodeInfo
-            status += '<P/>'+node+' as json string...<br/>'+JSON.stringify(snapshot.val())
+            status += '<P/>There are '+ct+' children of '+parentNode
             snapshot.forEach(function (child) {
-                status += '<P/>child node: key='+child.key+' value = '+JSON.stringify(child.val())
+                var path = parentNode + "/" + child.key + "/" + attr
+                updates[path] = value
+                status += '<P/>set: updates['+path+'] = ' + value
             })
+
+            return {updates: updates, status: status}
         })
-        .then(() => {
-            res.status(200).send(status)
+        .then((result) => {
+            var updates = result.updates
+            // good example of multi-path updates
+            return db.ref().update(updates).then(() => {
+                res.status(200).send(result.status)
+            })
+
         })
     }
 })
 
+
+// copies the /users node over to /archive_users_yyyyMMdd
+exports.archive = functions.https.onRequest((req, res) => {
+
+    var status = ''
+    var node = req.query.node
+
+    if(!node) {
+        status += 'Required request parameter:  node'
+        res.status(200).send(status)
+    }
+
+    else {
+        if(node.startsWith("/")) {
+            node = node.substring(1)
+        }
+
+        var datePart = date.as_yyyyMMdd()
+        var destNode = "archive_"+node+"_"+datePart
+        var fromNode = node
+
+        return db.ref(`${fromNode}`).once('value').then(snapshot => {
+            db.ref(`${destNode}`).set(snapshot.val())
+            res.status(200).send("OK: copied "+fromNode+" -to-> "+destNode)
+        })
+    }
+})
 
 
 

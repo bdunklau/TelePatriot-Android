@@ -66,6 +66,11 @@ exports.roleUnassigned = functions.database.ref('/users/{uid}/roles/{role}').onD
           });
 
     })
+    .then(() => {
+        var datestr = date.asCentralTime()
+        var msg = "Admin has removed you from the "+role+" group"
+        event.data.adminRef.root.child(`/users/${uid}/account_status_events`).push({date: datestr, event: msg})
+    })
 
 });
 

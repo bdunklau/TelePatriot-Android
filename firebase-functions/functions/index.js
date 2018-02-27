@@ -68,6 +68,8 @@ exports.viewMissionReport = teams.viewMissionReport
 
 
 const dbadmin = require('./dbadmin')
+exports.addAttributeToChildren = dbadmin.addAttributeToChildren
+exports.archive = dbadmin.archive
 exports.checkUsers = dbadmin.checkUsers
 exports.insert = dbadmin.insert
 exports.update = dbadmin.update
