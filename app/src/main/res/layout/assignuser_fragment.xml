@@ -42,6 +42,17 @@
             android:text="TextView"
             android:textColor="#007AFF"/>
 
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/switch_enabled_disabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:theme="@style/SwitchStyleGreen"
+            android:showText="false"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="100dp"
+            app:switchMinWidth="75dp" />
+
         <TextView
             android:id="@+id/text_note"
             android:layout_width="match_parent"

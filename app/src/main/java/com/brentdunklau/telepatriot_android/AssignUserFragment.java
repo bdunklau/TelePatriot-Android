@@ -3,17 +3,13 @@ package com.brentdunklau.telepatriot_android;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.SwitchCompat;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,16 +37,19 @@ import java.util.Map;
 
 public class AssignUserFragment extends AdminFragment {
 
+    private SwitchCompat enabledDisabledSwitch;
     private SwitchCompat adminSwitch;
     private SwitchCompat directorSwitch;
     private SwitchCompat volunteerSwitch;
     private Button okButton;
     private String uid;
+    boolean isEnabled = true;
     boolean isAdmin, isDirector, isVolunteer;
     Boolean has_signed_petition, has_signed_confidentiality_agreement, is_banned;
     //View myView;
     private FragmentManager fragmentManager;
     private Fragment back;
+    private UserBean usr;
 
     @Nullable
     @Override
@@ -71,11 +70,20 @@ public class AssignUserFragment extends AdminFragment {
 
     private void setUI() {
 
+        enabledDisabledSwitch = myView.findViewById(R.id.switch_enabled_disabled);
         adminSwitch = myView.findViewById(R.id.switch_admin);
         directorSwitch = myView.findViewById(R.id.switch_director);
         volunteerSwitch = myView.findViewById(R.id.switch_volunteer);
 
         adminSwitch.setSwitchPadding(100);
+
+
+        enabledDisabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                enabledDisabledChanged(b);
+            }
+        });
 
 
         adminSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -122,6 +130,7 @@ public class AssignUserFragment extends AdminFragment {
                 }
 
                 if(ub != null) {
+                    ub.setUid(uid);
                     updateLabel(R.id.text_name, ub.getName());
                     boolean underline = true;
                     updateLabel(R.id.text_email, ub.getEmail(), underline);
@@ -134,9 +143,11 @@ public class AssignUserFragment extends AdminFragment {
                             emailSetup(ub2, senderName);
                         }
                     });
+                    isEnabled = ub.isEnabled();
                     isAdmin = ub.isRole("Admin");
                     isDirector = ub.isRole("Director");
                     isVolunteer = ub.isRole("Volunteer");
+                    setSwitch(isEnabled, enabledDisabledSwitch);
                     setSwitch(isAdmin, adminSwitch);
                     setSwitch(isDirector, directorSwitch);
                     setSwitch(isVolunteer, volunteerSwitch);
@@ -148,6 +159,7 @@ public class AssignUserFragment extends AdminFragment {
                     setBannedStatus(is_banned);
 
                     wireUpSegmentedControlButtons(ub);
+                    usr = ub;
                 }
             }
 
@@ -166,6 +178,37 @@ public class AssignUserFragment extends AdminFragment {
         });
 
         setHasOptionsMenu(true);
+    }
+
+
+    /************************
+     NOTE that disabling someone's account does not automatically remove them from the
+     teams they're on.  That would make sense.  But the app just isn't programmed that way
+     right now.  At one time, we cleared the user's list of teams whenever the enable/disable
+     switch was moved to "disabled".  But that occurred before the user was saved.
+     And I wanted to make sure we didn't lose team membership info prior to actually saving
+     the user.  Otherwise, the admin could toggle to disabled, then back to enabled, never actually
+     changing the state of the user but losing all the team info in the process.
+     ************************/
+    private void enabledDisabledChanged(boolean enabled) {
+
+        if(enabled) {
+            volunteerSwitch.setEnabled(true);
+            directorSwitch.setEnabled(true);
+            adminSwitch.setEnabled(true);
+        }
+        else {
+            volunteerSwitch.setChecked(false);
+            directorSwitch.setChecked(false);
+            adminSwitch.setChecked(false);
+
+            volunteerSwitch.setEnabled(false);
+            directorSwitch.setEnabled(false);
+            adminSwitch.setEnabled(false);
+        }
+
+        enabledDisabledSwitch.setText(enabled ? "Enabled" : "Disabled");
+        usr.setEnabled(enabled);
     }
 
     /***
@@ -259,31 +302,42 @@ public class AssignUserFragment extends AdminFragment {
     }
 
     public void clickOk(View view) {
+        usr.setVolunteer(isVolunteer);
+        usr.setDirector(isDirector);
+        usr.setAdmin(isAdmin);
+        usr.setHas_signed_petition(has_signed_petition);
+        usr.setHas_signed_confidentiality_agreement(has_signed_confidentiality_agreement);
+        usr.setIs_banned(is_banned);
+
+        usr.update();
+
         String returnToTab = "Admin";
         if(isVolunteer) {
             returnToTab = "Volunteer";
-            setRole("Volunteer");
+            //setRole("Volunteer");
         } else {
-            unsetRole("Volunteer");
+            //unsetRole("Volunteer");
         }
 
         if(isDirector) {
             returnToTab = "Director";
-            setRole("Director");
+            //setRole("Director");
         } else {
-            unsetRole("Director");
+            //unsetRole("Director");
         }
 
         if(isAdmin) {
             returnToTab = "Admin";
-            setRole("Admin");
+            //setRole("Admin");
         } else {
-            unsetRole("Admin");
+            //unsetRole("Admin");
         }
 
+        /****************
         setValue(uid, "has_signed_petition", has_signed_petition);
         setValue(uid, "has_signed_confidentiality_agreement", has_signed_confidentiality_agreement);
         setValue(uid, "is_banned", is_banned);
+         ***********/
 
 
         // as long is something is set, remove the record from the no_roles node

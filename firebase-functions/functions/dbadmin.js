@@ -578,7 +578,38 @@ exports.selectDistinct = functions.https.onRequest((req, res) => {
 
 
 exports.query = functions.https.onRequest((req, res) => {
+    var status = ''
+
+    var node = req.query.node
+    if(!node) {
+        status += 'Required request parameters: <P/> node<P/> optional: attribute<P/> optional: value'
+        res.status(200).send(status)
+    }
+    else {
+        var attribute = req.query.attribute
+        var value = req.query.value
+        var nodeInfo = node
+
+        var theref = db.ref(`${node}`)
+        if(attribute && value) {
+            nodeInfo += ' where '+attribute+' = '+value
+            theref = db.ref(`${node}`).orderByChild(attribute).equalTo(value)
+        }
+
+        return theref.once('value').then(snapshot => {
+            var ct = snapshot.numChildren()
+            status += '<P/>There are '+ct+' children of '+nodeInfo
+            status += '<P/>'+node+' as json string...<br/>'+JSON.stringify(snapshot.val())
+            snapshot.forEach(function (child) {
+                status += '<P/>child node: key='+child.key+' value = '+JSON.stringify(child.val())
+            })
+        })
+        .then(() => {
+            res.status(200).send(status)
+        })
+    }
 })
+
 
 
 // initially created to add account_disposition=enabled to each child of /users

@@ -20,6 +20,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 /**
@@ -50,7 +51,8 @@ public class UnassignedUsersFragment extends AdminFragment {
         users = (RecyclerView) myView.findViewById(R.id.user_list);
         users.setLayoutManager(new LinearLayoutManager(myView.getContext()));
 
-        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("no_roles");
+        //final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("no_roles");
+        final Query ref = FirebaseDatabase.getInstance().getReference("no_roles").orderByChild("account_disposition").equalTo("enabled");
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -72,20 +74,8 @@ public class UnassignedUsersFragment extends AdminFragment {
 
     }
 
-    /******
-    private void updateLabel(final int rid, final String text) {
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                ((TextView) myView.findViewById(rid)).setText(text);
-            }
-        };
-        new Handler().post(r);
-    }
-     ******/
 
-
-    private void doit(final DatabaseReference ref) {
+    private void doit(final /*DatabaseReference*/ Query ref) {
 
         final FragmentManager fragmentManager = getFragmentManager();
 
