@@ -108,3 +108,9 @@ exports.downloadUsers = userList.downloadUsers
 exports.manageUsers = userList.manageUsers
 exports.updateUser = userList.updateUser
 
+const email = require('./email')
+exports.email = email.email
+exports.renderEmail = email.renderEmail
+exports.saveEmail = email.saveEmail
+exports.sendEmail = email.sendEmail
+

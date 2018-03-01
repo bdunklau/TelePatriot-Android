@@ -8,7 +8,8 @@
     "googleapis": "^22.2.0",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
-    "moment-timezone": "^0.5.13"
+    "moment-timezone": "^0.5.13",
+    "nodemailer": "^4.6.0"
   },
   "private": true
 }
