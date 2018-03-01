@@ -37,11 +37,14 @@ var listTeams = function(stuff, current_team) {
             stuff += '<td style="'+style+'" valign="top"><a href="/viewQueue?team='+child.val().team_name+'">Queue</a></td>'
             stuff += '<td style="'+style+'" valign="top">'+child.val().team_name+'</td>'
             if(current_team && current_team.trim() != '') {
+                /********** take this button out - it's too dangerous
                 if(current_team.trim() != child.val().team_name) {
                     stuff += '<td valign="middle"><form method="post" action="/copyMembers?from_team='+current_team+'&to_team='+child.val().team_name+'"><input type="submit" value="Add '+current_team+' members to '+child.val().team_name+'"></form></td>'
-                    //stuff += '<td><a href="/copyMembers?from_team='+current_team+'&to_team='+child.val().team_name+'">&lt;-- Add '+current_team+' members to this team</a></td>'
                 }
                 else { stuff += '<td>&nbsp;</td>' }
+                *****************/
+
+                stuff += '<td>&nbsp;</td>'
             }
             else { stuff += '<td>&nbsp;</td>' }
             //var deleteTeam = cell('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/deleteTeam?name='+child.val().team_name+'">!!! Delete Team !!!</a>', 1)

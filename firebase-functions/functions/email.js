@@ -30,9 +30,10 @@ exports.email = functions.https.onRequest((req, res) => {
         var formParams = {host: snapshot.val().host,
                         port: snapshot.val().port,
                         user: snapshot.val().user,
-                        pass: snapshot.val().pass,
+                        //pass: snapshot.val().pass,
                         to: snapshot.val().to,
                         from: snapshot.val().from,
+                        cc: snapshot.val().cc,
                         subject: snapshot.val().subject,
                         message: snapshot.val().message}
 
@@ -43,7 +44,7 @@ exports.email = functions.https.onRequest((req, res) => {
     .then(pageData => {
         return res.status(200).send(renderPage(pageData))
     })
-    
+
 })
 
 
@@ -97,13 +98,13 @@ var emailForm = function(parms) {
     html += '<input type="text" size="75" name="user" value="'+parms.user+'" placeholder="email user">'
     html += '</td>'
     html += '</tr>'
-
+    /*****************
     html += '<tr>'
     html += '<td>'
-    html += '<input type="text" size="75" name="pass" value="'+parms.pass+'" placeholder="email pass">'
+    html += '<input type="hidden" size="75" name="pass" value="'+parms.pass+'" placeholder="email pass">'
     html += '</td>'
     html += '</tr>'
-
+    *****************/
     html += '<tr>'
     html += '<td>'
     html += '<input type="text" size="75" name="to" value="'+parms.to+'" placeholder="email address">'
@@ -113,6 +114,12 @@ var emailForm = function(parms) {
     html += '<tr>'
     html += '<td>'
     html += '<input type="text" size="75" name="from" value="'+parms.from+'" placeholder="email address">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="text" size="75" name="cc" value="'+parms.cc+'" placeholder="cc email address">'
     html += '</td>'
     html += '</tr>'
 
@@ -146,9 +153,10 @@ exports.renderEmail = functions.https.onRequest((req, res) => {
     var formParams = {host: req.body.host,
                     port: req.body.port,
                     user: req.body.user,
-                    pass: req.body.pass,
+                    //pass: req.body.pass,
                     to: req.body.to,
                     from: req.body.from,
+                    cc: req.body.cc,
                     subject: req.body.subject,
                     message: req.body.message}
 
@@ -164,9 +172,10 @@ exports.saveEmail = functions.https.onRequest((req, res) => {
     var formParams = {host: req.body.host,
                     port: req.body.port,
                     user: req.body.user,
-                    pass: req.body.pass,
+                    //pass: req.body.pass,
                     to: req.body.to,
                     from: req.body.from,
+                    cc: req.body.cc,
                     subject: req.body.subject,
                     message: req.body.message}
 
@@ -186,45 +195,52 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
     var formParams = {host: req.body.host,
                     port: req.body.port,
                     user: req.body.user,
-                    pass: req.body.pass,
+                    //pass: req.body.pass,
                     to: req.body.to,
                     from: req.body.from,
+                    cc: req.body.cc,
                     subject: req.body.subject,
                     message: req.body.message}
 
 
-    var smtpTransport = nodemailer.createTransport({
-      host: formParams.host,
-              port: formParams.port,
-              secure: true, // true for 465, false for other ports
-      auth: {
-        user: formParams.user, pass: formParams.pass
-      }
-    })
+    return db.ref(`administration/welcome_email/pass`).once('value').then(snapshot => {
+        var pass = snapshot.val()
 
-    // setup e-mail data with unicode symbols
-    var mailOptions = {
-        from: formParams.from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
-        to: formParams.to, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
-        subject: formParams.subject, // Subject line
-        text: "plain text: "+formParams.message, // plaintext body
-        html: formParams.message // html body
-    }
+        var smtpTransport = nodemailer.createTransport({
+          host: formParams.host,
+                  port: formParams.port,
+                  secure: true, // true for 465, false for other ports
+          auth: {
+            user: formParams.user, pass: pass
+          }
+        })
 
-    // send mail with defined transport object
-    smtpTransport.sendMail(mailOptions, function(error, response){
-        if(error){
-            console.log(error);
-        }else{
-            console.log("Message sent: " + response.message);
+        // setup e-mail data with unicode symbols
+        var mailOptions = {
+            from: formParams.from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
+            to: formParams.to, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
+            cc: formParams.cc,
+            subject: formParams.subject, // Subject line
+            text: "plain text: "+formParams.message, // plaintext body
+            html: formParams.message // html body
         }
 
-        // if you don't want to use this transport object anymore, uncomment following line
-        smtpTransport.close(); // shut down the connection pool, no more messages
+        // send mail with defined transport object
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.message);
+            }
 
-        var pageData = {formParams: formParams, response: 'OK: email sent<P/>May take up to 5 mins for email to be received'}
-        return res.status(200).send(renderPage(pageData))
-    });
+            // if you don't want to use this transport object anymore, uncomment following line
+            smtpTransport.close(); // shut down the connection pool, no more messages
+
+            var pageData = {formParams: formParams, response: 'OK: email sent<P/>May take up to 5 mins for email to be received'}
+            return res.status(200).send(renderPage(pageData))
+        });
+    })
+
 
 
 })
