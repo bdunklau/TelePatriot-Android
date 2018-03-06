@@ -114,3 +114,6 @@ exports.renderEmail = email.renderEmail
 exports.saveEmail = email.saveEmail
 exports.sendEmail = email.sendEmail
 
+const videoManager = require('./video')
+exports.video = videoManager.video
+
