@@ -1,6 +1,7 @@
 package com.brentdunklau.telepatriot_android.util;
 
 import android.accounts.Account;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.auth.AccountChangeEvent;
@@ -8,6 +9,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -53,7 +55,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public boolean isLoggedIn() {
-        return getFirebaseUser() != null;
+        boolean bool = getFirebaseUser() != null;
+        return bool;
     }
 
 
@@ -267,6 +270,30 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     public String getName() {
         return getFirebaseUser()!=null ? getFirebaseUser().getDisplayName() : "name not available";
+    }
+
+    public void update(String name, final String email, String photoUrl, final OnCompleteListener<Void> listener) {
+        //UpdateProfileChangeRequest upc = new UpdateProfileChangeRequest();
+        //FirebaseAuth.getInstance().getCurrentUser().up//.updateProfile();new UpdateProfileChangeRequest() { });
+        //FirebaseAuth.getInstance().getCurrentUser().updateEmail(email);
+
+        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .setPhotoUri(Uri.parse(photoUrl))
+                .build();
+
+        user.updateProfile(profileUpdates)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            //Log.d(TAG, "User profile updated.");
+                            user.updateEmail(/*email*/"-").addOnCompleteListener(listener);
+                        }
+                    }
+                });
     }
 
     public String getUid() {
