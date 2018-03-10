@@ -1,6 +1,7 @@
 package com.brentdunklau.telepatriot_android.util;
 
 import android.accounts.Account;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.auth.AccountChangeEvent;
@@ -8,6 +9,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -53,7 +55,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public boolean isLoggedIn() {
-        return getFirebaseUser() != null;
+        boolean bool = getFirebaseUser() != null;
+        return bool;
     }
 
 
@@ -269,12 +272,47 @@ public class User implements FirebaseAuth.AuthStateListener {
         return getFirebaseUser()!=null ? getFirebaseUser().getDisplayName() : "name not available";
     }
 
+    public void update(String name, final String email, String photoUrl, final OnCompleteListener<Void> listener) {
+        //UpdateProfileChangeRequest upc = new UpdateProfileChangeRequest();
+        //FirebaseAuth.getInstance().getCurrentUser().up//.updateProfile();new UpdateProfileChangeRequest() { });
+        //FirebaseAuth.getInstance().getCurrentUser().updateEmail(email);
+
+        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .setPhotoUri(Uri.parse(photoUrl))
+                .build();
+
+        user.updateProfile(profileUpdates)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        boolean succ = task.isSuccessful();
+                        if (succ) {
+                            //Log.d(TAG, "User profile updated.");
+                            user.updateEmail(email).addOnCompleteListener(listener);
+                        }
+                    }
+                });
+    }
+
     public String getUid() {
         return getFirebaseUser()!=null ? getFirebaseUser().getUid() : "uid not available";
     }
 
     public String getEmail() {
-        return getFirebaseUser()!=null ? getFirebaseUser().getEmail() : "email not available";
+        if(getFirebaseUser()==null) {
+            return "";
+        }
+        else if(getFirebaseUser().getEmail()==null || getFirebaseUser().getEmail().trim().equals("")) {
+            return "Email Required (touch here)";
+        }
+        return getFirebaseUser().getEmail();
+    }
+
+    public boolean isEmailMissing() {
+        return getFirebaseUser()!=null && (getFirebaseUser().getEmail()==null || getFirebaseUser().getEmail().trim().equals(""));
     }
 
     public void setRecruiter_id(final String recruiter_id) {

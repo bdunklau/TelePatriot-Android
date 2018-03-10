@@ -6,8 +6,8 @@ android {
         applicationId "com.brentdunklau.telepatriot_android"
         minSdkVersion 17
         targetSdkVersion 26
-        versionCode 36
-        versionName "36"
+        versionCode 38
+        versionName "38"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -22,36 +22,36 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:26.0.0'
-    compile 'com.android.support:support-v13:26.0.1'
+    implementation 'com.android.support:appcompat-v7:26.0.0'
+    implementation 'com.android.support:support-v13:26.0.1'
     //compile 'com.android.support.constraint:constraint-layout:1.0.2'
     //compile 'com.google.firebase:firebase-auth:11.4.0'
     testCompile 'junit:junit:4.12'
 
     // Google
-    compile 'com.google.android.gms:play-services-auth:11.0.4'
+    implementation 'com.google.android.gms:play-services-auth:11.0.4'
     //compile 'com.google.firebase:firebase-database:11.4.0'
     //compile 'com.google.firebase:firebase-storage:11.4.0'
 
-    compile('com.facebook.android:facebook-android-sdk:4.25.0')
+    implementation('com.facebook.android:facebook-android-sdk:4.25.0')
     // for twitter
     // compile('com.twitter.sdk.android:twitter-core:3.0.0@aar) {transitive = "true"}
 
     // from:  https://github.com/firebase/FirebaseUI-Android
     // Single target that includes all FirebaseUI libraries above
-    compile 'com.firebaseui:firebase-ui:2.3.0'
+    implementation 'com.firebaseui:firebase-ui:2.3.0'
 
     // from
     // https://blog.chizobaogbonna.me/device-to-device-push-notification-using-cloud-functions-for-firebase-5e607d74d7a2
     // also this:  https://codelabs.developers.google.com/codelabs/firebase-android/#9
-    compile 'com.google.firebase:firebase-messaging:11.0.4'
+    implementation 'com.google.firebase:firebase-messaging:11.0.4'
 
     // for image manipulation of profile pics
-    compile 'com.squareup.picasso:picasso:2.5.2'
+    implementation 'com.squareup.picasso:picasso:2.5.2'
 }
 
 

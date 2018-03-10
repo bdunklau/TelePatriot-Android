@@ -21,13 +21,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.FirebaseDatabase;
 import com.squareup.picasso.Picasso;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, AccountStatusEvent.Listener,
@@ -35,6 +42,9 @@ public class MainActivity extends AppCompatActivity
 
     private String TAG = "MainActivity";
 
+    TextView text_user_name;
+    TextView text_user_email;
+    ImageView image_profile_pic;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,15 +101,19 @@ public class MainActivity extends AppCompatActivity
 
 
         View navHeaderView = navigationView.getHeaderView(0);  // https://stackoverflow.com/a/38418531
-        final TextView text_user_name = (TextView)navHeaderView.findViewById(R.id.text_user_name);
-        final TextView text_user_email = (TextView)navHeaderView.findViewById(R.id.text_user_email);
-        final ImageView image_profile_pic = (ImageView)navHeaderView.findViewById(R.id.image_profile_pic);
+        text_user_name = (TextView)navHeaderView.findViewById(R.id.text_user_name);
+        text_user_email = (TextView)navHeaderView.findViewById(R.id.text_user_email);
+        image_profile_pic = (ImageView)navHeaderView.findViewById(R.id.image_profile_pic);
+
         Runnable r = new Runnable() {
             @Override
             public void run() {
                 // This is where we set the name, email and profile pick in the Navigation Drawer
                 text_user_name.setText(User.getInstance().getName());
                 text_user_email.setText(User.getInstance().getEmail());
+                if(User.getInstance().isEmailMissing()) {
+                    text_user_email.setTextColor(0xFFFFFF00);
+                }
                 String photoUrl = User.getInstance().getPhotoURL();
                 System.out.println(photoUrl);
                 Log.d("MainActivity", photoUrl);
@@ -119,7 +133,72 @@ public class MainActivity extends AppCompatActivity
         };
         Handler h = new Handler();
         h.post(r);
+
+        text_user_name.setOnClickListener(beginEditingMyAccount());
+        text_user_email.setOnClickListener(beginEditingMyAccount());
+        image_profile_pic.setOnClickListener(beginEditingMyAccount());
     }
+
+
+    private View.OnClickListener beginEditingMyAccount() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editMyAccount();
+            }
+        };
+    }
+
+
+    private void editMyAccount() {
+        final boolean emailWasMissing = User.getInstance().isEmailMissing(); // not sure exactly what it's going to equal
+        // but this method was originally added specifically for the user's that didn't get their Facebook emails
+        // passed over.  For these people, they never got sent to the Limbo screen.  So that's where we need to send them
+        // once they provide an email address here.
+
+        android.app.FragmentManager fragmentManager = getFragmentManager();
+        EditMyAccountFragment fragment = new EditMyAccountFragment();
+        fragment.setOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                boolean successful = task.isSuccessful();
+                if (successful) {
+                    text_user_name.setText(User.getInstance().getName());
+                    text_user_email.setText(User.getInstance().getEmail());
+                    String photoUrl = User.getInstance().getPhotoURL();
+                    Context ctx = getApplicationContext();
+                    Picasso.with(ctx).setLoggingEnabled(true);
+                    Picasso.with(MainActivity.this).load(photoUrl).fit().into(image_profile_pic);
+                    Toast.makeText(getApplicationContext(), "Save Successful", Toast.LENGTH_SHORT).show();
+                    if(emailWasMissing) {
+                        // if the email WAS missing, we have to write a record under the /no_roles node
+                        // see this line:
+                        //      var userrecord = {name:name, photoUrl:photoUrl, email:email, created: created, account_disposition: "enabled"}
+                        // from: userCreated.js
+                        Map userValues = new HashMap();
+                        userValues.put("name", User.getInstance().getName());
+                        userValues.put("photoUrl", User.getInstance().getPhotoURL());
+                        userValues.put("email", User.getInstance().getEmail());
+                        userValues.put("created", new SimpleDateFormat("MMM d, yyyy h:mm a z").format(new Date()));
+                        userValues.put("account_disposition", "enabled");
+                        FirebaseDatabase.getInstance().getReference("/no_roles/"+User.getInstance().getUid()).setValue(userValues);
+
+                        // put the same user data here also because we may only have account_status_event's and nothing else
+                        FirebaseDatabase.getInstance().getReference("/users/"+User.getInstance().getUid()).updateChildren(userValues);
+
+                        // And we need to send the user to the Limbo screen because
+                        // they never had to pass through that screen
+                        MainActivity.this.startActivity(new Intent(MainActivity.this, LimboActivity.class));
+
+                    }
+                }
+            }
+        });
+        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+    }
+
 
     @Override
     public void onBackPressed() {

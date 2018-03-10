@@ -27,7 +27,16 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
     var name = email // default value if name not present
     if(event.data.displayName) name = event.data.displayName
     var created = date.asCentralTime()
-    var userrecord = {name:name, photoUrl:photoUrl, email:email, created: created, account_disposition: "enabled"}
+
+    // See comment at very bottom
+    var userrecord = {name:name, photoUrl:photoUrl, email: email, created: created, account_disposition: "enabled"}
+    /**********
+    var userrecord = {name:name, photoUrl:photoUrl, created: created, account_disposition: "enabled"}
+    // for the cases when there IS no email...
+    if(email) {
+        userrecord['email'] = email
+    }
+    ***************/
 
     // remember, .set() returns a promise
     // just about everything returns a promise
@@ -111,6 +120,55 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
     })
 })
 
+
+/***********************************************
+In createUserAccount() above, we have this code:
+
+    var userrecord = {name:name, photoUrl:photoUrl, email: email, created: created, account_disposition: "enabled"}
+
+
+
+We also have this code that is currently commented out:
+
+    var userrecord = {name:name, photoUrl:photoUrl, created: created, account_disposition: "enabled"}
+    // for the cases when there IS no email...
+    if(email) {
+        userrecord['email'] = email
+    }
+
+
+What do each of these do and why are they there?
+
+The first line is what we've always had.  The second block is new and works but we're not using
+it just yet.
+
+What's the problem:  MISSING EMAILS - Facebook is not sending emails over for some users
+
+What happens when the first line above is executed with no email:  Crash/Exception that prevents
+the user node under /users from being created.  So these users with no emails are NOT sent to the
+Limbo screen.  They are let right into the app, albeit with no permissions.
+
+In MainActivity, we now display a warning in yellow where the email address should be.  The user
+can touch this warning and be taken to a screen where he can supply his email (EditMyAccountFragment.java)
+Once the user supplies his email, we write the user's record to the /no_roles node so that the
+admins can properly on-board him.
+
+Is there anything wrong/confusing with the second block?  Yes
+
+The second block does avoid the crash/exception that occurs when there's no email.  And using
+this second block of code, new users without emails ARE sent to the Limbo screen which is good.
+The problem is, they still don't have an eamil.  So once we grant them permissions on the
+Unassigned Users screen, they are let in to the app but they still don't have an email address
+on file.
+
+Emails are pretty much assumed to always exist, so if one doesn't, that's an exception waiting
+to happen.
+
+Ideally, the UnassignedUsers screen would alert the admins to any user that doesn't have
+an email.  I haven't added that to the AssignUserFragment yet though.  I can roll out the
+new EditMyAccountFragment screen and get people to enter their emails without having to implement
+the second block of code and modifying the AssignUserFragment screen.
+***********************************************/
 
 
 
