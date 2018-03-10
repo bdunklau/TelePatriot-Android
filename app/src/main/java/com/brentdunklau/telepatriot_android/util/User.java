@@ -288,9 +288,10 @@ public class User implements FirebaseAuth.AuthStateListener {
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
+                        boolean succ = task.isSuccessful();
+                        if (succ) {
                             //Log.d(TAG, "User profile updated.");
-                            user.updateEmail(/*email*/"-").addOnCompleteListener(listener);
+                            user.updateEmail(email).addOnCompleteListener(listener);
                         }
                     }
                 });
@@ -301,7 +302,17 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public String getEmail() {
-        return getFirebaseUser()!=null ? getFirebaseUser().getEmail() : "email not available";
+        if(getFirebaseUser()==null) {
+            return "";
+        }
+        else if(getFirebaseUser().getEmail()==null || getFirebaseUser().getEmail().trim().equals("")) {
+            return "Email Required (touch here)";
+        }
+        return getFirebaseUser().getEmail();
+    }
+
+    public boolean isEmailMissing() {
+        return getFirebaseUser()!=null && (getFirebaseUser().getEmail()==null || getFirebaseUser().getEmail().trim().equals(""));
     }
 
     public void setRecruiter_id(final String recruiter_id) {

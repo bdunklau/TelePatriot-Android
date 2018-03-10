@@ -111,6 +111,9 @@ public class MainActivity extends AppCompatActivity
                 // This is where we set the name, email and profile pick in the Navigation Drawer
                 text_user_name.setText(User.getInstance().getName());
                 text_user_email.setText(User.getInstance().getEmail());
+                if(User.getInstance().isEmailMissing()) {
+                    text_user_email.setTextColor(0xFFFFFF00);
+                }
                 String photoUrl = User.getInstance().getPhotoURL();
                 System.out.println(photoUrl);
                 Log.d("MainActivity", photoUrl);
@@ -148,8 +151,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private void editMyAccount() {
-        String em = User.getInstance().getEmail();
-        final boolean emailWasMissing = em==null || em.trim().equals("") || em.trim().equals("-"); // not sure exactly what it's going to equal
+        final boolean emailWasMissing = User.getInstance().isEmailMissing(); // not sure exactly what it's going to equal
         // but this method was originally added specifically for the user's that didn't get their Facebook emails
         // passed over.  For these people, they never got sent to the Limbo screen.  So that's where we need to send them
         // once they provide an email address here.
@@ -177,9 +179,12 @@ public class MainActivity extends AppCompatActivity
                         userValues.put("name", User.getInstance().getName());
                         userValues.put("photoUrl", User.getInstance().getPhotoURL());
                         userValues.put("email", User.getInstance().getEmail());
-                        userValues.put("created", new SimpleDateFormat("MMM D, YYYY h:mm a z").format(new Date()));
+                        userValues.put("created", new SimpleDateFormat("MMM d, yyyy h:mm a z").format(new Date()));
                         userValues.put("account_disposition", "enabled");
                         FirebaseDatabase.getInstance().getReference("/no_roles/"+User.getInstance().getUid()).setValue(userValues);
+
+                        // put the same user data here also because we may only have account_status_event's and nothing else
+                        FirebaseDatabase.getInstance().getReference("/users/"+User.getInstance().getUid()).updateChildren(userValues);
 
                         // And we need to send the user to the Limbo screen because
                         // they never had to pass through that screen

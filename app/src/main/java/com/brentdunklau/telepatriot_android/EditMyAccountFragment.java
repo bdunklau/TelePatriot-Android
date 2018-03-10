@@ -42,14 +42,18 @@ public class EditMyAccountFragment  extends BaseFragment {
         button_save_my_account = myView.findViewById(R.id.button_save_my_account);
 
         edit_my_name.setText(User.getInstance().getName());
-        String email = User.getInstance().getEmail()==null ? "" : User.getInstance().getEmail();
-        edit_my_email.setText(email);
+        if(User.getInstance().isEmailMissing()) {
+            edit_my_email.setText("");
+        }
+        else {
+            edit_my_email.setText(User.getInstance().getEmail());
+        }
         edit_my_photo_url.setText(User.getInstance().getPhotoURL());
 
         button_save_my_account.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!isEmailAddress(edit_my_email, false))
+                if(!isEmailAddress(edit_my_email, true))
                     return;
 
                 User.getInstance().update(edit_my_name.getText()+"",
