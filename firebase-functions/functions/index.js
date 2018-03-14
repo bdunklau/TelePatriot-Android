@@ -114,3 +114,7 @@ exports.renderEmail = email.renderEmail
 exports.saveEmail = email.saveEmail
 exports.sendEmail = email.sendEmail
 
+const legislators = require('./legislators')
+exports.downloadFromOpenStates = legislators.downloadFromOpenStates
+exports.loadStates = legislators.loadStates
+
