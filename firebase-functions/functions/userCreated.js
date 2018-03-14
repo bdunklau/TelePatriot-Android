@@ -4,6 +4,10 @@ const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const date = require('./dateformat')
 const nodemailer = require('nodemailer')
+const citizen_builder_api = require('./citizen_builder_api/checkVolunteerStatus')
+
+// for calling CitizenBuilder API
+var request = require('request')
 
 // create reference to root of the database
 const db = admin.database().ref()
@@ -43,16 +47,36 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
 
     return newUserRef.set(userrecord).then(snap => {
 
-        return db.child(`/no_roles/${uid}`).set(userrecord)
-            .then( hmmm => {
-                admin.auth().getUser(uid)
-                    .then(function(userRecord) {
-                        console.log("Successfully fetched user data:", userRecord.toJSON());
-                        db.child(`/users/${uid}/name`).set(userRecord.displayName) // displayName not ready
-                        // above, but it is at this point
-                        // https://github.com/firebase/firebaseui-web/issues/197
+        db.child(`/no_roles/${uid}`).set(userrecord).then( whatisthis => {
+            admin.auth().getUser(uid)
+                .then(function(userRecord) {
+                    console.log("Successfully fetched user data:", userRecord.toJSON());
+                    db.child(`/users/${uid}/name`).set(userRecord.displayName) // displayName not ready
+                    // above, but it is at this point
+                    // https://github.com/firebase/firebaseui-web/issues/197
+                })
+        })
+    })
+    .then(() => {
+        if(email) {
+            citizen_builder_api.checkVolunteerStatus(email,
+                    function() {
+                        // called when the user HAS satisfied the legal requirements for access
+                        // In this case, set these attributes on the user's node
+                        var attributes = {}
+                        attributes[`/users/${uid}/has_signed_petition`] = true
+                        attributes[`/users/${uid}/has_signed_confidentiality_agreement`] = true
+                        attributes[`/users/${uid}/is_banned`] = false
+                        db.update(attributes)
+                    },
+                    function() {
+                        // called when the user has NOT satisfied the legal requirements for access
+                        // In this case, don't do anything.  The attributes that we set in the other
+                        // callback can be left out here.  Missing attribute will interpreted as "unknown"
+                        // We can't be more specific than "unknown" because we don't know exactly WHY
+                        // the CitizenBuilder API call returned false.
                     })
-            })
+        }
     })
 })
 

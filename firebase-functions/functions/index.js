@@ -118,3 +118,6 @@ const legislators = require('./legislators')
 exports.downloadFromOpenStates = legislators.downloadFromOpenStates
 exports.loadStates = legislators.loadStates
 
+const testing = require('./test/testing')
+exports.testApi = testing.testApi
+
