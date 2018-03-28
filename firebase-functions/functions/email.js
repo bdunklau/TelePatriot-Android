@@ -25,9 +25,46 @@ const db = admin.database();
 
 exports.email = functions.https.onRequest((req, res) => {
 
-    return db.ref(`administration/welcome_email`).once('value').then(snapshot => {
+    var html = ''
+    html += '<html><head></head><body>'
+    html += emailTypeDropdown('noselection')
+    html += '</body></html>'
 
-        var formParams = {host: snapshot.val().host,
+    return res.status(200).send(html)
+})
+
+
+var emailTypeDropdown = function(selectedValue) {
+
+    var html = ''
+    html += '<form name="chooseEmailType" action="chooseEmailType">'
+    html += '<select name="emailType" onchange="this.form.submit()">'
+    // the values in the option tags correspond to these nodes in the database:
+    //  /administration/welcome_email   and   /administration/petition_ca_email
+    html += '<option value="noselection" '+isSelected(selectedValue, "noselection")+'> - </option>'
+    html += '<option value="welcome_email" '+isSelected(selectedValue, "welcome_email")+'>Welcome Email</option>'
+    html += '<option value="petition_ca_email" '+isSelected(selectedValue, "petition_ca_email")+'>Petition, Conf Agreement</option>'
+    html += '</select>'
+    html += '</form>'
+    return html
+}
+
+
+var isSelected = function(val1, val2) {
+    if(val1 == val2) {
+        return 'selected'
+    }
+    else return ''
+}
+
+
+exports.chooseEmailType = functions.https.onRequest((req, res) => {
+    var emailType = req.query.emailType
+
+    return db.ref(`administration/${emailType}`).once('value').then(snapshot => {
+
+        var formParams = {title: snapshot.val().title,
+                        host: snapshot.val().host,
                         port: snapshot.val().port,
                         user: snapshot.val().user,
                         //pass: snapshot.val().pass,
@@ -35,7 +72,8 @@ exports.email = functions.https.onRequest((req, res) => {
                         from: snapshot.val().from,
                         cc: snapshot.val().cc,
                         subject: snapshot.val().subject,
-                        message: snapshot.val().message}
+                        message: snapshot.val().message,
+                        emailType: emailType}
 
         var pageData = {formParams: formParams, response: snapshot.val().message}
 
@@ -44,7 +82,6 @@ exports.email = functions.https.onRequest((req, res) => {
     .then(pageData => {
         return res.status(200).send(renderPage(pageData))
     })
-
 })
 
 
@@ -54,13 +91,15 @@ var renderPage = function(pageData) {
 
     var html = '<html><head></head>'
     html += '<body>'
-    html += '<form method="post" action="send">'
 
     html += '<table width="100%">'
-    html += '<tr><td valign="top">'+ emailForm(formParams)+ '</td>  <td valign="top">'+ responseSection(pageData.response)+ '</td></tr>'
+    html += '<tr><td>'+emailTypeDropdown(formParams.emailType)+'</td></tr>' // only need one column on this row for the "choose email type" dropdown
+    html += '<tr>'
+    html += '<td valign="top"><form method="post" action="send">'+ emailForm(formParams)+ '</form></td>'
+    html += '<td valign="top">'+ responseSection(pageData.response)+ '</td>'
+    html += '</tr>'
     html += '</table>'
 
-    html += '</form>'
     html += '</body></html>'
     return html
 }
@@ -77,13 +116,15 @@ var emailForm = function(parms) {
     html += '<table>'
     html += '<tr>'
     html += '<td>'
-    html += '<h2>Welcome Email</h2>'
+    html += '<h2>'+parms.title+'</h2>'
     html += '</td>'
     html += '</tr>'
 
     html += '<tr>'
     html += '<td>'
     html += '<input type="text" size="75" name="host" value="'+parms.host+'" placeholder="host">'
+    html += '<input type="text" name="emailType" value="'+parms.emailType+'">'
+    html += '<input type="text" name="title" value="'+parms.title+'">'
     html += '</td>'
     html += '</tr>'
 
@@ -98,13 +139,7 @@ var emailForm = function(parms) {
     html += '<input type="text" size="75" name="user" value="'+parms.user+'" placeholder="email user">'
     html += '</td>'
     html += '</tr>'
-    /*****************
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="hidden" size="75" name="pass" value="'+parms.pass+'" placeholder="email pass">'
-    html += '</td>'
-    html += '</tr>'
-    *****************/
+
     html += '<tr>'
     html += '<td>'
     html += '<input type="text" size="75" name="to" value="'+parms.to+'" placeholder="email address">'
@@ -150,7 +185,8 @@ exports.renderEmail = functions.https.onRequest((req, res) => {
     var message = req.body.message
 
 
-    var formParams = {host: req.body.host,
+    var formParams = {title: req.body.title,
+                    host: req.body.host,
                     port: req.body.port,
                     user: req.body.user,
                     //pass: req.body.pass,
@@ -158,7 +194,8 @@ exports.renderEmail = functions.https.onRequest((req, res) => {
                     from: req.body.from,
                     cc: req.body.cc,
                     subject: req.body.subject,
-                    message: req.body.message}
+                    message: req.body.message,
+                    emailType: req.body.emailType}
 
     var pageData = {formParams: formParams, response: message}
 
@@ -169,7 +206,8 @@ exports.renderEmail = functions.https.onRequest((req, res) => {
 
 exports.saveEmail = functions.https.onRequest((req, res) => {
 
-    var formParams = {host: req.body.host,
+    var formParams = {title: req.body.title,
+                    host: req.body.host,
                     port: req.body.port,
                     user: req.body.user,
                     //pass: req.body.pass,
@@ -177,7 +215,8 @@ exports.saveEmail = functions.https.onRequest((req, res) => {
                     from: req.body.from,
                     cc: req.body.cc,
                     subject: req.body.subject,
-                    message: req.body.message}
+                    message: req.body.message,
+                    emailType: req.body.emailType}
 
     // NOTICE the update() call instead of set() - update() is how you do multi-path updates
     // You won't replace every other node under welcome_email if you use update()
@@ -192,7 +231,8 @@ exports.saveEmail = functions.https.onRequest((req, res) => {
 
 exports.sendEmail = functions.https.onRequest((req, res) => {
 
-    var formParams = {host: req.body.host,
+    var formParams = {title: req.body.title,
+                    host: req.body.host,
                     port: req.body.port,
                     user: req.body.user,
                     //pass: req.body.pass,
@@ -200,7 +240,8 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
                     from: req.body.from,
                     cc: req.body.cc,
                     subject: req.body.subject,
-                    message: req.body.message}
+                    message: req.body.message,
+                    emailType: req.body.emailType}
 
 
     return db.ref(`administration/welcome_email/pass`).once('value').then(snapshot => {

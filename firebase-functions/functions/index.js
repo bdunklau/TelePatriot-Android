@@ -113,6 +113,7 @@ exports.email = email.email
 exports.renderEmail = email.renderEmail
 exports.saveEmail = email.saveEmail
 exports.sendEmail = email.sendEmail
+exports.chooseEmailType = email.chooseEmailType
 
 const legislators = require('./legislators')
 exports.downloadFromOpenStates = legislators.downloadFromOpenStates
