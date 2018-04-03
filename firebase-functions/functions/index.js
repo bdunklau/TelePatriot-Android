@@ -121,3 +121,6 @@ exports.loadStates = legislators.loadStates
 const testing = require('./test/testing')
 exports.testApi = testing.testApi
 
+const vidyo = require('./vidyo')
+exports.generateVidyoToken = vidyo.generateVidyoToken
+
