@@ -220,7 +220,7 @@ exports.saveEmail = functions.https.onRequest((req, res) => {
 
     // NOTICE the update() call instead of set() - update() is how you do multi-path updates
     // You won't replace every other node under welcome_email if you use update()
-    return db.ref(`administration/welcome_email`).update(formParams).then(() => {
+    return db.ref(`administration/${req.body.emailType}`).update(formParams).then(() => {
 
         var pageData = {formParams: formParams, response: 'OK: email stuff saved'}
         return res.status(200).send(renderPage(pageData))
@@ -244,7 +244,7 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
                     emailType: req.body.emailType}
 
 
-    return db.ref(`administration/welcome_email/pass`).once('value').then(snapshot => {
+    return db.ref(`administration/${req.body.emailType}/pass`).once('value').then(snapshot => {
         var pass = snapshot.val()
 
         var smtpTransport = nodemailer.createTransport({
