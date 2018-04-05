@@ -75,7 +75,15 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
                         // callback can be left out here.  Missing attribute will interpreted as "unknown"
                         // We can't be more specific than "unknown" because we don't know exactly WHY
                         // the CitizenBuilder API call returned false.
-                    })
+
+                        // UPDATE 4/5/18 - BUT.... but we do want to send this person the email that
+                        // tells them they have to sign the petition and confidentiality agreement
+                        // Let's do that now...
+
+                        return sendEmail('petition_ca_email', email, name)
+
+                    }
+            )
         }
     })
 })
@@ -98,8 +106,15 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
     })
     .then(() => {
         // send the welcome email
+        return sendEmail('welcome_email', email, name)
 
-        return db.child(`/administration/welcome_email`).once('value').then(snapshot => {
+    })
+})
+
+
+var sendEmail = function(emailType, email, name) {
+
+        return db.child(`/administration/${emailType}`).once('value').then(snapshot => {
 
             var rep = "(newbie)"
             var message = snapshot.val().message.replace(rep, name)
@@ -139,10 +154,7 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
             });
 
         })
-
-
-    })
-})
+}
 
 
 /***********************************************
