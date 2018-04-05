@@ -229,7 +229,7 @@ exports.saveEmail = functions.https.onRequest((req, res) => {
 
 
 
-exports.sendEmail = functions.https.onRequest((req, res) => { 
+exports.sendEmail = functions.https.onRequest((req, res) => {
 
     var formParams = {title: req.body.title,
                     host: req.body.host,
