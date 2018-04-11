@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
         User.getInstance().addAccountStatusEventListener(this);
 
-
+    //TODO test test test
 /*
         Holdover from back when everything was an activity.  This is how we were closing down the
         app.  If we don't end up needing this soon (10/12/17), then just delete it.
