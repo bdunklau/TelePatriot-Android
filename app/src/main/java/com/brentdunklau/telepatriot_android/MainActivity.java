@@ -248,6 +248,9 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_admin_layout) {
             Fragment fragment = new AdminFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        } else if (id == R.id.vidyo_chat){
+            Fragment fragment = new VidyoChatFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
         /***** take out till it's you now the petition link is correct
         else if( id == R.id.nav_send_petition) {

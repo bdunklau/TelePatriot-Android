@@ -19,10 +19,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['lib/android']
+        }
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
@@ -31,27 +36,23 @@ dependencies {
     //compile 'com.android.support.constraint:constraint-layout:1.0.2'
     //compile 'com.google.firebase:firebase-auth:11.4.0'
     testCompile 'junit:junit:4.12'
-
     // Google
     implementation 'com.google.android.gms:play-services-auth:11.0.4'
     //compile 'com.google.firebase:firebase-database:11.4.0'
     //compile 'com.google.firebase:firebase-storage:11.4.0'
-
-    implementation('com.facebook.android:facebook-android-sdk:4.25.0')
+    implementation 'com.facebook.android:facebook-android-sdk:4.25.0'
     // for twitter
     // compile('com.twitter.sdk.android:twitter-core:3.0.0@aar) {transitive = "true"}
-
     // from:  https://github.com/firebase/FirebaseUI-Android
     // Single target that includes all FirebaseUI libraries above
     implementation 'com.firebaseui:firebase-ui:2.3.0'
-
     // from
     // https://blog.chizobaogbonna.me/device-to-device-push-notification-using-cloud-functions-for-firebase-5e607d74d7a2
     // also this:  https://codelabs.developers.google.com/codelabs/firebase-android/#9
     implementation 'com.google.firebase:firebase-messaging:11.0.4'
-
     // for image manipulation of profile pics
     implementation 'com.squareup.picasso:picasso:2.5.2'
+    implementation files('lib/android/vidyoclient.jar')
 }
 
 
