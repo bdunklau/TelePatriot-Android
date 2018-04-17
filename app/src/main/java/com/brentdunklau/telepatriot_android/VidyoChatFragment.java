@@ -14,10 +14,8 @@ import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.app.Activity;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -32,36 +30,6 @@ import com.vidyo.VidyoClient.Device.LocalCamera;
 import com.vidyo.VidyoClient.Endpoint.LogRecord;
 import com.vidyo.VidyoClient.NetworkInterface;
 
-
-import android.Manifest;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.view.ViewTreeObserver;
-import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.app.Activity;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.ToggleButton;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
-import com.vidyo.VidyoClient.Connector.ConnectorPkg;
-import com.vidyo.VidyoClient.Connector.Connector;
-import com.vidyo.VidyoClient.Device.Device;
-import com.vidyo.VidyoClient.Device.LocalCamera;
-import com.vidyo.VidyoClient.Endpoint.LogRecord;
-import com.vidyo.VidyoClient.NetworkInterface;
 
 public class VidyoChatFragment extends BaseFragment implements
         View.OnClickListener,
@@ -438,7 +406,6 @@ public class VidyoChatFragment extends BaseFragment implements
                         // Set the client version in the toolbar
                         mClientVersion.setText("VidyoClient-AndroidSDK " + mVidyoConnector.getVersion());
 
-                        Toast.makeText(mSelf, "New Connector", Toast.LENGTH_SHORT).show();
                         // Set initial position
                         refreshUI();
 
