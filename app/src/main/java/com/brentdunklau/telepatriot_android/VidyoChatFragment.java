@@ -4,38 +4,64 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.hardware.camera2.CameraDevice;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.app.Activity;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-import android.widget.VideoView;
-import com.vidyo.VidyoClient.Connector.Connector;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import com.vidyo.VidyoClient.Connector.ConnectorPkg;
+import com.vidyo.VidyoClient.Connector.Connector;
 import com.vidyo.VidyoClient.Device.Device;
 import com.vidyo.VidyoClient.Device.LocalCamera;
 import com.vidyo.VidyoClient.Endpoint.LogRecord;
 import com.vidyo.VidyoClient.NetworkInterface;
 
+
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.ViewTreeObserver;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.app.Activity;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.ToggleButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import com.vidyo.VidyoClient.Connector.ConnectorPkg;
+import com.vidyo.VidyoClient.Connector.Connector;
+import com.vidyo.VidyoClient.Device.Device;
+import com.vidyo.VidyoClient.Device.LocalCamera;
+import com.vidyo.VidyoClient.Endpoint.LogRecord;
+import com.vidyo.VidyoClient.NetworkInterface;
 
 public class VidyoChatFragment extends BaseFragment implements
         View.OnClickListener,
@@ -103,15 +129,10 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean mEnableDebug = false;
     private String mReturnURL = null;
     private String mExperimentalOptions = null;
-    private VidyoChatFragment mSelf;
+    private MainActivity mSelf;
     private boolean mRefreshSettings = true;
     private boolean mDevicesSelected = true;
     private View myView;
-    private RelativeLayout vidyoChatMainLayout;
-    private LinearLayout controllerLayout;
-    private Thread mUiThread;
-    private CameraDevice camera = null;
-    final Handler mHandler = new Handler();
 
     /*
      *  Operating System Events
@@ -121,31 +142,32 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public View onCreateView (LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
         myView = inflater.inflate(R.layout.vidyo_chat_fragment,container,false);
-        setUI();
-        return myView;
-    }
 
-    public void setUI() {
 
         // Initialize the member variables
-
-        controllerLayout = myView.findViewById(R.id.controls_layout);
-
+        mControlsLayout = myView.findViewById(R.id.controls_layout);
+        //mToolbarLayout = (LinearLayout) findViewById(R.id.toolbarLayout);
         mVideoFrame = myView.findViewById(R.id.vidyoChatMyScreen);
         mVideoFrame.Register(this);
-
-
-        mSelf = this;
+        //TODO change editText to import data
+        mHost = myView.findViewById(R.id.host);
+        mDisplayName = myView.findViewById(R.id.displayName);
+        mToken = myView.findViewById(R.id.token);
+        mResourceId = myView.findViewById(R.id.resource);
+        mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
+        mClientVersion = myView.findViewById(R.id.clientVersion);
+        mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
+        mSelf = (MainActivity) getActivity();
 
         // Set the onClick listeners for the buttons
-
         mToggleConnectButton = myView.findViewById(R.id.videoChatConnectButton);
         mToggleConnectButton.setOnClickListener(this);
         mMicrophonePrivacyButton = myView.findViewById(R.id.microphone_on_button);
         mMicrophonePrivacyButton.setOnClickListener(this);
         mCameraPrivacyButton = myView.findViewById(R.id.camera_on_button);
         mCameraPrivacyButton.setOnClickListener(this);
-        ToggleButton button = myView.findViewById(R.id.camera_switch);
+        ToggleButton button;
+        button = myView.findViewById(R.id.camera_switch);
         button.setOnClickListener(this);
 
         // Set the application's UI context to this activity.
@@ -153,16 +175,28 @@ public class VidyoChatFragment extends BaseFragment implements
 
         // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
         mVidyoClientInitialized = ConnectorPkg.initialize();
+        return myView;
     }
+
+    
+    //protected void onNewIntent(Intent intent) {
+    //    super.onNewIntent(intent);
+
+        // Set the refreshSettings flag so the app settings are refreshed in onStart
+    //    mRefreshSettings = true;
+
+        // New intent was received so set it to use in onStart
+    //   setIntent(intent);
+    //}
 
     @Override
     public void onStart() {
         super.onStart();
-
-        // Initialize or refresh the app settings.
+// Initialize or refresh the app settings.
         // When app is first launched, mRefreshSettings will always be true.
         // Each successive time that onStart is called, app is coming back to foreground so check if the
         // settings need to be refreshed again, as app may have been launched via URI.
+
         if (mRefreshSettings &&
                 mVidyoConnectorState != VidyoConnectorState.Connected &&
                 mVidyoConnectorState != VidyoConnectorState.Connecting) {
@@ -171,43 +205,42 @@ public class VidyoChatFragment extends BaseFragment implements
             Uri uri = intent.getData();
 
             // Check if app was launched via URI
-            //if (uri != null) {
-            //    String param = uri.getQueryParameter("host");
-            //    mHost.setText( param != null ? param : "prod.vidyo.io");
+            if (uri != null) {
+                String param = uri.getQueryParameter("host");
+                mHost.setText( param != null ? param : "prod.vidyo.io");
 
-            //    param = uri.getQueryParameter("token");
-            //    mToken.setText(param != null ? param : "");
+                param = uri.getQueryParameter("token");
+                mToken.setText(param != null ? param : "");
 
-            //    param = uri.getQueryParameter("displayName");
-            //    mDisplayName.setText(param != null ? param : "");
+                param = uri.getQueryParameter("displayName");
+                mDisplayName.setText(param != null ? param : "");
 
-            //    param = uri.getQueryParameter("resourceId");
-            //    mResourceId.setText(param != null ? param : "");
+                param = uri.getQueryParameter("resourceId");
+                mResourceId.setText(param != null ? param : "");
 
-            //    mReturnURL = uri.getQueryParameter("returnURL");
-            //    mHideConfig = uri.getBooleanQueryParameter("hideConfig", false);
-            //    mAutoJoin = uri.getBooleanQueryParameter("autoJoin", false);
-            //    mAllowReconnect = uri.getBooleanQueryParameter("allowReconnect", true);
-             //   mCameraPrivacy = uri.getBooleanQueryParameter("cameraPrivacy", false);
-            //    mMicrophonePrivacy = uri.getBooleanQueryParameter("microphonePrivacy", false);
-             //   mEnableDebug = uri.getBooleanQueryParameter("enableDebug", false);
-             //   mExperimentalOptions = uri.getQueryParameter("experimentalOptions");
-            //} else {
+                mReturnURL = uri.getQueryParameter("returnURL");
+                mHideConfig = uri.getBooleanQueryParameter("hideConfig", false);
+                mAutoJoin = uri.getBooleanQueryParameter("autoJoin", false);
+                mAllowReconnect = uri.getBooleanQueryParameter("allowReconnect", true);
+                mCameraPrivacy = uri.getBooleanQueryParameter("cameraPrivacy", false);
+                mMicrophonePrivacy = uri.getBooleanQueryParameter("microphonePrivacy", false);
+                mEnableDebug = uri.getBooleanQueryParameter("enableDebug", false);
+                mExperimentalOptions = uri.getQueryParameter("experimentalOptions");
+            } else {
                 // If the app was launched by a different app, then get any parameters; otherwise use default settings
-            //    mHost.setText(intent.hasExtra("host") ? intent.getStringExtra("host") : "prod.vidyo.io");
-            //    mToken.setText(intent.hasExtra("token") ? intent.getStringExtra("token") : "");
-            //    mDisplayName.setText(intent.hasExtra("displayName") ? intent.getStringExtra("displayName") : "");
-             //   mResourceId.setText(intent.hasExtra("resourceId") ? intent.getStringExtra("resourceId") : "");
-            //    mReturnURL = intent.hasExtra("returnURL") ? intent.getStringExtra("returnURL") : null;
-            //    mHideConfig = intent.getBooleanExtra("hideConfig", false);
-            //    mAutoJoin = intent.getBooleanExtra("autoJoin", false);
-            //    mAllowReconnect = intent.getBooleanExtra("allowReconnect", true);
-            //    mCameraPrivacy = intent.getBooleanExtra("cameraPrivacy", false);
-            //    mMicrophonePrivacy = intent.getBooleanExtra("microphonePrivacy", false);
-            //    mEnableDebug = intent.getBooleanExtra("enableDebug", false);
-            //    mExperimentalOptions = intent.hasExtra("experimentalOptions") ? intent.getStringExtra("experimentalOptions") : null;
-            //}
-
+                mHost.setText(intent.hasExtra("host") ? intent.getStringExtra("host") : "prod.vidyo.io");
+                mToken.setText(intent.hasExtra("token") ? intent.getStringExtra("token") : "");
+                mDisplayName.setText(intent.hasExtra("displayName") ? intent.getStringExtra("displayName") : "");
+                mResourceId.setText(intent.hasExtra("resourceId") ? intent.getStringExtra("resourceId") : "");
+                mReturnURL = intent.hasExtra("returnURL") ? intent.getStringExtra("returnURL") : null;
+                mHideConfig = intent.getBooleanExtra("hideConfig", false);
+                mAutoJoin = intent.getBooleanExtra("autoJoin", false);
+                mAllowReconnect = intent.getBooleanExtra("allowReconnect", true);
+                mCameraPrivacy = intent.getBooleanExtra("cameraPrivacy", false);
+                mMicrophonePrivacy = intent.getBooleanExtra("microphonePrivacy", false);
+                mEnableDebug = intent.getBooleanExtra("enableDebug", false);
+                mExperimentalOptions = intent.hasExtra("experimentalOptions") ? intent.getStringExtra("experimentalOptions") : null;
+            }
 
             // Hide the controls if hideConfig enabled
             if (mHideConfig) {
@@ -216,9 +249,39 @@ public class VidyoChatFragment extends BaseFragment implements
 
             // Apply the app settings if the Connector object has been created
             if (mVidyoConnector != null) {
-                mSelf.applySettings();
+                // Apply some of the app settings
+                    // If enableDebug is configured then enable debugging
+                    if (mEnableDebug) {
+                        mVidyoConnector.enableDebug(7776, "warning info@VidyoClient info@VidyoConnector");
+                        mClientVersion.setVisibility(View.VISIBLE);
+                    } else {
+                        mVidyoConnector.disableDebug();
+                    }
+
+                    // If cameraPrivacy is configured then mute the camera
+                    mCameraPrivacyButton.setChecked(false); // reset state
+                    if (mCameraPrivacy) {
+                        mCameraPrivacyButton.performClick();
+                    }
+
+                    // If microphonePrivacy is configured then mute the microphone
+                    mMicrophonePrivacyButton.setChecked(false); // reset state
+                    if (mMicrophonePrivacy) {
+                        mMicrophonePrivacyButton.performClick();
+                    }
+
+                    // Set experimental options if any exist
+                    if (mExperimentalOptions != null) {
+                        ConnectorPkg.setExperimentalOptions(mExperimentalOptions);
+                    }
+
+                    // If configured to auto-join, then simulate a click of the toggle connect button
+                    if (mAutoJoin) {
+                        mToggleConnectButton.performClick();
+                    }
+                }
             }
-        }
+
         mRefreshSettings = false;
 
         // If Vidyo Client has been successfully initialized and the Connector has
@@ -274,6 +337,28 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
+
+    protected void onRestart() {
+
+        if (mVidyoConnector != null) {
+            mVidyoConnector.setMode(Connector.ConnectorMode.VIDYO_CONNECTORMODE_Foreground);
+
+            if (!mDevicesSelected) {
+                // Devices have been released when backgrounding (in onStop). Re-select them.
+                mDevicesSelected = true;
+
+                // Select the previously selected local camera and default mic/speaker
+                mVidyoConnector.selectLocalCamera(mLastSelectedCamera);
+                mVidyoConnector.selectDefaultMicrophone();
+                mVidyoConnector.selectDefaultSpeaker();
+
+                // Reestablish camera and microphone privacy states
+                mVidyoConnector.setCameraPrivacy(mCameraPrivacy);
+                mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
+            }
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -321,10 +406,12 @@ public class VidyoChatFragment extends BaseFragment implements
     // obtained, wait until this is received until calling startVidyoConnector where Connector is constructed.
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+
         // If the expected request code is received, start VidyoConnector
         if (requestCode == PERMISSIONS_REQUEST_ALL) {
             for (int i = 0; i < permissions.length; ++i)
-                startVidyoConnector();
+            startVidyoConnector();
+        } else {
         }
     }
 
@@ -351,59 +438,60 @@ public class VidyoChatFragment extends BaseFragment implements
                         // Set the client version in the toolbar
                         mClientVersion.setText("VidyoClient-AndroidSDK " + mVidyoConnector.getVersion());
 
+                        Toast.makeText(mSelf, "New Connector", Toast.LENGTH_SHORT).show();
                         // Set initial position
                         refreshUI();
 
                         // Register for local camera events
-                        if (!mVidyoConnector.registerLocalCameraEventListener(mSelf)) {
+                        if (!mVidyoConnector.registerLocalCameraEventListener((Connector.IRegisterLocalCameraEventListener) mSelf)) {
                         }
                         // Register for network interface events
-                        if (!mVidyoConnector.registerNetworkInterfaceEventListener(mSelf)) {
+                        if (!mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) mSelf)) {
                         }
                         // Register for log events
-                        if (!mVidyoConnector.registerLogEventListener(mSelf, "info@VidyoClient info@VidyoConnector warning")) {
+                        if (!mVidyoConnector.registerLogEventListener((Connector.IRegisterLogEventListener) mSelf, "info@VidyoClient info@VidyoConnector warning")) {
                         }
 
                         // Apply the app settings
-                        mSelf.applySettings();
+                        applySettings();
                     }
                     catch (Exception e) {
                     }
                 }
+
+                // Apply some of the app settings
+                public void applySettings() {
+                    // If enableDebug is configured then enable debugging
+                    if (mEnableDebug) {
+                        mVidyoConnector.enableDebug(7776, "warning info@VidyoClient info@VidyoConnector");
+                        mClientVersion.setVisibility(View.VISIBLE);
+                    } else {
+                        mVidyoConnector.disableDebug();
+                    }
+
+                    // If cameraPrivacy is configured then mute the camera
+                    mCameraPrivacyButton.setChecked(false); // reset state
+                    if (mCameraPrivacy) {
+                        mCameraPrivacyButton.performClick();
+                    }
+
+                    // If microphonePrivacy is configured then mute the microphone
+                    mMicrophonePrivacyButton.setChecked(false); // reset state
+                    if (mMicrophonePrivacy) {
+                        mMicrophonePrivacyButton.performClick();
+                    }
+
+                    // Set experimental options if any exist
+                    if (mExperimentalOptions != null) {
+                        ConnectorPkg.setExperimentalOptions(mExperimentalOptions);
+                    }
+
+                    // If configured to auto-join, then simulate a click of the toggle connect button
+                    if (mAutoJoin) {
+                        mToggleConnectButton.performClick();
+                    }
+                }
             });
-        }
-    }
-
-    // Apply some of the app settings
-    private void applySettings() {
-        // If enableDebug is configured then enable debugging
-        if (mEnableDebug) {
-            mVidyoConnector.enableDebug(7776, "warning info@VidyoClient info@VidyoConnector");
-            mClientVersion.setVisibility(View.VISIBLE);
-        } else {
-            mVidyoConnector.disableDebug();
-        }
-
-        // If cameraPrivacy is configured then mute the camera
-        mCameraPrivacyButton.setChecked(false); // reset state
-        if (mCameraPrivacy) {
-            mCameraPrivacyButton.performClick();
-        }
-
-        // If microphonePrivacy is configured then mute the microphone
-        mMicrophonePrivacyButton.setChecked(false); // reset state
-        if (mMicrophonePrivacy) {
-            mMicrophonePrivacyButton.performClick();
-        }
-
-        // Set experimental options if any exist
-        if (mExperimentalOptions != null) {
-            ConnectorPkg.setExperimentalOptions(mExperimentalOptions);
-        }
-
-        // If configured to auto-join, then simulate a click of the toggle connect button
-        if (mAutoJoin) {
-            mToggleConnectButton.performClick();
         }
     }
 
@@ -420,69 +508,70 @@ public class VidyoChatFragment extends BaseFragment implements
         mVidyoConnectorState = state;
 
         // Execute this code on the main thread since it is updating the UI layout.
-        runOnUiThread(new Runnable() {
+        mSelf.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                // Set the status text in the toolbar.
-                mToolbarStatus.setText(mStateDescription.get(mVidyoConnectorState));
 
-                // Depending on the state, do a subset of the following:
-                // - update the toggle connect button to either start call or end call image: mToggleConnectButton
-                // - display toolbar in case it is hidden: mToolbarLayout
-                // - show/hide the connection spinner: mConnectionSpinner
-                // - show/hide the input form: mControlsLayout
-                switch (mVidyoConnectorState) {
-                    case Connecting:
-                        mToggleConnectButton.setChecked(true);
-                        mConnectionSpinner.setVisibility(View.VISIBLE);
-                        break;
+                    // Set the status text in the toolbar.
+                    mToolbarStatus.setText(mStateDescription.get(mVidyoConnectorState));
 
-                    case Connected:
-                        mToggleConnectButton.setChecked(true);
-                        mControlsLayout.setVisibility(View.GONE);
-                        mConnectionSpinner.setVisibility(View.INVISIBLE);
-                        break;
+                    // Depending on the state, do a subset of the following:
+                    // - update the toggle connect button to either start call or end call image: mToggleConnectButton
+                    // - display toolbar in case it is hidden: mToolbarLayout
+                    // - show/hide the connection spinner: mConnectionSpinner
+                    // - show/hide the input form: mControlsLayout
+                    switch (mVidyoConnectorState) {
+                        case Connecting:
+                            mToggleConnectButton.setChecked(true);
+//                            mConnectionSpinner.setVisibility(View.VISIBLE);
+                            break;
 
-                    case Disconnecting:
-                        // The button just switched to the callStart image.
-                        // Change the button back to the callEnd image because do not want to assume that the Disconnect
-                        // call will actually end the call. Need to wait for the callback to be received
-                        // before swapping to the callStart image.
-                        mToggleConnectButton.setChecked(true);
-                        break;
+                        case Connected:
+                            mToggleConnectButton.setChecked(true);
+                            mControlsLayout.setVisibility(View.GONE);
+                            mConnectionSpinner.setVisibility(View.INVISIBLE);
+                            break;
 
-                    case Disconnected:
-                    case DisconnectedUnexpected:
-                    case Failure:
-                    case FailureInvalidResource:
-                        mToggleConnectButton.setChecked(false);
-                        mToolbarLayout.setVisibility(View.VISIBLE);
-                        mConnectionSpinner.setVisibility(View.INVISIBLE);
+                        case Disconnecting:
+                            // The button just switched to the callStart image.
+                            // Change the button back to the callEnd image because do not want to assume that the Disconnect
+                            // call will actually end the call. Need to wait for the callback to be received
+                            // before swapping to the callStart image.
+                            mToggleConnectButton.setChecked(true);
+                            break;
 
-                        // If a return URL was provided as an input parameter, then return to that application
-                        //if (mReturnURL != null) {
-                        // Provide a callstate of either 0 or 1, depending on whether the call was successful
-                        //  Intent returnApp = getPackageManager().getLaunchIntentForPackage(mReturnURL);
-                        //returnApp.putExtra("callstate", (mVidyoConnectorState == VidyoConnectorState.Disconnected) ? 1 : 0);
-                        //startActivity(returnApp);
-                        //}
+                        case Disconnected:
+                        case DisconnectedUnexpected:
+                        case Failure:
+                        case FailureInvalidResource:
+                            mToggleConnectButton.setChecked(false);
+                            mToolbarLayout.setVisibility(View.VISIBLE);
+                            mConnectionSpinner.setVisibility(View.INVISIBLE);
 
-                        // If the allow-reconnect flag is set to false and a normal (non-failure) disconnect occurred,
-                        // then disable the toggle connect button, in order to prevent reconnection.
-                        if (!mAllowReconnect && (mVidyoConnectorState == VidyoConnectorState.Disconnected)) {
-                            mToggleConnectButton.setEnabled(false);
-                            mToolbarStatus.setText("Call ended");
-                        }
+                            // If a return URL was provided as an input parameter, then return to that application
+                            if (mReturnURL != null) {
+                                // Provide a callstate of either 0 or 1, depending on whether the call was successful
+                                Intent returnApp = getActivity().getPackageManager().getLaunchIntentForPackage(mReturnURL);
+                                returnApp.putExtra("callstate", (mVidyoConnectorState == VidyoConnectorState.Disconnected) ? 1 : 0);
+                                startActivity(returnApp);
+                            }
 
-                        if (!mHideConfig ) {
-                            // Display the controls
-                            mControlsLayout.setVisibility(View.VISIBLE);
-                        }
-                        break;
+                            // If the allow-reconnect flag is set to false and a normal (non-failure) disconnect occurred,
+                            // then disable the toggle connect button, in order to prevent reconnection.
+                            if (!mAllowReconnect && (mVidyoConnectorState == VidyoConnectorState.Disconnected)) {
+                                mToggleConnectButton.setEnabled(false);
+                                mToolbarStatus.setText("Call ended");
+                            }
+
+                            if (!mHideConfig ) {
+                                // Display the controls
+                                mControlsLayout.setVisibility(View.VISIBLE);
+                            }
+                            break;
+                    }
                 }
+            });
             }
-        });
-    }
 
     /*
      * Button Event Callbacks
@@ -493,7 +582,7 @@ public class VidyoChatFragment extends BaseFragment implements
         switch (v.getId()) {
             case R.id.videoChatConnectButton:
                 // Connect or disconnect.
-  //              this.toggleConnect();
+                this.toggleConnect();
                 break;
 
             case R.id.camera_switch:
@@ -513,17 +602,17 @@ public class VidyoChatFragment extends BaseFragment implements
                 mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
                 break;
 
-            // case R.id.toggle_debug:
-            // Toggle debugging.
-            //   mEnableDebug = !mEnableDebug;
-            //   if (mEnableDebug) {
-            //       mVidyoConnector.enableDebug(7776, "warning info@VidyoClient info@VidyoConnector");
-            //       mClientVersion.setVisibility(View.VISIBLE);
-            //   } else {
-            //       mVidyoConnector.disableDebug();
-            //       mClientVersion.setVisibility(View.INVISIBLE);
-            //   }
-            //   break;
+            //case R.id.toggle_debug:
+                // Toggle debugging.
+            //    mEnableDebug = !mEnableDebug;
+            //    if (mEnableDebug) {
+            //        mVidyoConnector.enableDebug(7776, "warning info@VidyoClient info@VidyoConnector");
+            //        mClientVersion.setVisibility(View.VISIBLE);
+            //    } else {
+            //        mVidyoConnector.disableDebug();
+            //        mClientVersion.setVisibility(View.INVISIBLE);
+            //    }
+            //    break;
 
             default:
                 break;
@@ -533,32 +622,32 @@ public class VidyoChatFragment extends BaseFragment implements
     // The Connect button was pressed.
     // If not in a call, attempt to connect to the backend service.
     // If in a call, disconnect.
-//    public void toggleConnect() {
-//        if (mToggleConnectButton.isChecked()) {
-//            // Abort the Connect call if resource ID is invalid. It cannot contain empty spaces or "@".
-//            String resourceId = mResourceId.getText().toString().trim(); // trim leading and trailing white space
-//            if (resourceId.contains(" ") || resourceId.contains("@")) {
-//                changeState(VidyoConnectorState.FailureInvalidResource);
-//            } else {
-//                changeState(VidyoConnectorState.Connecting);
+    public void toggleConnect() {
+        if (mToggleConnectButton.isChecked()) {
+            // Abort the Connect call if resource ID is invalid. It cannot contain empty spaces or "@".
+            String resourceId = mResourceId.getText().toString().trim(); // trim leading and trailing white space
+            if (resourceId.contains(" ") || resourceId.contains("@")) {
+                changeState(VidyoConnectorState.FailureInvalidResource);
+            } else {
+                changeState(VidyoConnectorState.Connecting);
 
-//                final boolean status = mVidyoConnector.connect(
-//                        mHost.getText().toString().trim(),
- //                       mToken.getText().toString().trim(),
-//                        mDisplayName.getText().toString().trim(),
-//                        resourceId,
-//                        this);
-//                if (!status) {
-//                    changeState(VidyoConnectorState.Failure);
-//                }
-//            }
-//        } else {
+                final boolean status = mVidyoConnector.connect(
+                        mHost.getText().toString().trim(),
+                        mToken.getText().toString().trim(),
+                        mDisplayName.getText().toString().trim(),
+                        resourceId,
+                        this);
+                if (!status) {
+                    changeState(VidyoConnectorState.Failure);
+                }
+            }
+        } else {
             // The user is either connected to a resource or is in the process of connecting to a resource;
             // Call VidyoConnectorDisconnect to either disconnect or abort the connection attempt.
-//            changeState(VidyoConnectorState.Disconnecting);
-//            mVidyoConnector.disconnect();
-//        }
-//    }
+            changeState(VidyoConnectorState.Disconnecting);
+            mVidyoConnector.disconnect();
+        }
+    }
 
     // Toggle visibility of the toolbar
     @Override
@@ -636,16 +725,9 @@ public class VidyoChatFragment extends BaseFragment implements
 
     @Override
     public void onNetworkInterfaceSelected(NetworkInterface vidyoNetworkInterface, NetworkInterface.NetworkInterfaceTransportType vidyoNetworkInterfaceTransportType) {
-    }
+   }
 
     @Override
     public void onNetworkInterfaceStateUpdated(NetworkInterface vidyoNetworkInterface, NetworkInterface.NetworkInterfaceState vidyoNetworkInterfaceState) {
-    }
-    public final void runOnUiThread(Runnable action) {
-        if (Thread.currentThread() != mUiThread) {
-            mHandler.post(action);
-        } else {
-            action.run();
-        }
-    }
+   }
 }

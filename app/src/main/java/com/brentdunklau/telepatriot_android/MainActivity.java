@@ -362,4 +362,5 @@ public class MainActivity extends AppCompatActivity
         if(evt instanceof AccountStatusEvent.NoRoles)
             startActivity(new Intent(this, LimboActivity.class));
     }
+
 }

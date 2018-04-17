@@ -6,6 +6,36 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/usflag">
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/toolbarStatusText"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/clientVersion"/>
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/connectionSpinner"/>
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/host"/>
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/displayName"/>
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/token"/>
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/resource"/>
+
     <include
         layout="@layout/app_bar_main"
         android:layout_width="match_parent"
@@ -24,11 +54,10 @@
 
 
     <com.brentdunklau.telepatriot_android.VideoFrameLayout
-        android:layout_width="200dp"
+        android:layout_width="175dp"
         android:layout_height="200dp"
         android:layout_below="@+id/videoChatTitle"
-        android:id="@+id/vidyoChatMyScreen"
-        android:background="@drawable/ic_menu_slideshow">
+        android:id="@+id/vidyoChatMyScreen">
 
     </com.brentdunklau.telepatriot_android.VideoFrameLayout>
 
@@ -43,28 +72,36 @@
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:background="@drawable/toggle_connect"
-            android:layout_marginLeft="5dp"
-            android:id="@+id/videoChatConnectButton"/>
+            android:id="@+id/videoChatConnectButton"
+            android:textOff=""
+            android:textOn=""/>
 
         <ToggleButton
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:background="@drawable/toggle_camera_privacy"
             android:layout_marginLeft="10dp"
-            android:id="@+id/camera_on_button"/>
+            android:id="@+id/camera_on_button"
+            android:textOff=""
+            android:textOn=""/>
 
         <ToggleButton
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:background="@drawable/toggle_mic_privacy"
             android:layout_marginLeft="10dp"
-            android:id="@+id/microphone_on_button"/>
+            android:id="@+id/microphone_on_button"
+            android:textOff=""
+            android:textOn=""/>
 
         <ToggleButton
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:background="@drawable/camera_switch"
-            android:id="@+id/camera_switch"/>
+            android:id="@+id/camera_switch"
+            android:layout_marginLeft="10dp"
+            android:textOff=""
+            android:textOn=""/>
     </LinearLayout>
 
 
