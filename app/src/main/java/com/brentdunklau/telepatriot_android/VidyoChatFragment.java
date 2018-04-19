@@ -16,9 +16,17 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.SocketAddress;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -101,6 +109,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean mRefreshSettings = true;
     private boolean mDevicesSelected = true;
     private View myView;
+    private String mTokenString;
 
     /*
      *  Operating System Events
@@ -119,13 +128,18 @@ public class VidyoChatFragment extends BaseFragment implements
         mVideoFrame.Register(this);
         //TODO change editText to import data
         mHost = myView.findViewById(R.id.host);
+        mHost.setText("prod.vidyo.io");
         mDisplayName = myView.findViewById(R.id.displayName);
+        mDisplayName.setText("jeremy");
         mToken = myView.findViewById(R.id.token);
         mResourceId = myView.findViewById(R.id.resource);
+        mResourceId.setText("uniqueField");
         mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
         mClientVersion = myView.findViewById(R.id.clientVersion);
         mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
         mSelf = (MainActivity) getActivity();
+        mTokenString = "ebff14213ff047088e8c9767743b64cf"+"23338b.vidyo.io"+mDisplayName.getText().toString().trim();
+        mToken.setText(mTokenString);
 
         // Set the onClick listeners for the buttons
         mToggleConnectButton = myView.findViewById(R.id.videoChatConnectButton);
@@ -197,7 +211,7 @@ public class VidyoChatFragment extends BaseFragment implements
             } else {
                 // If the app was launched by a different app, then get any parameters; otherwise use default settings
                 mHost.setText(intent.hasExtra("host") ? intent.getStringExtra("host") : "prod.vidyo.io");
-                mToken.setText(intent.hasExtra("token") ? intent.getStringExtra("token") : "");
+                mToken.setText(mTokenString);
                 mDisplayName.setText(intent.hasExtra("displayName") ? intent.getStringExtra("displayName") : "");
                 mResourceId.setText(intent.hasExtra("resourceId") ? intent.getStringExtra("resourceId") : "");
                 mReturnURL = intent.hasExtra("returnURL") ? intent.getStringExtra("returnURL") : null;
@@ -302,28 +316,6 @@ public class VidyoChatFragment extends BaseFragment implements
                 mDevicesSelected = false;
             }
             mVidyoConnector.setMode(Connector.ConnectorMode.VIDYO_CONNECTORMODE_Background);
-        }
-    }
-
-
-    protected void onRestart() {
-
-        if (mVidyoConnector != null) {
-            mVidyoConnector.setMode(Connector.ConnectorMode.VIDYO_CONNECTORMODE_Foreground);
-
-            if (!mDevicesSelected) {
-                // Devices have been released when backgrounding (in onStop). Re-select them.
-                mDevicesSelected = true;
-
-                // Select the previously selected local camera and default mic/speaker
-                mVidyoConnector.selectLocalCamera(mLastSelectedCamera);
-                mVidyoConnector.selectDefaultMicrophone();
-                mVidyoConnector.selectDefaultSpeaker();
-
-                // Reestablish camera and microphone privacy states
-                mVidyoConnector.setCameraPrivacy(mCameraPrivacy);
-                mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
-            }
         }
     }
 
@@ -490,13 +482,15 @@ public class VidyoChatFragment extends BaseFragment implements
                     switch (mVidyoConnectorState) {
                         case Connecting:
                             mToggleConnectButton.setChecked(true);
-//                            mConnectionSpinner.setVisibility(View.VISIBLE);
+                            mConnectionSpinner.setVisibility(View.VISIBLE);
+                            Toast.makeText(mSelf, "connecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Connected:
                             mToggleConnectButton.setChecked(true);
                             mControlsLayout.setVisibility(View.GONE);
                             mConnectionSpinner.setVisibility(View.INVISIBLE);
+                            Toast.makeText(mSelf, "Connected", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnecting:
@@ -505,14 +499,18 @@ public class VidyoChatFragment extends BaseFragment implements
                             // call will actually end the call. Need to wait for the callback to be received
                             // before swapping to the callStart image.
                             mToggleConnectButton.setChecked(true);
+                            Toast.makeText(mSelf, "Disconnecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnected:
+                            Toast.makeText(mSelf, "Disconnected", Toast.LENGTH_SHORT).show();
                         case DisconnectedUnexpected:
+                            Toast.makeText(mSelf, "Disconnected Unexpected", Toast.LENGTH_SHORT).show();
                         case Failure:
+                            Toast.makeText(mSelf, "Failure", Toast.LENGTH_SHORT).show();
                         case FailureInvalidResource:
+                            Toast.makeText(mSelf, "Invalid Resource", Toast.LENGTH_SHORT).show();
                             mToggleConnectButton.setChecked(false);
-                            mToolbarLayout.setVisibility(View.VISIBLE);
                             mConnectionSpinner.setVisibility(View.INVISIBLE);
 
                             // If a return URL was provided as an input parameter, then return to that application
@@ -604,8 +602,20 @@ public class VidyoChatFragment extends BaseFragment implements
                         mDisplayName.getText().toString().trim(),
                         resourceId,
                         this);
+                //TODO move to record button
+
+                try {
+                    URL url = new URL("http://35.185.56.20/record/demoRoom/uniqueField");
+                    url.openConnection();
+                    Toast.makeText(mSelf, "Connected", Toast.LENGTH_SHORT).show();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 if (!status) {
                     changeState(VidyoConnectorState.Failure);
+                    Toast.makeText(mSelf, "failure", Toast.LENGTH_SHORT).show();
                 }
             }
         } else {
