@@ -91,8 +91,8 @@ public class VidyoChatFragment extends BaseFragment implements
     private LinearLayout mControlsLayout;
     private LinearLayout mToolbarLayout;
     private EditText mHost;
-    private EditText mDisplayName;
-    private EditText mToken;
+    public EditText mDisplayName;
+    public static EditText mToken;
     private EditText mResourceId;
     private TextView mToolbarStatus;
     private TextView mClientVersion;
@@ -109,7 +109,8 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean mRefreshSettings = true;
     private boolean mDevicesSelected = true;
     private View myView;
-    private String mTokenString;
+    public static String mTokenString;
+    public static String jsonTokenData;
 
     /*
      *  Operating System Events
@@ -133,13 +134,14 @@ public class VidyoChatFragment extends BaseFragment implements
         mDisplayName.setText("jeremy");
         mToken = myView.findViewById(R.id.token);
         mResourceId = myView.findViewById(R.id.resource);
-        mResourceId.setText("uniqueField");
+        mResourceId.setText("demoRoom");
         mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
         mClientVersion = myView.findViewById(R.id.clientVersion);
         mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
         mSelf = (MainActivity) getActivity();
-        mTokenString = "ebff14213ff047088e8c9767743b64cf"+"23338b.vidyo.io"+mDisplayName.getText().toString().trim();
-        mToken.setText(mTokenString);
+        GetToken newToken = new GetToken();
+        newToken.execute();
+        mToken.setText(jsonTokenData);
 
         // Set the onClick listeners for the buttons
         mToggleConnectButton = myView.findViewById(R.id.videoChatConnectButton);
@@ -160,7 +162,7 @@ public class VidyoChatFragment extends BaseFragment implements
         return myView;
     }
 
-    
+
     //protected void onNewIntent(Intent intent) {
     //    super.onNewIntent(intent);
 
@@ -602,11 +604,13 @@ public class VidyoChatFragment extends BaseFragment implements
                         mDisplayName.getText().toString().trim(),
                         resourceId,
                         this);
+
                 //TODO move to record button
 
                 try {
                     URL url = new URL("http://35.185.56.20/record/demoRoom/uniqueField");
                     url.openConnection();
+                    refreshUI();
                     Toast.makeText(mSelf, "Connected", Toast.LENGTH_SHORT).show();
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
