@@ -610,8 +610,7 @@ public class VidyoChatFragment extends BaseFragment implements
                 try {
                     URL url = new URL("http://35.185.56.20/record/demoRoom/uniqueField");
                     url.openConnection();
-                    refreshUI();
-                    Toast.makeText(mSelf, "Connected", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mSelf, "Docker connection", Toast.LENGTH_SHORT).show();
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
