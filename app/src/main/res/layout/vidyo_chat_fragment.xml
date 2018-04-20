@@ -1,187 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@drawable/usflag">
+    android:background="@drawable/usflag2"
+    android:orientation="vertical">
 
-    <TextView
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="250dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/toolbarStatusText"
+            android:visibility="invisible"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/clientVersion"
+            android:visibility="gone"/>
+        <ProgressBar
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/connectionSpinner"
+            style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"/>
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/host"
+            android:visibility="gone"/>
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/displayName"
+            android:visibility="gone"/>
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/token"
+            android:visibility="gone"/>
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/resource"
+            android:visibility="gone"/>
+
+        <com.brentdunklau.telepatriot_android.VideoFrameLayout
+            android:layout_width="175dp"
+            android:layout_height="match_parent"
+            android:id="@+id/vidyoChatMyScreen">
+
+        </com.brentdunklau.telepatriot_android.VideoFrameLayout>
+
+        <LinearLayout
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:id="@+id/controls_layout"
+            android:layout_alignParentBottom="true">
+
+            <ToggleButton
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/toggle_connect"
+                android:id="@+id/videoChatConnectButton"
+                android:textOff=""
+                android:textOn=""/>
+
+            <ToggleButton
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/toggle_camera_privacy"
+                android:layout_marginLeft="10dp"
+                android:id="@+id/camera_on_button"
+                android:textOff=""
+                android:textOn=""/>
+
+            <ToggleButton
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/toggle_mic_privacy"
+                android:layout_marginLeft="10dp"
+                android:id="@+id/microphone_on_button"
+                android:textOff=""
+                android:textOn=""/>
+
+            <ToggleButton
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/camera_switch"
+                android:id="@+id/camera_switch"
+                android:layout_marginLeft="10dp"
+                android:textOff=""
+                android:textOn=""/>
+        </LinearLayout>
+    </RelativeLayout>
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/toolbarStatusText"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/clientVersion"/>
-    <ProgressBar
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/connectionSpinner"
-        style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"/>
+        android:layout_weight="1">
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/host"/>
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/displayName"/>
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/token"
-        android:visibility="gone"/>
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/resource"/>
+        <ScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
 
-    <include
-        layout="@layout/app_bar_main"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Description"
+                    android:textStyle="bold"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/videoChatDesctiptionTitle"/>
 
-    <TextView
-        android:id="@+id/videoChatTitle"
-        android:layout_width="match_parent"
-        android:layout_height="55dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:text="Video Chat"
-        android:textAlignment="center"
-        android:textColor="@color/cardview_light_background"
-        android:textSize="30sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Edit"
+                    android:layout_toRightOf="@+id/videoChatDesctiptionTitle"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginLeft="15dp"
+                    android:textColor="@color/com_facebook_blue"/>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:layout_marginLeft="10dp"
+                    android:id="@+id/videoChatDescriptionText"
+                    android:layout_below="@+id/videoChatDesctiptionTitle"
+                    android:text="This is a Video petition. In a video petition, the person being interviewed *must* mention the legislator by name and must emphasize that the person being interviewed is a constituent o this legislator. Next, one of the people in the video needs to state what the legislator's declared position is on COS (for, against, undecided)"
+                    />
 
-    <com.brentdunklau.telepatriot_android.VideoFrameLayout
-        android:layout_width="175dp"
-        android:layout_height="200dp"
-        android:layout_below="@+id/videoChatTitle"
-        android:id="@+id/vidyoChatMyScreen">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatDescriptionText"
+                    android:layout_marginTop="10dp"
+                    android:text="Legislator"
+                    android:textStyle="bold"
+                    android:id="@+id/videoChatLegislatorTitle"
+                    android:layout_marginLeft="10dp"/>
 
-    </com.brentdunklau.telepatriot_android.VideoFrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatLegislatorTitle"
+                    android:layout_marginLeft="10dp"
+                    android:text="Rep Noncommittal Fence Sitter XX HD 200"
+                    android:id="@+id/videoChatRepInfo"
+                    android:layout_marginTop="10dp"/>
 
-    <LinearLayout
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_below="@id/vidyoChatMyScreen"
-        android:id="@+id/controls_layout">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatRepInfo"
+                    android:layout_marginLeft="10dp"
+                    android:text="FB: @RepHaventMadeUpMyMind"
+                    android:id="@+id/videoChatRepFBInfo"
+                    android:layout_marginTop="10dp"/>
 
-        <ToggleButton
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:background="@drawable/toggle_connect"
-            android:id="@+id/videoChatConnectButton"
-            android:textOff=""
-            android:textOn=""/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatRepFBInfo"
+                    android:layout_marginLeft="10dp"
+                    android:text="TW: @RepFenceSitter"
+                    android:id="@+id/videoChatRepTwitterInfo"
+                    android:layout_marginTop="10dp"/>
 
-        <ToggleButton
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:background="@drawable/toggle_camera_privacy"
-            android:layout_marginLeft="10dp"
-            android:id="@+id/camera_on_button"
-            android:textOff=""
-            android:textOn=""/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatRepTwitterInfo"
+                    android:layout_marginLeft="10dp"
+                    android:textStyle="bold"
+                    android:text="YouTube Video Description"
+                    android:id="@+id/videoChatYouTubeVideoDescription"
+                    android:layout_marginTop="10dp"/>
+            </RelativeLayout>
+        </ScrollView>
+    </RelativeLayout>
 
-        <ToggleButton
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:background="@drawable/toggle_mic_privacy"
-            android:layout_marginLeft="10dp"
-            android:id="@+id/microphone_on_button"
-            android:textOff=""
-            android:textOn=""/>
-
-        <ToggleButton
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:background="@drawable/camera_switch"
-            android:id="@+id/camera_switch"
-            android:layout_marginLeft="10dp"
-            android:textOff=""
-            android:textOn=""/>
-    </LinearLayout>
-
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Description"
-        android:textStyle="bold"
-        android:layout_marginLeft="10dp"
-        android:layout_below="@+id/controls_layout"
-        android:layout_marginTop="5dp"
-        android:id="@+id/videoChatDesctiptionTitle"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Edit"
-        android:layout_below="@+id/controls_layout"
-        android:layout_toRightOf="@+id/videoChatDesctiptionTitle"
-        android:layout_marginTop="5dp"
-        android:layout_marginLeft="15dp"
-        android:textColor="@color/com_facebook_blue"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textMultiLine"
-        android:layout_marginLeft="10dp"
-        android:id="@+id/videoChatDescriptionText"
-        android:layout_below="@+id/videoChatDesctiptionTitle"
-        android:text="This is a Video petition. In a video petition, the person being interviewed *must* mention the legislator by name and must emphasize that the person being interviewed is a constituent o this legislator. Next, one of the people in the video needs to state what the legislator's declared position is on COS (for, against, undecided)"
-        />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/videoChatDescriptionText"
-        android:layout_marginTop="10dp"
-        android:text="Legislator"
-        android:textStyle="bold"
-        android:id="@+id/videoChatLegislatorTitle"
-        android:layout_marginLeft="10dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/videoChatLegislatorTitle"
-        android:layout_marginLeft="10dp"
-        android:text="Rep Noncommittal Fence Sitter XX HD 200"
-        android:id="@+id/videoChatRepInfo"
-        android:layout_marginTop="10dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/videoChatRepInfo"
-        android:layout_marginLeft="10dp"
-        android:text="FB: @RepHaventMadeUpMyMind"
-        android:id="@+id/videoChatRepFBInfo"
-        android:layout_marginTop="10dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/videoChatRepFBInfo"
-        android:layout_marginLeft="10dp"
-        android:text="TW: @RepFenceSitter"
-        android:id="@+id/videoChatRepTwitterInfo"
-        android:layout_marginTop="10dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/videoChatRepTwitterInfo"
-        android:layout_marginLeft="10dp"
-        android:textStyle="bold"
-        android:text="YouTube Video Description"
-        android:id="@+id/videoChatYouTubeVideoDescription"
-        android:layout_marginTop="10dp"/>
-
-</RelativeLayout>
+</LinearLayout>
