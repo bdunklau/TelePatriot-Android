@@ -393,8 +393,14 @@ public class MyMissionFragment extends BaseFragment {
                 }
             }
 
-        String tel = mTelephonyMgr.getLine1Number();
-        return tel;
+            try {
+                String tel = mTelephonyMgr.getLine1Number();
+                return tel;
+            }catch (Exception e ){
+            return "phone # n/a";
+            }
+
+
     }
 
 
