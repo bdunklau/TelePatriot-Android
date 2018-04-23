@@ -5,11 +5,14 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/usflag2"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:weightSum="3">
 
     <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="250dp">
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
 
         <TextView
             android:layout_width="wrap_content"
@@ -54,6 +57,15 @@
             android:id="@+id/vidyoChatMyScreen">
 
         </com.brentdunklau.telepatriot_android.VideoFrameLayout>
+
+        <ToggleButton
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:background="@drawable/record"
+            android:layout_marginLeft="140dp"
+            android:id="@+id/recordButton"
+            android:textOn=""
+            android:textOff=""/>
 
         <LinearLayout
             android:layout_width="200dp"
@@ -100,8 +112,8 @@
     </RelativeLayout>
     <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1">
+        android:layout_height="0dp"
+        android:layout_weight="2">
 
         <ScrollView
             android:layout_width="wrap_content"

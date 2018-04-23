@@ -11,7 +11,9 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.view.View;
@@ -27,10 +29,20 @@ import java.net.MalformedURLException;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.vidyo.VidyoClient.Connector.ConnectorPkg;
 import com.vidyo.VidyoClient.Connector.Connector;
 import com.vidyo.VidyoClient.Device.Device;
@@ -111,7 +123,14 @@ public class VidyoChatFragment extends BaseFragment implements
     private View myView;
     public static String mTokenString;
     public static String jsonTokenData;
-
+    private ToggleButton mRecord;
+    private DatabaseReference userDatabase;
+    private String userName;
+    private String userEmail;
+    private String missionDescription;
+    private URL url = null;
+    private HttpURLConnection connection;
+    private String uid;
     /*
      *  Operating System Events
      */
@@ -153,6 +172,78 @@ public class VidyoChatFragment extends BaseFragment implements
         ToggleButton button;
         button = myView.findViewById(R.id.camera_switch);
         button.setOnClickListener(this);
+        mRecord = myView.findViewById(R.id.recordButton);
+
+        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        userDatabase = FirebaseDatabase.getInstance().getReference();
+        userDatabase.child("users").child(uid).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                userName = dataSnapshot.child("name").getValue().toString().trim();
+                userEmail = dataSnapshot.child("email").getValue().toString().trim();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+
+        });
+
+        userDatabase.child("video").child("types").child("0").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                missionDescription = dataSnapshot.child("video_mission_description").getValue().toString().trim();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        mRecord.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                if (isChecked){
+
+                    mRecord.setBackgroundResource(R.drawable.recordstop);
+
+                    try {
+                        url = new URL("http://35.185.56.20/record/demoRoom/uniqueField");
+                        connection = (HttpURLConnection) url.openConnection();
+                        Toast.makeText(mSelf, "Docker connection", Toast.LENGTH_SHORT).show();
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    userDatabase = FirebaseDatabase.getInstance().getReference();
+
+                    DateFormat today = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    Date date = new Date();
+                    final String todayDate = today.format(date);
+
+                    HashMap<String, String> videoMap = new HashMap<>();
+                    videoMap.put("video_mission_description", missionDescription);
+                    videoMap.put("node_create_date", todayDate);
+                    videoMap.put("video_mission_description", missionDescription);
+
+                    userDatabase.child("video").child("list").push().setValue(videoMap);
+                    String postID = userDatabase.getKey();
+
+                    Toast.makeText(mSelf, "pushed", Toast.LENGTH_SHORT).show();
+                }else{
+                    mRecord.setBackgroundResource(R.drawable.record);
+                    if (url != null){
+                        connection.disconnect();
+                        url = null;
+                    }
+
+                }
+            }
+        });
 
         // Set the application's UI context to this activity.
         ConnectorPkg.setApplicationUIContext(getActivity());
@@ -605,17 +696,6 @@ public class VidyoChatFragment extends BaseFragment implements
                         resourceId,
                         this);
 
-                //TODO move to record button
-
-                try {
-                    URL url = new URL("http://35.185.56.20/record/demoRoom/uniqueField");
-                    url.openConnection();
-                    Toast.makeText(mSelf, "Docker connection", Toast.LENGTH_SHORT).show();
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 if (!status) {
                     changeState(VidyoConnectorState.Failure);
                     Toast.makeText(mSelf, "failure", Toast.LENGTH_SHORT).show();
