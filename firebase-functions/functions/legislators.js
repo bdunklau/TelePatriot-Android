@@ -72,20 +72,28 @@ exports.loadStates = functions.https.onRequest((req, res) => {
         {state_abbreviation:'WY', state_name:'Wyoming'}
     ]
 
+    // good example of multi-path updates
+    var updates = {}
     var html = ''
     for(var i=0; i < states.length; i++) {
         var abbrev = states[i].state_abbreviation
-        db.ref(`states/${abbrev}`).set({state_name: states[i].state_name}).then(() => {
+        updates[`states/list/${abbrev}/state_name`] = states[i].state_name
             html += 'OK: inserted '+abbrev+' - '+states[i].state_name
-        })
     }
 
-    return res.status(200).send(html)
+    // good example of multi-path updates
+    return db.ref(`/`).update(updates).then(() => {
+        return res.status(200).send(html)
+    })
 
 })
 
 
-exports.downloadFromOpenStates = functions.https.onRequest((req, res) => {
+// This function writes 99 url's to the database - 1 for each state legislative body
+// These url's are written under each respective state's node
+//  i.e.  /states/{abbrev}/legislative_chambers/{HD or SD}/openstates_legislators_url = https://openstates.org/api/v1/legislators/...
+// TRIGGER !  As a result of writing these url's, a trigger just below this function is called
+exports.getOpenStatesUrls = functions.https.onRequest((req, res) => {
 
     return db.ref(`api_tokens/openstates`).once('value').then(snapshot => {
         var apikey = snapshot.val()
@@ -94,7 +102,7 @@ exports.downloadFromOpenStates = functions.https.onRequest((req, res) => {
     .then(apikey => {
 
         // loop through each state
-        return db.ref(`states`).once('value').then(snapshot => {
+        return db.ref(`states/list`).once('value').then(snapshot => {
             var numberOfStates = snapshot.numChildren() // i.e. 50
             var count = 0
             var openStatesParameters = []
@@ -109,46 +117,54 @@ exports.downloadFromOpenStates = functions.https.onRequest((req, res) => {
             return openStatesParameters
         })
         .then(openStatesParameters => {
+
+            var updates = {}
             var html = ''
-            for(var i=98; i < openStatesParameters.length; i++) {
+            for(var i=0; i < openStatesParameters.length; i++) {
                 var state = openStatesParameters[i].state_abbrev
                 var chamber = openStatesParameters[i].chamber
                 // construct the url that we send to OpenStates to get all the legislators in this state
                 var url = "https://openstates.org/api/v1/legislators/?state="+state+"&chamber="+chamber+"&apikey="+apikey
                 //  https://openstates.org/api/v1/legislators/?state=TX&chamber=upper&apikey=aad44b39-c9f2-4cc5-a90a-e0503e5bdc3c
 
-                var start = new Date().getTime();
-                for (var i = 0; i < 1e7; i++) {
-                    if ((new Date().getTime() - start) > 250){
-                        break;
-                    }
-                }
-
                 html += '<P/>'+url
 
-                /************/
-                // make the request
-                // see above:   var request = require('request')
-                request(url, function (error, response, body) {
-                    if( error || response.statusCode != 200) {
-                        return res.status(200).send("response code: "+response.statusCode+"<P>error: "+error)
-                    }
-                    else if (!error && response.statusCode == 200) {
-                        html += '<br/><B>Response</B><br/>'+response
-                        html += '<br/><B>body</B><br/>'+body
-                    }
-                    else {
-                        html += '<P>at i="+i+"  not what we expected'
-                    }
-                    if(i == openStatesParameters.length - 1) {
-                        return res.status(200).send(html)
-                    }
-                })
-                /*************/
+                var legislative_chamber = 'SD'
+                if(chamber == 'lower')
+                    legislative_chamber = 'HD'
+
+                updates[`states/legislators/${state}/legislative_chambers/${legislative_chamber}/openstates_legislators_url`] = url
+
             }
+
+            return db.ref(`/`).update(updates).then(() => {
+                return res.status(200).send(html)
+            })
+
         })
 
     })
 
+})
 
+
+// This trigger is called when url's are written to the various state nodes in the
+// function above: getOpenStatesUrls()
+// This is the function that actually makes the call to the OpenStates API to pull down all
+// the legislators in a legislative chamber
+exports.downloadFromOpenStates = functions.database.ref("states/legislators/{abbrev}/legislative_chambers/{legislative_chamber}/openstates_legislators_url").onWrite(
+    event => {
+
+    // if mission was deleted, just return
+    if(!event.data.exists() && event.data.previous.exists()) {
+        return false
+    }
+
+    var abbrev = event.params.abbrev
+    var legislative_chamber = event.params.legislative_chamber // SD or HD
+    var url = event.data.val() // the value associated with the "openstates_legislators_url" node
+
+    return request(url, function (error, response, body) {
+        return event.data.adminRef.root.child(`states/legislators/${abbrev}/legislative_chambers/${legislative_chamber}/legislators`).set(JSON.parse(body))
+    })
 })

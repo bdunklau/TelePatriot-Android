@@ -114,10 +114,11 @@ exports.renderEmail = email.renderEmail
 exports.saveEmail = email.saveEmail
 exports.sendEmail = email.sendEmail
 exports.chooseEmailType = email.chooseEmailType
- 
+
 const legislators = require('./legislators')
-exports.downloadFromOpenStates = legislators.downloadFromOpenStates
 exports.loadStates = legislators.loadStates
+exports.getOpenStatesUrls = legislators.getOpenStatesUrls
+exports.downloadFromOpenStates = legislators.downloadFromOpenStates
 
 const testing = require('./test/testing')
 exports.testApi = testing.testApi
