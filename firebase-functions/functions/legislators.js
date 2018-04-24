@@ -133,7 +133,7 @@ exports.getOpenStatesUrls = functions.https.onRequest((req, res) => {
                 if(chamber == 'lower')
                     legislative_chamber = 'HD'
 
-                updates[`states/legislators/${state}/legislative_chambers/${legislative_chamber}/openstates_legislators_url`] = url
+                updates[`states/list/${state}/legislative_chambers/${legislative_chamber}/openstates_legislators_url`] = url
 
             }
 
@@ -152,7 +152,7 @@ exports.getOpenStatesUrls = functions.https.onRequest((req, res) => {
 // function above: getOpenStatesUrls()
 // This is the function that actually makes the call to the OpenStates API to pull down all
 // the legislators in a legislative chamber
-exports.downloadFromOpenStates = functions.database.ref("states/legislators/{abbrev}/legislative_chambers/{legislative_chamber}/openstates_legislators_url").onWrite(
+exports.downloadFromOpenStates = functions.database.ref("states/list/{abbrev}/legislative_chambers/{legislative_chamber}/openstates_legislators_url").onWrite(
     event => {
 
     // if mission was deleted, just return
