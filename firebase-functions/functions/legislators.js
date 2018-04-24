@@ -149,7 +149,7 @@ exports.getOpenStatesUrls = functions.https.onRequest((req, res) => {
 
 
 // This trigger is called when url's are written to the various state nodes in the
-// function above: getOpenStatesUrls() 
+// function above: getOpenStatesUrls()
 // This is the function that actually makes the call to the OpenStates API to pull down all
 // the legislators in a legislative chamber
 exports.downloadFromOpenStates = functions.database.ref("states/legislators/{abbrev}/legislative_chambers/{legislative_chamber}/openstates_legislators_url").onWrite(
