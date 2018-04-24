@@ -165,6 +165,6 @@ exports.downloadFromOpenStates = functions.database.ref("states/list/{abbrev}/le
     var url = event.data.val() // the value associated with the "openstates_legislators_url" node
 
     return request(url, function (error, response, body) {
-        return event.data.adminRef.root.child(`states/legislators/${abbrev}/legislative_chambers/${legislative_chamber}/legislators`).set(JSON.parse(body))
+        return event.data.adminRef.root.child(`states/legislators/${abbrev}/legislative_chambers/${legislative_chamber}`).set(JSON.parse(body))
     })
 })
