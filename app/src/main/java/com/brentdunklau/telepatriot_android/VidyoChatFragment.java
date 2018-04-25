@@ -40,6 +40,7 @@ import java.util.Map;
 
 import com.brentdunklau.telepatriot_android.util.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -134,6 +135,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private String uid;
     private int missionKey;
     private String missionDescription;
+    private String nodeKey;
     /*
      *  Operating System Events
      */
@@ -215,9 +217,9 @@ public class VidyoChatFragment extends BaseFragment implements
                     videoListMap.put("video_mission_description", missionDescription);
 
                     userDatabase = FirebaseDatabase.getInstance().getReference();
-                    userDatabase.child("video").child("list").push();
-
-                    String pushId = userDatabase.child("video").child("list").push().getKey();
+                    DatabaseReference pushed = userDatabase.child("video").child("list").push();
+                    nodeKey = pushed.getKey();
+                    pushed.setValue(videoListMap);
 
                     String email = User.getInstance().getEmail();
                     String name = User.getInstance().getName();
@@ -230,7 +232,8 @@ public class VidyoChatFragment extends BaseFragment implements
                     participantMap.put("start_date_ms", mTimeMS);
                     participantMap.put("uid", uid);
 
-                    userDatabase.child("video").child("list").child("video_participants").child(pushId).push();
+                    pushed.child("video_participants").child("0").setValue(participantMap);
+
 
                 }else{
                     mRecord.setBackgroundResource(R.drawable.record);
