@@ -31,12 +31,14 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.brentdunklau.telepatriot_android.util.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -121,16 +123,17 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean mRefreshSettings = true;
     private boolean mDevicesSelected = true;
     private View myView;
-    public static String mTokenString;
     public static String jsonTokenData;
     private ToggleButton mRecord;
     private DatabaseReference userDatabase;
-    private String userName;
-    private String userEmail;
-    private String missionDescription;
     private URL url = null;
     private HttpURLConnection connection;
+    private ArrayList<MissionObject> mMission;
+    private String mTimeMS;
+    private String mTime;
     private String uid;
+    private int missionKey;
+    private String missionDescription;
     /*
      *  Operating System Events
      */
@@ -141,6 +144,12 @@ public class VidyoChatFragment extends BaseFragment implements
         myView = inflater.inflate(R.layout.vidyo_chat_fragment,container,false);
 
 
+        mMission = (ArrayList<MissionObject>) getArguments().getSerializable("missionArray");
+        //TODO make dynamic mission keys
+        MissionObject mission = mMission.get(0);
+        missionKey = mission.getMissionKey();
+        missionDescription = mission.getVideo_mission_description();
+        uid = (String) getArguments().getString("uid");
         // Initialize the member variables
         mControlsLayout = myView.findViewById(R.id.controls_layout);
         //mToolbarLayout = (LinearLayout) findViewById(R.id.toolbarLayout);
@@ -150,7 +159,7 @@ public class VidyoChatFragment extends BaseFragment implements
         mHost = myView.findViewById(R.id.host);
         mHost.setText("prod.vidyo.io");
         mDisplayName = myView.findViewById(R.id.displayName);
-        mDisplayName.setText("jeremy");
+        mDisplayName.setText(User.getInstance().getName());
         mToken = myView.findViewById(R.id.token);
         mResourceId = myView.findViewById(R.id.resource);
         mResourceId.setText("demoRoom");
@@ -174,32 +183,7 @@ public class VidyoChatFragment extends BaseFragment implements
         button.setOnClickListener(this);
         mRecord = myView.findViewById(R.id.recordButton);
 
-        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        userDatabase = FirebaseDatabase.getInstance().getReference();
-        userDatabase.child("users").child(uid).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                userName = dataSnapshot.child("name").getValue().toString().trim();
-                userEmail = dataSnapshot.child("email").getValue().toString().trim();
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-
-        });
-
-        userDatabase.child("video").child("types").child("0").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                missionDescription = dataSnapshot.child("video_mission_description").getValue().toString().trim();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
 
         mRecord.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -219,21 +203,35 @@ public class VidyoChatFragment extends BaseFragment implements
                         e.printStackTrace();
                     }
 
+                    long timeMS = System.currentTimeMillis();
+                    mTimeMS = String.valueOf(timeMS);
+                    Date date = Calendar.getInstance().getTime();
+                    mTime = String.valueOf(date);
+
+
+                    Map<String, String> videoListMap = new HashMap<>();
+                    videoListMap.put("node_create_date", mTime);
+                    videoListMap.put("node_create_date_ms", mTimeMS);
+                    videoListMap.put("video_mission_description", missionDescription);
+
                     userDatabase = FirebaseDatabase.getInstance().getReference();
+                    userDatabase.child("video").child("list").push();
 
-                    DateFormat today = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    Date date = new Date();
-                    final String todayDate = today.format(date);
+                    String pushId = userDatabase.child("video").child("list").push().getKey();
 
-                    HashMap<String, String> videoMap = new HashMap<>();
-                    videoMap.put("video_mission_description", missionDescription);
-                    videoMap.put("node_create_date", todayDate);
-                    videoMap.put("video_mission_description", missionDescription);
+                    String email = User.getInstance().getEmail();
+                    String name = User.getInstance().getName();
 
-                    userDatabase.child("video").child("list").push().setValue(videoMap);
-                    String postID = userDatabase.getKey();
+                    Map<String, String> participantMap = new HashMap<>();
 
-                    Toast.makeText(mSelf, "pushed", Toast.LENGTH_SHORT).show();
+                    participantMap.put("email", email);
+                    participantMap.put("name", name);
+                    participantMap.put("start_date", mTime);
+                    participantMap.put("start_date_ms", mTimeMS);
+                    participantMap.put("uid", uid);
+
+                    userDatabase.child("video").child("list").child("video_participants").child(pushId).push();
+
                 }else{
                     mRecord.setBackgroundResource(R.drawable.record);
                     if (url != null){
@@ -272,90 +270,7 @@ public class VidyoChatFragment extends BaseFragment implements
         // Each successive time that onStart is called, app is coming back to foreground so check if the
         // settings need to be refreshed again, as app may have been launched via URI.
 
-        if (mRefreshSettings &&
-                mVidyoConnectorState != VidyoConnectorState.Connected &&
-                mVidyoConnectorState != VidyoConnectorState.Connecting) {
 
-            Intent intent = getActivity().getIntent();
-            Uri uri = intent.getData();
-
-            // Check if app was launched via URI
-            if (uri != null) {
-                String param = uri.getQueryParameter("host");
-                mHost.setText( param != null ? param : "prod.vidyo.io");
-
-                param = uri.getQueryParameter("token");
-                mToken.setText(param != null ? param : "");
-
-                param = uri.getQueryParameter("displayName");
-                mDisplayName.setText(param != null ? param : "");
-
-                param = uri.getQueryParameter("resourceId");
-                mResourceId.setText(param != null ? param : "");
-
-                mReturnURL = uri.getQueryParameter("returnURL");
-                mHideConfig = uri.getBooleanQueryParameter("hideConfig", false);
-                mAutoJoin = uri.getBooleanQueryParameter("autoJoin", false);
-                mAllowReconnect = uri.getBooleanQueryParameter("allowReconnect", true);
-                mCameraPrivacy = uri.getBooleanQueryParameter("cameraPrivacy", false);
-                mMicrophonePrivacy = uri.getBooleanQueryParameter("microphonePrivacy", false);
-                mEnableDebug = uri.getBooleanQueryParameter("enableDebug", false);
-                mExperimentalOptions = uri.getQueryParameter("experimentalOptions");
-            } else {
-                // If the app was launched by a different app, then get any parameters; otherwise use default settings
-                mHost.setText(intent.hasExtra("host") ? intent.getStringExtra("host") : "prod.vidyo.io");
-                mToken.setText(mTokenString);
-                mDisplayName.setText(intent.hasExtra("displayName") ? intent.getStringExtra("displayName") : "");
-                mResourceId.setText(intent.hasExtra("resourceId") ? intent.getStringExtra("resourceId") : "");
-                mReturnURL = intent.hasExtra("returnURL") ? intent.getStringExtra("returnURL") : null;
-                mHideConfig = intent.getBooleanExtra("hideConfig", false);
-                mAutoJoin = intent.getBooleanExtra("autoJoin", false);
-                mAllowReconnect = intent.getBooleanExtra("allowReconnect", true);
-                mCameraPrivacy = intent.getBooleanExtra("cameraPrivacy", false);
-                mMicrophonePrivacy = intent.getBooleanExtra("microphonePrivacy", false);
-                mEnableDebug = intent.getBooleanExtra("enableDebug", false);
-                mExperimentalOptions = intent.hasExtra("experimentalOptions") ? intent.getStringExtra("experimentalOptions") : null;
-            }
-
-            // Hide the controls if hideConfig enabled
-            if (mHideConfig) {
-                mControlsLayout.setVisibility(View.GONE);
-            }
-
-            // Apply the app settings if the Connector object has been created
-            if (mVidyoConnector != null) {
-                // Apply some of the app settings
-                    // If enableDebug is configured then enable debugging
-                    if (mEnableDebug) {
-                        mVidyoConnector.enableDebug(7776, "warning info@VidyoClient info@VidyoConnector");
-                        mClientVersion.setVisibility(View.VISIBLE);
-                    } else {
-                        mVidyoConnector.disableDebug();
-                    }
-
-                    // If cameraPrivacy is configured then mute the camera
-                    mCameraPrivacyButton.setChecked(false); // reset state
-                    if (mCameraPrivacy) {
-                        mCameraPrivacyButton.performClick();
-                    }
-
-                    // If microphonePrivacy is configured then mute the microphone
-                    mMicrophonePrivacyButton.setChecked(false); // reset state
-                    if (mMicrophonePrivacy) {
-                        mMicrophonePrivacyButton.performClick();
-                    }
-
-                    // Set experimental options if any exist
-                    if (mExperimentalOptions != null) {
-                        ConnectorPkg.setExperimentalOptions(mExperimentalOptions);
-                    }
-
-                    // If configured to auto-join, then simulate a click of the toggle connect button
-                    if (mAutoJoin) {
-                        mToggleConnectButton.performClick();
-                    }
-                }
-            }
 
         mRefreshSettings = false;
 
