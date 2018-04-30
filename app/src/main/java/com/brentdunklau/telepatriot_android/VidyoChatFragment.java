@@ -136,6 +136,21 @@ public class VidyoChatFragment extends BaseFragment implements
     private int missionKey;
     private String missionDescription;
     private String nodeKey;
+    private TextView vidyoChatDescriptionText;
+    private EditText mRepEdit;
+    private EditText mFBEdit;
+    private EditText mTwitterEdit;
+    private TextView mRepButton;
+    private TextView mFBButton;
+    private TextView mTwitterButton;
+    private TextView mRepName;
+    private TextView mRepFB;
+    private TextView mRepTwitter;
+    private TextView mDescriptionEditButton;
+    private EditText mDescriptionEditText;
+    private TextView mYouTubeEditButton;
+    private EditText mYouTubeEditText;
+    private TextView mYouTubeDescription;
     /*
      *  Operating System Events
      */
@@ -151,7 +166,7 @@ public class VidyoChatFragment extends BaseFragment implements
         MissionObject mission = mMission.get(0);
         missionKey = mission.getMissionKey();
         missionDescription = mission.getVideo_mission_description();
-        uid = (String) getArguments().getString("uid");
+        uid =  getArguments().getString("uid");
         // Initialize the member variables
         mControlsLayout = myView.findViewById(R.id.controls_layout);
         //mToolbarLayout = (LinearLayout) findViewById(R.id.toolbarLayout);
@@ -172,6 +187,56 @@ public class VidyoChatFragment extends BaseFragment implements
         GetToken newToken = new GetToken();
         newToken.execute();
         mToken.setText(jsonTokenData);
+        vidyoChatDescriptionText = myView.findViewById(R.id.videoChatDescriptionText);
+        vidyoChatDescriptionText.setText(mission.getVideo_mission_description());
+
+        mRepName = myView.findViewById(R.id.videoChatRepInfo);
+        mRepFB = myView.findViewById(R.id.videoChatRepFBInfo);
+        mRepTwitter = myView.findViewById(R.id.videoChatRepTwitterInfo);
+        mRepEdit = myView.findViewById(R.id.repNameEdit);
+        mRepButton = myView.findViewById(R.id.repEdit);
+        mRepButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setRepInfo();
+            }
+        });
+        mFBButton = myView.findViewById(R.id.fbEdit);
+        mFBEdit = myView.findViewById(R.id.fbRepEdit);
+        mFBButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setFBInfo();
+            }
+        });
+        mTwitterEdit = myView.findViewById(R.id.twitterInfoEdit);
+        mTwitterButton = myView.findViewById(R.id.twitterEdit);
+        mTwitterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setTwitterInfo();
+            }
+        });
+
+        mDescriptionEditText = myView.findViewById(R.id.editDescription);
+        mDescriptionEditButton = myView.findViewById(R.id.editDescriptionButon);
+        mDescriptionEditButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editDescription();
+            }
+        });
+
+        mYouTubeDescription = myView.findViewById(R.id.videoChatYouTubeDescription);
+        mYouTubeEditText = myView.findViewById(R.id.editYouTubeDescription);
+        mYouTubeEditButton = myView.findViewById(R.id.editYouTubeButton);
+        mYouTubeEditButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editYouTubeDescription();
+            }
+        });
+
 
         // Set the onClick listeners for the buttons
         mToggleConnectButton = myView.findViewById(R.id.videoChatConnectButton);
@@ -252,6 +317,72 @@ public class VidyoChatFragment extends BaseFragment implements
         // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
         mVidyoClientInitialized = ConnectorPkg.initialize();
         return myView;
+    }
+
+    private void editYouTubeDescription() {
+        if (mYouTubeEditButton.getText().toString().trim().equals("Edit")){
+            mYouTubeDescription.setVisibility(View.INVISIBLE);
+            mYouTubeEditText.setVisibility(View.VISIBLE);
+            mYouTubeEditButton.setText("Done");
+        }else{
+            mYouTubeDescription.setText(mYouTubeEditText.getText());
+            mYouTubeDescription.setVisibility(View.VISIBLE);
+            mYouTubeEditText.setVisibility(View.GONE);
+            mYouTubeEditButton.setText("Edit");
+        }
+    }
+
+    private void editDescription() {
+        if (mDescriptionEditButton.getText().toString().trim().equals("Edit")){
+            vidyoChatDescriptionText.setVisibility(View.INVISIBLE);
+            mDescriptionEditText.setVisibility(View.VISIBLE);
+            mDescriptionEditButton.setText("Done");
+        }else{
+            mDescriptionEditButton.setText("Edit");
+            vidyoChatDescriptionText.setText(mDescriptionEditText.getText().toString().trim());
+            mDescriptionEditText.setVisibility(View.GONE);
+            vidyoChatDescriptionText.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setTwitterInfo() {
+        if (mTwitterButton.getText().toString().equals("Edit")) {
+            mRepTwitter.setVisibility(View.INVISIBLE);
+            mTwitterEdit.setVisibility(View.VISIBLE);
+            mTwitterButton.setText("Done");
+        }else {
+            mRepTwitter.setText(mTwitterEdit.getText().toString().trim());
+            mRepTwitter.setVisibility(View.VISIBLE);
+            mTwitterEdit.setVisibility(View.GONE);
+            mTwitterButton.setText("Edit");
+        }
+    }
+
+    private void setFBInfo() {
+        if (mFBButton.getText().toString().equals("Edit")) {
+            mRepFB.setVisibility(View.INVISIBLE);
+            mFBEdit.setVisibility(View.VISIBLE);
+            mFBButton.setText("Done");
+        }else {
+            mRepFB.setText(mRepEdit.getText().toString().trim());
+            mRepFB.setVisibility(View.VISIBLE);
+            mFBEdit.setVisibility(View.GONE);
+            mFBButton.setText("Edit");
+        }
+    }
+
+    private void setRepInfo() {
+        if (mRepButton.getText().toString().equals("Edit")) {
+            mRepName.setVisibility(View.INVISIBLE);
+            mRepEdit.setVisibility(View.VISIBLE);
+            mRepButton.setText("Done");
+        }else {
+            mRepName.setText(mRepEdit.getText().toString().trim());
+            mRepName.setVisibility(View.VISIBLE);
+            mRepEdit.setVisibility(View.GONE);
+            mRepButton.setText("Edit");
+        }
+
     }
 
 
