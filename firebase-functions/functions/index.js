@@ -119,6 +119,15 @@ const legislators = require('./legislators')
 exports.loadStates = legislators.loadStates
 exports.getOpenStatesUrls = legislators.getOpenStatesUrls
 exports.downloadFromOpenStates = legislators.downloadFromOpenStates
+exports.getSocialMediaUrls = legislators.getSocialMediaUrls
+exports.loadSocialMediaHandles = legislators.loadSocialMediaHandles
+exports.googleCivicApi1 = legislators.googleCivicApi1
+exports.googleCivicApi2 = legislators.googleCivicApi2
+exports.googleCivicApi3 = legislators.googleCivicApi3
+exports.showStates = legislators.showStates
+exports.viewLegislators = legislators.viewLegislators
+exports.saveDivision = legislators.saveDivision
+exports.reloadOpenStates = legislators.reloadOpenStates
 
 const testing = require('./test/testing')
 exports.testApi = testing.testApi
