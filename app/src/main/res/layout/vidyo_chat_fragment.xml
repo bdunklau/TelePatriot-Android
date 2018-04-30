@@ -132,13 +132,21 @@
                     android:id="@+id/videoChatDesctiptionTitle"/>
 
                 <TextView
+                    android:id="@+id/editDescriptionButon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignStart="@+id/repEdit"
                     android:text="Edit"
-                    android:layout_toRightOf="@+id/videoChatDesctiptionTitle"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginLeft="15dp"
-                    android:textColor="@color/com_facebook_blue"/>
+                    android:textColor="@color/colorPrimaryDark" />
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatDesctiptionTitle"
+                    android:inputType="textMultiLine"
+                    android:visibility="gone"
+                    android:id="@+id/editDescription"/>
 
                 <TextView
                     android:layout_width="match_parent"
@@ -147,8 +155,7 @@
                     android:layout_marginLeft="10dp"
                     android:id="@+id/videoChatDescriptionText"
                     android:layout_below="@+id/videoChatDesctiptionTitle"
-                    android:text="This is a Video petition. In a video petition, the person being interviewed *must* mention the legislator by name and must emphasize that the person being interviewed is a constituent o this legislator. Next, one of the people in the video needs to state what the legislator's declared position is on COS (for, against, undecided)"
-                    />
+                    android:text="Text" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -169,6 +176,13 @@
                     android:id="@+id/videoChatRepInfo"
                     android:layout_marginTop="10dp"/>
 
+                <EditText
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatLegislatorTitle"
+                    android:visibility="gone"
+                    android:id="@+id/repNameEdit"/>
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -177,6 +191,13 @@
                     android:text="FB: @RepHaventMadeUpMyMind"
                     android:id="@+id/videoChatRepFBInfo"
                     android:layout_marginTop="10dp"/>
+
+                <EditText
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/videoChatRepInfo"
+                    android:id="@+id/fbRepEdit"
+                    android:visibility="gone"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -187,6 +208,12 @@
                     android:id="@+id/videoChatRepTwitterInfo"
                     android:layout_marginTop="10dp"/>
 
+                <EditText
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatRepFBInfo"
+                    android:id="@+id/twitterInfoEdit"
+                    android:visibility="gone"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -196,6 +223,62 @@
                     android:text="YouTube Video Description"
                     android:id="@+id/videoChatYouTubeVideoDescription"
                     android:layout_marginTop="10dp"/>
+
+                <TextView
+                    android:id="@+id/editYouTubeButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignStart="@+id/repEdit"
+                    android:layout_alignTop="@+id/videoChatYouTubeVideoDescription"
+                    android:text="Edit"
+                    android:textColor="@color/colorPrimaryDark" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Description"
+                    android:inputType="textMultiLine"
+                    android:layout_below="@id/videoChatYouTubeVideoDescription"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/videoChatYouTubeDescription"/>
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/videoChatYouTubeVideoDescription"
+                    android:inputType="textMultiLine"
+                    android:visibility="gone"
+                    android:id="@+id/editYouTubeDescription"/>
+
+                <TextView
+                    android:id="@+id/repEdit"
+                    android:layout_width="38dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_below="@id/videoChatLegislatorTitle"
+                    android:layout_marginTop="10dp"
+                    android:text="Edit"
+                    android:textColor="@color/colorPrimaryDark" />
+
+                <TextView
+                    android:id="@+id/fbEdit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignStart="@+id/repEdit"
+                    android:layout_alignTop="@+id/videoChatRepFBInfo"
+                    android:text="Edit"
+                    android:textColor="@color/colorPrimaryDark" />
+
+                <TextView
+                    android:id="@+id/twitterEdit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignStart="@+id/repEdit"
+                    android:layout_alignTop="@+id/videoChatRepTwitterInfo"
+                    android:text="Edit"
+                    android:textColor="@color/colorPrimaryDark" />
+
             </RelativeLayout>
         </ScrollView>
     </RelativeLayout>
