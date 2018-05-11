@@ -117,17 +117,41 @@ exports.chooseEmailType = email.chooseEmailType
 
 const legislators = require('./legislators')
 exports.loadStates = legislators.loadStates
-exports.getOpenStatesUrls = legislators.getOpenStatesUrls
-exports.downloadFromOpenStates = legislators.downloadFromOpenStates
+exports.loadOpenStatesDistricts = legislators.loadOpenStatesDistricts
+exports.loadOpenStatesLegislators = legislators.loadOpenStatesLegislators
 exports.getSocialMediaUrls = legislators.getSocialMediaUrls
-exports.loadSocialMediaHandles = legislators.loadSocialMediaHandles
-exports.googleCivicApi1 = legislators.googleCivicApi1
-exports.googleCivicApi2 = legislators.googleCivicApi2
-exports.googleCivicApi3 = legislators.googleCivicApi3
 exports.showStates = legislators.showStates
 exports.viewLegislators = legislators.viewLegislators
+exports.findCivicDataMatch = legislators.findCivicDataMatch
 exports.saveDivision = legislators.saveDivision
-exports.reloadOpenStates = legislators.reloadOpenStates
+exports.loadLegislators = legislators.loadLegislators
+exports.loadCivicData = legislators.loadCivicData
+exports.peopleWithoutCivicData = legislators.peopleWithoutCivicData
+
+
+const civic = require('./google-civic')
+exports.civic = civic.civic
+exports.loadDivisions = civic.loadDivisions
+exports.loadDivisionsTrigger = civic.loadDivisionsTrigger
+exports.loadDivisionsAllStates = civic.loadDivisionsAllStates
+exports.listDivisions = civic.listDivisions
+exports.listOfficials = civic.listOfficials
+exports.loadOfficials = civic.loadOfficials
+exports.unloadOfficials = civic.unloadOfficials
+exports.unloadDivisions = civic.unloadDivisions
+exports.onOfficialUrl = civic.onOfficialUrl
+
+const districtMapper = require('./map-districts')
+exports.districtMapper = districtMapper.districtMapper
+exports.mapOpenStatesToGoogleCivic = districtMapper.mapOpenStatesToGoogleCivic
+exports.mapGoogleCivicToOpenStates = districtMapper.mapGoogleCivicToOpenStates
+exports.checkGoogleCivicDivision = districtMapper.checkGoogleCivicDivision
+
+const officialMapper = require('./map-officials')
+exports.officialMapper = officialMapper.officialMapper
+exports.osToCivicOfficials = officialMapper.osToCivicOfficials
+exports.tryLoadingOfficialsAgain = officialMapper.tryLoadingOfficialsAgain
+
 
 const testing = require('./test/testing')
 exports.testApi = testing.testApi
