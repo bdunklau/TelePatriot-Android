@@ -1,12 +1,14 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -23,7 +25,10 @@ import android.widget.ToggleButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketAddress;
@@ -39,6 +44,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.brentdunklau.telepatriot_android.util.User;
+import com.firebase.ui.auth.ui.ProgressDialogHolder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -52,6 +58,9 @@ import com.vidyo.VidyoClient.Device.Device;
 import com.vidyo.VidyoClient.Device.LocalCamera;
 import com.vidyo.VidyoClient.Endpoint.LogRecord;
 import com.vidyo.VidyoClient.NetworkInterface;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class VidyoChatFragment extends BaseFragment implements
@@ -151,6 +160,9 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView mYouTubeEditButton;
     private EditText mYouTubeEditText;
     private TextView mYouTubeDescription;
+    private ProgressDialog pd;
+    private String reasons;
+    private String nameString1;
     /*
      *  Operating System Events
      */
@@ -159,6 +171,16 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public View onCreateView (LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
         myView = inflater.inflate(R.layout.vidyo_chat_fragment,container,false);
+
+        int SDK_INT = android.os.Build.VERSION.SDK_INT;
+        if (SDK_INT > 8)
+        {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                    .permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+            //your codes here
+            getToken();
+        }
 
 
         mMission = (ArrayList<MissionObject>) getArguments().getSerializable("missionArray");
@@ -184,12 +206,9 @@ public class VidyoChatFragment extends BaseFragment implements
         mClientVersion = myView.findViewById(R.id.clientVersion);
         mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
         mSelf = (MainActivity) getActivity();
-        GetToken newToken = new GetToken();
-        newToken.execute();
         mToken.setText(jsonTokenData);
         vidyoChatDescriptionText = myView.findViewById(R.id.videoChatDescriptionText);
         vidyoChatDescriptionText.setText(mission.getVideo_mission_description());
-
         mRepName = myView.findViewById(R.id.videoChatRepInfo);
         mRepFB = myView.findViewById(R.id.videoChatRepFBInfo);
         mRepTwitter = myView.findViewById(R.id.videoChatRepTwitterInfo);
@@ -317,6 +336,58 @@ public class VidyoChatFragment extends BaseFragment implements
         // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
         mVidyoClientInitialized = ConnectorPkg.initialize();
         return myView;
+    }
+
+    private void getToken() {
+        pd = new ProgressDialog(getActivity());
+        pd.setMessage("Please Wait");
+        pd.show();
+
+        HttpURLConnection connection = null;
+        BufferedReader reader = null;
+
+        String nameString;
+        //TODO make dynamic
+
+        try {
+            nameString = User.getInstance().getName();
+            if(nameString.contains(" ")){
+                nameString1 = nameString.replaceAll(" ","_");
+            }
+            String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + nameString1;
+            URL url = new URL(urlString);
+
+            connection = (HttpURLConnection) url.openConnection();
+            connection.connect();
+            InputStream inputStream = connection.getInputStream();
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            StringBuffer buffer = new StringBuffer();
+            String line = "";
+
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line + "/n");
+            }
+
+            String bufferString = buffer.toString();
+            JSONObject jsonObject = new JSONObject(bufferString);
+            jsonTokenData = jsonObject.getString("token").trim();
+        } catch (MalformedURLException e) {
+        } catch (IOException e) {
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+            }
+        }
+        pd.dismiss();
     }
 
     private void editYouTubeDescription() {
@@ -630,9 +701,8 @@ public class VidyoChatFragment extends BaseFragment implements
 
                         case Connected:
                             mToggleConnectButton.setChecked(true);
-                            mControlsLayout.setVisibility(View.GONE);
                             mConnectionSpinner.setVisibility(View.INVISIBLE);
-                            Toast.makeText(mSelf, "Connected", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mSelf, "connected", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnecting:
@@ -641,17 +711,15 @@ public class VidyoChatFragment extends BaseFragment implements
                             // call will actually end the call. Need to wait for the callback to be received
                             // before swapping to the callStart image.
                             mToggleConnectButton.setChecked(true);
-                            Toast.makeText(mSelf, "Disconnecting", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mSelf, "disconnecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnected:
-                            Toast.makeText(mSelf, "Disconnected", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mSelf, "disconnected", Toast.LENGTH_SHORT).show();
                         case DisconnectedUnexpected:
-                            Toast.makeText(mSelf, "Disconnected Unexpected", Toast.LENGTH_SHORT).show();
                         case Failure:
-                            Toast.makeText(mSelf, "Failure", Toast.LENGTH_SHORT).show();
                         case FailureInvalidResource:
-                            Toast.makeText(mSelf, "Invalid Resource", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mSelf, "invalid resource", Toast.LENGTH_SHORT).show();
                             mToggleConnectButton.setChecked(false);
                             mConnectionSpinner.setVisibility(View.INVISIBLE);
 
@@ -742,12 +810,11 @@ public class VidyoChatFragment extends BaseFragment implements
                         mHost.getText().toString().trim(),
                         mToken.getText().toString().trim(),
                         mDisplayName.getText().toString().trim(),
-                        resourceId,
+                        mResourceId.getText().toString().trim(),
                         this);
 
                 if (!status) {
                     changeState(VidyoConnectorState.Failure);
-                    Toast.makeText(mSelf, "failure", Toast.LENGTH_SHORT).show();
                 }
             }
         } else {
@@ -784,6 +851,7 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onFailure(Connector.ConnectorFailReason reason) {
         changeState(VidyoConnectorState.Failure);
+        reasons = reason.toString();
     }
 
     // Handle an existing session being disconnected.
