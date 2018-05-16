@@ -56,6 +56,7 @@ exports.deleteTeam = teams.deleteTeam
 //exports.deleteTeam = teams.deleteTeam
 exports.addPeopleToTeam = teams.addPeopleToTeam
 exports.downloadMissionReport = teams.downloadMissionReport
+exports.downloadTeamRoster = teams.downloadTeamRoster
 exports.removePeopleFromTeam = teams.removePeopleFromTeam
 exports.viewMembers = teams.viewMembers
 exports.viewMissions = teams.viewMissions
