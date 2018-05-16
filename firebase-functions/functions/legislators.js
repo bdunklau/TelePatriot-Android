@@ -398,43 +398,67 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
     var state_abbrev = req.query.state
 
 
-    return db.ref(`openstates/${state_abbrev}/districts`).once('value').then(snapshot => {
-        var updates2 = {}
+    // the first thing we're going to do is delete the states/districts and states/legislators for this
+    // state so that we will re-trigger the loading of social media handles (See findCivicDataMatch() below)
+    return db.ref(`states/districts`).orderByChild('abbr').equalTo(state_abbrev).once('value').then(snapshot => {
+        var deletes = {}
         snapshot.forEach(function(child) {
-            var key = child.val().id  //i.e. nh-lower-Belknap 2
-            updates2[`states/districts/${key}`] = child.val()
+            deletes[`states/districts/${child.key}`] = null
         })
 
-        return snapshot.ref.root.update(updates2).then(() => {
+        // now get rid of all the /states/legislators for this state...
+        return snapshot.ref.root.child(`states/legislators`).orderByChild('state').equalTo(state_abbrev).once('value').then(snap2 => {
+            snap2.forEach(function(child) {
+                deletes[`states/legislators/${child.key}`] = null
+            })
+            snap2.ref.root.update(deletes).then(() => {
+                // now that all the state's districts and legislators have been deleted, re-add them
+                return db.ref(`openstates/${state_abbrev}/districts`).once('value').then(snapshot => {
+                    var updates2 = {}
+                    snapshot.forEach(function(child) {
+                        var key = child.val().id  //i.e. nh-lower-Belknap 2
+                        // need this attribute so that we can query on the client for all districts in a particular state and chamber
+                        // i.e. get all the districts in the Texas House
+                        var district = child.val()
+                        district.state_chamber = child.val().abbr+'-'+child.val().chamber
+                        updates2[`states/districts/${key}`] = district
+                    })
 
-            return db.ref(`openstates/${state_abbrev}/legislators`).once('value').then(snapshot => {
-                var updates = {}
-                var legislators = []
-                snapshot.forEach(function(child) {
-                    var legislator = child.val()
-                    var key = legislator.id  //i.e.  NHL000037
-                    // some officials like Lt Gov and maybe Speaker are returned by OpenStates with no "chamber"
-                    // value.  Ignore these guys
-                    if(legislator.chamber) {
-                        // add these attributes...
-                        legislator.state_chamber = legislator.state+'-'+legislator.chamber
-                        legislator.state_chamber_district = legislator.state_chamber+'-'+legislator.district
-                        legislator.civic_data_loaded_date = '(not loaded)'
-                        legislator.civic_data_loaded_date_ms = -1
-                        updates[`states/legislators/${key}`] = legislator
-                        legislators.push(legislator)
-                    }
-                })
-                var hd = _.sumBy(legislators, l => (l.chamber == 'lower' ? 1 : 0))
-                var sd = _.sumBy(legislators, l => (l.chamber == 'upper' ? 1 : 0))
-                updates[`states/list/${state_abbrev}/hd_loaded`] = hd
-                updates[`states/list/${state_abbrev}/sd_loaded`] = sd
-                snapshot.ref.root.update(updates).then(() => {
-                    return listStates(res, {state_abbrev: state_abbrev})
+                    return snapshot.ref.root.update(updates2).then(() => {
+
+                        return db.ref(`openstates/${state_abbrev}/legislators`).once('value').then(snapshot => {
+                            var updates = {}
+                            var legislators = []
+                            snapshot.forEach(function(child) {
+                                var legislator = child.val()
+                                var key = legislator.id  //i.e.  NHL000037
+                                // some officials like Lt Gov and maybe Speaker are returned by OpenStates with no "chamber"
+                                // value.  Ignore these guys
+                                if(legislator.chamber) {
+                                    // add these attributes...
+                                    legislator.state_chamber = legislator.state+'-'+legislator.chamber
+                                    legislator.state_chamber_district = legislator.state_chamber+'-'+legislator.district
+                                    legislator.civic_data_loaded_date = '(not loaded)'
+                                    legislator.civic_data_loaded_date_ms = -1
+                                    updates[`states/legislators/${key}`] = legislator
+                                    legislators.push(legislator)
+                                }
+                            })
+                            var hd = _.sumBy(legislators, l => (l.chamber == 'lower' ? 1 : 0))
+                            var sd = _.sumBy(legislators, l => (l.chamber == 'upper' ? 1 : 0))
+                            updates[`states/list/${state_abbrev}/hd_loaded`] = hd
+                            updates[`states/list/${state_abbrev}/sd_loaded`] = sd
+                            snapshot.ref.root.update(updates).then(() => {
+                                return listStates(res, {state_abbrev: state_abbrev})
+                            })
+                        })
+                    })
                 })
             })
         })
     })
+
+
 
 })
 
@@ -719,6 +743,41 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
         })
     })
 
+})
+
+
+exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/channels/{idx}').onWrite(event => {
+    var legId = event.params.legId // TXL0000033
+    if(!event.data.exists()) {
+        if(legId == 'TXL000690') event.data.adminRef.root.child(`templog2`).set({facebook_lookup_error: channelNode})
+        return false // when channels are deleted
+    }
+
+    var channelIdx = event.params.idx  // i.e.  0, 1, 2,...
+    var channelNode = event.data.val()
+    if(!channelNode.type || channelNode.type.toLowerCase() != 'facebook') {
+        event.data.adminRef.root.child(`templog2`).set({facebook_lookup_error: channelNode})
+        return false
+    }
+    if(channelNode.facebook_id || channelNode.facebook_lookup_error) {
+        if(legId == 'TXL000690') event.data.adminRef.root.child(`templog2`).set({facebook_lookup_error: 'channelNode.facebook_id || channelNode.facebook_lookup_error'})
+        return false // if it already exists, quit.  Otherwise, we'll cause infinite recursive trigger
+    }
+    var fbname = channelNode.id
+    return db.ref(`api_tokens/facebook_id_lookup_token`).once('value').then(snapshot => {
+        var fbtoken = snapshot.val()
+        // Ex:  https://graph.facebook.com/v3.0/wsabinAR?fields=id,name&access_token=EAACEdEose0cBAHbyx8PQ2g4Kf9fCa9mMHI5Ah1VWtlp4CF4OdOzl2bZAdsJqPiJwHT6sTHHzebRrtUZBuA8dUQhXkksNDsczNwltDsiPms6daMu4Y3Q2LUD0fP99ZA0sRiDv16Do4BsSHGx6l9ixXOirQLtsF7sJgEnETNMxDFkeg6gnUSly2uAjGrZAMAoZD
+        var url = "https://graph.facebook.com/v3.0/"+fbname+"?fields=id,name&access_token="+fbtoken
+        return request(url, function(error, response, body) {
+            if(error)
+                return snapshot.ref.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_lookup_error`).set(error)
+            var result = JSON.parse(body)
+            if(result.error)
+                return snapshot.ref.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_lookup_error`).set(result.error)
+            var fbId = result.id
+            return snapshot.ref.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_id`).set(fbId)
+        })
+    })
 })
 
 

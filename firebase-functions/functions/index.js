@@ -123,6 +123,7 @@ exports.getSocialMediaUrls = legislators.getSocialMediaUrls
 exports.showStates = legislators.showStates
 exports.viewLegislators = legislators.viewLegislators
 exports.findCivicDataMatch = legislators.findCivicDataMatch
+exports.lookupFacebookId = legislators.lookupFacebookId
 exports.saveDivision = legislators.saveDivision
 exports.loadLegislators = legislators.loadLegislators
 exports.loadCivicData = legislators.loadCivicData
