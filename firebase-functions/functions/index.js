@@ -128,6 +128,8 @@ exports.saveDivision = legislators.saveDivision
 exports.loadLegislators = legislators.loadLegislators
 exports.loadCivicData = legislators.loadCivicData
 exports.peopleWithoutCivicData = legislators.peopleWithoutCivicData
+exports.facebookIdUpdated = legislators.facebookIdUpdated
+exports.youtubeVideoDescription = legislators.youtubeVideoDescription
 
 
 const civic = require('./google-civic')

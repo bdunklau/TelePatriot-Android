@@ -6,7 +6,7 @@ const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const date = require('./dateformat')
 
-// for callling OpenStates API
+// for calling OpenStates API
 var request = require('request')
 
 // can only call this once globally and we already do that in index.js
@@ -746,12 +746,22 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
 })
 
 
+/*******************************************
+For iOS and maybe Android too, to open the FB app directly to the legislator's page, we have to know
+the legislator's FB ID.  The username is not enough.  The only way I've found so far (5/18/18) to look up someone's
+FB ID is to do an http get on their page and then look through the response for either: 'fb://page/?id='  or 'fb://profile/'
+*******************************************/
 exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/channels/{idx}').onWrite(event => {
     var legId = event.params.legId // TXL0000033
+
+    //quit early when this node is deleted
     if(!event.data.exists()) {
-        if(legId == 'TXL000690') event.data.adminRef.root.child(`templog2`).set({facebook_lookup_error: channelNode})
-        return false // when channels are deleted
+        if(legId == 'TXL000690') event.data.adminRef.root.child(`templog2`).set({facebook_lookup_error: event.data.val()})
+        return false
     }
+
+    if(!event.data.val().type || event.data.val().type.toLowerCase() != 'facebook')
+        return false
 
     var channelIdx = event.params.idx  // i.e.  0, 1, 2,...
     var channelNode = event.data.val()
@@ -764,20 +774,70 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
         return false // if it already exists, quit.  Otherwise, we'll cause infinite recursive trigger
     }
     var fbname = channelNode.id
-    return db.ref(`api_tokens/facebook_id_lookup_token`).once('value').then(snapshot => {
-        var fbtoken = snapshot.val()
-        // Ex:  https://graph.facebook.com/v3.0/wsabinAR?fields=id,name&access_token=EAACEdEose0cBAHbyx8PQ2g4Kf9fCa9mMHI5Ah1VWtlp4CF4OdOzl2bZAdsJqPiJwHT6sTHHzebRrtUZBuA8dUQhXkksNDsczNwltDsiPms6daMu4Y3Q2LUD0fP99ZA0sRiDv16Do4BsSHGx6l9ixXOirQLtsF7sJgEnETNMxDFkeg6gnUSly2uAjGrZAMAoZD
-        var url = "https://graph.facebook.com/v3.0/"+fbname+"?fields=id,name&access_token="+fbtoken
-        return request(url, function(error, response, body) {
-            if(error)
-                return snapshot.ref.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_lookup_error`).set(error)
-            var result = JSON.parse(body)
-            if(result.error)
-                return snapshot.ref.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_lookup_error`).set(result.error)
-            var fbId = result.id
-            return snapshot.ref.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_id`).set(fbId)
+    var url = "https://www.facebook.com/"+fbname
+
+    var options = {
+      url: url,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36'
+      }
+    }
+
+    return request(options, function(error, response, body) {
+        if(error)
+            return event.data.adminRef.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_lookup_error`).set(error)
+        var lookfor = ['fb://page/?id=', 'fb://profile/']
+        var findings = _.map(lookfor, function(str) {
+            return {'item': str, 'index': body.indexOf(str)}
+        })
+        var xxx = _.find(findings, function(finding) {
+            return finding.index != -1
+        })
+        if(!xxx) {
+            // good chance the page is invalid
+            var thisStuff = _.join(lookfor, ' and ')
+            var err = `This page: ${url} is does not appear to be valid.  We searched the content for ${thisStuff} but did not find instances of either.`
+            return event.data.adminRef.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_lookup_error`).set({'err': err, 'body': body})
+        }
+        else {
+            var magicString = xxx.item
+            var magicIndex1 = xxx.index + magicString.length
+            var chop = body.substring(magicIndex1)
+            var magicIndex2 = chop.indexOf('"')
+            var fbId = chop.substring(0, magicIndex2)
+            console.log('legId: ', legId, 'channelIdx', channelIdx, 'FB ID: ', fbId)
+            // If you ever want to see exactly what Facebook is returning in their html...
+            //event.data.adminRef.root.child(`states/legislators/${legId}/channels/${channelIdx}/check_body`).set(body)
+            return event.data.adminRef.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_id`).set(fbId)
+        }
+    })
+
+})
+
+
+// When the facebook_id is created or changes, we need to update the legislator_facebook_id under /video/list
+exports.facebookIdUpdated = functions.database.ref('states/legislators/{leg_id}/channels/{idx}/facebook_id').onWrite(event => {
+    if(event.data.val() == event.data.previous.val())
+        return false
+    if(!event.data.val())
+        return false
+
+    var fbId = event.data.val()
+
+    return event.data.adminRef.root.child(`states/legislators/${event.params.leg_id}/channels/${event.params.idx}`).once('value').then(snapshot => {
+        var facebookHandle = snapshot.val().id
+        return event.data.adminRef.root.child(`video/list`).orderByChild('leg_id').equalTo(event.params.leg_id).once('value').then(snapshot => {
+            var updates = {}
+            snapshot.forEach(function(child) {
+                var videoListKey = child.key
+                updates[`video/list/${videoListKey}/legislator_facebook_id`] = fbId
+                updates[`video/list/${videoListKey}/legislator_facebook`] = facebookHandle
+            })
+            return snapshot.ref.root.update(updates)
         })
     })
+
+
 })
 
 
@@ -833,5 +893,39 @@ exports.peopleWithoutCivicData = functions.https.onRequest((req, res) => {
         var queryValue = value=='empty' ? '""' : 'not empty'
         return listStates(res, {legislators: stuff.legislators, queryparms: {attribute: attribute, queryValue: queryValue}})
     })
+})
+
+
+
+// Creates the YouTube video description using legislator info (name, email, phone, etc)
+exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}').onWrite(event => {
+    if(!event.data.exists())
+        return false //return early if node was deleted
+    if(!event.data.val().youtube_video_description_unevaluated)
+        return false // this has to exist, otherwise quit
+
+    var description = event.data.val().youtube_video_description_unevaluated
+    var ch = event.data.val().chamber && event.data.val().chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
+    var rep = event.data.val().chamber && event.data.val().chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
+
+    var replace = [
+        {"this": "constituent_name", "withThat": "a constituent"}, // fix this later
+        {"this": "legislator_chamber_abbrev", "withThat": ch},
+        {"this": "legislator_district", "withThat": event.data.val().legislator_district},
+        {"this": "legislator_email", "withThat": event.data.val().email},
+        {"this": "legislator_facebook", "withThat": event.data.val().legislator_facebook},
+        {"this": "legislator_facebook_id", "withThat": event.data.val().legislator_facebook_id},
+        {"this": "legislator_twitter", "withThat": event.data.val().legislator_twitter},
+        {"this": "legislator_rep_type", "withThat": rep},
+        {"this": "legislator_full_name", "withThat": event.data.val().legislator_full_name},
+        {"this": "legislator_phone", "withThat": event.data.val().legislator_phone},
+        {"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state_abbrev.toUpperCase()}
+    ]
+
+    _.each(replace, function(rep) {
+        description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+
+    return event.data.adminRef.root.child(`video/list/${event.params.videoKey}/youtube_video_description`).set(description)
 })
 
