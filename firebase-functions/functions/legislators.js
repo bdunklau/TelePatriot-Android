@@ -904,6 +904,16 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
     if(!event.data.val().youtube_video_description_unevaluated)
         return false // this has to exist, otherwise quit
 
+    var descriptionAlreadyEvaluated = event.data.val().youtube_video_description && event.data.val().youtube_video_description_unevaluated
+        && event.data.val().youtube_video_description != event.data.val().youtube_video_description_unevaluated
+
+    var legislatorDidntChange = event.data.val().leg_id == event.data.previous.val().leg_id
+
+    // If the video description has already been evaluated AND the legislator didn't change, don't overwrite.
+    // That would undo anything the user specifically wanted to change.
+    if(descriptionAlreadyEvaluated && legislatorDidntChange)
+        return false
+
     var description = event.data.val().youtube_video_description_unevaluated
     var ch = event.data.val().chamber && event.data.val().chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
     var rep = event.data.val().chamber && event.data.val().chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
