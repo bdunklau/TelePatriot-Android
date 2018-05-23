@@ -65,7 +65,8 @@
             android:layout_marginLeft="140dp"
             android:id="@+id/recordButton"
             android:textOn=""
-            android:textOff=""/>
+            android:textOff=""
+            android:visibility="gone"/>
 
         <LinearLayout
             android:layout_width="200dp"

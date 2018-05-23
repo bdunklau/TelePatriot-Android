@@ -25,10 +25,13 @@ import android.widget.ToggleButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketAddress;
@@ -275,17 +278,30 @@ public class VidyoChatFragment extends BaseFragment implements
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
+
+                int SDK_INT = android.os.Build.VERSION.SDK_INT;
+                if (SDK_INT > 8)
+                {
+                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                            .permitAll().build();
+                    StrictMode.setThreadPolicy(policy);
+                    //your codes here
+
                 if (isChecked){
 
                     mRecord.setBackgroundResource(R.drawable.recordstop);
 
                     try {
-                        url = new URL("http://35.185.56.20/record/demoRoom/uniqueField");
+                        url = new URL("http://35.185.56.20/record/demoRoom/uniquefield");
                         connection = (HttpURLConnection) url.openConnection();
+                        OutputStream stream= new BufferedOutputStream(connection.getOutputStream());
+
                         Toast.makeText(mSelf, "Docker connection", Toast.LENGTH_SHORT).show();
                     } catch (MalformedURLException e) {
+                        Toast.makeText(mSelf, "Malformed", Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
                     } catch (IOException e) {
+                        Toast.makeText(mSelf, "IOE", Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
                     }
 
@@ -326,6 +342,7 @@ public class VidyoChatFragment extends BaseFragment implements
                         url = null;
                     }
 
+                }
                 }
             }
         });
@@ -701,6 +718,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
                         case Connected:
                             mToggleConnectButton.setChecked(true);
+                            mRecord.setVisibility(View.VISIBLE);
                             mConnectionSpinner.setVisibility(View.INVISIBLE);
                             Toast.makeText(mSelf, "connected", Toast.LENGTH_SHORT).show();
                             break;
@@ -715,6 +733,7 @@ public class VidyoChatFragment extends BaseFragment implements
                             break;
 
                         case Disconnected:
+                            mRecord.setVisibility(View.GONE);
                             Toast.makeText(mSelf, "disconnected", Toast.LENGTH_SHORT).show();
                         case DisconnectedUnexpected:
                         case Failure:
