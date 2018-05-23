@@ -4,6 +4,10 @@ const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const date = require('./dateformat')
 const nodemailer = require('nodemailer')
+const citizen_builder_api = require('./citizen_builder_api/checkVolunteerStatus')
+
+// for calling CitizenBuilder API
+var request = require('request')
 
 // create reference to root of the database
 const db = admin.database().ref()
@@ -27,23 +31,60 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
     var name = email // default value if name not present
     if(event.data.displayName) name = event.data.displayName
     var created = date.asCentralTime()
-    var userrecord = {name:name, photoUrl:photoUrl, email:email, created: created, account_disposition: "enabled"}
+
+    // See comment at very bottom
+    var userrecord = {name:name, photoUrl:photoUrl, email: email, created: created, account_disposition: "enabled"}
+    /**********
+    var userrecord = {name:name, photoUrl:photoUrl, created: created, account_disposition: "enabled"}
+    // for the cases when there IS no email...
+    if(email) {
+        userrecord['email'] = email
+    }
+    ***************/
 
     // remember, .set() returns a promise
     // just about everything returns a promise
 
     return newUserRef.set(userrecord).then(snap => {
 
-        return db.child(`/no_roles/${uid}`).set(userrecord)
-            .then( hmmm => {
-                admin.auth().getUser(uid)
-                    .then(function(userRecord) {
-                        console.log("Successfully fetched user data:", userRecord.toJSON());
-                        db.child(`/users/${uid}/name`).set(userRecord.displayName) // displayName not ready
-                        // above, but it is at this point
-                        // https://github.com/firebase/firebaseui-web/issues/197
-                    })
-            })
+        db.child(`/no_roles/${uid}`).set(userrecord).then( whatisthis => {
+            admin.auth().getUser(uid)
+                .then(function(userRecord) {
+                    console.log("Successfully fetched user data:", userRecord.toJSON());
+                    db.child(`/users/${uid}/name`).set(userRecord.displayName) // displayName not ready
+                    // above, but it is at this point
+                    // https://github.com/firebase/firebaseui-web/issues/197
+                })
+        })
+    })
+    .then(() => {
+        if(email) {
+            citizen_builder_api.checkVolunteerStatus(email,
+                    function() {
+                        // called when the user HAS satisfied the legal requirements for access
+                        // In this case, set these attributes on the user's node
+                        var attributes = {}
+                        attributes[`/users/${uid}/has_signed_petition`] = true
+                        attributes[`/users/${uid}/has_signed_confidentiality_agreement`] = true
+                        attributes[`/users/${uid}/is_banned`] = false
+                        db.update(attributes)
+                    },
+                    function() {
+                        // called when the user has NOT satisfied the legal requirements for access
+                        // In this case, don't do anything.  The attributes that we set in the other
+                        // callback can be left out here.  Missing attribute will interpreted as "unknown"
+                        // We can't be more specific than "unknown" because we don't know exactly WHY
+                        // the CitizenBuilder API call returned false.
+
+                        // UPDATE 4/5/18 - BUT.... but we do want to send this person the email that
+                        // tells them they have to sign the petition and confidentiality agreement
+                        // Let's do that now...
+
+                        return sendEmail('petition_ca_email', email, name)
+
+                    }
+            )
+        }
     })
 })
 
@@ -65,8 +106,15 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
     })
     .then(() => {
         // send the welcome email
+        return sendEmail('welcome_email', email, name)
 
-        return db.child(`/administration/welcome_email`).once('value').then(snapshot => {
+    })
+})
+
+
+var sendEmail = function(emailType, email, name) {
+
+        return db.child(`/administration/${emailType}`).once('value').then(snapshot => {
 
             var rep = "(newbie)"
             var message = snapshot.val().message.replace(rep, name)
@@ -106,11 +154,57 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
             });
 
         })
+}
 
 
-    })
-})
+/***********************************************
+In createUserAccount() above, we have this code:
 
+    var userrecord = {name:name, photoUrl:photoUrl, email: email, created: created, account_disposition: "enabled"}
+
+
+
+We also have this code that is currently commented out:
+
+    var userrecord = {name:name, photoUrl:photoUrl, created: created, account_disposition: "enabled"}
+    // for the cases when there IS no email...
+    if(email) {
+        userrecord['email'] = email
+    }
+
+
+What do each of these do and why are they there?
+
+The first line is what we've always had.  The second block is new and works but we're not using
+it just yet.
+
+What's the problem:  MISSING EMAILS - Facebook is not sending emails over for some users
+
+What happens when the first line above is executed with no email:  Crash/Exception that prevents
+the user node under /users from being created.  So these users with no emails are NOT sent to the
+Limbo screen.  They are let right into the app, albeit with no permissions.
+
+In MainActivity, we now display a warning in yellow where the email address should be.  The user
+can touch this warning and be taken to a screen where he can supply his email (EditMyAccountFragment.java)
+Once the user supplies his email, we write the user's record to the /no_roles node so that the
+admins can properly on-board him.
+
+Is there anything wrong/confusing with the second block?  Yes
+
+The second block does avoid the crash/exception that occurs when there's no email.  And using
+this second block of code, new users without emails ARE sent to the Limbo screen which is good.
+The problem is, they still don't have an eamil.  So once we grant them permissions on the
+Unassigned Users screen, they are let in to the app but they still don't have an email address
+on file.
+
+Emails are pretty much assumed to always exist, so if one doesn't, that's an exception waiting
+to happen.
+
+Ideally, the UnassignedUsers screen would alert the admins to any user that doesn't have
+an email.  I haven't added that to the AssignUserFragment yet though.  I can roll out the
+new EditMyAccountFragment screen and get people to enter their emails without having to implement
+the second block of code and modifying the AssignUserFragment screen.
+***********************************************/
 
 
 

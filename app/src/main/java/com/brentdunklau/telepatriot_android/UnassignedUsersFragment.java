@@ -31,7 +31,7 @@ public class UnassignedUsersFragment extends AdminFragment {
 
     private FirebaseRecyclerAdapter<UserBean, UserHolder> mAdapter;
     private RecyclerView users;
-    View myView;
+    //View myView;
 
     @Nullable
     @Override

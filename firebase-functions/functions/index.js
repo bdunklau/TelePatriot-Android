@@ -113,6 +113,54 @@ exports.email = email.email
 exports.renderEmail = email.renderEmail
 exports.saveEmail = email.saveEmail
 exports.sendEmail = email.sendEmail
+exports.chooseEmailType = email.chooseEmailType
+
+const legislators = require('./legislators')
+exports.loadStates = legislators.loadStates
+exports.loadOpenStatesDistricts = legislators.loadOpenStatesDistricts
+exports.loadOpenStatesLegislators = legislators.loadOpenStatesLegislators
+exports.getSocialMediaUrls = legislators.getSocialMediaUrls
+exports.showStates = legislators.showStates
+exports.viewLegislators = legislators.viewLegislators
+exports.findCivicDataMatch = legislators.findCivicDataMatch
+exports.lookupFacebookId = legislators.lookupFacebookId
+exports.saveDivision = legislators.saveDivision
+exports.loadLegislators = legislators.loadLegislators
+exports.loadCivicData = legislators.loadCivicData
+exports.peopleWithoutCivicData = legislators.peopleWithoutCivicData
+exports.facebookIdUpdated = legislators.facebookIdUpdated
+exports.youtubeVideoDescription = legislators.youtubeVideoDescription
+
+
+const civic = require('./google-civic')
+exports.civic = civic.civic
+exports.loadDivisions = civic.loadDivisions
+exports.loadDivisionsTrigger = civic.loadDivisionsTrigger
+exports.loadDivisionsAllStates = civic.loadDivisionsAllStates
+exports.listDivisions = civic.listDivisions
+exports.listOfficials = civic.listOfficials
+exports.loadOfficials = civic.loadOfficials
+exports.unloadOfficials = civic.unloadOfficials
+exports.unloadDivisions = civic.unloadDivisions
+exports.onOfficialUrl = civic.onOfficialUrl
+
+const districtMapper = require('./map-districts')
+exports.districtMapper = districtMapper.districtMapper
+exports.mapOpenStatesToGoogleCivic = districtMapper.mapOpenStatesToGoogleCivic
+exports.mapGoogleCivicToOpenStates = districtMapper.mapGoogleCivicToOpenStates
+exports.checkGoogleCivicDivision = districtMapper.checkGoogleCivicDivision
+
+const officialMapper = require('./map-officials')
+exports.officialMapper = officialMapper.officialMapper
+exports.osToCivicOfficials = officialMapper.osToCivicOfficials
+exports.tryLoadingOfficialsAgain = officialMapper.tryLoadingOfficialsAgain
+
+
+const testing = require('./test/testing')
+exports.testApi = testing.testApi
+
+const vidyo = require('./vidyo')
+exports.generateVidyoToken = vidyo.generateVidyoToken
 
 const videoManager = require('./video')
 exports.video = videoManager.video
