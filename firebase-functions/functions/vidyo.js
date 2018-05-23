@@ -23,7 +23,7 @@ exports.generateVidyoToken = functions.https.onRequest((req, res) => {
 
     // node.js Ex:  node generateToken.js --key=rUlaMASgt1Byi4Kp3sKYDeQzo --appID=ApplicationID --userName=user1 --expiresInSecs=10000
 
-    var userName = req.query.userName 
+    var userName = req.query.userName
     var expiresInSecs = 600
 
     db.child(`api_tokens`).once('value').then(snapshot => {
