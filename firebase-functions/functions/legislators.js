@@ -912,7 +912,7 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
         {"this": "constituent_name", "withThat": "a constituent"}, // fix this later
         {"this": "legislator_chamber_abbrev", "withThat": ch},
         {"this": "legislator_district", "withThat": event.data.val().legislator_district},
-        {"this": "legislator_email", "withThat": event.data.val().email},
+        {"this": "legislator_email", "withThat": event.data.val().legislator_email},
         {"this": "legislator_facebook", "withThat": event.data.val().legislator_facebook},
         {"this": "legislator_facebook_id", "withThat": event.data.val().legislator_facebook_id},
         {"this": "legislator_twitter", "withThat": event.data.val().legislator_twitter},
