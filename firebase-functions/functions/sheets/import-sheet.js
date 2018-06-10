@@ -1,5 +1,76 @@
 'use strict';
 
+
+/***************************
+READ THIS   ...SERIOUSLY
+
+INSPIRATION:  The inspiration for this script is https://github.com/firebase/functions-samples/tree/master/google-sheet-sync
+That page has a few url's wrong thought.  The instructions below are 100% correct.
+
+
+Functions that access google sheets have to be configured in a very specific way.
+We have to tell google what our app's client id is what that app's client secret is.
+
+You do that from the command line on local pc, from the firebase-functions/functions directory
+
+The command looks like this:
+
+firebase functions:config:set googleapi.client_id="****EXPLAINED BELOW****" googleapi.client_secret="****EXPLAINED BELOW****" googleapi.function_redirect="****EXPLAINED BELOW****"
+
+
+Here's how you get the client id, client secret and function_redirect values...
+1.  Go here https://console.developers.google.com/apis/credentials?project=telepatriot-bd737
+2.  Scroll down to the "OAuth 2.0 client IDs" section
+3.  click the edit pencil next to Web client 2 (or whatever we're using lately)
+4.  client id and client secret are listed at the top
+5.  The function_redirect value is listed under "Authorized redirect URIs"
+    For prod, it should be:  https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback
+    For dev, it should be:   https://us-central1-telepatriot-dev.cloudfunctions.net/oauthcallback
+
+
+If you have to create a new OAuth 2.0 client ID, here's how you do it.
+1.  Go here https://console.developers.google.com/apis/credentials?project=telepatriot-bd737
+2.  Make sure you're on the Credentials tab
+3.  Pull down "Create credentials"
+4.  Choose "OAuth client ID"
+5.  Choose "Web application"
+6.  "Authorized redirect URIs" is the only field we care about
+7.  Enter https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback
+8.  Hit save/create/whatever - done
+
+Put the client id and client secret into the "firebase functions:config:set..." command above
+Run that command
+Then do:  firebase deploy --only functions
+
+After deploying the functions, you'll get this output on the command line:
+Function URL (authgoogleapi): https://us-central1-telepatriot-bd737.cloudfunctions.net/authgoogleapi
+Function URL (oauthcallback): https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback
+Function URL (testsheetwrite): https://us-central1-telepatriot-bd737.cloudfunctions.net/testsheetwrite
+
+Point your browser to the first url to call the authgoogleapi function (which is further down in this script):
+https://us-central1-telepatriot-bd737.cloudfunctions.net/authgoogleapi
+or on telepatriot-dev...
+https://us-central1-telepatriot-dev.cloudfunctions.net/authgoogleapi
+
+This URL asks google for credentials that are needed to read and write to google sheets
+
+After you have authorized the telepatriot app, you will then point your browser to:
+https://us-central1-telepatriot-bd737.cloudfunctions.net/testsheetwrite
+
+The /testsheetwrite url is mapped to the testsheetwrite function (also below).  testsheetwrite writes to the
+database at a hard-coded location.  The spreadsheet id and mission id are HARDCODED in the
+database path in testsheetwrite.  So obviously we won't be writing to this path under
+normal operation.
+
+When you paste https://us-central1-telepatriot-bd737.cloudfunctions.net/testsheetwrite
+into the browser, google will respond with something like this:
+"Wrote 31, 24, 28 to DB, trigger should now update Sheet."
+
+So go look at the google spreadsheet to confirm.
+
+This whole file just demonstrates how to write to google sheets.  It's not production-ready code
+***************************/
+
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 //const googleAuth = require('google-auth-library');

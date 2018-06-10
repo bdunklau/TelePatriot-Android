@@ -9,6 +9,11 @@ const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const date = require('./dateformat')
+const google = require('googleapis'); // import-sheet.js also uses this
+const fs = require('fs');
+const xml2js = require('xml-js');
+
+const bucket = admin.storage().bucket()
 
 var style = "font-family:Arial;font-size:12px"
 var tableheading = style + ';background-color:#ededed'
@@ -20,206 +25,497 @@ const db = admin.database();
 
 exports.video = functions.https.onRequest((req, res) => {
 
-    return db.ref(`administration/video_parameters`).once('value').then(snapshot => {
+    debugs = []
 
-        var formParams = {
-
-                        }
-
-        var pageData = {formParams: formParams, response: snapshot.val().message}
-
-        return pageData
+    return getFirebaseStorageItems().then(items => {
+        return res.status(200).send(renderPage({items:items}))
     })
-    .then(pageData => {
-        return res.status(200).send(renderPage(pageData))
-    })
+
 
 })
 
+var getFirebaseStorageItems = function() {
+    return db.ref(`firebase_storage`).once('value').then(snapshot => {
+        var items = []
+        snapshot.forEach(function(child) {
+            items.push(child.val())
+        })
+        return items
+    })
+}
 
-var renderPage = function(pageData) {
-
-    var formParams = pageData.formParams
-
-    var html = '<html><head></head>'
-    html += '<body>'
-    html += '<form method="post" action="send">'
-
-    html += '<table width="100%">'
-    html += '<tr><td valign="top">'+ emailForm(formParams)+ '</td>  <td valign="top">'+ responseSection(pageData.response)+ '</td></tr>'
-    html += '</table>'
-
-    html += '</form>'
+var renderPage = function(stuff) {
+    var html = ''
+    html += '<html><head></head><body>'
+    html += renderDebug(stuff.debug)
+    html += renderItems(stuff.items)
     html += '</body></html>'
     return html
 }
 
-var responseSection = function(response) {
-    var html = ''
-    html += response
-    return html
-}
-
-var emailForm = function(parms) {
-    var html = ''
-
-    html += '<table>'
-    html += '<tr>'
-    html += '<td>'
-    html += '<h2>Videos</h2>'
-    html += '</td>'
-    html += '</tr>'
-
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="text" size="75" name="host" value="'+parms.host+'" placeholder="host">'
-    html += '</td>'
-    html += '</tr>'
-
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="text" size="75" name="port" value="'+parms.port+'" placeholder="port">'
-    html += '</td>'
-    html += '</tr>'
-
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="text" size="75" name="user" value="'+parms.user+'" placeholder="email user">'
-    html += '</td>'
-    html += '</tr>'
-
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="text" size="75" name="to" value="'+parms.to+'" placeholder="email address">'
-    html += '</td>'
-    html += '</tr>'
-
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="text" size="75" name="from" value="'+parms.from+'" placeholder="email address">'
-    html += '</td>'
-    html += '</tr>'
-
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="text" size="75" name="cc" value="'+parms.cc+'" placeholder="cc email address">'
-    html += '</td>'
-    html += '</tr>'
-
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="text" size="75" name="subject" value="'+parms.subject+'" placeholder="Subject">'
-    html += '</td>'
-    html += '</tr>'
-
-    html += '<tr>'
-    html += '<td>'
-    html += '<input type="submit" value="preview" formaction="/renderEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="sendEmail">'
-    html += '</td>'
-    html += '</tr>'
-
+var renderDebug = function(debug) {
+    if(!debug)
+        return ''
+    var html = '<table border="1" cellspacing="0" cellpadding="2">'
+    _.each(debug, function(dbg) {
+        html += '<tr><td>'+dbg.name+'</td><td>'+dbg.value+'</td></tr>'
+    })
     html += '</table>'
     return html
 }
 
+var renderItems = function(items) {
+    if(!items || items.length == 0)
+        return ''
 
-exports.renderEmail = functions.https.onRequest((req, res) => {
-    var message = req.body.message
+    var html = '<table border="1" cellspacing="0" cellpadding="2">'
+    var keys = Object.keys(items[0])
+    var colspan = 2
+    html += '<tr><th colspan="'+colspan+'">Items in FirebaseStorage</th></tr>'
 
+    _.each(items, function(item) {
+        html += '<tr>'
+        html +=     '<td><form method="post">'
+        html +=         '<input type="text" size="45" placeholder="state abbrev" value="tx" name="state_abbrev"><p/>'
+        html +=         '<input type="text" size="45" placeholder="state playlist" value="Convention of States Texas" name="state_playlist"><p/>'
+        html +=         '<input type="text" size="45" placeholder="district playlist" value="Convention of States Texas - HD 33 - Justin Holland" name="district_playlist"><p/>'
+        html +=         '<input type="hidden" value="'+item.md5Hash+'" name="md5Hash"/>'
+        html +=         '<input type="text" size="45" placeholder="video title" value="Video Petition to Rep Justin Holland" name="youtube_video_title"><p/>'
+        html +=         '<textarea placeholder="YouTube video description" rows="10" cols="45" name="youtube_video_description">This is a video to TX Rep Justin Holland (HD 33) thanking him for supporting the Convention of States resolution in May 2017.'
+        html +=         '\n\nSign the Convention of States petition at https://www.conventionofstates.com'
+        html +=         '\n\n[MD5]'+item["md5Hash"]+'[MD5]'
+        html +=         '</textarea><p/>'
+        html +=         '<input type="submit" value="unset" formaction="/unsetFirebaseStorageRecord" /> &nbsp;&nbsp;'
+        html +=         '<input type="submit" value="set" formaction="/setFirebaseStorageRecord" /> &nbsp;&nbsp;'
+        html +=         '<input type="submit" value="publish" formaction="/markForPublishVideo" /> &nbsp;&nbsp;'
+        html +=     '</form></td>'
+        html +=     '<td>'
+        html +=         '<table border="0" cellspacing="1" cellpadding="0">'
+        _.each(keys, function(key) {
+            html += '<tr><td>'+key+'</td><td>'+item[key]+'</td></tr>'
+        })
+        html +=         '</table>'
+        html +=     '</td>'
+        html += '</tr>'
+    })
+    html += '</table>'
+    return html
+}
 
-    var formParams = {host: req.body.host,
-                    port: req.body.port,
-                    user: req.body.user,
-                    //pass: req.body.pass,
-                    to: req.body.to,
-                    from: req.body.from,
-                    cc: req.body.cc,
-                    subject: req.body.subject,
-                    message: req.body.message}
+exports.setFirebaseStorageRecord = functions.https.onRequest((req, res) => {
+    var updates = {}
+    updates[`temp`] = null  // would be better to figure out where these records are coming from
+    updates[`templog`] = null
+    updates[`templog2`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/state_abbrev`] = req.body.state_abbrev
+    updates[`firebase_storage/${req.body.md5Hash}/state_playlist`] = req.body.state_playlist
+    updates[`firebase_storage/${req.body.md5Hash}/district_playlist`] = req.body.district_playlist
+    updates[`firebase_storage/${req.body.md5Hash}/youtube_video_title`] = req.body.youtube_video_title
+    updates[`firebase_storage/${req.body.md5Hash}/youtube_video_description`] = req.body.youtube_video_description
 
-    var pageData = {formParams: formParams, response: message}
-
-    return res.status(200).send(renderPage(pageData))
+    // multi-path update
+    return db.ref(`/`).update(updates).then(() => {
+        return getFirebaseStorageItems().then(items => {
+            return res.status(200).send(renderPage({items:items}))
+        })
+    })
 })
 
+exports.unsetFirebaseStorageRecord = functions.https.onRequest((req, res) => {
+    var updates = {}
+    updates[`temp`] = null  // would be better to figure out where these records are coming from
+    updates[`templog`] = null
+    updates[`templog2`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/state_abbrev`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/state_playlist`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/publish`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/progress`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/district_playlist`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/youtube_video_title`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/youtube_video_description`] = null
 
-
-exports.saveEmail = functions.https.onRequest((req, res) => {
-
-    var formParams = {host: req.body.host,
-                    port: req.body.port,
-                    user: req.body.user,
-                    //pass: req.body.pass,
-                    to: req.body.to,
-                    from: req.body.from,
-                    cc: req.body.cc,
-                    subject: req.body.subject,
-                    message: req.body.message}
-
-    // NOTICE the update() call instead of set() - update() is how you do multi-path updates
-    // You won't replace every other node under welcome_email if you use update()
-    return db.ref(`administration/welcome_email`).update(formParams).then(() => {
-
-        var pageData = {formParams: formParams, response: 'OK: email stuff saved'}
-        return res.status(200).send(renderPage(pageData))
+    // multi-path update
+    return db.ref(`/`).update(updates).then(() => {
+        return getFirebaseStorageItems().then(items => {
+            return res.status(200).send(renderPage({items:items}))
+        })
     })
 })
 
 
+// We set /firebase_storage/{md5Hash}/publish = publish to cause the database trigger to begin
+// the upload/insert process to YouTube
+exports.markForPublishVideo = functions.https.onRequest((req, res) => {
+    var updates = {}
+    // guarantees that uploadToYouTube4 is re-triggered, saves me from having to manually jack with the db
+    updates[`firebase_storage/${req.body.md5Hash}/publish`] = 'republish' // value doesn't actually have to be republish, just anything besides publish
+    // multi-path update
+    return db.ref(`/`).update(updates).then(() => {
+        db.ref(`firebase_storage/${req.body.md5Hash}/publish`).set('publish').then(() => {
+            return getFirebaseStorageItems().then(items => {
+                return res.status(200).send(renderPage({items:items}))
+            })
+        })
+    })
+})
 
-exports.sendEmail = functions.https.onRequest((req, res) => {
+// Trigger - this gets called whenever a file is added to firebase storage
+exports.newStorageItem = functions.storage.object().onChange(event => {
+    if(!event.data) {
+        return false
+    }
+    const object = event.data
+    if(!object) {
+        console.log('No event.data object - the file was probably just deleted')
+        return false
+    }
+    // use object.md5Hash as the primary key node value so that we don't create multiple nodes
+    // for a single object
+    return db.ref(`firebase_storage/${object.md5Hash}`).set(object)
+})
 
-    var formParams = {host: req.body.host,
-                    port: req.body.port,
-                    user: req.body.user,
-                    //pass: req.body.pass,
-                    to: req.body.to,
-                    from: req.body.from,
-                    cc: req.body.cc,
-                    subject: req.body.subject,
-                    message: req.body.message}
+// This trigger is designed to fire when /firebase_storage/{md5Hash}/publish is set to 'publish'
+// bucket:  https://cloud.google.com/nodejs/docs/reference/storage/1.6.x/Bucket
+exports.uploadToYouTube4 = functions.database.ref(`firebase_storage/{md5Hash}`).onWrite(event => {
+
+        debugs = []
+        dbg('uploadToYouTube4', 'begin')
+
+        var vdescr = event.data.val().youtube_video_description
+        var vtitle = event.data.val().youtube_video_title
+
+        // Lots of conditions under which we DON'T want this trigger to fire...
+        if( !event.data.val()                                   // if the firebase_storage/{md5Hash} record was deleted
+            || event.data.val().resourceState == 'not_exists'   // if the video was deleted from yt
+            || !event.data.val().publish                        // if there is no "publish" attribute
+            || event.data.val().publish != 'publish'            // or if the attribute doesn't equal "publish"
+            || event.data.val().progress                        // if we are only here because we're updating the "progress" number
+            || !vtitle                                          // if there is no video title
+            || !vdescr                                          // if there is no video description
+            || vdescr.indexOf(event.params.md5Hash) == -1       // or if the descr doesn't have the md5Hash in it
+         )
+            return false
 
 
-    return db.ref(`administration/welcome_email/pass`).once('value').then(snapshot => {
-        var pass = snapshot.val()
+        var storageLocation = event.data.val().name
+        var fileSize = event.data.val().size
 
-        var smtpTransport = nodemailer.createTransport({
-          host: formParams.host,
-                  port: formParams.port,
-                  secure: true, // true for 465, false for other ports
-          auth: {
-            user: formParams.user, pass: pass
-          }
+        // uploading video to youtube...
+        // try this also:  https://github.com/google/google-api-nodejs-client/issues/1014
+        return new Promise((resolve, reject) => {
+            dbg('start', date.asMillis())
+            dbg('storageLocation:', storageLocation)
+
+            // this block here is just "informational" - it serves no real purpose
+            bucket.getFiles(function(err, files) {
+                if (err) {
+                    dbg('bucket.getFiles(): err', err)
+                }
+                else {
+                    _.each(files, function(file) { // CRASH! Trying to debug the file object causes a crash and
+                                                    // actually prevents the video from being uploaded to YouTube - oops
+                        dbg('file', 'is this what is causing the problem?: file')
+                    })
+                }
+            })
+
+            var bucketFile = bucket.file(storageLocation)
+
+            var requestData = {  'params': {'part': 'snippet,status'},
+                                 'properties':
+                                    {'snippet.categoryId': '22',
+                                     'snippet.defaultLanguage': '',
+                                     'snippet.description': vdescr,
+                                     'snippet.tags[]': '',
+                                     'snippet.title': vtitle,
+                                     'status.embeddable': '',
+                                     'status.license': '',
+                                     'status.privacyStatus': 'private',
+                                     'status.publicStatsViewable': ''
+                                    },
+                                 'mediaFilename': 'Truman-on-the-trampoline.mp4'}
+
+            getAuthorizedClient().then(auth => {
+
+                try {
+                    //https://developers.google.com/youtube/v3/docs/videos/insert#usage
+                    var parameters = removeEmptyParameters(requestData['params']);
+                    dbg('uploadToYouTube()', 'removeEmptyParameters')
+                    parameters['auth'] = auth;
+                    dbg('auth', auth)
+                    parameters['media'] = { body: bucketFile.createReadStream() };
+                    dbg('uploadToYouTube()', 'bucketFile.createReadStream()')
+                    parameters['notifySubscribers'] = false;
+                    parameters['resource'] = createResource(requestData['properties']);
+                    dbg('uploadToYouTube()', 'createResource(requestData[\'properties\'])')
+                    var stuff = {parameters: parameters, size: event.data.val().size}
+
+                    var parameters = stuff.parameters
+                    var service = google.youtube('v3')
+                    dbgKeys('parameters', parameters)
+
+                    var req2 = service.videos.insert(parameters, function (error, data) {
+                        dbg('insert: error', error)
+                        dbg('insert: data', data)
+                        console.log('error: ', error, '  data: ', data)
+                        dbg('service.videos.insert callback', 'data: '+data)
+                        dbg('service.videos.insert callback', 'error: '+error)
+
+                        //process.exit()
+                        //console.log(util.inspect(data, false, null));
+                        //console.log(error);
+                    });
+
+                    return resolve()
+                }
+                catch(err2) {
+                    dbg('err2', err2)
+                }
+
+            })
+            .catch(err => {
+                dbg('exception', err)
+                return reject()
+            })
+
         })
 
-        // setup e-mail data with unicode symbols
-        var mailOptions = {
-            from: formParams.from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
-            to: formParams.to, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
-            cc: formParams.cc,
-            subject: formParams.subject, // Subject line
-            text: "plain text: "+formParams.message, // plaintext body
-            html: formParams.message // html body
-        }
-
-        // send mail with defined transport object
-        smtpTransport.sendMail(mailOptions, function(error, response){
-            if(error){
-                console.log(error);
-            }else{
-                console.log("Message sent: " + response.message);
-            }
-
-            // if you don't want to use this transport object anymore, uncomment following line
-            smtpTransport.close(); // shut down the connection pool, no more messages
-
-            var pageData = {formParams: formParams, response: 'OK: email sent<P/>May take up to 5 mins for email to be received'}
-            return res.status(200).send(renderPage(pageData))
-        });
-    })
-
-
-
 })
 
 
+
+/**********************************
+Video workflow...
+video is dropped in to firebase storage
+video is uploaded to yt - include md5Hash in the video description
+yt sends us back notification of upload
+notification contains video id but that doesn't help us match up the notification with a record in /firebase_storage
+Notification triggers an api call to yt so we can get the video description
+extract the md5Hash from the video description
+Now we can associate a record from /firebase_storage with a notification in /youtube_notifications
+clean up:  update the video descr on yt with md5Hash removed (because don't need it anymore)
+***********************************/
+
+/**********************************
+Get YouTube Video Description...
+
+https://www.googleapis.com/youtube/v3/videos?part=snippet&id=k7OGVYZL-i4&fields=items/snippet/title,items/snippet/description&key=AIzaSyC2hOku8c1EiFdnRKDVtwzN3H8VfiVUl2w
+where:
+    id=k7OGVYZL-i4 is the YouTube video id
+    key=AIzaSyC2hOku8c1EiFdnRKDVtwzN3H8VfiVUl2w  is an API key
+        This key happens to be "Browser key" from the "API Keys"
+        section of this page: https://console.cloud.google.com/apis/credentials?project=telepatriot-dev&folder&organizationId
+
+Response looks like this...
+
+{
+ "items": [
+  {
+   "snippet": {
+    "title": "Changed",
+    "description": "Oooooooooooo"
+   }
+  }
+ ]
+}
+***********************************/
+
+/**********************************
+Below, when I say "has this structure", I don't mean this is ALL that's returned.
+I am just pointing out the attributes that I care about.  There are some I DON'T care about
+
+When posting a video, the response from YouTube has this structure...
+feed/entry/author/name/_text = TelePatriot-Dev
+feed/entry/author/uri/_text = https://www.youtube.com/channel/UCiC2Q-noJ-2uxQeDKC6IHKg
+feed/entry/link/_attributes/href = https://www.youtube.com/watch?v=k7OGVYZL-i4
+feed/entry/title/_text = (the title of the video)
+feed/entry/yt:channelId/_text = UCiC2Q-noJ-2uxQeDKC6IHKg
+feed/entry/yt:videoId/_text = k7OGVYZL-i4
+
+
+When deleting a video, the response from YouTube has this structure...
+feed/at:deleted-entry/at:by/name/_text = TelePatriot-Dev
+feed/at:deleted-entry/at:by/uri/_text = https://www.youtube.com/channel/UCiC2Q-noJ-2uxQeDKC6IHKg
+feed/at:deleted-entry/link/_attributes/href = https://www.youtube.com/watch?v=_u0SEvSCZZI
+
+THE SUCKY PART is that the video description isn't returned in this notification from YouTube
+We have to create a trigger that listens for writes to this node and make ANOTHER api call to
+get the video's description - geez
+***********************************/
+var YOUTUBE_NOTIFICATIONS = 'youtube_notifications'
+exports.youtubewebhook1 = functions.https.onRequest((req, res) => {
+    var youtube_notifications = YOUTUBE_NOTIFICATIONS
+    var notf = {}
+    if(req.rawBody) {
+        notf['youtube_notification'] = xml2js.xml2js(req.rawBody, {compact: true})
+    }
+    var hub_challenge = "better find req parm!!!"
+    if(req.query['hub.challenge']) {
+        hub_challenge = req.query['hub.challenge']
+    }
+    notf['date'] = date.asCentralTime()
+    notf['date_ms'] = date.asMillis()
+    return db.ref(youtube_notifications).push().set(notf).then(() => {
+        return res.status(200).send(hub_challenge)
+    })
+})
+
+
+// Triggered when YouTube calls us back and writes to /youtube_notifications
+// When YouTube calls us back, we have to turn around and make an api call here to get the
+// video's description - hassle
+exports.getAdditionalYouTubeInfo = functions.database.ref(YOUTUBE_NOTIFICATIONS+'/{pkey}/youtube_notification').onWrite(event => {
+    if(!event.data.val())
+        return false // ignore deletes
+    if(event.data.val().feed['at:deleted-entry'])
+        return false // ignore if YouTube calls us back to say the video has been deleted
+    var videoId = event.data.val().feed['entry']['yt:videoId']['_text']
+    if(!videoId) {
+        console.log('videoId: ', videoId)
+        console.log('event.data.val(): ', event.data.val())
+        return false // have to have video id also
+    }
+
+    return getAuthorizedClient().then(auth => {
+        var requestData = { 'params': {'part': 'snippet,contentDetails', 'id':videoId},
+                            'properties':
+                                {'snippet.categoryId': '22',
+                                 'snippet.defaultLanguage': '',
+                                 'snippet.description': 'Description of uploaded video.',
+                                 'snippet.tags[]': '',
+                                 'snippet.title': 'Test video upload',
+                                 'status.embeddable': '',
+                                 'status.license': '',
+                                 'status.privacyStatus': 'private',
+                                 'status.publicStatsViewable': ''
+                                },
+                             'mediaFilename': 'Truman-on-the-trampoline.mp4'
+                            }
+        db.ref(`templog2/auth`).set(auth)
+
+        var parameters = removeEmptyParameters(requestData['params']);
+        parameters['auth'] = auth
+
+        // good ref:  https://developers.google.com/youtube/v3/docs/videos/list
+        var service = google.youtube('v3')
+        service.videos.list(parameters, function (error, data) {
+            db.ref(`templog2/error`).set(error)
+            db.ref(`templog2/data`).set(data)
+        });
+    })
+})
+
+
+var debugs = []
+var dbg = function(name, value) {
+    if(!value || value === undefined) {
+        value = 'value is undefined'
+    }
+    debugs.push({'name': name, 'value': value})
+    db.ref(`templog2`).push().set({'name': name, 'value': value})
+}
+
+var dbgKeys = function(descr, obj) {
+    dbg('Object', descr)
+    var keys = Object.getOwnPropertyNames(obj)//.keys(obj)
+    _.each(keys, function(key) {
+        dbg(descr+' props', key)
+    })
+}
+
+/**
+ * Remove parameters that do not have values.
+ *
+ * @param {Object} params A list of key-value pairs representing request
+ *                        parameters and their values.
+ * @return {Object} The params object minus parameters with no values set.
+ */
+function removeEmptyParameters(params) {
+  for (var p in params) {
+    if (!params[p] || params[p] == 'undefined') {
+      delete params[p];
+    }
+  }
+  return params;
+}
+
+/**
+ * Create a JSON object, representing an API resource, from a list of
+ * properties and their values.
+ *
+ * @param {Object} properties A list of key-value pairs representing resource
+ *                            properties and their values.
+ * @return {Object} A JSON object. The function nests properties based on
+ *                  periods (.) in property names.
+ */
+function createResource(properties) {
+  var resource = {};
+  var normalizedProps = properties;
+  for (var p in properties) {
+    var value = properties[p];
+    if (p && p.substr(-2, 2) == '[]') {
+      var adjustedName = p.replace('[]', '');
+      if (value) {
+        normalizedProps[adjustedName] = value.split(',');
+      }
+      delete normalizedProps[p];
+    }
+  }
+  for (var p in normalizedProps) {
+    // Leave properties that don't have values out of inserted resource.
+    if (normalizedProps.hasOwnProperty(p) && normalizedProps[p]) {
+      var propArray = p.split('.');
+      var ref = resource;
+      for (var pa = 0; pa < propArray.length; pa++) {
+        var key = propArray[pa];
+        if (pa == propArray.length - 1) {
+          ref[key] = normalizedProps[p];
+        } else {
+          ref = ref[key] = ref[key] || {};
+        }
+      }
+    };
+  }
+  return resource;
+}
+
+
+const CONFIG_CLIENT_ID = functions.config().googleapi.client_id;
+const CONFIG_CLIENT_SECRET = functions.config().googleapi.client_secret;
+const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //`https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
+
+// setup for authGoogleAPI
+const SCOPES = ['https://www.googleapis.com/auth/youtube.upload']; // see https://developers.google.com/youtube/v3/docs/videos/insert#usage
+var OAuth2 = google.auth.OAuth2;
+var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
+                                FUNCTIONS_REDIRECT);
+
+// OAuth token cached locally.
+let oauthTokens = null;
+
+// setup for OauthCallback
+const DB_TOKEN_PATH = '/api_tokens';
+
+// checks if oauthTokens have been loaded into memory, and if not, retrieves them
+function getAuthorizedClient() {
+  dbg('oauthTokens', oauthTokens)
+  /* commented this out because was getting "Promise.success is not a function"
+  if (oauthTokens) {
+    return Promise.success(functionsOauthClient);
+  }
+  */
+  return db.ref(DB_TOKEN_PATH).once('value').then(snapshot => {
+    oauthTokens = snapshot.val();
+    functionsOauthClient.credentials = oauthTokens;
+    return functionsOauthClient;
+  })
+}
+
+
+// uploading:     https://firebase.google.com/docs/storage/web/upload-files
+// downloading:   https://firebase.google.com/docs/storage/web/download-files
+
+// =======================================================================
+
+// ref:  https://developers.google.com/youtube/v3/docs/videos/insert#usage
+// Sample nodejs code for videos.insert

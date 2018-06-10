@@ -158,10 +158,39 @@ exports.tryLoadingOfficialsAgain = officialMapper.tryLoadingOfficialsAgain
 
 const testing = require('./test/testing')
 exports.testApi = testing.testApi
+exports.testPing = testing.testPing
 
 const vidyo = require('./vidyo')
 exports.generateVidyoToken = vidyo.generateVidyoToken
 
 const videoManager = require('./video')
 exports.video = videoManager.video
+exports.newStorageItem = videoManager.newStorageItem
+exports.uploadToYouTube4 = videoManager.uploadToYouTube4
+exports.setFirebaseStorageRecord = videoManager.setFirebaseStorageRecord
+exports.unsetFirebaseStorageRecord = videoManager.unsetFirebaseStorageRecord
+exports.markForPublishVideo = videoManager.markForPublishVideo
+exports.publishVideo = videoManager.publishVideo
+exports.youtubewebhook1 = videoManager.youtubewebhook1
+exports.getAdditionalYouTubeInfo = videoManager.getAdditionalYouTubeInfo
+
+const googleCloud = require('./google-cloud')
+exports.cloud = googleCloud.cloud
+exports.listImages = googleCloud.listImages
+exports.sendToVirtualMachines = googleCloud.sendToVirtualMachines
+exports.dockers = googleCloud.dockers
+exports.startDocker = googleCloud.startDocker
+exports.stopDocker = googleCloud.stopDocker
+exports.stopAndRemoveDocker = googleCloud.stopAndRemoveDocker
+exports.createAnotherDocker = googleCloud.createAnotherDocker
+
+
+const googleAuth = require('./google-auth')
+exports.getAuthorizedClient = googleAuth.getAuthorizedClient
+
+const debug = require('./debug')
+exports.dbg = debug.dbg
+exports.dbgKeys = debug.dbgKeys
+exports.dbgKeyValues = debug.dbgKeyValues
+
 
