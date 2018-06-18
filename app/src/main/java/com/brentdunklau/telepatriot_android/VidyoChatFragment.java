@@ -631,7 +631,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
     private void _mVidyoConnector() {
         mVidyoConnector = new Connector(mVideoFrame,
-                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
+                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Tiles,
                 15,
                 "info@VidyoClient info@VidyoConnector warning",
                 "",
@@ -654,7 +654,9 @@ public class VidyoChatFragment extends BaseFragment implements
                         _mVidyoConnector();
 
                         // Set the client version in the toolbar
-                        mClientVersion.setText("VidyoClient-AndroidSDK " + mVidyoConnector.getVersion());
+                        String version =  mVidyoConnector.getVersion();
+                        System.out.println("startVidyoConnector():  mVidyoConnector.getVersion() = "+mVidyoConnector.getVersion());
+                        mClientVersion.setText("VidyoClient-AndroidSDK " + version);
 
                         // Set initial position
                         refreshUI();
@@ -716,8 +718,9 @@ public class VidyoChatFragment extends BaseFragment implements
     // Refresh the UI
     private void refreshUI() {
         // Refresh the rendering of the video
-        mVidyoConnector.assignViewToLocalCamera(mVideoFrame, mLastSelectedCamera, true, false);
-        mVidyoConnector.showViewAt(mVideoFrame, 0, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
+        System.out.println("refreshUI:  mLastSelectedCamera = "+mLastSelectedCamera);
+        mVidyoConnector.assignViewToLocalCamera(mVideoFrame, mLastSelectedCamera, false, false);
+        mVidyoConnector.showViewAt(mVideoFrame, 100, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
     }
      /**************/
 
@@ -917,6 +920,7 @@ public class VidyoChatFragment extends BaseFragment implements
     // Handle local camera events.
     @Override
     public void onLocalCameraAdded(LocalCamera localCamera) {
+        mLastSelectedCamera = localCamera;
     }
 
     @Override
