@@ -697,7 +697,7 @@ public class VidyoChatFragment extends BaseFragment implements
                     // If microphonePrivacy is configured then mute the microphone
                     mMicrophonePrivacyButton.setChecked(false); // reset state
                     if (mMicrophonePrivacy) {
-                        mMicrophonePrivacyButton.performClick();
+                        mMicrophonePrivacyButton.performClick(); 
                     }
 
                     // Set experimental options if any exist
