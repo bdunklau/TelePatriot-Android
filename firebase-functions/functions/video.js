@@ -283,9 +283,8 @@ exports.uploadToYouTube4 = functions.database.ref(`firebase_storage/{md5Hash}`).
 })
 
 
-
 /**********************************
-Video workflow...
+Video workflow... NOT SURE HOW MUCH OF THIS STILL APPLIES 6/11/18
 video is dropped in to firebase storage
 video is uploaded to yt - include md5Hash in the video description
 yt sends us back notification of upload

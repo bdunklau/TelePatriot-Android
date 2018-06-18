@@ -49,6 +49,10 @@
                 android:id="@+id/vidyo_chat"
                 android:icon="@drawable/ic_menu_slideshow"
                 android:title="Video Chat"/>
+            <item
+                android:id="@+id/video_invitations"
+                android:icon="@drawable/ic_menu_slideshow"
+                android:title="Video Invitations"/>
         </menu>
     </item>
 

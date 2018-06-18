@@ -27,6 +27,7 @@ import android.widget.Toast;
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -55,9 +56,8 @@ public class MainActivity extends AppCompatActivity
     TextView text_user_email;
     ImageView image_profile_pic;
     String uid;
-    DatabaseReference userDatabase;
-    String missionDescription;
-    String missionType;
+    //String missionDescription;
+    //String missionType;
     private ArrayList<MissionObject> mMissionArray = new ArrayList<>();
     private int missionKey;
 
@@ -154,41 +154,8 @@ public class MainActivity extends AppCompatActivity
         image_profile_pic.setOnClickListener(beginEditingMyAccount());
 
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        userDatabase = FirebaseDatabase.getInstance().getReference();
 
-
-        userDatabase.child("video").child("types").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                missionDescription = dataSnapshot.child("video_mission_description").getValue().toString().trim();
-                missionType = dataSnapshot.child("type").getValue().toString().trim();
-                missionKey = Integer.parseInt(dataSnapshot.getKey());
-                MissionObject mission = new MissionObject(missionKey, missionType, missionDescription);
-
-                mMissionArray.add(mission);
-
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        VideoType.init();
     }
 
     private View.OnClickListener beginEditingMyAccount() {
@@ -300,11 +267,10 @@ public class MainActivity extends AppCompatActivity
             Fragment fragment = new AdminFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         } else if (id == R.id.vidyo_chat){
-            Bundle bundle = new Bundle();
-            bundle.putSerializable("missionArray", mMissionArray );
-            bundle.putString("uid",uid);
             Fragment fragment = new VidyoChatFragment();
-            fragment.setArguments(bundle);
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        } else if (id == R.id.video_invitations) {
+            Fragment fragment = new VideoInvitationsFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
         /***** take out till it's you now the petition link is correct

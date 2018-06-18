@@ -36,6 +36,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private boolean isAdmin, isDirector, isVolunteer;
     private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
+    private String current_video_node_key;
 
     private Team currentTeam;
     //private List<Team> teams = new ArrayList<Team>();
@@ -155,9 +156,7 @@ public class User implements FirebaseAuth.AuthStateListener {
                 // team nodes are keyed by the team name and they also have a "team_name" node
                 // under the key that is also the name of the team.  The team_name node is so
                 // that we can take advantage of the deserialization function built in to firebase
-                database.getReference("temp").push().setValue("about to create Team");
                 Team team = dataSnapshot.getValue(Team.class);
-                database.getReference("temp").push().setValue("ok: created Team");
                 //setCurrentTeam(team);
                 User.this.currentTeam = team;
                 fireTeamSelected(User.this.currentTeam);
@@ -239,6 +238,8 @@ public class User implements FirebaseAuth.AuthStateListener {
         String team = User.getInstance().getCurrentTeamName();
         FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items/"+missionItemId).removeValue();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions/"+missionId+"/mission_items/"+missionItemId);
+
+        // TODO this should be a multi-path update
         ref.child("accomplished").setValue("complete");
         ref.child("active").setValue(false);
         ref.child("active_and_accomplished").setValue("false_complete");
@@ -415,6 +416,19 @@ public class User implements FirebaseAuth.AuthStateListener {
         map.put(currentTeam.getTeam_name(), currentTeam);
         userRef.child("current_team").setValue(map);
         fireTeamSelected(currentTeam);
+    }
+
+    public String getCurrent_video_node_key() {
+        return current_video_node_key;
+    }
+
+    public void setCurrent_video_node_key(final String current_video_node_key) {
+        database.getReference("/users/"+getUid()+"/current_video_node_key").setValue(current_video_node_key).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                User.this.current_video_node_key = current_video_node_key;
+            }
+        });
     }
 
     public void addAccountStatusEventListener(AccountStatusEvent.Listener l) {

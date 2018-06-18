@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.firebase.ui.auth.ui.ProgressDialogHolder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
@@ -141,11 +142,12 @@ public class VidyoChatFragment extends BaseFragment implements
     private DatabaseReference userDatabase;
     private URL url = null;
     private HttpURLConnection connection;
-    private ArrayList<MissionObject> mMission;
     private String mTimeMS;
     private String mTime;
     private String uid;
-    private int missionKey;
+    //private int missionKey;
+    private Integer videoTypeKey;
+    private String room; // the initiator's user id
     private String missionDescription;
     private String nodeKey;
     private TextView vidyoChatDescriptionText;
@@ -165,7 +167,6 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView mYouTubeDescription;
     private ProgressDialog pd;
     private String reasons;
-    private String nameString1;
     /*
      *  Operating System Events
      */
@@ -185,13 +186,18 @@ public class VidyoChatFragment extends BaseFragment implements
             getToken();
         }
 
+        // We need to know if we are coming to this screen from a video invitation or if the user
+        // is initiating a video chat
+        // How would we tell?
+        // Option 1: Users have a "currentVideoNodeKey" attribute.  If we make sure this attribute is
+        //          set before the user gets here, then it won't matter if they are initiator or guest
 
-        mMission = (ArrayList<MissionObject>) getArguments().getSerializable("missionArray");
+        List<VideoType> videoTypes = VideoType.getTypes();
         //TODO make dynamic mission keys
-        MissionObject mission = mMission.get(0);
-        missionKey = mission.getMissionKey();
-        missionDescription = mission.getVideo_mission_description();
-        uid =  getArguments().getString("uid");
+        VideoType videoType = videoTypes.get(0); // TODO how are we going to choose different video types?
+        videoTypeKey = videoType.getKey();
+        missionDescription = videoType.getVideo_mission_description();
+        uid =  User.getInstance().getUid();
         // Initialize the member variables
         mControlsLayout = myView.findViewById(R.id.controls_layout);
         //mToolbarLayout = (LinearLayout) findViewById(R.id.toolbarLayout);
@@ -204,14 +210,14 @@ public class VidyoChatFragment extends BaseFragment implements
         mDisplayName.setText(User.getInstance().getName());
         mToken = myView.findViewById(R.id.token);
         mResourceId = myView.findViewById(R.id.resource);
-        mResourceId.setText("demoRoom");
+        mResourceId.setText(getRoom());
         mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
         mClientVersion = myView.findViewById(R.id.clientVersion);
         mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
         mSelf = (MainActivity) getActivity();
         mToken.setText(jsonTokenData);
         vidyoChatDescriptionText = myView.findViewById(R.id.videoChatDescriptionText);
-        vidyoChatDescriptionText.setText(mission.getVideo_mission_description());
+        vidyoChatDescriptionText.setText(videoType.getVideo_mission_description());
         mRepName = myView.findViewById(R.id.videoChatRepInfo);
         mRepFB = myView.findViewById(R.id.videoChatRepFBInfo);
         mRepTwitter = myView.findViewById(R.id.videoChatRepTwitterInfo);
@@ -272,6 +278,12 @@ public class VidyoChatFragment extends BaseFragment implements
         button.setOnClickListener(this);
         mRecord = myView.findViewById(R.id.recordButton);
 
+
+        // Set the application's UI context to this activity.
+        ConnectorPkg.setApplicationUIContext(getActivity());
+
+        // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
+        mVidyoClientInitialized = ConnectorPkg.initialize();
 
 
         mRecord.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -347,12 +359,25 @@ public class VidyoChatFragment extends BaseFragment implements
             }
         });
 
-        // Set the application's UI context to this activity.
-        ConnectorPkg.setApplicationUIContext(getActivity());
+        /*******
+        if(room != null) {
+            mToggleConnectButton.setChecked(true);
+            _mVidyoConnector();
+            toggleConnect();
+        }
+         ********/
 
-        // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
-        mVidyoClientInitialized = ConnectorPkg.initialize();
         return myView;
+    }
+
+    public void setRoom(String room) {
+        this.room = room;
+    }
+
+    public String getRoom() {
+        if(room == null)
+            room = User.getInstance().getUid();
+        return room;
     }
 
     private void getToken() {
@@ -363,15 +388,14 @@ public class VidyoChatFragment extends BaseFragment implements
         HttpURLConnection connection = null;
         BufferedReader reader = null;
 
-        String nameString;
         //TODO make dynamic
 
         try {
-            nameString = User.getInstance().getName();
-            if(nameString.contains(" ")){
-                nameString1 = nameString.replaceAll(" ","_");
+            String tokenThing = User.getInstance().getUid();
+            if(tokenThing.contains("@")){
+                tokenThing = tokenThing.replaceAll("@","_");
             }
-            String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + nameString1;
+            String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + tokenThing;
             URL url = new URL(urlString);
 
             connection = (HttpURLConnection) url.openConnection();
@@ -605,6 +629,15 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
+    private void _mVidyoConnector() {
+        mVidyoConnector = new Connector(mVideoFrame,
+                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
+                15,
+                "info@VidyoClient info@VidyoConnector warning",
+                "",
+                0);
+    }
+
     // Construct Connector and register for event listeners.
     private void startVidyoConnector() {
 
@@ -618,12 +651,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
                     // Construct Connector
                     try {
-                        mVidyoConnector = new Connector(mVideoFrame,
-                                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
-                                15,
-                                "info@VidyoClient info@VidyoConnector warning",
-                                "",
-                                0);
+                        _mVidyoConnector();
 
                         // Set the client version in the toolbar
                         mClientVersion.setText("VidyoClient-AndroidSDK " + mVidyoConnector.getVersion());
@@ -684,11 +712,14 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
+    /****************************/
     // Refresh the UI
     private void refreshUI() {
         // Refresh the rendering of the video
+        mVidyoConnector.assignViewToLocalCamera(mVideoFrame, mLastSelectedCamera, true, false);
         mVidyoConnector.showViewAt(mVideoFrame, 0, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
     }
+     /**************/
 
     // The state of the VidyoConnector connection changed, reconfigure the UI.
     // If connected, dismiss the controls layout
@@ -829,7 +860,7 @@ public class VidyoChatFragment extends BaseFragment implements
                         mHost.getText().toString().trim(),
                         mToken.getText().toString().trim(),
                         mDisplayName.getText().toString().trim(),
-                        mResourceId.getText().toString().trim(),
+                        /*mResourceId.getText().toString().trim()*/"aaa", // room parameter
                         this);
 
                 if (!status) {

@@ -39,6 +39,8 @@ public class UserBean {
     private Double current_latitude;
     private Double current_longitude;
 
+    private String current_video_node_key;
+
     private List<Team> teams;
 
     private Map<String, Object> roles;
@@ -288,6 +290,14 @@ public class UserBean {
         this.current_longitude = current_longitude;
     }
 
+    public String getCurrent_video_node_key() {
+        return current_video_node_key;
+    }
+
+    public void setCurrent_video_node_key(String current_video_node_key) {
+        this.current_video_node_key = current_video_node_key;
+    }
+
     // modeled after TPUser.update() in Swift
     public void update() {
         // ref:  https://firebase.googleblog.com/2015/09/introducing-multi-location-updates-and_86.html
@@ -311,6 +321,7 @@ public class UserBean {
         m.put("has_signed_confidentiality_agreement", has_signed_confidentiality_agreement);
         m.put("has_signed_petition", has_signed_petition);
         m.put("is_banned", is_banned);
+        m.put("current_video_node_key", current_video_node_key);
 
         Map roleMap = new HashMap();
         roleMap.put("Admin", isAdmin ? "true" : null); // will forever regret making these strings instead of booleans
