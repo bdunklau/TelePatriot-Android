@@ -6,8 +6,8 @@
   "description": "Cloud Functions for Firebase",
   "dependencies": {
     "btoa": "^1.2.1",
-    "firebase-admin": "^5.4.2",
-    "firebase-functions": "^0.8.1",
+    "firebase-admin": "^5.10.0",
+    "firebase-functions": "^0.8.2",
     "google-auth-library": "^0.11.0",
     "googleapis": "^22.2.0",
     "jssha": "^2.3.1",
