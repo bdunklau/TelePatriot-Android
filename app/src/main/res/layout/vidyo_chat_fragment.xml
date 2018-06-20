@@ -101,6 +101,8 @@
                 android:textOff=""
                 android:textOn=""/>
 
+            <!-- Took this out because null viewId in mVidyoConnector() keeps the camera from flipping around
+                not sure why yet 6/19/18
             <ToggleButton
                 android:layout_width="35dp"
                 android:layout_height="35dp"
@@ -109,6 +111,7 @@
                 android:layout_marginLeft="10dp"
                 android:textOff=""
                 android:textOn=""/>
+                -->
         </LinearLayout>
     </RelativeLayout>
     <RelativeLayout

@@ -60,6 +60,7 @@ import com.vidyo.VidyoClient.Connector.ConnectorPkg;
 import com.vidyo.VidyoClient.Connector.Connector;
 import com.vidyo.VidyoClient.Device.Device;
 import com.vidyo.VidyoClient.Device.LocalCamera;
+import com.vidyo.VidyoClient.Device.LocalRenderer;
 import com.vidyo.VidyoClient.Endpoint.LogRecord;
 import com.vidyo.VidyoClient.NetworkInterface;
 
@@ -202,7 +203,7 @@ public class VidyoChatFragment extends BaseFragment implements
         mControlsLayout = myView.findViewById(R.id.controls_layout);
         //mToolbarLayout = (LinearLayout) findViewById(R.id.toolbarLayout);
         mVideoFrame = myView.findViewById(R.id.vidyoChatMyScreen);
-        mVideoFrame.Register(this);
+        //mVideoFrame.Register(this);
         //TODO change editText to import data
         mHost = myView.findViewById(R.id.host);
         mHost.setText("prod.vidyo.io");
@@ -273,9 +274,11 @@ public class VidyoChatFragment extends BaseFragment implements
         mMicrophonePrivacyButton.setOnClickListener(this);
         mCameraPrivacyButton = myView.findViewById(R.id.camera_on_button);
         mCameraPrivacyButton.setOnClickListener(this);
+        /*********
         ToggleButton button;
         button = myView.findViewById(R.id.camera_switch);
         button.setOnClickListener(this);
+         *********/
         mRecord = myView.findViewById(R.id.recordButton);
 
 
@@ -299,62 +302,62 @@ public class VidyoChatFragment extends BaseFragment implements
                     StrictMode.setThreadPolicy(policy);
                     //your codes here
 
-                if (isChecked){
+                    if (isChecked){
 
-                    mRecord.setBackgroundResource(R.drawable.recordstop);
+                        mRecord.setBackgroundResource(R.drawable.recordstop);
 
-                    try {
-                        url = new URL("http://35.185.56.20/record/demoRoom/uniquefield");
-                        connection = (HttpURLConnection) url.openConnection();
-                        OutputStream stream= new BufferedOutputStream(connection.getOutputStream());
+                        try {
+                            url = new URL("http://35.185.56.20/record/demoRoom/uniquefield");
+                            connection = (HttpURLConnection) url.openConnection();
+                            OutputStream stream= new BufferedOutputStream(connection.getOutputStream());
 
-                        Toast.makeText(mSelf, "Docker connection", Toast.LENGTH_SHORT).show();
-                    } catch (MalformedURLException e) {
-                        Toast.makeText(mSelf, "Malformed", Toast.LENGTH_SHORT).show();
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        Toast.makeText(mSelf, "IOE", Toast.LENGTH_SHORT).show();
-                        e.printStackTrace();
+                            Toast.makeText(mSelf, "Docker connection", Toast.LENGTH_SHORT).show();
+                        } catch (MalformedURLException e) {
+                            Toast.makeText(mSelf, "Malformed", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            Toast.makeText(mSelf, "IOE", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        }
+
+                        long timeMS = System.currentTimeMillis();
+                        mTimeMS = String.valueOf(timeMS);
+                        Date date = Calendar.getInstance().getTime();
+                        mTime = String.valueOf(date);
+
+
+                        Map<String, String> videoListMap = new HashMap<>();
+                        videoListMap.put("node_create_date", mTime);
+                        videoListMap.put("node_create_date_ms", mTimeMS);
+                        videoListMap.put("video_mission_description", missionDescription);
+
+                        userDatabase = FirebaseDatabase.getInstance().getReference();
+                        DatabaseReference pushed = userDatabase.child("video").child("list").push();
+                        nodeKey = pushed.getKey();
+                        pushed.setValue(videoListMap);
+
+                        String email = User.getInstance().getEmail();
+                        String name = User.getInstance().getName();
+
+                        Map<String, String> participantMap = new HashMap<>();
+
+                        participantMap.put("email", email);
+                        participantMap.put("name", name);
+                        participantMap.put("start_date", mTime);
+                        participantMap.put("start_date_ms", mTimeMS);
+                        participantMap.put("uid", uid);
+
+                        pushed.child("video_participants").child("0").setValue(participantMap);
+
+
+                    } else {
+                        mRecord.setBackgroundResource(R.drawable.record);
+                        if (url != null){
+                            connection.disconnect();
+                            url = null;
+                        }
+
                     }
-
-                    long timeMS = System.currentTimeMillis();
-                    mTimeMS = String.valueOf(timeMS);
-                    Date date = Calendar.getInstance().getTime();
-                    mTime = String.valueOf(date);
-
-
-                    Map<String, String> videoListMap = new HashMap<>();
-                    videoListMap.put("node_create_date", mTime);
-                    videoListMap.put("node_create_date_ms", mTimeMS);
-                    videoListMap.put("video_mission_description", missionDescription);
-
-                    userDatabase = FirebaseDatabase.getInstance().getReference();
-                    DatabaseReference pushed = userDatabase.child("video").child("list").push();
-                    nodeKey = pushed.getKey();
-                    pushed.setValue(videoListMap);
-
-                    String email = User.getInstance().getEmail();
-                    String name = User.getInstance().getName();
-
-                    Map<String, String> participantMap = new HashMap<>();
-
-                    participantMap.put("email", email);
-                    participantMap.put("name", name);
-                    participantMap.put("start_date", mTime);
-                    participantMap.put("start_date_ms", mTimeMS);
-                    participantMap.put("uid", uid);
-
-                    pushed.child("video_participants").child("0").setValue(participantMap);
-
-
-                }else{
-                    mRecord.setBackgroundResource(R.drawable.record);
-                    if (url != null){
-                        connection.disconnect();
-                        url = null;
-                    }
-
-                }
                 }
             }
         });
@@ -511,7 +514,7 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onStart() {
         super.onStart();
-// Initialize or refresh the app settings.
+        // Initialize or refresh the app settings.
         // When app is first launched, mRefreshSettings will always be true.
         // Each successive time that onStart is called, app is coming back to foreground so check if the
         // settings need to be refreshed again, as app may have been launched via URI.
@@ -519,6 +522,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
 
         mRefreshSettings = false;
+
 
         // If Vidyo Client has been successfully initialized and the Connector has
         // not yet been constructed, then check permissions and construct Connector.
@@ -548,6 +552,12 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onResume() {
         super.onResume();
+
+        // Set the application's UI context to this activity.
+        ConnectorPkg.setApplicationUIContext(getActivity());
+
+        // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
+        mVidyoClientInitialized = ConnectorPkg.initialize();
     }
 
     @Override
@@ -590,6 +600,7 @@ public class VidyoChatFragment extends BaseFragment implements
         ConnectorPkg.uninitialize();
     }
 
+    /**************************
     // The device interface orientation has changed
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -611,6 +622,7 @@ public class VidyoChatFragment extends BaseFragment implements
             });
         }
     }
+    *******************/
 
     /*
      * Private Utility Functions
@@ -630,8 +642,10 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
     private void _mVidyoConnector() {
-        mVidyoConnector = new Connector(mVideoFrame,
-                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Tiles,
+        mVidyoConnector = new Connector(null, // null for custom layouts - IMPORTANT ! this is how you get the video to take
+                                                    // up the whole video frame !
+                                                    // BUT null means the "camera flip" button won't active the back camera (probably doesn't matter)
+                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
                 15,
                 "info@VidyoClient info@VidyoConnector warning",
                 "",
@@ -659,16 +673,16 @@ public class VidyoChatFragment extends BaseFragment implements
                         mClientVersion.setText("VidyoClient-AndroidSDK " + version);
 
                         // Set initial position
-                        refreshUI();
+                        //refreshUI();
 
                         // Register for local camera events
-                        if (!mVidyoConnector.registerLocalCameraEventListener((Connector.IRegisterLocalCameraEventListener) mSelf)) {
+                        if (!mVidyoConnector.registerLocalCameraEventListener((Connector.IRegisterLocalCameraEventListener) VidyoChatFragment.this)) {
                         }
                         // Register for network interface events
-                        if (!mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) mSelf)) {
+                        if (!mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) VidyoChatFragment.this)) {
                         }
                         // Register for log events
-                        if (!mVidyoConnector.registerLogEventListener((Connector.IRegisterLogEventListener) mSelf, "info@VidyoClient info@VidyoConnector warning")) {
+                        if (!mVidyoConnector.registerLogEventListener((Connector.IRegisterLogEventListener) VidyoChatFragment.this, "info@VidyoClient info@VidyoConnector warning")) {
                         }
 
                         // Apply the app settings
@@ -714,15 +728,15 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
-    /****************************/
+    /****************************
     // Refresh the UI
-    private void refreshUI() {
+    private void refreshUIxxxxxxx() {
         // Refresh the rendering of the video
         System.out.println("refreshUI:  mLastSelectedCamera = "+mLastSelectedCamera);
         mVidyoConnector.assignViewToLocalCamera(mVideoFrame, mLastSelectedCamera, false, false);
         mVidyoConnector.showViewAt(mVideoFrame, 100, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
     }
-     /**************/
+     **************/
 
     // The state of the VidyoConnector connection changed, reconfigure the UI.
     // If connected, dismiss the controls layout
@@ -813,11 +827,15 @@ public class VidyoChatFragment extends BaseFragment implements
                 this.toggleConnect();
                 break;
 
+            /***********  read NOTE below as to why commented out
             case R.id.camera_switch:
                 // Cycle the camera.
+                // NOTE: This seems to be broken by the null viewId that we use when we initialize
+                // the mVidyoConnector object earlier in this class.  Doesn't really matter that we can't flip the
+                // camera around I guess
                 mVidyoConnector.cycleCamera();
                 break;
-
+            *************/
             case R.id.camera_on_button:
                 // Toggle the camera privacy.
                 mCameraPrivacy = mCameraPrivacyButton.isChecked();
@@ -917,10 +935,15 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
+    // Equiv in XCode is VideoChatVC.onLocalCameraAdded()
     // Handle local camera events.
     @Override
     public void onLocalCameraAdded(LocalCamera localCamera) {
-        mLastSelectedCamera = localCamera;
+        if(mVidyoConnector != null) {
+            //localCamera.setPositionInLocalRenderer(mVidyoConnector., 0, 0, 90, 90, 30);
+            mVidyoConnector.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
+            mVidyoConnector.showViewAt(mVideoFrame, 0, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
+        }
     }
 
     @Override

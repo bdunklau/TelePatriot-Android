@@ -273,7 +273,7 @@ public class MainActivity extends AppCompatActivity
             Fragment fragment = new VideoInvitationsFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
-        /***** take out till it's you now the petition link is correct
+        /***** take out till it's you know the petition link is correct
         else if( id == R.id.nav_send_petition) {
             Fragment fragment = new SendPetitionFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
