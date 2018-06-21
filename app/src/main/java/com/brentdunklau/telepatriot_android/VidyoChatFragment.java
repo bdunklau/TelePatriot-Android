@@ -61,7 +61,9 @@ import com.vidyo.VidyoClient.Connector.Connector;
 import com.vidyo.VidyoClient.Device.Device;
 import com.vidyo.VidyoClient.Device.LocalCamera;
 import com.vidyo.VidyoClient.Device.LocalRenderer;
+import com.vidyo.VidyoClient.Device.RemoteCamera;
 import com.vidyo.VidyoClient.Endpoint.LogRecord;
+import com.vidyo.VidyoClient.Endpoint.Participant;
 import com.vidyo.VidyoClient.NetworkInterface;
 
 import org.json.JSONException;
@@ -74,6 +76,7 @@ public class VidyoChatFragment extends BaseFragment implements
         Connector.IRegisterLogEventListener,
         Connector.IRegisterNetworkInterfaceEventListener,
         Connector.IRegisterLocalCameraEventListener,
+        Connector.IRegisterRemoteCameraEventListener,
         IVideoFrameListener {
 
     // Define the various states of this application.
@@ -116,8 +119,8 @@ public class VidyoChatFragment extends BaseFragment implements
     private ToggleButton mToggleConnectButton;
     private ToggleButton mMicrophonePrivacyButton;
     private ToggleButton mCameraPrivacyButton;
-    private ProgressBar mConnectionSpinner;
-    private LinearLayout mControlsLayout;
+    //private ProgressBar mConnectionSpinner;
+    //private LinearLayout mControlsLayout;
     private LinearLayout mToolbarLayout;
     private EditText mHost;
     public EditText mDisplayName;
@@ -126,6 +129,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView mToolbarStatus;
     private TextView mClientVersion;
     private VideoFrameLayout mVideoFrame;
+    private VideoFrameLayout remoteFrame;
     private boolean mHideConfig = false;
     private boolean mAutoJoin = false;
     private boolean mAllowReconnect = true;
@@ -164,7 +168,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView mDescriptionEditButton;
     private EditText mDescriptionEditText;
     private TextView mYouTubeEditButton;
-    private EditText mYouTubeEditText;
+    //private EditText mYouTubeEditText;
     private TextView mYouTubeDescription;
     private ProgressDialog pd;
     private String reasons;
@@ -200,9 +204,10 @@ public class VidyoChatFragment extends BaseFragment implements
         missionDescription = videoType.getVideo_mission_description();
         uid =  User.getInstance().getUid();
         // Initialize the member variables
-        mControlsLayout = myView.findViewById(R.id.controls_layout);
+        //mControlsLayout = myView.findViewById(R.id.controls_layout);
         //mToolbarLayout = (LinearLayout) findViewById(R.id.toolbarLayout);
         mVideoFrame = myView.findViewById(R.id.vidyoChatMyScreen);
+        remoteFrame = myView.findViewById(R.id.remoteChatScreen);
         //mVideoFrame.Register(this);
         //TODO change editText to import data
         mHost = myView.findViewById(R.id.host);
@@ -214,7 +219,7 @@ public class VidyoChatFragment extends BaseFragment implements
         mResourceId.setText(getRoom());
         mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
         mClientVersion = myView.findViewById(R.id.clientVersion);
-        mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
+        //mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
         mSelf = (MainActivity) getActivity();
         mToken.setText(jsonTokenData);
         vidyoChatDescriptionText = myView.findViewById(R.id.videoChatDescriptionText);
@@ -257,7 +262,7 @@ public class VidyoChatFragment extends BaseFragment implements
         });
 
         mYouTubeDescription = myView.findViewById(R.id.videoChatYouTubeDescription);
-        mYouTubeEditText = myView.findViewById(R.id.editYouTubeDescription);
+        //mYouTubeEditText = myView.findViewById(R.id.editYouTubeDescription);
         mYouTubeEditButton = myView.findViewById(R.id.editYouTubeButton);
         mYouTubeEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -437,12 +442,12 @@ public class VidyoChatFragment extends BaseFragment implements
     private void editYouTubeDescription() {
         if (mYouTubeEditButton.getText().toString().trim().equals("Edit")){
             mYouTubeDescription.setVisibility(View.INVISIBLE);
-            mYouTubeEditText.setVisibility(View.VISIBLE);
+            //mYouTubeEditText.setVisibility(View.VISIBLE);
             mYouTubeEditButton.setText("Done");
         }else{
-            mYouTubeDescription.setText(mYouTubeEditText.getText());
+            //mYouTubeDescription.setText(mYouTubeEditText.getText());
             mYouTubeDescription.setVisibility(View.VISIBLE);
-            mYouTubeEditText.setVisibility(View.GONE);
+            //mYouTubeEditText.setVisibility(View.GONE);
             mYouTubeEditButton.setText("Edit");
         }
     }
@@ -647,7 +652,7 @@ public class VidyoChatFragment extends BaseFragment implements
                                                     // BUT null means the "camera flip" button won't active the back camera (probably doesn't matter)
                 Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
                 15,
-                "info@VidyoClient info@VidyoConnector warning",
+                "info@VidyoClient info@VidyoConnector warning", // don't know what these next 3 lines do
                 "",
                 0);
     }
@@ -677,6 +682,9 @@ public class VidyoChatFragment extends BaseFragment implements
 
                         // Register for local camera events
                         if (!mVidyoConnector.registerLocalCameraEventListener((Connector.IRegisterLocalCameraEventListener) VidyoChatFragment.this)) {
+                        }
+                        // Register for remote camera events - this is the good stuff right here :)
+                        if (!mVidyoConnector.registerRemoteCameraEventListener((Connector.IRegisterRemoteCameraEventListener) VidyoChatFragment.this)) {
                         }
                         // Register for network interface events
                         if (!mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) VidyoChatFragment.this)) {
@@ -760,14 +768,14 @@ public class VidyoChatFragment extends BaseFragment implements
                     switch (mVidyoConnectorState) {
                         case Connecting:
                             mToggleConnectButton.setChecked(true);
-                            mConnectionSpinner.setVisibility(View.VISIBLE);
+                            //mConnectionSpinner.setVisibility(View.VISIBLE);
                             Toast.makeText(mSelf, "connecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Connected:
                             mToggleConnectButton.setChecked(true);
                             mRecord.setVisibility(View.VISIBLE);
-                            mConnectionSpinner.setVisibility(View.INVISIBLE);
+                            //mConnectionSpinner.setVisibility(View.INVISIBLE);
                             Toast.makeText(mSelf, "connected", Toast.LENGTH_SHORT).show();
                             break;
 
@@ -788,7 +796,7 @@ public class VidyoChatFragment extends BaseFragment implements
                         case FailureInvalidResource:
                             Toast.makeText(mSelf, "invalid resource", Toast.LENGTH_SHORT).show();
                             mToggleConnectButton.setChecked(false);
-                            mConnectionSpinner.setVisibility(View.INVISIBLE);
+                            //mConnectionSpinner.setVisibility(View.INVISIBLE);
 
                             // If a return URL was provided as an input parameter, then return to that application
                             if (mReturnURL != null) {
@@ -807,7 +815,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
                             if (!mHideConfig ) {
                                 // Display the controls
-                                mControlsLayout.setVisibility(View.VISIBLE);
+                                //mControlsLayout.setVisibility(View.VISIBLE);
                             }
                             break;
                     }
@@ -940,7 +948,6 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onLocalCameraAdded(LocalCamera localCamera) {
         if(mVidyoConnector != null) {
-            //localCamera.setPositionInLocalRenderer(mVidyoConnector., 0, 0, 90, 90, 30);
             mVidyoConnector.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
             mVidyoConnector.showViewAt(mVideoFrame, 0, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
         }
@@ -984,4 +991,27 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onNetworkInterfaceStateUpdated(NetworkInterface vidyoNetworkInterface, NetworkInterface.NetworkInterfaceState vidyoNetworkInterfaceState) {
    }
+
+
+    // per Connector.IRegisterRemoteCameraEventListener
+    @Override
+    public void onRemoteCameraAdded(RemoteCamera remoteCamera, Participant participant) {
+        // see XCode VideoChatVC.onRemoteCameraAdded()  line 742
+        if(mVidyoConnector != null) {
+            mVidyoConnector.assignViewToRemoteCamera(remoteFrame, remoteCamera, true, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
+            mVidyoConnector.showViewAt(remoteFrame, 0, 0, remoteFrame.getWidth(), remoteFrame.getHeight());
+        }
+
+    }
+
+    // per Connector.IRegisterRemoteCameraEventListener
+    @Override
+    public void onRemoteCameraRemoved(RemoteCamera remoteCamera, Participant participant) {
+
+    }
+
+    // per Connector.IRegisterRemoteCameraEventListener
+    @Override
+    public void onRemoteCameraStateUpdated(RemoteCamera remoteCamera, Participant participant, Device.DeviceState deviceState) {
+    }
 }
