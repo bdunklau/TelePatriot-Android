@@ -126,3 +126,6 @@ exports.testApi = testing.testApi
 const vidyo = require('./vidyo')
 exports.generateVidyoToken = vidyo.generateVidyoToken
 
+const amiready = require('./user-amiready')
+exports.amiready = amiready.amiready
+
