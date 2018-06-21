@@ -45,7 +45,7 @@ var generateText = function(response, historyIds) {
 var generateFormField = function(response, historyIds) {
     var html = '<tr><td colspan="3">'
     html += response.html.text+'<p/><input type="text" name="'+response.html.fieldname+'" size="50" placeholder="'+response.html.placeholder+'"/>'
-    html += '&nbsp;&nbsp; <input type="submit" value="submit" style="height:50px"/>'
+    html += '&nbsp;&nbsp; <input type="submit" value="submit" style="height:30px"/>'
     html += '</td></tr>'
     return html
 }
@@ -64,12 +64,12 @@ var responses = [
 
     {'input': {'phone':'Android', 'fb':'yes'},
      'id':'20',
-     'html': {text: 'Do you remember what your Facebook email address is?', parm:'fbknown', choices:['yes', 'no']},
+     'html': {text: 'Do you remember what email address you use for Facebook?', parm:'fbknown', choices:['yes', 'no']},
      'htmlfunction': generateText}, // next: do you know what your facebook email address is?
 
     {'input': {'phone':'Android', 'fb':'yes', 'fbknown':'yes'},
      'id':'30',
-     'html': {text: 'Enter your Facebook email address', fieldname: 'email', placeholder:'Facebook email address'},
+     'html': {text: 'How do you login to Facebook?', fieldname: 'email', placeholder:'Email'},
      'htmlfunction': generateFormField},    // next: Enter your Facebook email address
 
     {'input': {'phone':'Android', 'fb':'yes', 'fbknown':'no'},
@@ -91,18 +91,13 @@ var responses = [
 
     {'input': {'phone':'iPhone', 'fb':'yes'},
      'id':'70',
-     'html': {text: 'Do you remember what your Facebook email address is?', parm:'fbknown', choices:['yes', 'no']},
+     'html': {text: 'Do you remember what email address you use for Facebook?', parm:'fbknown', choices:['yes', 'no']},
      'htmlfunction': generateText}, // next: do you know what your facebook email address is?
 
-    {'input': {'phone':'iPhone', 'fb':'yes',
-     'id':'80',
-    'html': {text: 'Enter your Facebook email address', fieldname: 'email', placeholder:'Facebook email address'}},
-    'htmlfunction': generateFormField},    // next: Enter your Facebook email address
-
     {'input': {'phone':'iPhone', 'fb':'yes', 'fbknown':'yes'},
-     'id':'85',
-     'html': {text: 'Enter your Facebook email address', fieldname: 'email', placeholder:'Facebook email address'},
-     'htmlfunction': generateFormField},    // next: Enter your Facebook email address
+     'id':'80',
+    'html': {text: 'How do you login to Facebook?', fieldname: 'email', placeholder:'Email'},
+    'htmlfunction': generateFormField},    // next: Enter your Facebook email address
 
     {'input': {'phone':'iPhone', 'fb':'yes', 'fbknown':'no'},
      'id':'90',
@@ -111,12 +106,12 @@ var responses = [
 
     {'input': {'phone':'iPhone', 'fb':'yes', 'fbknown':'no', 'google':'yes'},
      'id':'100',
-     'html': {text: 'Do you remember what your Google email address is?', parm:'googleknown', choices:['yes', 'no']},
+     'html': {text: 'Do you remember what email address you use for Google?', parm:'googleknown', choices:['yes', 'no']},
      'htmlfunction': generateText}, // next: do you know what your google email address is?
 
     {'input': {'phone':'iPhone', 'fb':'yes', 'fbknown':'no', 'google':'yes', 'googleknown':'yes'},
      'id':'110',
-     'html': {text: 'Enter your Google email address', fieldname: 'email', placeholder:'Google email address'},
+     'html': {text: 'How do you login to Google?', fieldname: 'email', placeholder:'Email'},
      'htmlfunction': generateFormField},    // next: Enter your Google email address
 
     {'input': {'phone':'iPhone', 'fb':'yes', 'fbknown':'no', 'google':'yes', 'googleknown':'no'},
@@ -139,12 +134,12 @@ var responses = [
 
     {'input': {'phone':'iPhone', 'fb':'no', 'google':'yes'},
      'id':'150',
-    'html': {text: 'Do you remember what your Google email address is?', parm:'googleknown', choices:['yes', 'no']},
+    'html': {text: 'Do you remember what email address you use for Google?', parm:'googleknown', choices:['yes', 'no']},
     'htmlfunction': generateText}, // next: do you know what your google email address is?
 
     {'input': {'phone':'iPhone', 'fb':'no', 'google':'yes', 'googleknown':'yes'},
      'id':'160',
-     'html': {text: 'Enter your Google email address', fieldname: 'email', placeholder:'Google email address'},
+     'html': {text: 'How do you login to Google?', fieldname: 'email', placeholder:'Email'},
      'htmlfunction': generateFormField},    // next: Enter your Google email address
 
     {'input': {'phone':'iPhone', 'fb':'no', 'google':'yes', 'googleknown':'no'},
