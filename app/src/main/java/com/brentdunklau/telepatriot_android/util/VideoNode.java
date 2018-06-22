@@ -45,9 +45,14 @@ public class VideoNode {
         if(key == null) {
             // get/create key by inserting a node under video/list
             key = FirebaseDatabase.getInstance().getReference("video/list").push().getKey();
-            FirebaseDatabase.getInstance().getReference("video/list/"+key).setValue(map());
+            save();
         }
         return key;
+    }
+
+    public void save() {
+        if(key == null) return;
+        FirebaseDatabase.getInstance().getReference("video/list/"+key).setValue(map());
     }
 
     private Map map() {

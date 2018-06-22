@@ -1,7 +1,11 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -10,9 +14,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.Nullable;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -156,7 +162,7 @@ public class VidyoChatFragment extends BaseFragment implements
     //private int missionKey;
     private Integer videoTypeKey;
     private String room; // the initiator's user id
-    private String missionDescription;
+    private String missionDescription;  // we can probably get rid of this - we have vidyoChatDescriptionText
     private String nodeKey;
     private TextView vidyoChatDescriptionText;
     private EditText mRepEdit;
@@ -169,13 +175,16 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView mRepFB;
     private TextView mRepTwitter;
     private TextView mDescriptionEditButton;
-    private EditText mDescriptionEditText;
+    //private EditText mDescriptionEditText;
     private TextView mYouTubeEditButton;
     //private EditText mYouTubeEditText;
     private TextView mYouTubeDescription;
     private Legislator legislator;
     private ProgressDialog pd;
     private String reasons;
+    private LocalCamera localCamera;
+    private VideoNode currentVideoNode;
+
     /*
      *  Operating System Events
      */
@@ -256,7 +265,6 @@ public class VidyoChatFragment extends BaseFragment implements
             }
         });
 
-        mDescriptionEditText = myView.findViewById(R.id.editDescription);
         mDescriptionEditButton = myView.findViewById(R.id.editDescriptionButon);
         mDescriptionEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -306,10 +314,11 @@ public class VidyoChatFragment extends BaseFragment implements
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     VideoNode vnode = dataSnapshot.getValue(VideoNode.class);
                     if(vnode == null) return;
-                    vnode.setKey(videoNodeKey);
-                    vidyoChatDescriptionText.setText(vnode.getVideo_mission_description());
-                    legislator = vnode.getLegislator();
-                    mYouTubeDescription.setText(vnode.getYoutube_video_description());
+                    currentVideoNode = vnode;
+                    currentVideoNode.setKey(videoNodeKey);
+                    vidyoChatDescriptionText.setText(currentVideoNode.getVideo_mission_description());
+                    legislator = currentVideoNode.getLegislator();
+                    mYouTubeDescription.setText(currentVideoNode.getYoutube_video_description());
                 }
 
                 @Override
@@ -400,6 +409,99 @@ public class VidyoChatFragment extends BaseFragment implements
          ********/
 
         return myView;
+    }
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Initialize or refresh the app settings.
+        // When app is first launched, mRefreshSettings will always be true.
+        // Each successive time that onStart is called, app is coming back to foreground so check if the
+        // settings need to be refreshed again, as app may have been launched via URI.
+
+
+
+        mRefreshSettings = false;
+
+
+        // If Vidyo Client has been successfully initialized and the Connector has
+        // not yet been constructed, then check permissions and construct Connector.
+        if (mVidyoClientInitialized && mVidyoConnector == null) {
+            // Beginning in Android 6.0 (API level 23), users grant permissions to apps while
+            // app is running, not when they install the app. Check whether app has permission
+            // to access what is declared in its manifest.
+            if (Build.VERSION.SDK_INT > 22) {
+                List<String> permissionsNeeded = new ArrayList<>();
+                for (String permission : mPermissions) {
+                    // Check if the permission has already been granted.
+                    if (ContextCompat.checkSelfPermission(getActivity(), permission) != PackageManager.PERMISSION_GRANTED)
+                        permissionsNeeded.add(permission);
+                }
+                if (permissionsNeeded.size() > 0) {
+                    // Request any permissions which have not been granted. The result will be called back in onRequestPermissionsResult.
+                    ActivityCompat.requestPermissions(getActivity(), permissionsNeeded.toArray(new String[0]), PERMISSIONS_REQUEST_ALL);
+                } else {
+                    startVidyoConnector();
+                }
+            } else {
+                startVidyoConnector();
+            }
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Set the application's UI context to this activity.
+        //ConnectorPkg.setApplicationUIContext(getActivity());
+
+        // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
+        //mVidyoClientInitialized = ConnectorPkg.initialize();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        if (mVidyoConnector != null) {
+            if (mVidyoConnectorState != VidyoConnectorState.Connected &&
+                    mVidyoConnectorState != VidyoConnectorState.Connecting) {
+                // Not connected/connecting to a resource.
+                // Release camera, mic, and speaker from this app while backgrounded.
+                mVidyoConnector.selectLocalCamera(null);
+                mVidyoConnector.selectLocalMicrophone(null);
+                mVidyoConnector.selectLocalSpeaker(null);
+                mDevicesSelected = false;
+            }
+            mVidyoConnector.disable(); // this is key
+            // If you don't call disable(), your app will hang on to the camera and the next time you come to
+            // this screen you'll try to open the camera again and you won't be able to.  You'll be instantiating mVidyoConnector
+            // again but you won't be able to get the camera back - hard lesson learned here.
+
+            //mVidyoConnector.setMode(Connector.ConnectorMode.VIDYO_CONNECTORMODE_Background); not sure if we need this given that we call disable() above
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        // Release device resources
+        mLastSelectedCamera = null;
+        mVidyoConnector.disable();
+
+        // Connector will be destructed upon garbage collection.
+        mVidyoConnector = null;
+
+        ConnectorPkg.setApplicationUIContext(null);
+
+        // Uninitialize the VidyoClient library - this should be done once in the lifetime of the application.
+        ConnectorPkg.uninitialize();
     }
 
     private String getVideoNodeKey(String vtype) {
@@ -499,21 +601,9 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
     private void editVideoMissionDescription() {
-        EditVideoMissionDescriptionFragment f = new EditVideoMissionDescriptionFragment();
-        f.setBack(/*go back to*/ this);
-        gotoFragment(f);
-        /************
-        if (mDescriptionEditButton.getText().toString().trim().equals("Edit")){
-            vidyoChatDescriptionText.setVisibility(View.INVISIBLE);
-            mDescriptionEditText.setVisibility(View.VISIBLE);
-            mDescriptionEditButton.setText("Done");
-        }else{
-            mDescriptionEditButton.setText("Edit");
-            vidyoChatDescriptionText.setText(mDescriptionEditText.getText().toString().trim());
-            mDescriptionEditText.setVisibility(View.GONE);
-            vidyoChatDescriptionText.setVisibility(View.VISIBLE);
-        }
-         ***********/
+        // custom dialog
+        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode);
+        dialog.show();
     }
 
     private void setTwitterInfo() {
@@ -567,94 +657,6 @@ public class VidyoChatFragment extends BaseFragment implements
     //   setIntent(intent);
     //}
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Initialize or refresh the app settings.
-        // When app is first launched, mRefreshSettings will always be true.
-        // Each successive time that onStart is called, app is coming back to foreground so check if the
-        // settings need to be refreshed again, as app may have been launched via URI.
-
-
-
-        mRefreshSettings = false;
-
-
-        // If Vidyo Client has been successfully initialized and the Connector has
-        // not yet been constructed, then check permissions and construct Connector.
-        if (mVidyoClientInitialized && mVidyoConnector == null) {
-            // Beginning in Android 6.0 (API level 23), users grant permissions to apps while
-            // app is running, not when they install the app. Check whether app has permission
-            // to access what is declared in its manifest.
-            if (Build.VERSION.SDK_INT > 22) {
-                List<String> permissionsNeeded = new ArrayList<>();
-                for (String permission : mPermissions) {
-                    // Check if the permission has already been granted.
-                    if (ContextCompat.checkSelfPermission(getActivity(), permission) != PackageManager.PERMISSION_GRANTED)
-                        permissionsNeeded.add(permission);
-                }
-                if (permissionsNeeded.size() > 0) {
-                    // Request any permissions which have not been granted. The result will be called back in onRequestPermissionsResult.
-                    ActivityCompat.requestPermissions(getActivity(), permissionsNeeded.toArray(new String[0]), PERMISSIONS_REQUEST_ALL);
-                } else {
-                    startVidyoConnector();
-                }
-            } else {
-                startVidyoConnector();
-            }
-        }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        // Set the application's UI context to this activity.
-        ConnectorPkg.setApplicationUIContext(getActivity());
-
-        // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
-        mVidyoClientInitialized = ConnectorPkg.initialize();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        if (mVidyoConnector != null) {
-            if (mVidyoConnectorState != VidyoConnectorState.Connected &&
-                    mVidyoConnectorState != VidyoConnectorState.Connecting) {
-                // Not connected/connecting to a resource.
-                // Release camera, mic, and speaker from this app while backgrounded.
-                mVidyoConnector.selectLocalCamera(null);
-                mVidyoConnector.selectLocalMicrophone(null);
-                mVidyoConnector.selectLocalSpeaker(null);
-                mDevicesSelected = false;
-            }
-            mVidyoConnector.setMode(Connector.ConnectorMode.VIDYO_CONNECTORMODE_Background);
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        // Release device resources
-        mLastSelectedCamera = null;
-        mVidyoConnector.disable();
-
-        // Connector will be destructed upon garbage collection.
-        mVidyoConnector = null;
-
-        ConnectorPkg.setApplicationUIContext(null);
-
-        // Uninitialize the VidyoClient library - this should be done once in the lifetime of the application.
-        ConnectorPkg.uninitialize();
-    }
 
     /**************************
     // The device interface orientation has changed
@@ -697,15 +699,9 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
-    private void _mVidyoConnector() {
-        mVidyoConnector = new Connector(null, // null for custom layouts - IMPORTANT ! this is how you get the video to take
-                                                    // up the whole video frame !
-                                                    // BUT null means the "camera flip" button won't active the back camera (probably doesn't matter)
-                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
-                15,
-                "info@VidyoClient info@VidyoConnector warning", // don't know what these next 3 lines do
-                "",
-                0);
+    private void logit(String s) {
+        for(int i=0; i < 20; i++)
+            System.out.println(s);
     }
 
     // Construct Connector and register for event listeners.
@@ -713,7 +709,8 @@ public class VidyoChatFragment extends BaseFragment implements
 
         // Wait until mVideoFrame is drawn until getting started.
         ViewTreeObserver viewTreeObserver = mVideoFrame.getViewTreeObserver();
-        if (viewTreeObserver.isAlive()) {
+        boolean isAlive = viewTreeObserver.isAlive();
+        if (isAlive) {
             viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
@@ -721,7 +718,16 @@ public class VidyoChatFragment extends BaseFragment implements
 
                     // Construct Connector
                     try {
-                        _mVidyoConnector();
+
+                        // LAME - can't put a breakpoint here
+                        mVidyoConnector = new Connector(null, // null for custom layouts - IMPORTANT ! this is how you get the video to take
+                                // up the whole video frame !
+                                // BUT null means the "camera flip" button won't activate the back camera (probably doesn't matter)
+                                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
+                                1,
+                                "info@VidyoClient info@VidyoConnector warning", // don't know what these next 3 lines do
+                                "",
+                                0);
 
                         // Set the client version in the toolbar
                         String version =  mVidyoConnector.getVersion();
@@ -732,22 +738,22 @@ public class VidyoChatFragment extends BaseFragment implements
                         //refreshUI();
 
                         // Register for local camera events
-                        if (!mVidyoConnector.registerLocalCameraEventListener((Connector.IRegisterLocalCameraEventListener) VidyoChatFragment.this)) {
-                        }
+                        mVidyoConnector.registerLocalCameraEventListener((Connector.IRegisterLocalCameraEventListener) VidyoChatFragment.this);
+
                         // Register for remote camera events - this is the good stuff right here :)
-                        if (!mVidyoConnector.registerRemoteCameraEventListener((Connector.IRegisterRemoteCameraEventListener) VidyoChatFragment.this)) {
-                        }
+                        mVidyoConnector.registerRemoteCameraEventListener((Connector.IRegisterRemoteCameraEventListener) VidyoChatFragment.this);
+
                         // Register for network interface events
-                        if (!mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) VidyoChatFragment.this)) {
-                        }
+                        mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) VidyoChatFragment.this);
+
                         // Register for log events
-                        if (!mVidyoConnector.registerLogEventListener((Connector.IRegisterLogEventListener) VidyoChatFragment.this, "info@VidyoClient info@VidyoConnector warning")) {
-                        }
+                        mVidyoConnector.registerLogEventListener((Connector.IRegisterLogEventListener) VidyoChatFragment.this, "info@VidyoClient info@VidyoConnector warning");
 
                         // Apply the app settings
                         applySettings();
                     }
-                    catch (Exception e) {
+                    catch (Throwable e) {
+                        logit("startVidyoConnector: Throwable!  "+e);
                     }
                 }
 
@@ -998,6 +1004,7 @@ public class VidyoChatFragment extends BaseFragment implements
     // Handle local camera events.
     @Override
     public void onLocalCameraAdded(LocalCamera localCamera) {
+        this.localCamera = localCamera;
         if(mVidyoConnector != null) {
             mVidyoConnector.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
             mVidyoConnector.showViewAt(mVideoFrame, 0, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
@@ -1065,4 +1072,16 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onRemoteCameraStateUpdated(RemoteCamera remoteCamera, Participant participant, Device.DeviceState deviceState) {
     }
+
+
+    public void doPositiveClick() {
+        // Do stuff here.
+        System.out.println("FragmentAlertDialog: Positive click!");
+    }
+
+    public void doNegativeClick() {
+        // Do stuff here.
+        System.out.println("FragmentAlertDialog: Negative click!");
+    }
+
 }
