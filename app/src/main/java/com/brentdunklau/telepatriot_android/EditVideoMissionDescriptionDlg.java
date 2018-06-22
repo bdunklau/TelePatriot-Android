@@ -17,7 +17,7 @@ public class EditVideoMissionDescriptionDlg extends Dialog {
     public EditVideoMissionDescriptionDlg(Activity activity, VideoNode v) {
         super(activity);
 
-        setContentView(R.layout.edit_video_mission_description_fragment);
+        setContentView(R.layout.edit_video_mission_description_dlg);
 
         TextView description_header = (TextView) findViewById(R.id.description_header);
 

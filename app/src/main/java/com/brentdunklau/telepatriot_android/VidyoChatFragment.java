@@ -1,28 +1,18 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.Nullable;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -37,14 +27,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.SocketAddress;
 import java.net.URL;
-import java.net.URLConnection;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -55,11 +40,7 @@ import java.util.Map;
 import com.brentdunklau.telepatriot_android.util.Legislator;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
-import com.brentdunklau.telepatriot_android.util.VideoParticipant;
 import com.brentdunklau.telepatriot_android.util.VideoType;
-import com.firebase.ui.auth.ui.ProgressDialogHolder;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -69,7 +50,6 @@ import com.vidyo.VidyoClient.Connector.ConnectorPkg;
 import com.vidyo.VidyoClient.Connector.Connector;
 import com.vidyo.VidyoClient.Device.Device;
 import com.vidyo.VidyoClient.Device.LocalCamera;
-import com.vidyo.VidyoClient.Device.LocalRenderer;
 import com.vidyo.VidyoClient.Device.RemoteCamera;
 import com.vidyo.VidyoClient.Endpoint.LogRecord;
 import com.vidyo.VidyoClient.Endpoint.Participant;
@@ -245,7 +225,7 @@ public class VidyoChatFragment extends BaseFragment implements
         mRepButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setRepInfo();
+                chooseLegislator();
             }
         });
         mFBButton = myView.findViewById(R.id.fbEdit);
@@ -632,7 +612,11 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
-    private void setRepInfo() {
+    private void chooseLegislator() {
+        EditLegislatorForVideoDlg dialog = new EditLegislatorForVideoDlg(getActivity(), currentVideoNode);
+        dialog.show();
+
+        /************
         if (mRepButton.getText().toString().equals("Edit")) {
             mRepName.setVisibility(View.INVISIBLE);
             mRepEdit.setVisibility(View.VISIBLE);
@@ -643,7 +627,7 @@ public class VidyoChatFragment extends BaseFragment implements
             mRepEdit.setVisibility(View.GONE);
             mRepButton.setText("Edit");
         }
-
+        **************/
     }
 
 
