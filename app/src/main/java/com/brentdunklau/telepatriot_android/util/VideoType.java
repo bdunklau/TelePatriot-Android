@@ -1,5 +1,7 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import android.provider.MediaStore;
+
 import com.brentdunklau.telepatriot_android.MissionObject;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -39,6 +41,15 @@ public class VideoType {
             init();
         }
         return types;
+    }
+
+    public static VideoType getType(String type) {
+        List<VideoType> ts = getTypes();
+        for(VideoType vt : ts) {
+            if(vt.getType().equalsIgnoreCase(type))
+                return vt;
+        }
+        return null;
     }
 
     private static void query() {

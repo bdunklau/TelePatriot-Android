@@ -46,7 +46,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.brentdunklau.telepatriot_android.util.Legislator;
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.VideoNode;
+import com.brentdunklau.telepatriot_android.util.VideoParticipant;
 import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.firebase.ui.auth.ui.ProgressDialogHolder;
 import com.google.firebase.auth.FirebaseAuth;
@@ -170,6 +173,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView mYouTubeEditButton;
     //private EditText mYouTubeEditText;
     private TextView mYouTubeDescription;
+    private Legislator legislator;
     private ProgressDialog pd;
     private String reasons;
     /*
@@ -257,7 +261,7 @@ public class VidyoChatFragment extends BaseFragment implements
         mDescriptionEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                editDescription();
+                editVideoMissionDescription();
             }
         });
 
@@ -293,6 +297,25 @@ public class VidyoChatFragment extends BaseFragment implements
         // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
         mVidyoClientInitialized = ConnectorPkg.initialize();
 
+        String vtype = "Video Petition"; // TODO at some point, get this from the database
+        final String videoNodeKey = getVideoNodeKey(vtype);
+
+        if(videoNodeKey != null) {
+            FirebaseDatabase.getInstance().getReference("video/list/" + videoNodeKey).addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    VideoNode vnode = dataSnapshot.getValue(VideoNode.class);
+                    if(vnode == null) return;
+                    vnode.setKey(videoNodeKey);
+                    vidyoChatDescriptionText.setText(vnode.getVideo_mission_description());
+                    legislator = vnode.getLegislator();
+                    mYouTubeDescription.setText(vnode.getYoutube_video_description());
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) { }
+            });
+        }
 
         mRecord.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -336,6 +359,7 @@ public class VidyoChatFragment extends BaseFragment implements
                         videoListMap.put("node_create_date_ms", mTimeMS);
                         videoListMap.put("video_mission_description", missionDescription);
 
+                        // looks like multi-path update
                         userDatabase = FirebaseDatabase.getInstance().getReference();
                         DatabaseReference pushed = userDatabase.child("video").child("list").push();
                         nodeKey = pushed.getKey();
@@ -376,6 +400,28 @@ public class VidyoChatFragment extends BaseFragment implements
          ********/
 
         return myView;
+    }
+
+    private String getVideoNodeKey(String vtype) {
+        String current_video_node_key = User.getInstance().getCurrent_video_node_key();
+        if(current_video_node_key != null) {
+            return current_video_node_key;
+        }
+        else {
+            VideoNode vn = createVideoNode(vtype);
+            if(vn == null)
+                return null;
+            User.getInstance().setCurrent_video_node_key(vn.getKey());
+            return vn.getKey();
+        }
+    }
+
+    private VideoNode createVideoNode(String t) {
+        VideoType vtype = VideoType.getType(t /*"Video Petition"*/);
+        if(vtype == null)
+            return null; // might want some sensible default
+
+        return new VideoNode(User.getInstance(), vtype);
     }
 
     public void setRoom(String room) {
@@ -452,7 +498,11 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
-    private void editDescription() {
+    private void editVideoMissionDescription() {
+        EditVideoMissionDescriptionFragment f = new EditVideoMissionDescriptionFragment();
+        f.setBack(/*go back to*/ this);
+        gotoFragment(f);
+        /************
         if (mDescriptionEditButton.getText().toString().trim().equals("Edit")){
             vidyoChatDescriptionText.setVisibility(View.INVISIBLE);
             mDescriptionEditText.setVisibility(View.VISIBLE);
@@ -463,6 +513,7 @@ public class VidyoChatFragment extends BaseFragment implements
             mDescriptionEditText.setVisibility(View.GONE);
             vidyoChatDescriptionText.setVisibility(View.VISIBLE);
         }
+         ***********/
     }
 
     private void setTwitterInfo() {
