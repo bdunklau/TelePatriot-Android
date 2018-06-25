@@ -928,9 +928,16 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
         {"this": "legislator_twitter", "withThat": event.data.val().legislator_twitter},
         {"this": "legislator_rep_type", "withThat": rep},
         {"this": "legislator_full_name", "withThat": event.data.val().legislator_full_name},
-        {"this": "legislator_phone", "withThat": event.data.val().legislator_phone},
-        {"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state_abbrev.toUpperCase()}
+        {"this": "legislator_phone", "withThat": event.data.val().legislator_phone}
     ]
+
+    // "internal confusion" about whether I should be using _abbrev or not  LOL
+    if(event.data.val().legislator_state_abbrev) {
+        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state_abbrev.toUpperCase()})
+    }
+    else if(event.data.val().legislator_state) {
+        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state.toUpperCase()})
+    }
 
     _.each(replace, function(rep) {
         description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
@@ -985,18 +992,132 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
  And because all this is done with triggers, all we have to do in the mobile code is do one write to
  social_media/user_updates and the triggers do all the rest.  We can even test this just using the firebase database client
  ******************************************************/
-exports.socialMediaUpdate = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
+exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
     // This function is "Step 2a" described above
 
     if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
 
+    var channel = {id: event.data.val().id, type: event.data.val().type, user_update: event.params.key}
+
     // query states/legislators/{event.data.val().leg_id}
-    return db.ref(`states/legislators/{event.params.key}`).once('value').then(snapshot => {
+    return db.ref(`states/legislators/${event.data.val().leg_id}`).once('value').then(snapshot => {
         if(!snapshot.val().channels) {
             // no channels is ok.  We just add one
-            var channels = [{}]
+            var channels = [channel]
+            return snapshot.ref.child("channels").set(channels)
+        }
+        else {
+            var idx = snapshot.val().channels.length
+            for(var i=0; i < snapshot.val().channels.length; i++) {
+                if(snapshot.val().channels[i].type.toLowerCase() == event.data.val().type.toLowerCase()) {
+                    idx = i
+                }
+            }
+
+            return snapshot.ref.child("channels/"+idx).set(channel)
         }
     })
 
+})
+
+
+// This function is "Step 2b" described above
+exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
+
+    if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
+
+    var which_handle = event.data.val().type.toLowerCase() == 'facebook' ? 'legislator_facebook' : 'legislator_twitter'
+
+    return db.ref(`video/list`).orderByChild('leg_id').equalTo(event.data.val().leg_id).once('value').then(snapshot => {
+        var updates = {}
+        snapshot.forEach(function(child) {
+            // get each node/path that needs to be updated...
+            updates['video/list/'+child.key+'/'+which_handle] = event.data.val().id
+        })
+        // multi-path update
+        return db.ref(`/`).update(updates)
+    })
+})
+
+// see if we accidentally overwrote good data with bad data and correct if we did
+exports.overwriteBadWithGoodData = functions.database.ref('states/legislators/{leg_id}/channels/{idx}').onWrite(event => {
+    if(!event.data.exists() && event.data.previous.exists())
+        return false;  // ignore the case where the node is deleted
+
+    if(!event.data.val().user_update)
+        return false  // ignore the case where this node has no "user_update" attribute
+
+    if(event.data.val().id == event.data.previous.val().id)
+        return false  // the value we care about didn't change
+
+    var leg_id = event.params.leg_id
+    var idx = event.params.idx
+
+    return db.ref(`social_media/user_updates/${event.data.val().user_update}`).once('value').then(snapshot => {
+        // check this social_media/user_updates/aSDfsdfaSDfwE/id  node and see if it's the same
+        // as the states/legislators/leg_id/channels/{idx}/id node
+        // If it's not -> that's a problem and needs to be corrected
+        var goodHandle = snapshot.val().id
+        if(event.data.val().id != goodHandle) {
+            return db.ref(`states/legislators/${leg_id}/channels/${idx}/id`).set(goodHandle)
+        }
+    })
+})
+
+// quick and dirty web page that I do a GET on to add a node to social_media/user_updates to verify the two
+// triggers above do what they should
+exports.testUpdateSocialMedia = functions.https.onRequest((req, res) => {
+    if(!req.query.id || !req.query.leg_id || !req.query.type)
+        return res.status(200).send('Some/all of these parameters were missing<P/>They are all required:<P/>id (the Facebook or Twitter handle)<br/>leg_id<br/>type (either Facebook or Twitter)')
+
+    // for this test, we don't need a lot of the attributes we typically insert:
+    //      legislator_full_name, state_abbrev, state_chamber, state_chamber_district, updated_date, updated_date_ms, updating_user_email, updating_user_id, updating_user_name
+    var upd = {id: req.query.id, leg_id: req.query.leg_id, type: req.query.type /*don't need legislator_full_name, state_abbrev, state_chamber, state_chamber_district, */}
+    return db.ref('social_media/user_updates').push().set(upd).then(() => {
+        var result = []
+        result.push({message:'NOTE This page will report false negatives because triggers fire after this function has sent its response'})
+
+        // now query and make sure the triggers worked...
+        return db.ref(`states/legislators/${req.query.leg_id}/channels`).orderByChild('type').equalTo(req.query.type).once('value').then(snapshot => {
+            var ct = snapshot.numChildren()
+            if(ct != 1) {
+                result.push({message:'NOT OK - We got '+ct+' '+req.query.type+'channels. We should have gotten exactly 1'})
+                return result
+            }
+            else {
+                snapshot.forEach(function(child) {
+                    var sameHandle = child.val().id == req.query.id
+                    if(sameHandle)
+                        result.push({message:'OK - states/legislators/'+req.query.leg_id+'/channels/'+child.key+'/id = '+child.val().id})
+                    else {
+                        result.push({message:'NOT OK - Expected states/legislators/'+req.query.leg_id+'/channels/'+child.key+'/id = '+req.query.id})
+                        result.push({message:'NOT OK - Actually states/legislators/'+req.query.leg_id+'/channels/'+child.key+'/id = '+child.val().id})
+                    }
+                })
+                return db.ref(`video/list`).orderByChild('leg_id').equalTo(req.query.leg_id).once('value').then(snapshot => {
+                    var attribute = req.query.type.toLowerCase() == 'facebook' ? 'legislator_facebook' : 'legislator_twitter'
+                    snapshot.forEach(function(child) {
+                        var handle = child.val()[attribute]
+                        if(handle == req.query.id) {
+                            result.push({message:'OK - video/list/'+child.key+'/'+attribute+' = '+handle})
+                        }
+                        else {
+                            result.push({message:'NOT OK - Expected video/list/'+child.key+'/'+attribute+' = '+req.query.id})
+                            result.push({message:'NOT OK - Actually video/list/'+child.key+'/'+attribute+' = '+handle})
+                        }
+                    })
+                    return result
+                })
+            }
+        })
+        .then(result => {
+            var html = '<html><head><body>'
+            _.each(result, function(rs) {
+                html += '<br/>'+rs.message
+            })
+            html += '</body></html>'
+            res.status(200).send(html)
+        })
+    })
 })
 

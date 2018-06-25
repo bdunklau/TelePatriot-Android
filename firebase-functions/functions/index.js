@@ -130,6 +130,10 @@ exports.loadCivicData = legislators.loadCivicData
 exports.peopleWithoutCivicData = legislators.peopleWithoutCivicData
 exports.facebookIdUpdated = legislators.facebookIdUpdated
 exports.youtubeVideoDescription = legislators.youtubeVideoDescription
+exports.updateLegislatorSocialMedia = legislators.updateLegislatorSocialMedia
+exports.updateVideoNodeSocialMedia = legislators.updateVideoNodeSocialMedia
+exports.testUpdateSocialMedia = legislators.testUpdateSocialMedia
+exports.overwriteBadWithGoodData = legislators.overwriteBadWithGoodData
 
 
 const civic = require('./google-civic')
