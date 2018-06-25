@@ -939,3 +939,64 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
     return event.data.adminRef.root.child(`video/list/${event.params.videoKey}/youtube_video_description`).set(description)
 })
 
+/******************************************************
+ How to update legislators social media handles without letting incorrect data overwrite good data
+
+ Step 1:  Write a record to social_media/user_updates:
+         id (the facebook or twitter handle)
+         leg_id  (the open states leg_id)
+         legislator_full_name  (maybe)
+         legislator_first_name
+         legislator_last_name
+         state_abbrev
+         state_chamber
+         state_chamber_district
+         type  ("Facebook" or "Twitter")
+         updated_date  (i.e.  Jun 25, 2018 9:05 AM CDT)
+         updated_date_ms
+         updating_user_email  (current user's email)
+         updating_user_id
+         updating_user_name  (i.e.  Brent Dunklau)
+
+ Step 2a:  Trigger that listens for writes to social_media/user_updates/{key}
+    The trigger will write to 2 places - states/legislators/{leg_id}/channels/{idx} and video/list
+    The trigger will query states/legislators/{leg_id} to see if there is a "channels" node and under that,
+    a channel with the right "type" value (Facebook or Twitter).
+    The trigger will update the channel node if it exists and create one if it doesn't.
+    In either case, the trigger will also write a "user_update" node with value equal to the key value
+    from social_media/user_updates/{key}
+
+ Step 2b:  Another trigger that also listens for writes to social_media/user_updates/{key}
+    This trigger will also update legislator_facebook or legislator_twitter for all nodes under
+    video/list where leg_id = the legislator's leg_id.  So older videos will be kept up to date as social handles change.
+    And one of those nodes will be the one you're currently looking at.
+
+ Step 3:  Prevent overwriting good data with bad data.  Need a trigger to watch what gets written
+    to states/legislators/{leg_id}/channels/{idx}.  If a value is written to
+    states/legislators/{leg_id}/channels/{idx}, the "restore" trigger will check for the existence of this
+    attribute: states/legislators/{leg_id}/channels/{idx}/user_update
+
+    If this attribute exists, the "restore" trigger will query social_media/user_updates for a node with this key.
+    The "id" value under this social_media/user_updates/{key} node will be compared to the "id" value under
+    states/legislators/{leg_id}/channels/{idx}.  If the two id's are the same, no action.  But if they are different,
+    we interpret that as bad data attempting to overwrite good data.  In that case, the trigger will update
+    states/legislators/{leg_id}/channels/{idx}/id=social_media/user_updates/{key}/id
+
+ And because all this is done with triggers, all we have to do in the mobile code is do one write to
+ social_media/user_updates and the triggers do all the rest.  We can even test this just using the firebase database client
+ ******************************************************/
+exports.socialMediaUpdate = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
+    // This function is "Step 2a" described above
+
+    if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
+
+    // query states/legislators/{event.data.val().leg_id}
+    return db.ref(`states/legislators/{event.params.key}`).once('value').then(snapshot => {
+        if(!snapshot.val().channels) {
+            // no channels is ok.  We just add one
+            var channels = [{}]
+        }
+    })
+
+})
+

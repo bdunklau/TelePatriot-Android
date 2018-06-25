@@ -152,8 +152,9 @@
     <!-- android:fillViewport="true"  >>>>>  https://stackoverflow.com/a/42754121 -->
     <ScrollView
         android:id="@+id/scrollView"
-        android:layout_width="364dp"
+        android:layout_width="0dp"
         android:layout_height="325dp"
+        android:layout_marginEnd="8dp"
         android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -193,7 +194,7 @@
 
             <TextView
                 android:id="@+id/videoChatDescriptionText"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
@@ -207,7 +208,7 @@
 
 
             <TextView
-                android:id="@+id/videoChatLegislatorTitle"
+                android:id="@+id/legislator_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -224,61 +225,122 @@
                 android:layout_marginStart="24dp"
                 android:text="Choose"
                 android:textColor="@color/colorPrimaryDark"
-                app:layout_constraintStart_toEndOf="@+id/videoChatLegislatorTitle"
-                app:layout_constraintTop_toTopOf="@+id/videoChatLegislatorTitle" />
-
+                app:layout_constraintStart_toEndOf="@+id/legislator_header"
+                app:layout_constraintTop_toTopOf="@+id/legislator_header" />
 
             <TextView
-                android:id="@+id/videoChatRepInfo"
+                android:id="@+id/legislator_first_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
-                android:text="Rep Noncommittal Fence Sitter XX HD 200"
+                android:text=""
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/videoChatLegislatorTitle" />
+                app:layout_constraintTop_toBottomOf="@+id/legislator_header" />
+
+            <TextView
+                android:id="@+id/legislator_last_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text=""
+                app:layout_constraintStart_toEndOf="@+id/legislator_first_name"
+                app:layout_constraintTop_toTopOf="@+id/legislator_first_name" />
+
+            <TextView
+                android:id="@+id/legislator_state_abbrev"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text=""
+                app:layout_constraintStart_toEndOf="@+id/legislator_last_name"
+                app:layout_constraintTop_toTopOf="@+id/legislator_last_name" />
+
+            <TextView
+                android:id="@+id/legislator_chamber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text=""
+                app:layout_constraintStart_toEndOf="@+id/legislator_state_abbrev"
+                app:layout_constraintTop_toTopOf="@+id/legislator_state_abbrev" />
+
+            <TextView
+                android:id="@+id/legislator_district"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text=""
+                app:layout_constraintStart_toEndOf="@+id/legislator_chamber"
+                app:layout_constraintTop_toTopOf="@+id/legislator_chamber" />
 
 
             <TextView
-                android:id="@+id/videoChatRepFBInfo"
+                android:id="@+id/legislator_facebook"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:text="FB: @RepHaventMadeUpMyMind"
+                android:textColor="@color/colorPrimaryDark"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/videoChatRepInfo" />
+                app:layout_constraintTop_toBottomOf="@+id/legislator_first_name" />
 
+            <!--
             <TextView
                 android:id="@+id/fbEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
+                android:layout_marginStart="92dp"
                 android:text="Edit"
                 android:textColor="@color/colorPrimaryDark"
-                app:layout_constraintStart_toEndOf="@+id/videoChatRepFBInfo"
-                app:layout_constraintTop_toTopOf="@+id/videoChatRepFBInfo" />
+                app:layout_constraintStart_toEndOf="@+id/legislator_facebook"
+                app:layout_constraintTop_toTopOf="@+id/legislator_facebook" />
+            -->
+
+            <ImageView
+                android:id="@+id/edit_facebook"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="24dp"
+                app:layout_constraintBottom_toBottomOf="@+id/legislator_facebook"
+                app:layout_constraintStart_toEndOf="@+id/legislator_facebook"
+                app:layout_constraintTop_toTopOf="@+id/legislator_facebook"
+                app:srcCompat="@drawable/baseline_edit_black_18dp" />
 
 
             <TextView
-                android:id="@+id/videoChatRepTwitterInfo"
+                android:id="@+id/legislator_twitter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:text="TW: @RepFenceSitter"
+                android:textColor="@color/colorPrimaryDark"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/videoChatRepFBInfo" />
+                app:layout_constraintTop_toBottomOf="@+id/legislator_facebook" />
 
+            <!--
             <TextView
                 android:id="@+id/twitterEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
+                android:layout_marginStart="160dp"
                 android:text="Edit"
                 android:textColor="@color/colorPrimaryDark"
-                app:layout_constraintStart_toEndOf="@+id/videoChatRepTwitterInfo"
-                app:layout_constraintTop_toTopOf="@+id/videoChatRepTwitterInfo" />
+                app:layout_constraintStart_toEndOf="@+id/legislator_twitter"
+                app:layout_constraintTop_toTopOf="@+id/legislator_twitter" />
+                -->
+
+            <ImageView
+                android:id="@+id/edit_twitter"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="24dp"
+                app:layout_constraintBottom_toBottomOf="@+id/legislator_twitter"
+                app:layout_constraintStart_toEndOf="@+id/legislator_twitter"
+                app:layout_constraintTop_toTopOf="@+id/legislator_twitter"
+                app:srcCompat="@drawable/baseline_edit_black_18dp" />
 
 
             <TextView
@@ -286,11 +348,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="24dp"
                 android:text="YouTube Video Description"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/videoChatRepTwitterInfo" />
+                app:layout_constraintTop_toBottomOf="@+id/legislator_twitter" />
 
             <TextView
                 android:id="@+id/editYouTubeButton"
@@ -305,13 +367,16 @@
 
             <TextView
                 android:id="@+id/videoChatYouTubeDescription"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:inputType="textMultiLine"
                 android:text="Description Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \nDescription Description Description \n"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/videoChatYouTubeVideoDescription" />
 

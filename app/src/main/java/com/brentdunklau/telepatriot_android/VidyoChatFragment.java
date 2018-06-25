@@ -2,17 +2,20 @@ package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -146,14 +149,12 @@ public class VidyoChatFragment extends BaseFragment implements
     private String nodeKey;
     private TextView vidyoChatDescriptionText;
     private EditText mRepEdit;
-    private EditText mFBEdit;
-    private EditText mTwitterEdit;
+    //private EditText mFBEdit;
+    //private EditText mTwitterEdit;
     private TextView mRepButton;
-    private TextView mFBButton;
-    private TextView mTwitterButton;
-    private TextView mRepName;
+    //private TextView mFBButton;
+    //private TextView mTwitterButton;
     private TextView mRepFB;
-    private TextView mRepTwitter;
     private TextView mDescriptionEditButton;
     //private EditText mDescriptionEditText;
     private TextView mYouTubeEditButton;
@@ -164,6 +165,14 @@ public class VidyoChatFragment extends BaseFragment implements
     private String reasons;
     private LocalCamera localCamera;
     private VideoNode currentVideoNode;
+
+
+    private TextView legislator_first_name, legislator_last_name, legislator_state_abbrev, legislator_chamber, legislator_district;
+    // put the Choose TextView "link" here
+    private TextView legislator_facebook;
+    private ImageView edit_facebook;
+    private TextView legislator_twitter;
+    private ImageView edit_twitter;
 
     /*
      *  Operating System Events
@@ -191,6 +200,42 @@ public class VidyoChatFragment extends BaseFragment implements
         //          set before the user gets here, then it won't matter if they are initiator or guest
 
         List<VideoType> videoTypes = VideoType.getTypes();
+
+
+        ////////////////////////////////////////////////////////////////////////////
+        // Legislator section
+        // reference the Legislator Choose button here
+        legislator_first_name = myView.findViewById(R.id.legislator_first_name);
+        legislator_last_name = myView.findViewById(R.id.legislator_last_name);
+        legislator_state_abbrev = myView.findViewById(R.id.legislator_state_abbrev);
+        legislator_chamber = myView.findViewById(R.id.legislator_chamber);
+        legislator_district = myView.findViewById(R.id.legislator_district);
+        legislator_facebook = myView.findViewById(R.id.legislator_facebook);
+        edit_facebook = myView.findViewById(R.id.edit_facebook);
+        legislator_twitter = myView.findViewById(R.id.legislator_twitter);
+        edit_twitter = myView.findViewById(R.id.edit_twitter);
+        edit_facebook.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // pop up a dialog with a field allowing you to set facebook handle
+                dlg(currentVideoNode, "legislator_facebook",
+                        currentVideoNode.getLegislator_facebook(), legislator_facebook,
+                        "Facebook Handle");
+            }
+        });
+        edit_twitter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // pop up a dialog with a field allowing you to set twitter handle
+                dlg(currentVideoNode, "legislator_twitter",
+                        currentVideoNode.getLegislator_twitter(), legislator_twitter,
+                        "Twitter Handle");
+            }
+        });
+
+
+
+
         //TODO make dynamic mission keys
         VideoType videoType = videoTypes.get(0); // TODO how are we going to choose different video types?
         videoTypeKey = videoType.getKey();
@@ -217,9 +262,6 @@ public class VidyoChatFragment extends BaseFragment implements
         mToken.setText(jsonTokenData);
         vidyoChatDescriptionText = myView.findViewById(R.id.videoChatDescriptionText);
         vidyoChatDescriptionText.setText(videoType.getVideo_mission_description());
-        mRepName = myView.findViewById(R.id.videoChatRepInfo);
-        mRepFB = myView.findViewById(R.id.videoChatRepFBInfo);
-        mRepTwitter = myView.findViewById(R.id.videoChatRepTwitterInfo);
         mRepEdit = myView.findViewById(R.id.repNameEdit);
         mRepButton = myView.findViewById(R.id.repEdit);
         mRepButton.setOnClickListener(new View.OnClickListener() {
@@ -228,22 +270,26 @@ public class VidyoChatFragment extends BaseFragment implements
                 chooseLegislator();
             }
         });
-        mFBButton = myView.findViewById(R.id.fbEdit);
-        mFBEdit = myView.findViewById(R.id.fbRepEdit);
+        //mFBButton = myView.findViewById(R.id.fbEdit);
+        //mFBEdit = myView.findViewById(R.id.fbRepEdit);
+        /******
         mFBButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setFBInfo();
             }
         });
-        mTwitterEdit = myView.findViewById(R.id.twitterInfoEdit);
-        mTwitterButton = myView.findViewById(R.id.twitterEdit);
+         ******/
+        //mTwitterEdit = myView.findViewById(R.id.twitterInfoEdit);
+        //mTwitterButton = myView.findViewById(R.id.twitterEdit);
+        /******
         mTwitterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setTwitterInfo();
             }
         });
+         *******/
 
         mDescriptionEditButton = myView.findViewById(R.id.editDescriptionButon);
         mDescriptionEditButton.setOnClickListener(new View.OnClickListener() {
@@ -297,7 +343,8 @@ public class VidyoChatFragment extends BaseFragment implements
                     currentVideoNode = vnode;
                     currentVideoNode.setKey(videoNodeKey);
                     vidyoChatDescriptionText.setText(currentVideoNode.getVideo_mission_description());
-                    legislator = currentVideoNode.getLegislator();
+                    setLegislatorFields(currentVideoNode);
+
                     mYouTubeDescription.setText(currentVideoNode.getYoutube_video_description());
                 }
 
@@ -390,6 +437,106 @@ public class VidyoChatFragment extends BaseFragment implements
 
         return myView;
     }
+
+    /**
+     * Created so that we could pop up a simple dialog and edit facebook and twitter handles
+     * for legislators
+     * @param videoNode The node under video/list
+     * @param attributeName The name of the attribute in the video node, i.e. It would be the
+     *                      "legislator_facebook" part of video/list/{key}/legislator_facebook
+     * @param attributeValue the value of the node, i.e. the value of video/list/{key}/legislator_facebook
+     * @param screenElement the corresponding screen element on this fragmenet, i.e. legislator_facebook
+     */
+    private void dlg(final VideoNode videoNode, final String attributeName, String attributeValue, TextView screenElement, String what) {
+        LayoutInflater li = LayoutInflater.from(myView.getContext());
+        final View promptsView = li.inflate(R.layout.ok_cancel_dialog_one_numeric_input, null);
+        TextView heading = promptsView.findViewById(R.id.dialog_heading);
+        heading.setText("Edit "+what);
+        TextView moreInf = promptsView.findViewById(R.id.dialog_additional_information);
+        String moreInfo = "Update the "+what+" for "+videoNode.getLegislator_first_name()+" "+videoNode.getLegislator_last_name();
+        moreInf.setText(moreInfo);
+        EditText thefield = promptsView.findViewById(R.id.dialog_input);
+        thefield.setText(attributeValue);
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(myView.getContext());
+        alertDialogBuilder.setView(myView);
+
+        // set prompts.xml to alertdialog builder
+        alertDialogBuilder.setView(promptsView);
+
+        final EditText userInput = (EditText) promptsView
+                .findViewById(R.id.dialog_input);
+
+        // set dialog message
+        alertDialogBuilder
+                .setCancelable(false)
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                // this is where we save the new value to the database
+                                String newval = ((EditText) promptsView.findViewById(R.id.dialog_input)).getText().toString();
+
+                                // See EditSocialMediaVC in Swift - You can't just update the social media node like this.
+                                // You have to update the legislator's channel.  And I'm not even sure if the swift code then
+                                // updates the social handle under /video/list/{key}/legislator_facebook or legislator_twitter
+                                // That might be happening via firebase trigger function.  I would have to see how the iPhone
+                                // version works to be sure.
+                                FirebaseDatabase.getInstance().getReference("video/list/"+videoNode.getKey()+"/"+attributeName).setValue(newval);
+                                dialog.dismiss();
+                            }
+                        })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+        // create alert dialog
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        // show it
+        alertDialog.show();
+    }
+
+    private void setLegislatorFields(VideoNode node) {
+        if(node.getLeg_id() == null || node.getLeg_id().trim().equals("")) {
+            legislator_first_name.setText("");
+            legislator_last_name.setText("");
+            legislator_state_abbrev.setText("");
+            legislator_chamber.setText("");
+            legislator_district.setText("");
+            legislator_facebook.setText("");
+            legislator_twitter.setText("");
+        }
+        else {
+            legislator_first_name.setText(node.getLegislator_first_name());
+            legislator_last_name.setText(node.getLegislator_last_name());
+            String state_abbrev = "";
+            if(node.getLegislator_state() != null)
+                state_abbrev = node.getLegislator_state().toUpperCase();
+            legislator_state_abbrev.setText(state_abbrev);
+
+            if(node.getLegislator_chamber() == null)
+                legislator_chamber.setText("");
+            else
+                legislator_chamber.setText("lower".equalsIgnoreCase(node.getLegislator_chamber()) ? "HD" : "SD");
+
+            legislator_district.setText(node.getLegislator_district());
+
+            String fb = "FB: -";
+            if(node.getLegislator_facebook() != null)
+                fb = "FB: "+node.getLegislator_facebook();
+            legislator_facebook.setText(fb);
+
+            String tw = "TW: -";
+            if(node.getLegislator_twitter() != null)
+                tw = "TW: "+node.getLegislator_twitter();
+            legislator_twitter.setText(tw);
+        }
+
+
+    }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -586,14 +733,15 @@ public class VidyoChatFragment extends BaseFragment implements
         dialog.show();
     }
 
+    /*********
     private void setTwitterInfo() {
         if (mTwitterButton.getText().toString().equals("Edit")) {
-            mRepTwitter.setVisibility(View.INVISIBLE);
+            legislator_twitter.setVisibility(View.INVISIBLE);
             mTwitterEdit.setVisibility(View.VISIBLE);
             mTwitterButton.setText("Done");
         }else {
-            mRepTwitter.setText(mTwitterEdit.getText().toString().trim());
-            mRepTwitter.setVisibility(View.VISIBLE);
+            legislator_twitter.setText(mTwitterEdit.getText().toString().trim());
+            legislator_twitter.setVisibility(View.VISIBLE);
             mTwitterEdit.setVisibility(View.GONE);
             mTwitterButton.setText("Edit");
         }
@@ -611,23 +759,11 @@ public class VidyoChatFragment extends BaseFragment implements
             mFBButton.setText("Edit");
         }
     }
+     **********/
 
     private void chooseLegislator() {
         EditLegislatorForVideoDlg dialog = new EditLegislatorForVideoDlg(getActivity(), currentVideoNode);
         dialog.show();
-
-        /************
-        if (mRepButton.getText().toString().equals("Edit")) {
-            mRepName.setVisibility(View.INVISIBLE);
-            mRepEdit.setVisibility(View.VISIBLE);
-            mRepButton.setText("Done");
-        }else {
-            mRepName.setText(mRepEdit.getText().toString().trim());
-            mRepName.setVisibility(View.VISIBLE);
-            mRepEdit.setVisibility(View.GONE);
-            mRepButton.setText("Edit");
-        }
-        **************/
     }
 
 

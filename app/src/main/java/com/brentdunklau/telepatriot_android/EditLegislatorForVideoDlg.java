@@ -2,19 +2,29 @@ package com.brentdunklau.telepatriot_android;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Intent;
+import android.net.Uri;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.brentdunklau.telepatriot_android.util.Legislator;
+import com.brentdunklau.telepatriot_android.util.LegislatorHolder;
+import com.brentdunklau.telepatriot_android.util.Util;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -30,6 +40,9 @@ public class EditLegislatorForVideoDlg extends Dialog {
     // just some default values...
     private String selectedState = "tx", selectedChamber = "HD", selectedDistrict = "1";
     private Map<String, String> stateMap = new HashMap<String, String>();
+
+    private FirebaseRecyclerAdapter<Legislator, LegislatorHolder> mAdapter;
+    private RecyclerView legislatorRecyclerView;
 
     public EditLegislatorForVideoDlg(Activity activity, VideoNode v) {
         super(activity);
@@ -101,6 +114,10 @@ public class EditLegislatorForVideoDlg extends Dialog {
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) { }
         });
+
+
+        legislatorRecyclerView = (RecyclerView) findViewById(R.id.legislator_list);
+        legislatorRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
     }
 
     @Override
@@ -166,32 +183,74 @@ public class EditLegislatorForVideoDlg extends Dialog {
     }
 
     private void displayLegislators(String state, String chamber, String district) {
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
-        System.out.println("displayLegislators:  nothing here yet");
+        String ch = chamber.equalsIgnoreCase("SD") ? "upper" :  "lower";
+        String state_chamber_district = state+"-"+ch+"-"+district;
+        final Query ref = FirebaseDatabase.getInstance().getReference("states/legislators")
+                .orderByChild("state_chamber_district")
+                .equalTo(state_chamber_district);
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                doit(ref);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) { }
+        });
+    }
+
+    private void doit(final /*DatabaseReference*/ Query ref) {
+
+        //final FragmentManager fragmentManager = getFragmentManager();
+
+        // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
+        mAdapter = new FirebaseRecyclerAdapter<Legislator, LegislatorHolder>(
+                Legislator.class,
+                R.layout.legislator_details,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
+                LegislatorHolder.class,
+                ref) {
+            @Override
+            public void populateViewHolder(LegislatorHolder holder, Legislator legislator, int position) {
+                holder.setLegislator(legislator);
+            }
+
+
+            // https://stackoverflow.com/a/41629505
+            @Override
+            public LegislatorHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                LegislatorHolder viewHolder = super.onCreateViewHolder(parent, viewType);
+
+                viewHolder.setOnClickListener(new LegislatorHolder.ClickListener() {
+                    @Override
+                    public void onItemClick(View view, int position) {
+                        mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                Legislator legislator = dataSnapshot.getValue(Legislator.class);
+                                // now update the video node and put this legislator on that node
+                                if(currentVideoNode != null) {
+                                    DatabaseReference vref = FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey());
+                                    vref.updateChildren(legislator.getValuesForVideoNode());
+                                }
+
+                                // then dismiss this dialog
+                                EditLegislatorForVideoDlg.this.dismiss();
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+
+                    //@Override
+                    //public void onItemLongClick(View view, int position) {
+                    //}
+                });
+                return viewHolder;
+            }
+        };
+        legislatorRecyclerView.setAdapter(mAdapter);
     }
 }
