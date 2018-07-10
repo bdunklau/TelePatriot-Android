@@ -64,7 +64,6 @@ var mainStuff = function() {
     .then(stuff => {
         return db.ref(`administration/dockers`).once('value').then(snapshot => {
             var html = ''
-            html += '<a href="/findADocker">Find A Docker</a>'
             html += '<table cellspacing="0" border="1" cellpadding="2">'
             html += '<tr>'
             html +=     '<th colspan="12">/administration/dockers</th>'
@@ -101,6 +100,34 @@ var mainStuff = function() {
             })
             html += '</table>'
             stuff.administration_dockers = html
+            return stuff
+        })
+    })
+    .then(stuff => {
+        return db.ref(`videos/docker_requests`).once('value').then(snapshot => {
+            var html = ''
+            html += '<table cellspacing="0" border="1" cellpadding="2">'
+            html += '<tr>'
+            html +=     '<th colspan="5">/videos/docker_requests</th>'
+            html += '</tr>'
+            html += '<tr>'
+            html +=     '<th>key</th>'
+            html +=     '<th>uid (user id)</th>'
+            html +=     '<th>request_date</th>'
+            html +=     '<th>video_node_key</th>'
+            html +=     '<th>room_id</th>'
+            html += '</tr>'
+            snapshot.forEach(function(child) {
+                html += '<tr>'
+                html +=     '<td>'+child.key+'</td>'
+                html +=     '<td>'+child.val().uid+'</td>'
+                html +=     '<td>'+child.val().request_date+'</td>'
+                html +=     '<td>'+child.val().video_node_key+'</td>'
+                html +=     '<td>'+child.val().room_id+'</td>'
+                html += '</tr>'
+            })
+            html += '</table>'
+            stuff.docker_requests = html
             return stuff
         })
     })
@@ -207,35 +234,12 @@ var htmlOfHosts = function(hosts, title) {
         html +=     '<td>'+host.type+'</td>'
         html +=     '<td>'+host.host+'</td>'
         html +=     '<td><a href="/dockers?host='+host.host+'&port='+host.port+'">dockers</a></td>'
-        html +=     '<td><a href="/findADocker?host='+host.host+'&port='+host.port+'">find a docker</a></td>'
+        html +=     '<td><a href="/testRequestDocker?host='+host.host+'&port='+host.port+'">find a docker</a></td>'
         html += '</tr>'
     })
     html += '</table>'
     return html
 }
-
-
-// This functions queries /administration/dockers and returns a docker container
-// that is ready to connect to and start recording.  And if no docker container is
-// available, this function will create one.
-exports.findADocker = functions.https.onRequest((req, res) => {
-    return db.ref(`administration/dockers`).once('value').then(snapshot => {
-        if(snapshot.numChildren() == 0) {
-            var callback = function(error, response, body) {
-                // set /administration/dockers/{key}/video_node_key = video node key
-                // so that we can tell this docker is being used at the moment
-            }
-            return createDocker(req.query.host, req.query.port, callback)
-        }
-        else {
-            var dockers = []
-            snapshot.forEach(function(child) {
-                dockers.push(child.val())
-            })
-            var runningDockers = _.filter(dockers, {'running':true})
-        }
-    })
-})
 
 
 exports.dockers = functions.https.onRequest((req, res) => {
@@ -291,13 +295,13 @@ var getDockerHtml = function(dockers, url, vmHost, vmPort) {
     var html = ''
     html += '<b>Docker Instances returned by this url:</b><br/>'
     html += '<a href="'+url+'">'+url+'</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<a href="/createAnotherDocker?vmHost='+vmHost+'&vmPort='+vmPort+'">Create Another Docker</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+    html += '<a href="/testCreateAnotherDocker?vmHost='+vmHost+'&vmPort='+vmPort+'">Create Another Docker</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
     html += '<br/>'
     html += '<table border="1">'
     _.each(dockers, function(docker) {
         var isUp = false
         if(docker.status && docker.status.toLowerCase().startsWith('up')) isUp = true
-        var startDocker = '<a href="/startDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">start</a>'
+        var startDocker = '<a href="/testStartDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">start</a>'
         var stopDocker = '<a href="/stopDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">stop</a>'
         var stopAndRemove = '<a href="/stopAndRemoveDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">stop & remove</a>'
         var portStr = ''
@@ -405,7 +409,7 @@ exports.listRecordings = functions.https.onRequest((req, res) => {
 })
 
 
-exports.startDocker = functions.https.onRequest((req, res) => {
+exports.testStartDocker = functions.https.onRequest((req, res) => {
     var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/start-docker?dockerName='+req.query.dockerName
     return request(url, function(error, response, body) {
         // body/response doesn't matter because we will get the Up/Exited status by
@@ -533,7 +537,7 @@ exports.stopAndRemoveDocker = functions.https.onRequest((req, res) => {
 })
 
 
-exports.createAnotherDocker = functions.https.onRequest((req, res) => {
+exports.testCreateAnotherDocker = functions.https.onRequest((req, res) => {
     var callback = function(error, response, body) {
         // body/response doesn't matter because we will get the Up/Exited status by
         // calling mainStuff()...
@@ -559,11 +563,110 @@ exports.createAnotherDocker = functions.https.onRequest((req, res) => {
 })
 
 
+/**************************************************************
+// This function tests the database trigger that listens on videos/docker_requests
+// Mobile clients will write to videos/docker_requests when they want to start recording
+// and stop recording.  This http test function allows us to write to the same place that
+// the mobile clients will write to.
+//
+// The trigger exports.dockerRequest is responsible for determining what docker instance is
+// available for recording.  See the comment header above that trigger for the explanation of
+// how it makes this determination
+*******************************************************************/
+exports.testRequestDocker = functions.https.onRequest((req, res) => {
+    // create a docker_request...
+    var docker_request = {}  // simulated user id...
+    docker_request['uid'] = 'dztOse5lKoNht9bPpOl3QeE33y22'
+    docker_request['request_type'] = 'start recording' // can also be 'stop recording'
+    docker_request['request_date'] = date.asCentralTime()
+    docker_request['request_date_ms'] = date.asMills()
+    docker_request['video_node_key'] = date.asMillis() //simulated key
+    docker_request['room_id'] = date.asMillis() //simulated room_id
+    return db.ref(`videos/docker_requests`).push().set(docker_request).then(() => {
+        return mainStuff().then(stuff => {
+            return res.status(200).send(render(stuff))
+        })
+    })
+
+    /********* maybe...
+    return db.ref(`administration/dockers`).once('value').then(snapshot => {
+        if(snapshot.numChildren() == 0) {
+            var callback = function(error, response, body) {
+                // set /administration/dockers/{key}/video_node_key = video node key
+                // so that we can tell this docker is being used at the moment
+            }
+            return createDocker(req.query.host, req.query.port, callback)
+        }
+        else {
+            var dockers = []
+            snapshot.forEach(function(child) {
+                dockers.push(child.val())
+            })
+            var runningDockers = _.filter(dockers, {'running':true})
+        }
+    })
+    ***********/
+})
+
+
+/*************************************************************
+A docker request can either be a 'start recording' request or a 'stop recording' request
+Start recording requests (event.data.val().request_type = 'start recording') cause this function
+to query /administration/dockers looking for an instance that is running:true and recording:false
+If no instance like that can be found, we next look for running:false and then start that instance
+If no stopped instance can be found, this function will create a new instance, start it, then
+start the recording
+
+WHAT DO WE EXPECT TO HAPPEN HERE?...
+*************************************************************/
+exports.dockerRequest = functions.database.ref('videos/docker_requests').onWrite(event => {
+    // ignore deletes...
+    if(!event.data.val()) return false
+    // ignore malformed...
+    if(!event.data.val().request_type) return false
+    var type = event.data.val().request_type
+    // we don't 'request a room' - we are requesting a 'recording secretary'.  The room is just a
+    // name/string that we already know
+    if(type == 'start recording') {
+        //find the first 'virtual machine' node from /administration/hosts
+        return db.ref(`administration/hosts`).orderByChild('type').equalTo('virtual machine').limitToFirst(1).once('value').then(snapshot => {
+            // TODO error handling if no vm's found?  This should never be the case because we hand jam the vm into the database
+            var vm = snapshot.val()[0]
+
+            // then find all /administration/dockers nodes that match the vm's 'host' value (an IP address)
+            return event.data.adminRef.root.child(`administration/dockers`).orderByChild('vm_host').equalTo(vm.host).once('value').then(snapshot => {
+                var dockers = []
+                snapshot.forEach(function(child) {
+                    dockers.push(child.val())
+                })
+                var availableDockers = _.filter(dockers, {'running': true, 'recording': false})
+                if(!availableDockers || availableDockers.length == 0) {
+                    var stoppedDockers = _.filter(dockers, {'running': false})
+                    if(!stoppedDockers || stoppedDockers.length == 0) {
+                        // TODO we have to create a new docker instance.  It will be created running by default
+                    }
+                    else {
+                        var selectedDocker = stoppedDockers[0]
+                        // TODO need to start this docker first...
+                    }
+                }
+                else {
+                    var selectedDocker = availableDockers[0]
+                    // TODO write this docker to where?...
+                }
+            })
+        })
+    }
+    else if(type == 'stop recording') {
+    }
+    // ignore all others...
+    else return false
+})
+
+
 var createDocker = function(host, port, callback) {
     var url = 'http://'+host+':'+port+'/create-another-docker'
-    return request(url, function(error, response, body) {
-        callback(error, response, body)
-    })
+    return request(url, callback)
 }
 
 
@@ -711,6 +814,9 @@ var render = function(stuff) {
     }
     if(stuff.administration_dockers) {
         html += '<P/>'+stuff.administration_dockers
+    }
+    if(stuff.docker_requests) {
+        html += '<P/>'+stuff.docker_requests
     }
     html += '</body></html>'
     return html
