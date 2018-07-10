@@ -2,6 +2,7 @@ package com.brentdunklau.telepatriot_android;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -22,17 +23,21 @@ public class VideoInvitationHolder  extends RecyclerView.ViewHolder {
     // https://stackoverflow.com/a/41629505
     private VideoInvitationHolder.ClickListener mClickListener;
 
+    // See VideoInvitationsFragment and video_invitation.xml
     public VideoInvitationHolder(View itemView) {
         super(itemView);
 
         initiator_name = itemView.findViewById(R.id.initiator_name);
         invitation_create_date = itemView.findViewById(R.id.invitation_create_date);
+        Button accept_invitation_button = itemView.findViewById(R.id.accept_invitation_button);
 
         // https://stackoverflow.com/a/41629505
-        //listener set on ENTIRE ROW, you may set on individual components within a row.
-        itemView.setOnClickListener(new View.OnClickListener() {
+        // In other XxxxHolders, we do:  itemView.setOnClickListener() so that the whole row
+        // listens for the click.  But here we just want the button to respond to touches
+        accept_invitation_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // the listener is (probably) over at VideoInvitationsFragment
                 mClickListener.onItemClick(v, getAdapterPosition());
             }
         });

@@ -423,12 +423,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public void setCurrent_video_node_key(final String current_video_node_key) {
-        database.getReference("/users/"+getUid()+"/current_video_node_key").setValue(current_video_node_key).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                User.this.current_video_node_key = current_video_node_key;
-            }
-        });
+        this.current_video_node_key = current_video_node_key;
+        database.getReference("/users/"+getUid()+"/current_video_node_key").setValue(current_video_node_key);
     }
 
     public void addAccountStatusEventListener(AccountStatusEvent.Listener l) {

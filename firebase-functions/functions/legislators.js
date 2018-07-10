@@ -1082,7 +1082,7 @@ exports.testUpdateSocialMedia = functions.https.onRequest((req, res) => {
             var ct = snapshot.numChildren()
             if(ct != 1) {
                 result.push({message:'NOT OK - We got '+ct+' '+req.query.type+'channels. We should have gotten exactly 1'})
-                return result
+                return {result: result}
             }
             else {
                 snapshot.forEach(function(child) {
@@ -1095,8 +1095,10 @@ exports.testUpdateSocialMedia = functions.https.onRequest((req, res) => {
                     }
                 })
                 return db.ref(`video/list`).orderByChild('leg_id').equalTo(req.query.leg_id).once('value').then(snapshot => {
+                    var videoNodeKeys = []
                     var attribute = req.query.type.toLowerCase() == 'facebook' ? 'legislator_facebook' : 'legislator_twitter'
                     snapshot.forEach(function(child) {
+                        videoNodeKeys.push(child.key)
                         var handle = child.val()[attribute]
                         if(handle == req.query.id) {
                             result.push({message:'OK - video/list/'+child.key+'/'+attribute+' = '+handle})
@@ -1106,15 +1108,34 @@ exports.testUpdateSocialMedia = functions.https.onRequest((req, res) => {
                             result.push({message:'NOT OK - Actually video/list/'+child.key+'/'+attribute+' = '+handle})
                         }
                     })
-                    return result
+                    return {result: result, videoNodeKeys: videoNodeKeys}
                 })
             }
         })
-        .then(result => {
+        .then(stuff => {
+            var result = stuff.result
             var html = '<html><head><body>'
             _.each(result, function(rs) {
                 html += '<br/>'+rs.message
             })
+
+            // some helpful links that we display in the results.  That way I can click each one and be
+            // taken to the exact spots in the database tree that I need to go to to verify results
+            var helplinks = []
+            helplinks.push('https://console.firebase.google.com/project/telepatriot-dev/database/telepatriot-dev/data/social_media/user_updates')
+            helplinks.push('https://console.firebase.google.com/project/telepatriot-dev/database/telepatriot-dev/data/states/legislators/'+req.query.leg_id+'/channels/0')
+            var three = []
+            if(stuff.videoNodeKeys) {
+                _.each(stuff.videoNodeKeys, function(key) {
+                    helplinks.push('https://console.firebase.google.com/project/telepatriot-dev/database/telepatriot-dev/data/video/list/'+key);
+                })
+            }
+
+            html += '<h3>Helpful Links to Verify this Test</h3>'
+            _.each(helplinks, function(link) {
+                html += '<br/><a href="'+link+'">'+link+'</a>'
+            })
+
             html += '</body></html>'
             res.status(200).send(html)
         })

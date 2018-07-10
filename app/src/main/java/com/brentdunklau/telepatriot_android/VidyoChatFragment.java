@@ -82,6 +82,7 @@ public class VidyoChatFragment extends BaseFragment implements
         FailureInvalidResource
     }
 
+    /************* not sure if we need this 7/7/18
     // Map the application state to the status to display in the toolbar.
     private static final Map<VidyoConnectorState, String> mStateDescription = new HashMap<VidyoConnectorState, String>() {{
         put(VidyoConnectorState.Connecting, "Connecting...");
@@ -92,6 +93,7 @@ public class VidyoChatFragment extends BaseFragment implements
         put(VidyoConnectorState.Failure, "Connection failed");
         put(VidyoConnectorState.FailureInvalidResource, "Invalid Resource ID");
     }};
+     ***************/
 
     // Helps check whether app has permission to access what is declared in its manifest.
     // - Permissions from app's manifest that have a "protection level" of "dangerous".
@@ -108,17 +110,14 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean mVidyoClientInitialized = false;
     private Connector mVidyoConnector = null;
     private LocalCamera mLastSelectedCamera = null;
-    private ToggleButton mToggleConnectButton;
-    private ToggleButton mMicrophonePrivacyButton;
-    private ToggleButton mCameraPrivacyButton;
     //private ProgressBar mConnectionSpinner;
     //private LinearLayout mControlsLayout;
     private LinearLayout mToolbarLayout;
     private EditText mHost;
     public EditText mDisplayName;
-    public static EditText mToken;
+    //public static EditText mToken;
     private EditText mResourceId;
-    private TextView mToolbarStatus;
+    //private TextView mToolbarStatus;
     private TextView mClientVersion;
     private VideoFrameLayout mVideoFrame;
     private VideoFrameLayout remoteFrame;
@@ -135,30 +134,22 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean mDevicesSelected = true;
     private View myView;
     public static String jsonTokenData;
-    private ToggleButton mRecord;
     private DatabaseReference userDatabase;
     private URL url = null;
-    private HttpURLConnection connection;
+    private HttpURLConnection vmConnection;
     private String mTimeMS;
     private String mTime;
     private String uid;
-    //private int missionKey;
     private Integer videoTypeKey;
     private String room; // the initiator's user id
     private String missionDescription;  // we can probably get rid of this - we have vidyoChatDescriptionText
     private String nodeKey;
     private TextView vidyoChatDescriptionText;
     private EditText mRepEdit;
-    //private EditText mFBEdit;
-    //private EditText mTwitterEdit;
     private TextView mRepButton;
-    //private TextView mFBButton;
-    //private TextView mTwitterButton;
     private TextView mRepFB;
     private TextView mDescriptionEditButton;
-    //private EditText mDescriptionEditText;
     private TextView mYouTubeEditButton;
-    //private EditText mYouTubeEditText;
     private TextView mYouTubeDescription;
     private Legislator legislator;
     private ProgressDialog pd;
@@ -166,6 +157,12 @@ public class VidyoChatFragment extends BaseFragment implements
     private LocalCamera localCamera;
     private VideoNode currentVideoNode;
 
+    private boolean recording = false;
+
+    private ToggleButton connect_button;
+    private ToggleButton microphone_button;
+    private ToggleButton camera_button;
+    private ToggleButton record_button;
 
     private TextView legislator_first_name, legislator_last_name, legislator_state_abbrev, legislator_chamber, legislator_district;
     // put the Choose TextView "link" here
@@ -252,14 +249,14 @@ public class VidyoChatFragment extends BaseFragment implements
         mHost.setText("prod.vidyo.io");
         mDisplayName = myView.findViewById(R.id.displayName);
         mDisplayName.setText(User.getInstance().getName());
-        mToken = myView.findViewById(R.id.token);
+        //mToken = myView.findViewById(R.id.token);
         mResourceId = myView.findViewById(R.id.resource);
         mResourceId.setText(getRoom());
-        mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
+        //mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
         mClientVersion = myView.findViewById(R.id.clientVersion);
         //mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
         mSelf = (MainActivity) getActivity();
-        mToken.setText(jsonTokenData);
+        //mToken.setText(jsonTokenData);
         vidyoChatDescriptionText = myView.findViewById(R.id.videoChatDescriptionText);
         vidyoChatDescriptionText.setText(videoType.getVideo_mission_description());
         mRepEdit = myView.findViewById(R.id.repNameEdit);
@@ -311,18 +308,13 @@ public class VidyoChatFragment extends BaseFragment implements
 
 
         // Set the onClick listeners for the buttons
-        mToggleConnectButton = myView.findViewById(R.id.videoChatConnectButton);
-        mToggleConnectButton.setOnClickListener(this);
-        mMicrophonePrivacyButton = myView.findViewById(R.id.microphone_on_button);
-        mMicrophonePrivacyButton.setOnClickListener(this);
-        mCameraPrivacyButton = myView.findViewById(R.id.camera_on_button);
-        mCameraPrivacyButton.setOnClickListener(this);
-        /*********
-        ToggleButton button;
-        button = myView.findViewById(R.id.camera_switch);
-        button.setOnClickListener(this);
-         *********/
-        mRecord = myView.findViewById(R.id.recordButton);
+        connect_button = myView.findViewById(R.id.connect_button);
+        connect_button.setOnClickListener(this);
+        microphone_button = myView.findViewById(R.id.microphone_button);
+        microphone_button.setOnClickListener(this);
+        camera_button = myView.findViewById(R.id.camera_button);
+        camera_button.setOnClickListener(this);
+        record_button = myView.findViewById(R.id.record_button);
 
 
         // Set the application's UI context to this activity.
@@ -353,85 +345,34 @@ public class VidyoChatFragment extends BaseFragment implements
             });
         }
 
-        mRecord.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        record_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
 
                 int SDK_INT = android.os.Build.VERSION.SDK_INT;
-                if (SDK_INT > 8)
-                {
-                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-                            .permitAll().build();
-                    StrictMode.setThreadPolicy(policy);
-                    //your codes here
-
-                    if (isChecked){
-
-                        mRecord.setBackgroundResource(R.drawable.recordstop);
-
-                        try {
-                            url = new URL("http://35.185.56.20/record/demoRoom/uniquefield");
-                            connection = (HttpURLConnection) url.openConnection();
-                            OutputStream stream= new BufferedOutputStream(connection.getOutputStream());
-
-                            Toast.makeText(mSelf, "Docker connection", Toast.LENGTH_SHORT).show();
-                        } catch (MalformedURLException e) {
-                            Toast.makeText(mSelf, "Malformed", Toast.LENGTH_SHORT).show();
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            Toast.makeText(mSelf, "IOE", Toast.LENGTH_SHORT).show();
-                            e.printStackTrace();
-                        }
-
-                        long timeMS = System.currentTimeMillis();
-                        mTimeMS = String.valueOf(timeMS);
-                        Date date = Calendar.getInstance().getTime();
-                        mTime = String.valueOf(date);
-
-
-                        Map<String, String> videoListMap = new HashMap<>();
-                        videoListMap.put("node_create_date", mTime);
-                        videoListMap.put("node_create_date_ms", mTimeMS);
-                        videoListMap.put("video_mission_description", missionDescription);
-
-                        // looks like multi-path update
-                        userDatabase = FirebaseDatabase.getInstance().getReference();
-                        DatabaseReference pushed = userDatabase.child("video").child("list").push();
-                        nodeKey = pushed.getKey();
-                        pushed.setValue(videoListMap);
-
-                        String email = User.getInstance().getEmail();
-                        String name = User.getInstance().getName();
-
-                        Map<String, String> participantMap = new HashMap<>();
-
-                        participantMap.put("email", email);
-                        participantMap.put("name", name);
-                        participantMap.put("start_date", mTime);
-                        participantMap.put("start_date_ms", mTimeMS);
-                        participantMap.put("uid", uid);
-
-                        pushed.child("video_participants").child("0").setValue(participantMap);
-
-
-                    } else {
-                        mRecord.setBackgroundResource(R.drawable.record);
-                        if (url != null){
-                            connection.disconnect();
-                            url = null;
-                        }
-
-                    }
+                if (SDK_INT < 9) {
+                    Toast.makeText(mSelf, "Android Update Required", Toast.LENGTH_LONG).show();
                 }
+
+                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                        .permitAll().build();
+                StrictMode.setThreadPolicy(policy);
+
+                if (isChecked) {
+                    startRecording();
+                } else {
+                    stopRecording();
+                }
+
             }
         });
 
         /*******
         if(room != null) {
-            mToggleConnectButton.setChecked(true);
+            connect_button.setChecked(true);
             _mVidyoConnector();
-            toggleConnect();
+            connectionClicked();
         }
          ********/
 
@@ -632,6 +573,7 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
     private String getVideoNodeKey(String vtype) {
+
         String current_video_node_key = User.getInstance().getCurrent_video_node_key();
         if(current_video_node_key != null) {
             return current_video_node_key;
@@ -663,12 +605,65 @@ public class VidyoChatFragment extends BaseFragment implements
         return room;
     }
 
-    private void getToken() {
+    private String getToken() {
+        String token = "";
+        HttpURLConnection connection = null;
+        BufferedReader reader = null;
+
+        try {
+            String uid = User.getInstance().getUid();
+            if(uid.contains("@")){
+                uid = uid.replaceAll("@","_");
+            }
+            // TODO maybe get this url from the database instead?
+            // TODO not good to have parm named userName if the value is the user's id
+            String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + uid;
+            URL url = new URL(urlString);
+
+            connection = (HttpURLConnection) url.openConnection();
+            connection.connect();
+            InputStream inputStream = connection.getInputStream();
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            StringBuffer buffer = new StringBuffer();
+            String line = "";
+
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line + "/n");
+            }
+
+            String bufferString = buffer.toString();
+            JSONObject jsonObject = new JSONObject(bufferString);
+            token = jsonObject.getString("token").trim();
+        } catch (MalformedURLException e) {
+            // TODO what are we supposed to do in this case?
+        } catch (IOException e) {
+            // TODO what are we supposed to do in this case?
+        } catch (JSONException e) {
+            // TODO what are we supposed to do in this case?
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            }
+            catch (IOException e) {
+                // TODO what are we supposed to do in this case?
+            }
+        }
+        return token;
+    }
+
+    /********* get rid of this once the new version above is working
+    private void getToken_orig() {
         pd = new ProgressDialog(getActivity());
         pd.setMessage("Please Wait");
         pd.show();
 
-        HttpURLConnection connection = null;
+        HttpURLConnection vmConnection = null;
         BufferedReader reader = null;
 
         //TODO make dynamic
@@ -681,9 +676,9 @@ public class VidyoChatFragment extends BaseFragment implements
             String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + tokenThing;
             URL url = new URL(urlString);
 
-            connection = (HttpURLConnection) url.openConnection();
-            connection.connect();
-            InputStream inputStream = connection.getInputStream();
+            vmConnection = (HttpURLConnection) url.openConnection();
+            vmConnection.connect();
+            InputStream inputStream = vmConnection.getInputStream();
             reader = new BufferedReader(new InputStreamReader(inputStream));
 
             StringBuffer buffer = new StringBuffer();
@@ -701,8 +696,8 @@ public class VidyoChatFragment extends BaseFragment implements
         } catch (JSONException e) {
             e.printStackTrace();
         } finally {
-            if (connection != null) {
-                connection.disconnect();
+            if (vmConnection != null) {
+                vmConnection.disconnect();
             }
             try {
                 if (reader != null) {
@@ -713,6 +708,7 @@ public class VidyoChatFragment extends BaseFragment implements
         }
         pd.dismiss();
     }
+     ***********/
 
     private void editYouTubeDescription() {
         if (mYouTubeEditButton.getText().toString().trim().equals("Edit")){
@@ -888,15 +884,15 @@ public class VidyoChatFragment extends BaseFragment implements
                     }
 
                     // If cameraPrivacy is configured then mute the camera
-                    mCameraPrivacyButton.setChecked(false); // reset state
+                    camera_button.setChecked(false); // reset state
                     if (mCameraPrivacy) {
-                        mCameraPrivacyButton.performClick();
+                        camera_button.performClick();
                     }
 
                     // If microphonePrivacy is configured then mute the microphone
-                    mMicrophonePrivacyButton.setChecked(false); // reset state
+                    microphone_button.setChecked(false); // reset state
                     if (mMicrophonePrivacy) {
-                        mMicrophonePrivacyButton.performClick(); 
+                        microphone_button.performClick();
                     }
 
                     // Set experimental options if any exist
@@ -906,7 +902,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
                     // If configured to auto-join, then simulate a click of the toggle connect button
                     if (mAutoJoin) {
-                        mToggleConnectButton.performClick();
+                        connect_button.performClick();
                     }
                 }
             });
@@ -923,7 +919,7 @@ public class VidyoChatFragment extends BaseFragment implements
     }
      **************/
 
-    // The state of the VidyoConnector connection changed, reconfigure the UI.
+    // The state of the VidyoConnector vmConnection changed, reconfigure the UI.
     // If connected, dismiss the controls layout
     private void changeState(VidyoConnectorState state) {
 
@@ -935,44 +931,64 @@ public class VidyoChatFragment extends BaseFragment implements
             public void run() {
 
                     // Set the status text in the toolbar.
-                    mToolbarStatus.setText(mStateDescription.get(mVidyoConnectorState));
+                    //mToolbarStatus.setText(mStateDescription.get(mVidyoConnectorState));
 
                     // Depending on the state, do a subset of the following:
-                    // - update the toggle connect button to either start call or end call image: mToggleConnectButton
+                    // - update the toggle connect button to either start call or end call image: connect_button
                     // - display toolbar in case it is hidden: mToolbarLayout
-                    // - show/hide the connection spinner: mConnectionSpinner
+                    // - show/hide the vmConnection spinner: mConnectionSpinner
                     // - show/hide the input form: mControlsLayout
                     switch (mVidyoConnectorState) {
                         case Connecting:
-                            mToggleConnectButton.setChecked(true);
+                            connect_button.setChecked(true);
                             //mConnectionSpinner.setVisibility(View.VISIBLE);
                             Toast.makeText(mSelf, "connecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Connected:
-                            mToggleConnectButton.setChecked(true);
-                            mRecord.setVisibility(View.VISIBLE);
+                            connect_button.setChecked(true);
+                            record_button.setVisibility(View.VISIBLE);
                             //mConnectionSpinner.setVisibility(View.INVISIBLE);
                             Toast.makeText(mSelf, "connected", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnecting:
+                            // See VideoChatVC.connectionClicked() - the 'if connected' block
+                            if(recording) {
+                                stopRecording();
+                            }
+
+                            // unrid()  // TODO create this method similar to VideoChatVC.unrid() in Swift
+
                             // The button just switched to the callStart image.
                             // Change the button back to the callEnd image because do not want to assume that the Disconnect
                             // call will actually end the call. Need to wait for the callback to be received
                             // before swapping to the callStart image.
-                            mToggleConnectButton.setChecked(true);
+                            connect_button.setChecked(true);
+                            record_button.setVisibility(View.GONE);
                             Toast.makeText(mSelf, "disconnecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnected:
-                            mRecord.setVisibility(View.GONE);
+                            record_button.setVisibility(View.GONE);
                             Toast.makeText(mSelf, "disconnected", Toast.LENGTH_SHORT).show();
+                            connect_button.setChecked(false);
+                            break;
                         case DisconnectedUnexpected:
+                            // TODO not sure what to do about these error conditions
+                            // displaying this kind of toast isn't helpful for the user
+                            //Toast.makeText(mSelf, "disconnect unexpected", Toast.LENGTH_SHORT).show();
+                            break;
                         case Failure:
+                            // TODO not sure what to do about these error conditions
+                            // displaying this kind of toast isn't helpful for the user
+                            //Toast.makeText(mSelf, "failure", Toast.LENGTH_SHORT).show();
+                            break;
                         case FailureInvalidResource:
-                            Toast.makeText(mSelf, "invalid resource", Toast.LENGTH_SHORT).show();
-                            mToggleConnectButton.setChecked(false);
+                            // TODO not sure what to do about these error conditions
+                            // displaying this kind of toast isn't helpful for the user
+                            //Toast.makeText(mSelf, "invalid resource", Toast.LENGTH_SHORT).show();
+                            connect_button.setChecked(false);
                             //mConnectionSpinner.setVisibility(View.INVISIBLE);
 
                             // If a return URL was provided as an input parameter, then return to that application
@@ -986,8 +1002,8 @@ public class VidyoChatFragment extends BaseFragment implements
                             // If the allow-reconnect flag is set to false and a normal (non-failure) disconnect occurred,
                             // then disable the toggle connect button, in order to prevent reconnection.
                             if (!mAllowReconnect && (mVidyoConnectorState == VidyoConnectorState.Disconnected)) {
-                                mToggleConnectButton.setEnabled(false);
-                                mToolbarStatus.setText("Call ended");
+                                connect_button.setEnabled(false);
+                                //mToolbarStatus.setText("Call ended");
                             }
 
                             if (!mHideConfig ) {
@@ -995,6 +1011,8 @@ public class VidyoChatFragment extends BaseFragment implements
                                 //mControlsLayout.setVisibility(View.VISIBLE);
                             }
                             break;
+                        // There aren't cased for recoding started and recording stopped because we already
+                        // have this method call: record_button.setOnCheckedChangeListener
                     }
                 }
             });
@@ -1007,9 +1025,9 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.videoChatConnectButton:
+            case R.id.connect_button:
                 // Connect or disconnect.
-                this.toggleConnect();
+                connectionClicked();
                 break;
 
             /***********  read NOTE below as to why commented out
@@ -1021,15 +1039,15 @@ public class VidyoChatFragment extends BaseFragment implements
                 mVidyoConnector.cycleCamera();
                 break;
             *************/
-            case R.id.camera_on_button:
+            case R.id.camera_button:
                 // Toggle the camera privacy.
-                mCameraPrivacy = mCameraPrivacyButton.isChecked();
+                mCameraPrivacy = camera_button.isChecked();
                 mVidyoConnector.setCameraPrivacy(mCameraPrivacy);
                 break;
 
-            case R.id.microphone_on_button:
+            case R.id.microphone_button:
                 // Toggle the microphone privacy.
-                mMicrophonePrivacy = mMicrophonePrivacyButton.isChecked();
+                mMicrophonePrivacy = microphone_button.isChecked();
                 mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
                 break;
 
@@ -1053,33 +1071,98 @@ public class VidyoChatFragment extends BaseFragment implements
     // The Connect button was pressed.
     // If not in a call, attempt to connect to the backend service.
     // If in a call, disconnect.
-    public void toggleConnect() {
-        if (mToggleConnectButton.isChecked()) {
-            // Abort the Connect call if resource ID is invalid. It cannot contain empty spaces or "@".
-            String resourceId = mResourceId.getText().toString().trim(); // trim leading and trailing white space
-            if (resourceId.contains(" ") || resourceId.contains("@")) {
-                changeState(VidyoConnectorState.FailureInvalidResource);
-            } else {
-                changeState(VidyoConnectorState.Connecting);
-
-                final boolean status = mVidyoConnector.connect(
-                        mHost.getText().toString().trim(),
-                        mToken.getText().toString().trim(),
-                        mDisplayName.getText().toString().trim(),
-                        /*mResourceId.getText().toString().trim()*/"aaa", // room parameter
-                        this);
-
-                if (!status) {
-                    changeState(VidyoConnectorState.Failure);
-                }
-            }
+    // See in Swift: VideoChatVC.connectionClicked()
+    public void connectionClicked() {
+        // The logic for Android is opposite from the iOS logic.  Here, connect_button.isChecked() means we just
+        // touched the connect_button but we haven't made the vmConnection yet.  In the iOS version (VideoChatVC.connectionClicked()),
+        // "if connected..." means we already are connected and we want to disconnect
+        if (connectionRequested()) {
+            doConnect();
         } else {
             // The user is either connected to a resource or is in the process of connecting to a resource;
-            // Call VidyoConnectorDisconnect to either disconnect or abort the connection attempt.
+            // Call VidyoConnectorDisconnect to either disconnect or abort the vmConnection attempt.
             changeState(VidyoConnectorState.Disconnecting);
             mVidyoConnector.disconnect();
         }
     }
+
+    private boolean connectionRequested() {
+        return connect_button.isChecked();
+    }
+
+    // modeled after Swift VideoChatVC.doConnect()
+    private void doConnect() {
+        changeState(VidyoConnectorState.Connecting);
+
+        String token = getToken();
+
+        // Abort the Connect call if resource ID is invalid. It cannot contain empty spaces or "@".
+        String resourceId = mResourceId.getText().toString().trim(); // trim leading and trailing white space
+        resourceId = resourceId.replaceAll(" ", "").replaceAll("@", "");
+
+        final boolean status = mVidyoConnector.connect(
+                mHost.getText().toString().trim(),
+                token,
+                mDisplayName.getText().toString().trim(),
+                resourceId, // room parameter
+                this);
+
+        if (!status) {
+            changeState(VidyoConnectorState.Failure);
+        }
+    }
+
+    // See Swift VideoChatVC.startRecording()
+    private void startRecording() {
+        recording = true;
+        record_button.setBackgroundResource(R.drawable.recordstop);
+
+        try {
+            // TODO What is the url?  It's not this...
+            url = new URL("http://35.185.56.20/record/demoRoom/uniquefield");
+            // We have to figure out what the url.
+            // Is it the url to the vm?
+            // How is the room_id passed?
+            // What will the unique identifier be?  Do we even need it?
+            // When should the url be determined?
+            //      When the user first comes to the Video Chat screen?
+            //      When the user clicks the connect button?
+            //      When the user clicks the record button?
+            // Seems like we should wait till the user clicks record to actually determine the url
+            // So are we going to write the url to the video node?  Seems like we would have to.
+            // Each vm and docker instance may need to write themselves to a log table in the database
+            // so that we can query that log table here for an available vm and docker instance
+            // We might start small and assume only one vm, but still, we have to have a way of
+            // determining what that url is.  We can't hardcode the vm's ip here
+            vmConnection = (HttpURLConnection) url.openConnection();
+            OutputStream stream= new BufferedOutputStream(vmConnection.getOutputStream());
+
+        } catch (MalformedURLException e) {
+            Toast.makeText(mSelf, "Cannot Record (Err 1)", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            stopRecording();
+            return;
+        } catch (IOException e) {
+            Toast.makeText(mSelf, "Cannot Record (Err 2)", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            stopRecording();
+            return;
+        }
+
+        // TODO FirebaseDatabase.getInstance()...
+        // Need to write to the video node the time the recording started
+    }
+
+    // See Swift VideoChatVC.stopRecording()
+    private void stopRecording() {
+        recording = false;
+        record_button.setBackgroundResource(R.drawable.record);
+        if (url != null) {
+            vmConnection.disconnect();
+            url = null;
+        }
+    }
+
 
     // Toggle visibility of the toolbar
     @Override
@@ -1097,13 +1180,13 @@ public class VidyoChatFragment extends BaseFragment implements
      *  Connector Events
      */
 
-    // Handle successful connection.
+    // Handle successful vmConnection.
     @Override
     public void onSuccess() {
         changeState(VidyoConnectorState.Connected);
     }
 
-    // Handle attempted connection failure.
+    // Handle attempted vmConnection failure.
     @Override
     public void onFailure(Connector.ConnectorFailReason reason) {
         changeState(VidyoConnectorState.Failure);

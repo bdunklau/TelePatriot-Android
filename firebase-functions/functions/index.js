@@ -187,6 +187,11 @@ exports.startDocker = googleCloud.startDocker
 exports.stopDocker = googleCloud.stopDocker
 exports.stopAndRemoveDocker = googleCloud.stopAndRemoveDocker
 exports.createAnotherDocker = googleCloud.createAnotherDocker
+exports.startRecording = googleCloud.startRecording
+exports.stopRecording = googleCloud.stopRecording
+exports.listRecordings = googleCloud.listRecordings
+exports.removeRecording = googleCloud.removeRecording
+exports.findADocker = googleCloud.findADocker
 
 
 const googleAuth = require('./google-auth')

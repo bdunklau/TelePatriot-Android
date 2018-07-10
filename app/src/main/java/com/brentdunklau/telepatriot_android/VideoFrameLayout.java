@@ -19,6 +19,9 @@ public class VideoFrameLayout extends FrameLayout {
         super(context, attrs);
     }
 
+    /*************************
+     * Not sure, but I don't think I need any of this...
+     *
     public void Register(IVideoFrameListener listener) {
         mListener = listener;
     }
@@ -50,4 +53,5 @@ public class VideoFrameLayout extends FrameLayout {
         }
         return super.dispatchTouchEvent(ev);
     }
+    *******************/
 }

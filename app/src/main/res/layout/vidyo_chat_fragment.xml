@@ -2,7 +2,7 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/linearLayout2"
+    android:id="@+id/constraint_layout_1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/usflag2"
@@ -34,11 +34,13 @@
         android:layout_height="wrap_content"
         android:visibility="gone" />
 
+    <!--
     <EditText
         android:id="@+id/token"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone" />
+        -->
 
     <EditText
         android:id="@+id/resource"
@@ -46,18 +48,9 @@
         android:layout_height="wrap_content"
         android:visibility="gone" />
 
-    <ToggleButton
-        android:id="@+id/recordButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/record"
-        android:textOff=""
-        android:textOn=""
-        android:visibility="gone" />
-
 
     <ToggleButton
-        android:id="@+id/videoChatConnectButton"
+        android:id="@+id/connect_button"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_marginStart="8dp"
@@ -68,26 +61,38 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <ToggleButton
-        android:id="@+id/camera_on_button"
-        android:layout_width="33dp"
+        android:id="@+id/camera_button"
+        android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="16dp"
         android:background="@drawable/toggle_camera_privacy"
         android:textOff=""
         android:textOn=""
-        app:layout_constraintStart_toEndOf="@+id/videoChatConnectButton"
-        app:layout_constraintTop_toTopOf="@+id/videoChatConnectButton" />
+        app:layout_constraintStart_toEndOf="@+id/connect_button"
+        app:layout_constraintTop_toTopOf="@+id/connect_button" />
 
     <ToggleButton
-        android:id="@+id/microphone_on_button"
+        android:id="@+id/microphone_button"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="16dp"
         android:background="@drawable/toggle_mic_privacy"
         android:textOff=""
         android:textOn=""
-        app:layout_constraintStart_toEndOf="@+id/camera_on_button"
-        app:layout_constraintTop_toTopOf="@+id/videoChatConnectButton" />
+        app:layout_constraintStart_toEndOf="@+id/camera_button"
+        app:layout_constraintTop_toTopOf="@+id/connect_button" />
+
+    <ToggleButton
+        android:id="@+id/record_button"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="16dp"
+        android:background="@drawable/record"
+        android:textOff=""
+        android:textOn=""
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@+id/microphone_button"
+        app:layout_constraintTop_toTopOf="@+id/connect_button" />
 
     <!-- Took this out because null viewId in mVidyoConnector() keeps the camera from flipping around
                 not sure why yet 6/19/18
@@ -123,23 +128,24 @@
         android:id="@+id/vidyoChatMyScreen"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@android:color/darker_gray"
         android:layout_marginTop="0dp"
+        android:background="@android:color/darker_gray"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_default="percent"
+        app:layout_constraintHeight_percent="0.35"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_default="percent"
-        app:layout_constraintWidth_percent="0.5"
-        app:layout_constraintHeight_default="percent"
-        app:layout_constraintHeight_percent="0.35"></com.brentdunklau.telepatriot_android.VideoFrameLayout>
+        app:layout_constraintWidth_percent="0.5">
+    </com.brentdunklau.telepatriot_android.VideoFrameLayout>
 
     <com.brentdunklau.telepatriot_android.VideoFrameLayout
         android:id="@+id/remoteChatScreen"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@android:color/darker_gray"
         android:layout_marginTop="0dp"
+        android:background="@android:color/darker_gray"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_default="percent"
         app:layout_constraintHeight_percent="0.35"
@@ -300,8 +306,8 @@
 
             <ImageView
                 android:id="@+id/edit_facebook"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginStart="24dp"
                 app:layout_constraintBottom_toBottomOf="@+id/legislator_facebook"
                 app:layout_constraintStart_toEndOf="@+id/legislator_facebook"
@@ -334,8 +340,8 @@
 
             <ImageView
                 android:id="@+id/edit_twitter"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginStart="24dp"
                 app:layout_constraintBottom_toBottomOf="@+id/legislator_twitter"
                 app:layout_constraintStart_toEndOf="@+id/legislator_twitter"
