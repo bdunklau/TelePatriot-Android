@@ -37,13 +37,18 @@ const compute = new Compute();
 
 
 exports.cloud = functions.https.onRequest((req, res) => {
-    return mainStuff().then(stuff => {
+    return mainStuff({}).then(stuff => {
         return res.status(200).send(render(stuff))
     })
 })
 
 
-var mainStuff = function() {
+exports.dockers = functions.https.onRequest((req, res) => {
+    return showDockers({vmHost: req.query.vmHost, vmPort: req.query.vmPort, res: res})
+})
+
+
+var mainStuff = function(stuff) {
     return db.ref(`administration/hosts`).once('value').then(snapshot => {
         var hosts = []
         var vms = []
@@ -54,12 +59,16 @@ var mainStuff = function() {
         })
         var firebaseHost = _.find(hosts, {type: 'firebase functions'}).host
         var vms = _.filter(hosts, {type: 'virtual machine'})
-        return {vmsInDatabase: vms, firebaseHost: firebaseHost}
+        stuff.vmsInDatabase = vms
+        stuff.firebaseHost = firebaseHost
+        return stuff
     })
     .then(stuff => {
         var vmHtml = htmlOfHosts(stuff.vmsInDatabase, 'Virtual Machines Stored in the database under /administration/hosts')
         var firebaseHostHtml = htmlForFirebaseHost(stuff)
-        return {vmsInDatabase: vmHtml, firebaseHost: firebaseHostHtml}
+        stuff.vmsInDatabase = vmHtml
+        stuff.firebaseHost = firebaseHostHtml
+        return stuff
     })
     .then(stuff => {
         return db.ref(`administration/dockers`).once('value').then(snapshot => {
@@ -104,18 +113,17 @@ var mainStuff = function() {
         })
     })
     .then(stuff => {
-        return db.ref(`videos/docker_requests`).once('value').then(snapshot => {
+        return db.ref(`video/docker_requests`).once('value').then(snapshot => {
             var html = ''
             html += '<table cellspacing="0" border="1" cellpadding="2">'
             html += '<tr>'
-            html +=     '<th colspan="5">/videos/docker_requests</th>'
+            html +=     '<th colspan="5">/video/docker_requests</th>'
             html += '</tr>'
             html += '<tr>'
             html +=     '<th>key</th>'
             html +=     '<th>uid (user id)</th>'
             html +=     '<th>request_date</th>'
             html +=     '<th>video_node_key</th>'
-            html +=     '<th>room_id</th>'
             html += '</tr>'
             snapshot.forEach(function(child) {
                 html += '<tr>'
@@ -123,7 +131,6 @@ var mainStuff = function() {
                 html +=     '<td>'+child.val().uid+'</td>'
                 html +=     '<td>'+child.val().request_date+'</td>'
                 html +=     '<td>'+child.val().video_node_key+'</td>'
-                html +=     '<td>'+child.val().room_id+'</td>'
                 html += '</tr>'
             })
             html += '</table>'
@@ -131,315 +138,91 @@ var mainStuff = function() {
             return stuff
         })
     })
+    .then(stuff => {
+        var html = '<P/>'
+        html += 'Step 1: <a href="/testCreateVideoNode?vmHost='+stuff.vmHost+'&vmPort='+stuff.vmPort+'">create video node (/video/list/[key])</a><br/>'
+        if(stuff.video_node_key) {
+            html += 'Step 1 Result: Created /video/list/'+stuff.video_node_key+'<br/>'
+            html += 'Step 2: <a href="/testRequestDocker?vmHost='+stuff.vmHost+'&vmPort='+stuff.vmPort+'&video_node_key='+stuff.video_node_key+'">Start Recording</a>'
+        }
+        stuff.steps_to_run_video = html
+        return stuff
+    })
 }
 
 
-exports.sendToVirtualMachines = functions.https.onRequest((req, res) => {
-    var thisHost = req.body.firebaseHost
-    var csvAddresses = req.body.vmList
-    var addresses = _.split(csvAddresses, ',')
-    // ping all the virtual machines with the address of the firebase functions server so that the virtual
-    // machines know who to call back to
-    var urls = _.map(addresses, function(address) {
-        return {url: 'https://'+address+'/firebase-host/?host='+thisHost, ping_from: address}
-    })
-    _.each(things, function(thing) {
-        var url = thing.url
-        request(url, function(error, response, body) {
-            var node = {date: date.asCentralTime(), date_ms: date.asMillis(), ping_from: thing.ping_from, error: '', response: '', body: ''}
-            if(error) node.error = error
-            if(response) node.response = response
-            if(body) node.body = body
-            db.ref(`pings`).push().set(node)
+exports.testCreateVideoNode = functions.https.onRequest((req, res) => {
+    var sampleNode = {}
+    // see constructor of VideoNode.java
+    sampleNode['node_create_date'] = date.asCentralTime()
+    sampleNode['node_create_date_ms'] = date.asMillis()
+    var video_participant = {}
+    video_participant['uid'] = 'dztOse5lKoNht9bPpOl3QeE33y22'
+    video_participant['name'] = 'Brent Dunklau'
+    video_participant['email'] = 'bdunklau@yahoo.com'
+    video_participant['start_date'] = date.asCentralTime()
+    video_participant['start_date_ms'] = date.asMillis()
+    sampleNode['video_participants'] = [video_participant]
+    sampleNode['video_mission_description'] = 'This is a video petition.  In a video petition, the person being interviewed *must* mention the legislator by name and must emphasize that the person being interviewed is a constituent of this legislator.  Next, one of the people in the video needs to state what the legislator\'s declared position is on COS (for, against, undecided)'
+    sampleNode['youtube_video_description'] = 'This is a video petition to legislator_rep_type legislator_full_name (legislator_state_abbrev_upper legislator_chamber_abbrev legislator_district) from a constituent, constituent_name, asking legislator_rep_type legislator_full_name to support the Convention of States resolution. \r\n \r\nIf you are a constituent, you can also ask legislator_rep_type legislator_full_name to support the Convention of States resolution by phone, email or social media. \r\nPhone: legislator_phone \r\nEmail: legislator_email \r\nFacebook: https://www.facebook.com/legislator_facebook \r\nTwitter: https://www.twitter.com/legislator_twitter \r\n \r\nAnd if you haven\'t signed the Convention of States petition, you can do that here: https:\/\/www.conventionofstates.com   Be sure to get your friends and family to sign also, then have them contact *their* state legislators. \r\n \r\nTogether, we can be a part of the solution that\'s as big as the problem!'
+    sampleNode['youtube_video_description_unevaluated'] = 'This is a video petition to legislator_rep_type legislator_full_name (legislator_state_abbrev_upper legislator_chamber_abbrev legislator_district) from a constituent, constituent_name, asking legislator_rep_type legislator_full_name to support the Convention of States resolution. \r\n \r\nIf you are a constituent, you can also ask legislator_rep_type legislator_full_name to support the Convention of States resolution by phone, email or social media. \r\nPhone: legislator_phone \r\nEmail: legislator_email \r\nFacebook: https://www.facebook.com/legislator_facebook \r\nTwitter: https://www.twitter.com/legislator_twitter \r\n \r\nAnd if you haven\'t signed the Convention of States petition, you can do that here: https:\/\/www.conventionofstates.com   Be sure to get your friends and family to sign also, then have them contact *their* state legislators. \r\n \r\nTogether, we can be a part of the solution that\'s as big as the problem!'
+    var key = db.ref(`video/list`).push().getKey()
+    return db.ref(`video/list/${key}`).set(sampleNode).then(() => {
+        var input = {video_node_key: key, vmHost: req.query.vmHost, vmPort: req.query.vmPort}
+        return mainStuff(input).then(stuff => {
+            return res.status(200).send(render(stuff))
         })
     })
 
-    return getPings().then(pings => {
-        var pingHtml = getPingHtml(pings)
-        return res.status(200).send(render({pings: pingHtml}))
-    })
+    /********
+
+    *****/
 })
 
 
-var getPings = function() {
-    return db.ref(`pings`).once('value').then(snapshot => {
-        var pings = []
-        snapshot.forEach(function(child) {
-            var ping = child.val()
-            ping.key = child.key
-            pings.push(ping)
-        })
-        return pings
-    })
-}
-
-
-var getPingHtml = function(pings) {
-    if(!pings || pings.length)
-        return 'no pings from the virtual machine(s) yet'
-    var html = '<b>Pings from Virtual Machines</b>'
-    html = '<table border="1">'
-    html += '<tr>'
-    html +=     '<th>Date</th>'
-    html +=     '<th>Ping From</th>'
-    html +=     '<th>Error</th>'
-    html +=     '<th>Response</th>'
-    html +=     '<th>Body</th>'
-    html += '</tr>'
-    _.each(pings, function(ping) {
-        html += '<tr>'
-        html +=     '<td>'+ping.date+'</td>'
-        html +=     '<td>'+ping.ping_from+'</td>'
-        html +=     '<td>'+ping.error+'</td>'
-        html +=     '<td>'+ping.response+'</td>'
-        html +=     '<td>'+ping.body+'</td>'
-        html += '</tr>'
-    })
-    html += '</table>'
-    return html
-}
-
-
-// I DON'T THINK WE NEED THIS  *******************
-// WE CAN SEND THE FBASE FUNCTIONS URL TO THE NODE SERVER ON EACH REQUEST
-var htmlForFirebaseHost = function(stuff) {
-    var firebaseHost = stuff.firebaseHost
-    var xxx = _.map(stuff.vmsInDatabase, function(vm) {return vm.host})
-    var vmList = _.join(xxx, ',')
-    var html = ''
-    html += '(I don\'t think we even need this)<br/>'
-    html = '<form method="post" action="/sendToVirtualMachines">'
-    html += '<b>Send this address:</b> <input type="text" name="firebaseHost" value="'+firebaseHost+'" size="50" /><p/>'
-    html += '<b>to these server(s):</b> <input type="text" name="vmList" value="'+vmList+'" size="50" /><p/>'
-    html += '<input type="submit" value="send">'
-    html += '</form>'
-    return html
-}
-
-
-var htmlOfHosts = function(hosts, title) {
-    if(!hosts || hosts.length == 0)
-        return 'no hosts - is that right?'
-    var html = ''
-    html += '<b>'+title+'</b><br/>'
-    html += '<table border="1">'
-    html += '<tr>'
-    html +=     '<th>type</th>'
-    html +=     '<th>host</th>'
-    html +=     '<th>dockers</th>'
-    html +=     '<th>find a docker</th>'
-    html += '</tr>'
-    _.each(hosts, function(host) {
-        html += '<tr>'
-        html +=     '<td>'+host.type+'</td>'
-        html +=     '<td>'+host.host+'</td>'
-        html +=     '<td><a href="/dockers?host='+host.host+'&port='+host.port+'">dockers</a></td>'
-        html +=     '<td><a href="/testRequestDocker?host='+host.host+'&port='+host.port+'">find a docker</a></td>'
-        html += '</tr>'
-    })
-    html += '</table>'
-    return html
-}
-
-
-exports.dockers = functions.https.onRequest((req, res) => {
-    return showDockers(req.query.host, req.query.port, res)
-})
-
-
-var showDockers = function(host, port, res) {
-    var url = 'http://'+host+':'+port+'/dockers' // not https ?!
-    request(url, function(error, response, body) {
-        try {
-            var dockers = JSON.parse(body)
-            var dockerHtml = getDockerHtml(dockers, url, host, port)
-            return mainStuff().then(stuff => {
-                stuff.dockers = dockerHtml
-                return res.status(200).send(render(stuff))
-            })
-        } catch(err) {
-            var theerror = err + ' for url: '+url
-            return res.status(200).send(render({error: theerror, body: body, response: response}))
+exports.testCreateAnotherDocker = functions.https.onRequest((req, res) => {
+    /****************
+    var callback = function(error, response, body) {
+        // body/response doesn't matter because we will get the Up/Exited status by
+        // calling mainStuff()...
+        if(!error) {
+            var docker = JSON.parse(body)
+            // body contains 'name' and 'port'
+            docker.vm_host = host
+            docker.vm_port = port
+            docker.vm_host_port_name = host+'_'+port+'_'+docker.name
+            docker.running = true
+            docker.recording = false
+            docker.container_created = date.asCentralTime()
+            docker.container_created_ms = date.asMillis()
+            docker.container_started = date.asCentralTime()
+            docker.container_started_ms = date.asMillis()
+            //docker.response = response // there is a function in the response that will throw an exception
+            //docker.error = error
+            db.ref(`administration/dockers`).push().set(docker)
         }
-    })
-}
-
-
-// just for listing recording files - TODO really should figure out how to un-duplicate these 2 methods
-var showDockers2 = function(args) {
-    var host = args.host
-    var port = args.port
-    var res = args.res
-    var url = 'http://'+host+':'+port+'/dockers' // not https ?!
-    request(url, function(error, response, body) {
-        try {
-            var dockers = JSON.parse(body)
-            var selectedDocker = _.find(dockers, {'name': args.dockerName})
-            if(selectedDocker)
-                selectedDocker.recordings = _.split(args.body, '\n')
-            var dockerHtml = getDockerHtml(dockers, url, host, port)
-            return mainStuff().then(stuff => {
-                stuff.dockers = dockerHtml
-                //stuff.response = args.response // this is just [object Object]
-                //stuff.body = args.body // this is the json string
-                return res.status(200).send(render(stuff))
-            })
-        } catch(err) {
-            return res.status(200).send(render({error: err, body: body, response: response}))
-        }
-    })
-}
-
-
-var getDockerHtml = function(dockers, url, vmHost, vmPort) {
-    var html = ''
-    html += '<b>Docker Instances returned by this url:</b><br/>'
-    html += '<a href="'+url+'">'+url+'</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<a href="/testCreateAnotherDocker?vmHost='+vmHost+'&vmPort='+vmPort+'">Create Another Docker</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<br/>'
-    html += '<table border="1">'
-    _.each(dockers, function(docker) {
-        var isUp = false
-        if(docker.status && docker.status.toLowerCase().startsWith('up')) isUp = true
-        var startDocker = '<a href="/testStartDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">start</a>'
-        var stopDocker = '<a href="/stopDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">stop</a>'
-        var stopAndRemove = '<a href="/stopAndRemoveDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">stop & remove</a>'
-        var portStr = ''
-        if(docker.port) portStr = docker.port
-        var stopRecording = '<a href="/stopRecording?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">stop</a>'
-
-        html +=             '<tr>'
-        //                      the left hand cell is where we list all the attributes of the docker instance
-        html +=                 '<td>'
-        html +=                     '<table border="0">'
-        html +=                         '<tr>'
-        html +=                             '<td><b>Docker:</b></td>'
-        html +=                             '<td>'+docker.name+' ['+startDocker+'] ['+stopDocker+'] ['+stopAndRemove+']</td>'
-        html +=                         '</tr>'
-        html +=                         '<tr>'
-        html +=                             '<td>Status</td>'
-        html +=                             '<td>'+docker.status+'</td>'
-        html +=                         '</tr>'
-        if(isUp) {
-        html +=                         '<tr>'
-        html +=                             '<td>Port</td>'
-        html +=                             '<td>'+portStr+'</td>'
-        html +=                         '</tr>'
-        html +=                         '<tr>'
-        html +=                             '<td>Port Mapping</td>'
-        html +=                             '<td>'+docker.port_mapping+'</td>'
-        html +=                         '</tr>'
-        html +=                     '<form method="post" action="/startRecording">'
-        html +=                         '<tr>'
-        html +=                             '<td>&nbsp;<P/><b>Recording</b></td>'
-        html +=                             '<td>&nbsp;<P/>'+stopRecording+'</td>'
-        html +=                         '</tr>'
-        html +=                         '<tr>'
-        html +=                             '<td>Room</td>'
-        html +=                             '<td><input type="text" name="room_id" value="'+date.asMillis()+'" />'
-        html +=                                 '<input type="hidden" name="vmHost" value="'+vmHost+'"/>'
-        html +=                                 '<input type="hidden" name="vmPort" value="'+vmPort+'"/></td>'
-        html +=                                 '<input type="hidden" name="dockerPort" value="'+docker.port+'"/></td>'
-        html +=                         '</tr>'
-        html +=                         '<tr>'
-        html +=                             '<td>Unique File Ext</td>'
-        html +=                             '<td><input type="text" name="uniqueIdentifier" value="'+date.asMillis()+'" /></td>'
-        html +=                         '</tr>'
-        html +=                         '<tr>'
-        html +=                             '<td></td>'
-        html +=                             '<td><input type="submit" value="start recording" /></td>'
-        html +=                         '</tr>'
-        html +=                     '</form>'
-        } // end if(isUp)
-        html +=                     '</table>'
-        html +=                 '</td>'
-
-        //                      the right hand cell is where we list all the recording-xxxxx.flv files for the docker instance
-        html +=                 '<td valign="top">'
-        html +=                     '<table border="0">'
-        html +=                         '<tr>'
-        // the actual command has " marks:  docker exec recorder8001 sh -c "ls -al /opt/vidyo/recording-*.*"
-        var tooltip = 'Runs: docker exec '+docker.name+' sh -c ls -al /opt/vidyo/recording-*.*'
-        html +=                             '<td><a href="/listRecordings?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'" title="'+tooltip+'">List Recordings</a></td>'
-        html +=                         '</tr>'
-                                    _.each(docker.recordings, function(fileStuff) {
-                                        var idx = fileStuff.indexOf('/opt/vidyo')
-                                        if(idx == -1) return
-                                        var filename = fileStuff.substring(idx)
-                                        var rmFile = '[<a href="/removeRecording?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'&filename='+filename+'">delete</a>]'
-                                        html += '<tr><td>'+rmFile+' '+fileStuff+'</td></tr>'
-                                    })
-        html +=                     '</table>'
-        html +=                 '</td>'
-        html +=             '</tr>'
-
-    })
-    html += '</table>'
-    return html
-}
-
-
-exports.removeRecording = functions.https.onRequest((req, res) => {
-    var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/remove-recording?dockerName='+req.query.dockerName+'&filename='+req.query.filename
-    return request(url, function(error, response, body) {
-        var stuff = {}
-        stuff.response = response
-        stuff.body = body
-        stuff.host = req.query.vmHost
-        stuff.port = req.query.vmPort
-        stuff.res = res
-        stuff.dockerName = req.query.dockerName
-        return showDockers2(stuff)
-    })
-})
-
-
-exports.listRecordings = functions.https.onRequest((req, res) => {
-    var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/list-recordings?dockerName='+req.query.dockerName
-    return request(url, function(error, response, body) {
-        var stuff = {}
-        stuff.response = response
-        stuff.body = body
-        stuff.host = req.query.vmHost
-        stuff.port = req.query.vmPort
-        stuff.res = res
-        stuff.dockerName = req.query.dockerName
-        return showDockers2(stuff)
-    })
+        return showDockers({vmHost: host, vmPort: port, res: res})
+    }
+    *****************/
+    return createDocker({vmHost: req.query.vmHost,
+                         vmPort: req.query.vmPort,
+                         res: res,
+                         callback: onDockerCreation,
+                         nextAction: showDockers})
 })
 
 
 exports.testStartDocker = functions.https.onRequest((req, res) => {
-    var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/start-docker?dockerName='+req.query.dockerName
-    return request(url, function(error, response, body) {
-        // body/response doesn't matter because we will get the Up/Exited status by
-        // calling mainStuff()...
-
-        // write to the container's node under /administration/dockers...
-        var searchValue = req.query.vmHost+'_'+req.query.vmPort+'_'+req.query.dockerName
-        return db.ref(`administration/dockers`).orderByChild('vm_host_port_name').equalTo(searchValue).once('value').then(snapshot => {
-            // should only be one child
-            snapshot.forEach(function(child) {
-                var updates = {}
-                updates['running'] = true
-                updates['recording'] = false
-                updates['container_started'] = date.asCentralTime()
-                updates['container_started_ms'] = date.asMillis()
-                updates['recording_started'] = null
-                updates['recording_started_ms'] = null
-                updates['recording_stopped'] = null
-                updates['recording_stopped_ms'] = null
-                updates['container_stopped'] = null
-                updates['container_stopped_ms'] = null
-                child.ref.update(updates)
-            })
-            return showDockers(req.query.vmHost, req.query.vmPort, res)
-        })
-    })
+    return startDocker({vmHost: req.query.vmHost,
+                        vmPort: req.query.vmPort,
+                        dockerName: req.query.dockerName,
+                        res: res,
+                        callback: showDockers})
 })
 
 
-exports.startRecording = functions.https.onRequest((req, res) => {
+exports.testStartRecording = functions.https.onRequest((req, res) => {
+    // not https ?!
     var url = 'http://'+req.body.vmHost+':'+req.body.dockerPort+'/record/'+req.body.room_id+'/'+req.body.uniqueIdentifier
     return request(url, function(error, response, body) {
         // body/response doesn't matter because we will get the Up/Exited status by
@@ -460,13 +243,13 @@ exports.startRecording = functions.https.onRequest((req, res) => {
                 updates['recording_stopped_ms'] = null
                 child.ref.update(updates)
             })
-            return showDockers(req.body.vmHost, req.body.vmPort, res)
+            return showDockers({vmHost: req.body.vmHost, vmPort: req.body.vmPort, res: res})
         })
     })
 })
 
 
-exports.stopRecording = functions.https.onRequest((req, res) => {
+exports.testStopRecording = functions.https.onRequest((req, res) => {
     var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/stop-recording?dockerName='+req.query.dockerName
     return request(url, function(error, response, body) {
         // body/response doesn't matter because we will get the Up/Exited status by
@@ -484,13 +267,13 @@ exports.stopRecording = functions.https.onRequest((req, res) => {
                 updates['recording_stopped_ms'] = date.asMillis()
                 child.ref.update(updates)
             })
-            return showDockers(req.query.vmHost, req.query.vmPort, res)
+            return showDockers({vmHost: req.query.vmHost, vmPort: req.query.vmPort, res: res})
         })
     })
 })
 
 
-exports.stopDocker = functions.https.onRequest((req, res) => {
+exports.testStopDocker = functions.https.onRequest((req, res) => {
     var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/stop-docker?dockerName='+req.query.dockerName
     return request(url, function(error, response, body) {
         // body/response doesn't matter because we will get the Up/Exited status by
@@ -512,13 +295,13 @@ exports.stopDocker = functions.https.onRequest((req, res) => {
                 updates['container_stopped_ms'] = date.asMillis()
                 child.ref.update(updates)
             })
-            return showDockers(req.query.vmHost, req.query.vmPort, res)
+            return showDockers({vmHost: req.query.vmHost, vmPort: req.query.vmPort, res: res})
         })
     })
 })
 
 
-exports.stopAndRemoveDocker = functions.https.onRequest((req, res) => {
+exports.testStopAndRemoveDocker = functions.https.onRequest((req, res) => {
     var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/stop-and-remove-docker?dockerName='+req.query.dockerName
     return request(url, function(error, response, body) {
         // body/response doesn't matter because we will get the Up/Exited status by
@@ -531,41 +314,15 @@ exports.stopAndRemoveDocker = functions.https.onRequest((req, res) => {
             snapshot.forEach(function(child) {
                 child.ref.remove()
             })
-            return showDockers(req.query.vmHost, req.query.vmPort, res)
+            return showDockers({vmHost: req.query.vmHost, vmPort: req.query.vmPort, res: res})
         })
     })
 })
 
 
-exports.testCreateAnotherDocker = functions.https.onRequest((req, res) => {
-    var callback = function(error, response, body) {
-        // body/response doesn't matter because we will get the Up/Exited status by
-        // calling mainStuff()...
-        if(!error) {
-            var docker = JSON.parse(body)
-            // body contains 'name' and 'port'
-            docker.vm_host = host
-            docker.vm_port = port
-            docker.vm_host_port_name = host+'_'+port+'_'+docker.name
-            docker.running = true
-            docker.recording = false
-            docker.container_created = date.asCentralTime()
-            docker.container_created_ms = date.asMillis()
-            docker.container_started = date.asCentralTime()
-            docker.container_started_ms = date.asMillis()
-            //docker.response = response // there is a function in the response that will throw an exception
-            //docker.error = error
-            db.ref(`administration/dockers`).push().set(docker)
-        }
-        return showDockers(host, port, res)
-    }
-    return createDocker(req.query.vmHost, req.query.vmPort, callback)
-})
-
-
 /**************************************************************
-// This function tests the database trigger that listens on videos/docker_requests
-// Mobile clients will write to videos/docker_requests when they want to start recording
+// This function tests the database trigger that listens on video/docker_requests
+// Mobile clients will write to video/docker_requests when they want to start recording
 // and stop recording.  This http test function allows us to write to the same place that
 // the mobile clients will write to.
 //
@@ -579,95 +336,192 @@ exports.testRequestDocker = functions.https.onRequest((req, res) => {
     docker_request['uid'] = 'dztOse5lKoNht9bPpOl3QeE33y22'
     docker_request['request_type'] = 'start recording' // can also be 'stop recording'
     docker_request['request_date'] = date.asCentralTime()
-    docker_request['request_date_ms'] = date.asMills()
-    docker_request['video_node_key'] = date.asMillis() //simulated key
-    docker_request['room_id'] = date.asMillis() //simulated room_id
-    return db.ref(`videos/docker_requests`).push().set(docker_request).then(() => {
-        return mainStuff().then(stuff => {
+    docker_request['request_date_ms'] = date.asMillis()
+    docker_request['video_node_key'] = req.query.video_node_key
+    docker_request['room_id'] = date.asMillis() // simulated room_id
+    docker_request['unique_file_ext'] = date.asMillis() // simulated
+    var input = {}
+    input.video_node_key = req.query.video_node_key
+    input.vmHost = req.query.vmHost
+    input.vmPort = req.query.vmPort
+    return db.ref(`video/docker_requests`).push().set(docker_request).then(() => {
+        return mainStuff(input).then(stuff => {
+            return res.status(200).send(render(stuff))
+        })
+    })
+})
+
+
+exports.removeRecording = functions.https.onRequest((req, res) => {
+    var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/remove-recording?dockerName='+req.query.dockerName+'&filename='+req.query.filename
+    return request(url, function(error, response, body) {
+        var stuff = {}
+        stuff.response = response
+        stuff.body = body
+        stuff.vmHost = req.query.vmHost
+        stuff.vmPort = req.query.vmPort
+        stuff.res = res
+        stuff.dockerName = req.query.dockerName
+        return showDockers2(stuff)
+    })
+})
+
+
+exports.listRecordings = functions.https.onRequest((req, res) => {
+    var url = 'http://'+req.query.vmHost+':'+req.query.vmPort+'/list-recordings?dockerName='+req.query.dockerName
+    return request(url, function(error, response, body) {
+        var stuff = {}
+        stuff.response = response
+        stuff.body = body
+        stuff.vmHost = req.query.vmHost
+        stuff.vmPort = req.query.vmPort
+        stuff.res = res
+        stuff.dockerName = req.query.dockerName
+        return showDockers2(stuff)
+    })
+})
+
+
+exports.listImages = functions.https.onRequest((req, res) => {
+
+    // getting rid of templog2 is just ad hoc housecleaning
+    return db.ref('templog2').remove().then(() => {
+
+        return getVms(function(stuff) {
             return res.status(200).send(render(stuff))
         })
     })
 
-    /********* maybe...
-    return db.ref(`administration/dockers`).once('value').then(snapshot => {
-        if(snapshot.numChildren() == 0) {
-            var callback = function(error, response, body) {
-                // set /administration/dockers/{key}/video_node_key = video node key
-                // so that we can tell this docker is being used at the moment
-            }
-            return createDocker(req.query.host, req.query.port, callback)
-        }
-        else {
-            var dockers = []
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Helper functions
+
+var createDocker = function(stuff) {
+    var url = 'http://'+stuff.vmHost+':'+stuff.vmPort+'/create-another-docker'
+    return request(url, function(error, response, body) {
+        stuff.error = error
+        stuff.response = response
+        stuff.body = body
+        stuff.callback(stuff)
+    })
+}
+
+
+var onDockerCreation = function(stuff/*error, response, body*/) {
+    // body/response doesn't matter because we will get the Up/Exited status by
+    // calling mainStuff()...
+    if(!stuff.error) {
+        var docker = JSON.parse(stuff.body)
+        // stuff.body contains 'name' and 'port'
+        docker.vm_host = stuff.vmHost
+        docker.vm_port = stuff.vmPort
+        docker.vm_host_port_name = stuff.vmHost+'_'+stuff.vmPort+'_'+docker.name
+        docker.running = true
+        docker.recording = false
+        docker.container_created = date.asCentralTime()
+        docker.container_created_ms = date.asMillis()
+        docker.container_started = date.asCentralTime()
+        docker.container_started_ms = date.asMillis()
+        //docker.response = response // there is a function in the response that will throw an exception
+        //docker.error = error
+        db.ref(`administration/dockers`).push().set(docker)
+    }
+    return stuff.nextAction(stuff) //showDockers({host: host, port: port, res: res})
+}
+
+
+var startDocker = function(stuff) {
+    var url = 'http://'+stuff.vmHost+':'+stuff.vmPort+'/start-docker?dockerName='+stuff.dockerName
+    return request(url, function(error, response, body) {
+        // body/response doesn't matter because we will get the Up/Exited status by
+        // calling mainStuff()...
+
+        // write to the container's node under /administration/dockers...
+        var searchValue = stuff.vmHost+'_'+stuff.vmPort+'_'+stuff.dockerName
+        return db.ref(`administration/dockers`).orderByChild('vm_host_port_name').equalTo(searchValue).once('value').then(snapshot => {
+            // should only be one child
             snapshot.forEach(function(child) {
-                dockers.push(child.val())
+                var updates = {}
+                updates['running'] = true
+                updates['recording'] = false
+                updates['container_started'] = date.asCentralTime()
+                updates['container_started_ms'] = date.asMillis()
+                updates['recording_started'] = null
+                updates['recording_started_ms'] = null
+                updates['recording_stopped'] = null
+                updates['recording_stopped_ms'] = null
+                updates['container_stopped'] = null
+                updates['container_stopped_ms'] = null
+                child.ref.update(updates)
             })
-            var runningDockers = _.filter(dockers, {'running':true})
+            // In some cases, callback is showDockers().  In others, it's startRecording()
+            return stuff.callback(stuff)
+        })
+    })
+
+}
+
+
+var startRecording = function(stuff) {
+    // not https ?!
+    var recorderUrl = 'http://'+stuff.vmHost+':'+stuff.docker.port+'/record/'+stuff.room_id+'/'+stuff.unique_file_ext
+    return request(recorderUrl, function(error, response, body) {
+        if(!error) {
+            var updates = {}
+            updates['running'] = true
+            updates['recording'] = true
+            updates['recording_started'] = date.asCentralTime()
+            updates['recording_started_ms'] = date.asMillis()
+            updates['recording_stopped'] = null
+            updates['recording_stopped_ms'] = null
+            return event.data.adminRef.child(`administration/dockers/${stuff.key}`).update(updates)
         }
     })
-    ***********/
-})
-
-
-/*************************************************************
-A docker request can either be a 'start recording' request or a 'stop recording' request
-Start recording requests (event.data.val().request_type = 'start recording') cause this function
-to query /administration/dockers looking for an instance that is running:true and recording:false
-If no instance like that can be found, we next look for running:false and then start that instance
-If no stopped instance can be found, this function will create a new instance, start it, then
-start the recording
-
-WHAT DO WE EXPECT TO HAPPEN HERE?...
-*************************************************************/
-exports.dockerRequest = functions.database.ref('videos/docker_requests').onWrite(event => {
-    // ignore deletes...
-    if(!event.data.val()) return false
-    // ignore malformed...
-    if(!event.data.val().request_type) return false
-    var type = event.data.val().request_type
-    // we don't 'request a room' - we are requesting a 'recording secretary'.  The room is just a
-    // name/string that we already know
-    if(type == 'start recording') {
-        //find the first 'virtual machine' node from /administration/hosts
-        return db.ref(`administration/hosts`).orderByChild('type').equalTo('virtual machine').limitToFirst(1).once('value').then(snapshot => {
-            // TODO error handling if no vm's found?  This should never be the case because we hand jam the vm into the database
-            var vm = snapshot.val()[0]
-
-            // then find all /administration/dockers nodes that match the vm's 'host' value (an IP address)
-            return event.data.adminRef.root.child(`administration/dockers`).orderByChild('vm_host').equalTo(vm.host).once('value').then(snapshot => {
-                var dockers = []
-                snapshot.forEach(function(child) {
-                    dockers.push(child.val())
-                })
-                var availableDockers = _.filter(dockers, {'running': true, 'recording': false})
-                if(!availableDockers || availableDockers.length == 0) {
-                    var stoppedDockers = _.filter(dockers, {'running': false})
-                    if(!stoppedDockers || stoppedDockers.length == 0) {
-                        // TODO we have to create a new docker instance.  It will be created running by default
-                    }
-                    else {
-                        var selectedDocker = stoppedDockers[0]
-                        // TODO need to start this docker first...
-                    }
-                }
-                else {
-                    var selectedDocker = availableDockers[0]
-                    // TODO write this docker to where?...
-                }
-            })
-        })
-    }
-    else if(type == 'stop recording') {
-    }
-    // ignore all others...
-    else return false
-})
-
-
-var createDocker = function(host, port, callback) {
-    var url = 'http://'+host+':'+port+'/create-another-docker'
-    return request(url, callback)
 }
+
+/********************************************* from testStartRecording - this works....
+    // not https ?!
+    var url = 'http://'+req.body.vmHost+':'+req.body.dockerPort+'/record/'+req.body.room_id+'/'+req.body.uniqueIdentifier
+    return request(url, function(error, response, body) {
+        // body/response doesn't matter because we will get the Up/Exited status by
+        // calling mainStuff()...
+
+        // write to the container's node under /administration/dockers...
+        var dockerName = 'recorder'+req.body.dockerPort
+        var searchValue = req.body.vmHost+'_'+req.body.vmPort+'_'+dockerName
+        return db.ref(`administration/dockers`).orderByChild('vm_host_port_name').equalTo(searchValue).once('value').then(snapshot => {
+            // should only be one child
+            snapshot.forEach(function(child) {
+                var updates = {}
+                updates['running'] = true
+                updates['recording'] = true
+                updates['recording_started'] = date.asCentralTime()
+                updates['recording_started_ms'] = date.asMillis()
+                updates['recording_stopped'] = null
+                updates['recording_stopped_ms'] = null
+                child.ref.update(updates)
+            })
+            return showDockers({vmHost: req.body.vmHost, vmPort: req.body.vmPort, res: res})
+        })
+    })
+*********************************************/
 
 
 var getVms = function(callback) {
@@ -764,17 +618,265 @@ var getVms = function(callback) {
 }
 
 
-exports.listImages = functions.https.onRequest((req, res) => {
 
-    // getting rid of templog2 is just ad hoc housecleaning
-    return db.ref('templog2').remove().then(() => {
 
-        return getVms(function(stuff) {
-            return res.status(200).send(render(stuff))
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Triggers
+
+
+/*************************************************************
+Mobile clients write to video/docker_requests and we have a test method above that
+writes to video/docker_requests also - testRequestDocker
+
+A docker request can either be a 'start recording' request or a 'stop recording' request
+Start recording requests (event.data.val().request_type = 'start recording') cause this function
+to query /administration/dockers looking for an instance that is running:true and recording:false
+If no instance like that can be found, we next look for running:false and then start that instance
+If no stopped instance can be found, this function will create a new instance, start it, then
+start the recording
+
+WHAT DO WE EXPECT TO HAPPEN HERE?...
+*************************************************************/
+exports.dockerRequest = functions.database.ref('video/docker_requests').onWrite(event => {
+    // ignore deletes...
+    if(!event.data.val()) return false
+    // ignore malformed...
+    if(!event.data.val().request_type) return false
+    var type = event.data.val().request_type
+    // we don't 'request a room' - we are requesting a 'recording secretary'.  The room is just a
+    // name/string that we already know
+    if(type == 'start recording') {
+        //find the first 'virtual machine' node from /administration/hosts
+        return db.ref(`administration/hosts`).orderByChild('type').equalTo('virtual machine').limitToFirst(1).once('value').then(snapshot => {
+            // TODO error handling if no vm's found?  This should never be the case because we hand jam the vm into the database
+            var vm = snapshot.val()[0]
+
+            // then find all /administration/dockers nodes that match the vm's 'host' value (an IP address)
+            return event.data.adminRef.root.child(`administration/dockers`).orderByChild('vm_host').equalTo(vm.host).once('value').then(snapshot => {
+                var dockers = []
+                snapshot.forEach(function(child) {
+                    dockers.push({key: child.key, docker: child.val()})
+                })
+                var availableDockers = _.filter(dockers, function(docker) {
+                    return docker.docker.running && !docker.docker.recording
+                })
+                if(!availableDockers || availableDockers.length == 0) {
+                    var stoppedDockers = _.filter(dockers, function(docker) {
+                        return !docker.docker.running
+                    })
+                    if(!stoppedDockers || stoppedDockers.length == 0) {
+                        // create a new docker instance, then start the recording
+                        return createDocker({vmHost: vm.host,
+                                             vmPort: vm.port,
+                                             callback: onDockerCreation,
+                                             nextAction: startRecording})
+                    }
+                    else {
+                        var selectedDocker = stoppedDockers[0]
+                        // found a docker, it just wasn't running, so start it...
+
+                        return startDocker({vmHost: vm.host,
+                                            vmPort: vm.port,
+                                            dockerName: selectedDocker.docker.name,
+                                            // for startRecording...
+                                            docker: selectedDocker.docker,
+                                            key: selectedDocker.key,
+                                            room_id: event.data.val().room_id,
+                                            unique_file_ext: event.data.val().unique_file_ext,
+                                            callback: startRecording })
+                    }
+                }
+                else {
+                    var selectedDocker = availableDockers[0]
+                    return startRecording({vmHost: vm.host,
+                                           docker: selectedDocker.docker,
+                                           key: selectedDocker.key,
+                                           room_id: event.data.val().room_id,
+                                           unique_file_ext: event.data.val().unique_file_ext})
+                }
+            })
         })
-    })
-
+    }
+    else if(type == 'stop recording') {
+    }
+    // ignore all others...
+    else return false
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Layout
+
+
+var getDockerHtml = function(dockers, url, vmHost, vmPort) {
+    var html = ''
+    html += '<b>Docker Instances returned by this url:</b><br/>'
+    html += '<a href="'+url+'">'+url+'</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+    html += '<a href="/testCreateAnotherDocker?vmHost='+vmHost+'&vmPort='+vmPort+'">Create Another Docker</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+    html += '<br/>'
+    html += '<table border="1">'
+    _.each(dockers, function(docker) {
+        var isUp = false
+        if(docker.status && docker.status.toLowerCase().startsWith('up')) isUp = true
+        var startDocker = '<a href="/testStartDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">start</a>'
+        var stopDocker = '<a href="/testStopDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">stop</a>'
+        var stopAndRemove = '<a href="/testStopAndRemoveDocker?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">stop & remove</a>'
+        var portStr = ''
+        if(docker.port) portStr = docker.port
+        var stopRecording = '<a href="/testStopRecording?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'">stop</a>'
+
+        html +=             '<tr>'
+        //                      the left hand cell is where we list all the attributes of the docker instance
+        html +=                 '<td>'
+        html +=                     '<table border="0">'
+        html +=                         '<tr>'
+        html +=                             '<td><b>Docker:</b></td>'
+        html +=                             '<td>'+docker.name+' ['+startDocker+'] ['+stopDocker+'] ['+stopAndRemove+']</td>'
+        html +=                         '</tr>'
+        html +=                         '<tr>'
+        html +=                             '<td>Status</td>'
+        html +=                             '<td>'+docker.status+'</td>'
+        html +=                         '</tr>'
+        if(isUp) {
+        html +=                         '<tr>'
+        html +=                             '<td>Port</td>'
+        html +=                             '<td>'+portStr+'</td>'
+        html +=                         '</tr>'
+        html +=                         '<tr>'
+        html +=                             '<td>Port Mapping</td>'
+        html +=                             '<td>'+docker.port_mapping+'</td>'
+        html +=                         '</tr>'
+        html +=                     '<form method="post" action="/testStartRecording">'
+        html +=                         '<tr>'
+        html +=                             '<td>&nbsp;<P/><b>Recording</b></td>'
+        html +=                             '<td>&nbsp;<P/>'+stopRecording+'</td>'
+        html +=                         '</tr>'
+        html +=                         '<tr>'
+        html +=                             '<td>Room</td>'
+        html +=                             '<td><input type="text" name="room_id" value="'+date.asMillis()+'" />'
+        html +=                                 '<input type="hidden" name="vmHost" value="'+vmHost+'"/>'
+        html +=                                 '<input type="hidden" name="vmPort" value="'+vmPort+'"/></td>'
+        html +=                                 '<input type="hidden" name="dockerPort" value="'+docker.port+'"/></td>'
+        html +=                         '</tr>'
+        html +=                         '<tr>'
+        html +=                             '<td>Unique File Ext</td>'
+        html +=                             '<td><input type="text" name="uniqueIdentifier" value="'+date.asMillis()+'" /></td>'
+        html +=                         '</tr>'
+        html +=                         '<tr>'
+        html +=                             '<td></td>'
+        html +=                             '<td><input type="submit" value="start recording" /></td>'
+        html +=                         '</tr>'
+        html +=                     '</form>'
+        } // end if(isUp)
+        html +=                     '</table>'
+        html +=                 '</td>'
+
+        //                      the right hand cell is where we list all the recording-xxxxx.flv files for the docker instance
+        html +=                 '<td valign="top">'
+        html +=                     '<table border="0">'
+        html +=                         '<tr>'
+        // the actual command has " marks:  docker exec recorder8001 sh -c "ls -al /opt/vidyo/recording-*.*"
+        var tooltip = 'Runs: docker exec '+docker.name+' sh -c ls -al /opt/vidyo/recording-*.*'
+        html +=                             '<td><a href="/listRecordings?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'" title="'+tooltip+'">List Recordings</a></td>'
+        html +=                         '</tr>'
+                                    _.each(docker.recordings, function(fileStuff) {
+                                        var idx = fileStuff.indexOf('/opt/vidyo')
+                                        if(idx == -1) return
+                                        var filename = fileStuff.substring(idx)
+                                        var rmFile = '[<a href="/removeRecording?vmHost='+vmHost+'&vmPort='+vmPort+'&dockerName='+docker.name+'&filename='+filename+'">delete</a>]'
+                                        html += '<tr><td>'+rmFile+' '+fileStuff+'</td></tr>'
+                                    })
+        html +=                     '</table>'
+        html +=                 '</td>'
+        html +=             '</tr>'
+
+    })
+    html += '</table>'
+    return html
+}
+
+
+var showDockers = function(stuff) {
+    var host = stuff.vmHost
+    var port = stuff.vmPort
+    var res = stuff.res
+    var url = 'http://'+host+':'+port+'/dockers' // not https ?!
+    request(url, function(error, response, body) {
+        try {
+            var dockers = JSON.parse(body)
+            var dockerHtml = getDockerHtml(dockers, url, host, port)
+            var input = {}
+            input.dockers = dockerHtml
+            input.vmHost = host
+            input.vmPort = port
+            return mainStuff(input).then(stuff => {
+                return res.status(200).send(render(stuff))
+            })
+        } catch(err) {
+            var theerror = err + ' for url: '+url
+            return res.status(200).send(render({error: theerror, body: body, response: response}))
+        }
+    })
+}
+
+
+// just for listing recording files - TODO really should figure out how to un-duplicate these 2 methods
+var showDockers2 = function(args) {
+    var host = args.vmHost
+    var port = args.vmPort
+    var res = args.res
+    var url = 'http://'+host+':'+port+'/dockers' // not https ?!
+    request(url, function(error, response, body) {
+        try {
+            var dockers = JSON.parse(body)
+            var selectedDocker = _.find(dockers, {'name': args.dockerName})
+            if(selectedDocker)
+                selectedDocker.recordings = _.split(args.body, '\n')
+            var dockerHtml = getDockerHtml(dockers, url, host, port)
+            var input = {}
+            input.dockers = dockerHtml
+            input.vmHost = host
+            input.vmPort = port
+            return mainStuff(input).then(stuff => {
+                //stuff.response = args.response // this is just [object Object]
+                //stuff.body = args.body // this is the json string
+                return res.status(200).send(render(stuff))
+            })
+        } catch(err) {
+            return res.status(200).send(render({error: err, body: body, response: response}))
+        }
+    })
+}
+
 
 var render = function(stuff) {
     var html = '<html><head></head><body>'
@@ -815,9 +917,144 @@ var render = function(stuff) {
     if(stuff.administration_dockers) {
         html += '<P/>'+stuff.administration_dockers
     }
+    if(stuff.steps_to_run_video) {
+        html += '<P/>'+stuff.steps_to_run_video
+    }
     if(stuff.docker_requests) {
         html += '<P/>'+stuff.docker_requests
     }
     html += '</body></html>'
+    return html
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// older stuff but still good
+
+
+exports.sendToVirtualMachines = functions.https.onRequest((req, res) => {
+    var thisHost = req.body.firebaseHost
+    var csvAddresses = req.body.vmList
+    var addresses = _.split(csvAddresses, ',')
+    // ping all the virtual machines with the address of the firebase functions server so that the virtual
+    // machines know who to call back to
+    var urls = _.map(addresses, function(address) {
+        return {url: 'https://'+address+'/firebase-host/?host='+thisHost, ping_from: address}
+    })
+    _.each(things, function(thing) {
+        var url = thing.url
+        request(url, function(error, response, body) {
+            var node = {date: date.asCentralTime(), date_ms: date.asMillis(), ping_from: thing.ping_from, error: '', response: '', body: ''}
+            if(error) node.error = error
+            if(response) node.response = response
+            if(body) node.body = body
+            db.ref(`pings`).push().set(node)
+        })
+    })
+
+    return getPings().then(pings => {
+        var pingHtml = getPingHtml(pings)
+        return res.status(200).send(render({pings: pingHtml}))
+    })
+})
+
+
+var getPings = function() {
+    return db.ref(`pings`).once('value').then(snapshot => {
+        var pings = []
+        snapshot.forEach(function(child) {
+            var ping = child.val()
+            ping.key = child.key
+            pings.push(ping)
+        })
+        return pings
+    })
+}
+
+
+var getPingHtml = function(pings) {
+    if(!pings || pings.length)
+        return 'no pings from the virtual machine(s) yet'
+    var html = '<b>Pings from Virtual Machines</b>'
+    html = '<table border="1">'
+    html += '<tr>'
+    html +=     '<th>Date</th>'
+    html +=     '<th>Ping From</th>'
+    html +=     '<th>Error</th>'
+    html +=     '<th>Response</th>'
+    html +=     '<th>Body</th>'
+    html += '</tr>'
+    _.each(pings, function(ping) {
+        html += '<tr>'
+        html +=     '<td>'+ping.date+'</td>'
+        html +=     '<td>'+ping.ping_from+'</td>'
+        html +=     '<td>'+ping.error+'</td>'
+        html +=     '<td>'+ping.response+'</td>'
+        html +=     '<td>'+ping.body+'</td>'
+        html += '</tr>'
+    })
+    html += '</table>'
+    return html
+}
+
+
+// I DON'T THINK WE NEED THIS  *******************
+// WE CAN SEND THE FBASE FUNCTIONS URL TO THE NODE SERVER ON EACH REQUEST
+var htmlForFirebaseHost = function(stuff) {
+    var firebaseHost = stuff.firebaseHost
+    var xxx = _.map(stuff.vmsInDatabase, function(vm) {return vm.host})
+    var vmList = _.join(xxx, ',')
+    var html = ''
+    html += '(I don\'t think we even need this)<br/>'
+    html = '<form method="post" action="/sendToVirtualMachines">'
+    html += '<b>Send this address:</b> <input type="text" name="firebaseHost" value="'+firebaseHost+'" size="50" /><p/>'
+    html += '<b>to these server(s):</b> <input type="text" name="vmList" value="'+vmList+'" size="50" /><p/>'
+    html += '<input type="submit" value="send">'
+    html += '</form>'
+    return html
+}
+
+
+var htmlOfHosts = function(hosts, title) {
+    if(!hosts || hosts.length == 0)
+        return 'no hosts - is that right?'
+    var html = ''
+    html += '<b>'+title+'</b><br/>'
+    html += '<table border="1">'
+    html += '<tr>'
+    html +=     '<th>type</th>'
+    html +=     '<th>host</th>'
+    html +=     '<th>dockers</th>'
+    html += '</tr>'
+    _.each(hosts, function(host) {
+        html += '<tr>'
+        html +=     '<td>'+host.type+'</td>'
+        html +=     '<td>'+host.host+'</td>'
+        html +=     '<td><a href="/dockers?vmHost='+host.host+'&vmPort='+host.port+'">dockers</a></td>'
+        html += '</tr>'
+    })
+    html += '</table>'
     return html
 }

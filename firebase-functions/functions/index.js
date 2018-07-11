@@ -184,15 +184,16 @@ exports.listImages = googleCloud.listImages
 exports.sendToVirtualMachines = googleCloud.sendToVirtualMachines
 exports.dockers = googleCloud.dockers
 exports.testStartDocker = googleCloud.testStartDocker
-exports.stopDocker = googleCloud.stopDocker
-exports.stopAndRemoveDocker = googleCloud.stopAndRemoveDocker
+exports.testStopDocker = googleCloud.testStopDocker
+exports.testStopAndRemoveDocker = googleCloud.testStopAndRemoveDocker
 exports.testCreateAnotherDocker = googleCloud.testCreateAnotherDocker
-exports.startRecording = googleCloud.startRecording
-exports.stopRecording = googleCloud.stopRecording
+exports.testStartRecording = googleCloud.testStartRecording
+exports.testStopRecording = googleCloud.testStopRecording
 exports.listRecordings = googleCloud.listRecordings
 exports.removeRecording = googleCloud.removeRecording
 exports.testRequestDocker = googleCloud.testRequestDocker
 exports.dockerRequest = googleCloud.dockerRequest
+exports.testCreateVideoNode = googleCloud.testCreateVideoNode
 
 
 const googleAuth = require('./google-auth')

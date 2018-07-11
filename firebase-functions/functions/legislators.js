@@ -907,7 +907,7 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
     var descriptionAlreadyEvaluated = event.data.val().youtube_video_description && event.data.val().youtube_video_description_unevaluated
         && event.data.val().youtube_video_description != event.data.val().youtube_video_description_unevaluated
 
-    var legislatorDidntChange = event.data.val().leg_id == event.data.previous.val().leg_id
+    var legislatorDidntChange = event.data.val().leg_id && event.data.previous.val().leg_id && event.data.val().leg_id == event.data.previous.val().leg_id
 
     // If the video description has already been evaluated AND the legislator didn't change, don't overwrite.
     // That would undo anything the user specifically wanted to change.
