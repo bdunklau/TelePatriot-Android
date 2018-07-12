@@ -188,10 +188,10 @@ exports.testStopDocker = googleCloud.testStopDocker
 exports.testStopAndRemoveDocker = googleCloud.testStopAndRemoveDocker
 exports.testCreateAnotherDocker = googleCloud.testCreateAnotherDocker
 exports.testStartRecording = googleCloud.testStartRecording
+exports.testStartRecording2 = googleCloud.testStartRecording2
 exports.testStopRecording = googleCloud.testStopRecording
 exports.listRecordings = googleCloud.listRecordings
 exports.removeRecording = googleCloud.removeRecording
-exports.testRequestDocker = googleCloud.testRequestDocker
 exports.dockerRequest = googleCloud.dockerRequest
 exports.testCreateVideoNode = googleCloud.testCreateVideoNode
 
