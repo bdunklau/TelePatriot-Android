@@ -149,7 +149,15 @@ var mainStuff = function(stuff) {
         html += 'Step 1: <a href="/testCreateVideoNode?vmHost='+stuff.vmHost+'&vmPort='+stuff.vmPort+'">create video node (/video/list/[key])</a><br/>'
         if(stuff.video_node_key) {
             html += 'Step 1 Result: Created /video/list/'+stuff.video_node_key+'<br/>'
-            html += 'Step 2: <a href="/testStartRecording2?vmHost='+stuff.vmHost+'&vmPort='+stuff.vmPort+'&video_node_key='+stuff.video_node_key+'">Start Recording</a>'
+            html += 'Step 2: <a href="/testStartRecording2?vmHost='+stuff.vmHost+'&vmPort='+stuff.vmPort+'&video_node_key='+stuff.video_node_key+'&recording=true">Start Recording</a> &nbsp;&nbsp;'
+
+            if(stuff.recording) {
+                html += '!!! Recording !!!<br/>'
+                html += 'Step 3: <a href="/testStopRecording2?vmHost='+stuff.vmHost+'&vmPort='+stuff.vmPort+'&video_node_key='+stuff.video_node_key+'&recording=false">Stop Recording</a><br/>'
+            }
+            else {
+                html += 'Step 3: Stop Recording<br/>'
+            }
         }
         stuff.steps_to_run_video = html
         return stuff
@@ -227,6 +235,12 @@ exports.testStartDocker = functions.https.onRequest((req, res) => {
 })
 
 
+/*****************************************************************
+This method is not tied to any /video/list/[key] entry.  All this method does
+is verify that we can call the docker instance to make it start recording
+
+testStartRecording2 - below - is more realistic
+******************************************************************/
 exports.testStartRecording = functions.https.onRequest((req, res) => {
     // not https ?!
     var url = 'http://'+req.body.vmHost+':'+req.body.dockerPort+'/record/'+req.body.room_id+'/'+req.body.uniqueIdentifier
@@ -270,25 +284,11 @@ and stop recording.  This http test function allows us to write to the same plac
  how it makes this determination
 *******************************************************************/
 exports.testStartRecording2 = functions.https.onRequest((req, res) => {
-    // create a docker_request...
-    var docker_request = {}  // simulated user id...
-    docker_request['uid'] = 'dztOse5lKoNht9bPpOl3QeE33y22'
-    docker_request['request_type'] = 'start recording' // can also be 'stop recording'
-    docker_request['request_date'] = date.asCentralTime()
-    docker_request['request_date_ms'] = date.asMillis()
-    docker_request['video_node_key'] = req.query.video_node_key
-    docker_request['room_id'] = date.asMillis() // simulated room_id
-    docker_request['unique_file_ext'] = date.asMillis() // simulated
-    var input = {}
-    input.video_node_key = req.query.video_node_key
-    input.vmHost = req.query.vmHost
-    input.vmPort = req.query.vmPort
-    // we have a trigger listening on video/docker_requests - exports.dockerRequest
-    return db.ref(`video/docker_requests`).push().set(docker_request).then(() => {
-        return mainStuff(input).then(stuff => {
-            return res.status(200).send(render(stuff))
-        })
-    })
+    return controlRecording({request_type: 'start recording',
+                             video_node_key: req.query.video_node_key,
+                             recording: req.query.recording, // these next 3 are only needed for this web page
+                             vmHost: req.query.vmHost,   // mobile clients won't need to know these 3 things
+                             vmPort: req.query.vmPort})
 })
 
 
@@ -313,6 +313,15 @@ exports.testStopRecording = functions.https.onRequest((req, res) => {
             return showDockers({vmHost: req.query.vmHost, vmPort: req.query.vmPort, res: res})
         })
     })
+})
+
+
+exports.testStopRecording2 = functions.https.onRequest((req, res) => {
+    return controlRecording({request_type: 'stop recording',
+                             video_node_key: req.query.video_node_key,
+                             recording: req.query.recording, // these next 3 are only needed for this web page
+                             vmHost: req.query.vmHost,   // mobile clients won't need to know these 3 things
+                             vmPort: req.query.vmPort})
 })
 
 
@@ -489,6 +498,26 @@ var startDocker = function(stuff) {
 
 }
 
+
+var controlRecording = function(input) {
+    // create a docker_request...
+    var docker_request = {}  // simulated user id...
+    docker_request['uid'] = 'dztOse5lKoNht9bPpOl3QeE33y22'
+    docker_request['request_type'] = input.request_type // could be 'start recording' or 'stop recording'
+    docker_request['request_date'] = date.asCentralTime()
+    docker_request['request_date_ms'] = date.asMillis()
+    docker_request['video_node_key'] = input.video_node_key
+    docker_request['room_id'] = date.asMillis() // simulated room_id
+    docker_request['unique_file_ext'] = date.asMillis() // simulated
+    // we have a trigger listening on video/docker_requests - exports.dockerRequest
+    return db.ref(`video/docker_requests`).push().set(docker_request).then(() => {
+        return mainStuff(input).then(stuff => {
+            return res.status(200).send(render(stuff))
+        })
+    })
+}
+
+
 // See exports.testStartRecording2 and exports.dockerRequest
 var startRecording = function(stuff) {
     // not https ?!
@@ -508,9 +537,33 @@ var startRecording = function(stuff) {
             // also need to update the video node at /video/list/[video_node_key] with...
             updates[`video/list/${stuff.video_node_key}/recording_started`] = date.asCentralTime()
             updates[`video/list/${stuff.video_node_key}/recording_started_ms`] = date.asMillis()
+            updates[`video/list/${stuff.video_node_key}/recording_stopped`] = null
+            updates[`video/list/${stuff.video_node_key}/recording_stopped_ms`] = null
             updates[`video/list/${stuff.video_node_key}/vm_host`] = stuff.vmHost
             updates[`video/list/${stuff.video_node_key}/vm_port`] = stuff.vmPort
             updates[`video/list/${stuff.video_node_key}/docker_name`] = stuff.docker.name
+            return db.ref('/').update(updates)
+        }
+        // TODO what if error is thrown?
+    })
+}
+
+
+var stopRecording = function(stuff) {
+    var url = 'http://'+stuff.vmHost+':'+stuff.vmPort+'/stop-recording?dockerName='+stuff.docker_name
+    request(url, function(error, response, body) {
+        // note: you cannot send the reponse object to the database for debugging. That will cause an error because
+        // the response object contains functions as attributes and firebase doesn't like that
+        if(!error) {
+            var updates = {}
+            // multi-path updates...
+            updates[`administration/dockers/${stuff.key}/running`] = true
+            updates[`administration/dockers/${stuff.key}/recording`] = false
+            updates[`administration/dockers/${stuff.key}/recording_stopped`] = date.asCentralTime()
+            updates[`administration/dockers/${stuff.key}/recording_stopped_ms`] = date.asMillis()
+            // also need to update the video node at /video/list/[video_node_key] with...
+            updates[`video/list/${stuff.video_node_key}/recording_stopped`] = date.asCentralTime()
+            updates[`video/list/${stuff.video_node_key}/recording_stopped_ms`] = date.asMillis()
             return db.ref('/').update(updates)
         }
         // TODO what if error is thrown?
@@ -743,14 +796,16 @@ exports.dockerRequest = functions.database.ref('video/docker_requests/{key}').on
         })
     }
     else if(type == 'stop recording') {
+        // construct the url to the virtual machine to tell it to stop recording...
+        return db.ref(`video/list/${event.data.val().video_node_key}`).once('value').then(snapshot => {
+            var video_node = snapshot.val()
+            var args = {vmHost: video_node.vm_host, vmPort: video_node.vm_port, docker_name: video_node.docker_name}
+            return stopRecording(args)
+        })
     }
     // ignore all others...
     else return false
 })
-
-
-
-
 
 
 
