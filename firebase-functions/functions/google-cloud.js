@@ -117,19 +117,25 @@ var mainStuff = function(stuff) {
             var html = ''
             html += '<table cellspacing="0" border="1" cellpadding="2">'
             html += '<tr>'
-            html +=     '<th colspan="5">/video/docker_requests</th>'
+            html +=     '<th colspan="7">/video/docker_requests</th>'
             html += '</tr>'
             html += '<tr>'
             html +=     '<th>key</th>'
-            html +=     '<th>uid (user id)</th>'
             html +=     '<th>request_date</th>'
+            html +=     '<th>request_type</th>'
+            html +=     '<th>room_id</th>'
+            html +=     '<th>uid (user id)</th>'
+            html +=     '<th>unique_file_ext</th>'
             html +=     '<th>video_node_key</th>'
             html += '</tr>'
             snapshot.forEach(function(child) {
                 html += '<tr>'
                 html +=     '<td>'+child.key+'</td>'
-                html +=     '<td>'+child.val().uid+'</td>'
                 html +=     '<td>'+child.val().request_date+'</td>'
+                html +=     '<td>'+child.val().request_type+'</td>'
+                html +=     '<td>'+child.val().room_id+'</td>'
+                html +=     '<td>'+child.val().uid+'</td>'
+                html +=     '<td>'+child.val().unique_file_ext+'</td>'
                 html +=     '<td>'+child.val().video_node_key+'</td>'
                 html += '</tr>'
             })
@@ -344,6 +350,7 @@ exports.testRequestDocker = functions.https.onRequest((req, res) => {
     input.video_node_key = req.query.video_node_key
     input.vmHost = req.query.vmHost
     input.vmPort = req.query.vmPort
+    // we have a trigger listening on video/docker_requests - exports.dockerRequest
     return db.ref(`video/docker_requests`).push().set(docker_request).then(() => {
         return mainStuff(input).then(stuff => {
             return res.status(200).send(render(stuff))
@@ -478,7 +485,7 @@ var startDocker = function(stuff) {
 
 }
 
-
+// See exports.testRequestDocker and exports.dockerRequest
 var startRecording = function(stuff) {
     // not https ?!
     var recorderUrl = 'http://'+stuff.vmHost+':'+stuff.docker.port+'/record/'+stuff.room_id+'/'+stuff.unique_file_ext
@@ -491,8 +498,9 @@ var startRecording = function(stuff) {
             updates['recording_started_ms'] = date.asMillis()
             updates['recording_stopped'] = null
             updates['recording_stopped_ms'] = null
-            return event.data.adminRef.child(`administration/dockers/${stuff.key}`).update(updates)
+            return stuff.adminRef.child(`administration/dockers/${stuff.key}`).update(updates)
         }
+        console.log('startRecording: error: ', error)
     })
 }
 
@@ -649,19 +657,36 @@ start the recording
 
 WHAT DO WE EXPECT TO HAPPEN HERE?...
 *************************************************************/
-exports.dockerRequest = functions.database.ref('video/docker_requests').onWrite(event => {
+exports.dockerRequest = functions.database.ref('video/docker_requests/{key}').onWrite(event => {
     // ignore deletes...
-    if(!event.data.val()) return false
+    if(!event.data.val()) {
+        db.ref('templog2').push().set({dockerRequest: 'oops: !event.data.val()'})
+        return false
+    }
+
+    db.ref('templog2').push().set({dockerRequest: 'check: event.data.val()'})
+    db.ref('templog2').push().set({event_data_val: event.data.val()})
+
     // ignore malformed...
-    if(!event.data.val().request_type) return false
+    if(!event.data.val().request_type) {
+        db.ref('templog2').push().set({dockerRequest: 'oops: !event.data.val().request_type'})
+        return false
+    }
     var type = event.data.val().request_type
     // we don't 'request a room' - we are requesting a 'recording secretary'.  The room is just a
     // name/string that we already know
     if(type == 'start recording') {
+        db.ref('templog2').push().set({dockerRequest: 'OK: type = start recording'})
         //find the first 'virtual machine' node from /administration/hosts
         return db.ref(`administration/hosts`).orderByChild('type').equalTo('virtual machine').limitToFirst(1).once('value').then(snapshot => {
             // TODO error handling if no vm's found?  This should never be the case because we hand jam the vm into the database
-            var vm = snapshot.val()[0]
+
+            var vm
+            snapshot.forEach(function(child) {
+                vm = child.val()
+            })
+
+            db.ref('templog2').push().set({check: 'check vm', vm: vm})
 
             // then find all /administration/dockers nodes that match the vm's 'host' value (an IP address)
             return event.data.adminRef.root.child(`administration/dockers`).orderByChild('vm_host').equalTo(vm.host).once('value').then(snapshot => {
@@ -669,22 +694,32 @@ exports.dockerRequest = functions.database.ref('video/docker_requests').onWrite(
                 snapshot.forEach(function(child) {
                     dockers.push({key: child.key, docker: child.val()})
                 })
+                db.ref('templog2').push().set({dockerRequest: 'CHECK: dockers.length = '+dockers.length})
                 var availableDockers = _.filter(dockers, function(docker) {
                     return docker.docker.running && !docker.docker.recording
                 })
+
+                db.ref('templog2').push().set({dockerRequest: 'CHECK: availableDockers...'})
+                if(availableDockers) db.ref('templog2').push().set({availableDockers: availableDockers})
+
                 if(!availableDockers || availableDockers.length == 0) {
+                    db.ref('templog2').push().set({dockerRequest: 'nothing available - looking for stopped dockers...'})
                     var stoppedDockers = _.filter(dockers, function(docker) {
                         return !docker.docker.running
                     })
                     if(!stoppedDockers || stoppedDockers.length == 0) {
+                        db.ref('templog2').push().set({dockerRequest: 'hmmm... no stopped dockers either'})
                         // create a new docker instance, then start the recording
                         return createDocker({vmHost: vm.host,
                                              vmPort: vm.port,
+                                             adminRef: event.data.adminRef,
                                              callback: onDockerCreation,
                                              nextAction: startRecording})
                     }
                     else {
                         var selectedDocker = stoppedDockers[0]
+                        db.ref('templog2').push().set({dockerRequest: 'OK: at least we found a stopped docker'})
+                        db.ref('templog2').push().set({stoppedDocker: selectedDocker})
                         // found a docker, it just wasn't running, so start it...
 
                         return startDocker({vmHost: vm.host,
@@ -693,6 +728,7 @@ exports.dockerRequest = functions.database.ref('video/docker_requests').onWrite(
                                             // for startRecording...
                                             docker: selectedDocker.docker,
                                             key: selectedDocker.key,
+                                            adminRef: event.data.adminRef,
                                             room_id: event.data.val().room_id,
                                             unique_file_ext: event.data.val().unique_file_ext,
                                             callback: startRecording })
@@ -700,9 +736,12 @@ exports.dockerRequest = functions.database.ref('video/docker_requests').onWrite(
                 }
                 else {
                     var selectedDocker = availableDockers[0]
+                    db.ref('templog2').push().set({dockerRequest: 'OK: found a running docker...'})
+                    db.ref('templog2').push().set({availableDocker: selectedDocker})
                     return startRecording({vmHost: vm.host,
                                            docker: selectedDocker.docker,
                                            key: selectedDocker.key,
+                                           adminRef: event.data.adminRef,
                                            room_id: event.data.val().room_id,
                                            unique_file_ext: event.data.val().unique_file_ext})
                 }
