@@ -129,3 +129,7 @@ exports.generateVidyoToken = vidyo.generateVidyoToken
 const amiready = require('./user-amiready')
 exports.amiready = amiready.amiready
 
+const youtube = require('./youtube')
+exports.youtube_main = youtube.youtube_main
+//exports.createPlaylist = youtube.createPlaylist
+
