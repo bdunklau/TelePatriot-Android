@@ -32,7 +32,7 @@ var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
                                 FUNCTIONS_REDIRECT);
 
 exports.youtube_main = functions.https.onRequest((req, res) => {
-    return render()
+    return render(res)
 })
 
 /*********
@@ -221,6 +221,7 @@ We want to display 2 lists of playlists so we can visually confirm that what's i
 database is in fact on youtube also
 ***/
 var listPlaylistsOnYouTube = function(channelId) {
+    var service = google.youtube('v3')
     return getAuthorizedClient().then(client => {
 
         var requestData = {'params': {'channelId': channelId,
@@ -236,13 +237,11 @@ var listPlaylistsOnYouTube = function(channelId) {
             db.ref('templog2').push().set({response: response})
         });
 
-        return resolve();
-
     })
 }
 
 
-var render = function() {
+var render = function(res) {
     var html = ''
     html += createPlaylistForm()
     html += listPlaylistsInDatabase()
