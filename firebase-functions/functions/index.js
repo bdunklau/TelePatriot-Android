@@ -21,8 +21,6 @@ exports.roleUnassigned = roles.roleUnassigned
 exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
 
-exports.authgoogleapi = sheetsDemo.authgoogleapi
-exports.oauthcallback = sheetsDemo.oauthcallback
 exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
@@ -32,6 +30,8 @@ exports.readSpreadsheet = sheetReader.readSpreadsheet
 exports.deleteMissionItems = sheetReader.deleteMissionItems
 exports.testReadSpreadsheet = sheetReader.testReadSpreadsheet
 exports.testMergeMissions = sheetReader.testMergeMissions
+exports.oauthcallback = sheetReader.oauthcallback
+exports.authgoogleapi = sheetReader.authgoogleapi
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
@@ -129,7 +129,9 @@ exports.generateVidyoToken = vidyo.generateVidyoToken
 const amiready = require('./user-amiready')
 exports.amiready = amiready.amiready
 
-const youtube = require('./youtube')
-exports.youtube_main = youtube.youtube_main
-//exports.createPlaylist = youtube.createPlaylist
+const youtube_playlists = require('./youtube-playlists')
+exports.youtube_playlists = youtube_playlists.youtube_playlists
+exports.savePlaylist = youtube_playlists.savePlaylist
+exports.deletePlaylist = youtube_playlists.deletePlaylist
+exports.editPlaylist = youtube_playlists.editPlaylist
 

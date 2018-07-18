@@ -20,6 +20,7 @@ You do that from the command line on local pc, from the firebase-functions/funct
 The command looks like this:
 
 firebase functions:config:set googleapi.client_id="****EXPLAINED BELOW****" googleapi.client_secret="****EXPLAINED BELOW****" googleapi.function_redirect="****EXPLAINED BELOW****"
+firebase functions:config:set googleapi.client_id="377732711004-bap6eu3jmefke76gbud433c3od72lab1.apps.googleusercontent.com" googleapi.client_secret="cMVG3qDLKK5fo4vm0BPiu92f" googleapi.function_redirect="https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback"
 
 
 Here's how you get the client id, client secret and function_redirect values...
@@ -39,7 +40,7 @@ If you have to create a new OAuth 2.0 client ID, here's how you do it.
 4.  Choose "OAuth client ID"
 5.  Choose "Web application"
 6.  "Authorized redirect URIs" is the only field we care about
-7.  Enter https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback
+7.  Enter https://us-central1-telepatriot-[bd737 or dev].cloudfunctions.net/oauthcallback
 8.  Hit save/create/whatever - done
 
 Put the client id and client secret into the "firebase functions:config:set..." command above
@@ -112,6 +113,7 @@ var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
 let oauthTokens = null;
 
 
+/*************** clashes with  import-sheet.js:authgoogleapi
 // visit the URL for this Function to request tokens
 exports.authgoogleapi = functions.https.onRequest((req, res) =>
   res.redirect(functionsOauthClient.generateAuthUrl({
@@ -120,12 +122,14 @@ exports.authgoogleapi = functions.https.onRequest((req, res) =>
     prompt: 'consent'
   }))
 );
+****************/
 
 // setup for OauthCallback
 const DB_TOKEN_PATH = '/api_tokens';
 
 // after you grant access, you will be redirected to the URL for this Function
 // this Function stores the tokens to your Firebase database
+/*************** clashes with  import-sheet.js:oauthcallback
 exports.oauthcallback = functions.https.onRequest((req, res) => {
   const code = req.query.code;
   functionsOauthClient.getToken(code, (err, tokens) => {
@@ -139,6 +143,7 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
                                    'You can now close this page.'));
   });
 });
+****************/
 
 
 /*
