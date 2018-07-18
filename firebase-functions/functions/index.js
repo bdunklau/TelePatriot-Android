@@ -135,3 +135,10 @@ exports.savePlaylist = youtube_playlists.savePlaylist
 exports.deletePlaylist = youtube_playlists.deletePlaylist
 exports.editPlaylist = youtube_playlists.editPlaylist
 
+const twitter = require('./twitter')
+exports.twitter = twitter.twitter
+exports.tweet = twitter.tweet
+exports.callback_from_twitter = twitter.callback_from_twitter
+//exports.deleteTweet = twitter.deleteTweet  // not supported, don't think
+
+
