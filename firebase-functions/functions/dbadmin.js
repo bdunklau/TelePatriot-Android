@@ -671,7 +671,7 @@ exports.archive = functions.https.onRequest((req, res) => {
         }
 
         var datePart = date.as_yyyyMMdd()
-        var destNode = "archive_"+node+"_"+datePart
+        var destNode = "zzz_archive_"+node+"_"+datePart
         var fromNode = node
 
         return db.ref(`${fromNode}`).once('value').then(snapshot => {
