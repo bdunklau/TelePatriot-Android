@@ -34,33 +34,85 @@ var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
                                 FUNCTIONS_REDIRECT);
 
 exports.youtube_playlists = functions.https.onRequest((req, res) => {
-    return render(req, res)
+    return db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
+        var uid
+        snapshot.forEach(function(child) {
+            uid = child.key
+        })
+        return render({req: req, res: res, uid: uid})
+    })
 })
 
 
-exports.savePlaylist = functions.https.onRequest((req, res) => {
-    if(req.body.key && req.body.key != '') {
-        // updating...
-        updatePlaylist(req, res)
+exports.testSavePlaylist = functions.https.onRequest((req, res) => {
+    return db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
+        var uid
+        snapshot.forEach(function(child) {
+            uid = child.key
+        })
+
+        // issue a request to insert/update then have a trigger listen for the request
+        // to actually do the insert/update
+        // This is what mobile clients will do...
+        var request = {'title': req.body.title, 'description': req.body.description, 'privacyStatus': 'Unlisted'}
+        request.action = 'save'
+        if(req.body.id) {
+            request.id = req.body.id
+        }
+        if(req.body.key) {
+            request.key = req.body.key
+        }
+        request.date = date.asCentralTime()
+        request.date_ms = date.asMillis()
+        request.uid = req.body.uid
+        return db.ref('video/playlist_requests').push().set(request).then(() => {
+            return render({req: req, res: res, uid: uid})
+        })
+    })
+
+})
+
+
+exports.handlePlaylistRequest = functions.database.ref('video/playlist_requests/{key}').onWrite(event => {
+    if(!event.data.val() && event.data.previous.val())
+        return false //ignore deletes
+    var request = event.data.val()
+    if(request.id) {
+        // update or delete
+        if(request.action == 'delete') {
+            // delete...
+            return deletePlaylist(request)
+        }
+        else {
+            // update...
+            return updatePlaylist(request)
+        }
     }
     else {
-        // inserting...
-        insertPlaylist(req, res)
+        // insert...
+        return insertPlaylist(request)
     }
 })
 
 
-exports.editPlaylist = functions.https.onRequest((req, res) => {
-    return render(req, res)
+exports.testEditPlaylist = functions.https.onRequest((req, res) => {
+    return db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
+        var uid
+        snapshot.forEach(function(child) {
+            uid = child.key
+        })
+
+        return render({req: req, res: res, uid: uid})
+    })
 })
 
 
-var insertPlaylist = function(req, res) {
+var insertPlaylist = function(request) {
 
     return getAuthorizedClient().then(auth => {
         var requestData = {'params': {'part': 'snippet,status', 'onBehalfOfContentOwner': ''},
-                           'properties': {'snippet.title': req.body.title,
-                                          'snippet.description': req.body.description,
+                           'properties': {'snippet.title': request.title,
+                                          'snippet.description': request.description,
                                           'snippet.tags[]': '',
                                           'snippet.defaultLanguage': '',
                                           'status.privacyStatus': 'Unlisted'}
@@ -88,22 +140,40 @@ var insertPlaylist = function(req, res) {
             // response already comes with an 'id' attribute
             // There's also a 'thumbnails' attribute under 'snippet'
 
-            return db.ref('video/playlists').push().set(response).then(() => {
-                return render(req, res)
-            })
+            return db.ref('video/playlists').push().set(response)
         });
     })
 
 }
 
 
-var updatePlaylist = function(req, res) {
+var deletePlaylist = function(request) {
+
+    return getAuthorizedClient().then(auth => {
+        var requestData = {'params': {'id': request.id,
+                         'onBehalfOfContentOwner': ''}}
+        var service = google.youtube('v3');
+        var parameters = removeEmptyParameters(requestData['params']);
+        parameters['auth'] = auth;
+        service.playlists.delete(parameters, function(err, response) {
+            if (err) {
+              console.log('The API returned an error: ' + err);
+              return;
+            }
+            // FYI - there is no response object on deletes
+            db.ref('video/playlists').child(request.key).remove()
+        });
+    })
+}
+
+
+var updatePlaylist = function(request) {
 
     return getAuthorizedClient().then(auth => {
         var requestData = {'params': {'part': 'snippet,status', 'onBehalfOfContentOwner': ''},
-                           'properties': {'id': req.body.id,
-                                          'snippet.title': req.body.title,
-                                          'snippet.description': req.body.description,
+                           'properties': {'id': request.id,
+                                          'snippet.title': request.title,
+                                          'snippet.description': request.description,
                                           'snippet.tags[]': '',
                                           'snippet.defaultLanguage': '',
                                           'status.privacyStatus': 'Unlisted'}
@@ -131,36 +201,30 @@ var updatePlaylist = function(req, res) {
             // response already comes with an 'id' attribute
             // There's also a 'thumbnails' attribute under 'snippet'
 
-            db.ref('templog2').push().set({update_response: response})
-
-            return db.ref('video/playlists/'+req.body.key).update(response).then(() => {
-                return render(req, res)
-            })
+            return db.ref('video/playlists/'+request.key).update(response)
         });
     })
 
 }
 
 
-exports.deletePlaylist = functions.https.onRequest((req, res) => {
+exports.testDeletePlaylist = functions.https.onRequest((req, res) => {
 
     return getAuthorizedClient().then(auth => {
+        // This is what mobile clients will do...
+        var request = {}
+        if(req.query.id) {
+            request.id = req.query.id
+            request.action = 'delete'
+        }
+        request.date = date.asCentralTime()
+        request.date_ms = date.asMillis()
+        request.uid = req.query.uid
+        request.key = req.query.key
+        return db.ref('video/playlist_requests').push().set(request).then(() => {
+            return render({req: req, res: res, uid: request.uid})
+        })
 
-        var requestData = {'params': {'id': req.query.id,
-                         'onBehalfOfContentOwner': ''}}
-        var service = google.youtube('v3');
-        var parameters = removeEmptyParameters(requestData['params']);
-        parameters['auth'] = auth;
-        service.playlists.delete(parameters, function(err, response) {
-            if (err) {
-              console.log('The API returned an error: ' + err);
-              return;
-            }
-            // FYI - there is no response object on deletes
-            db.ref('video/playlists').child(req.query.key).remove().then(() => {
-                return render(req, res)
-            })
-        });
     })
 
 })
@@ -211,7 +275,6 @@ function getAuthorizedClient() {
   return db.ref('/api_tokens').once('value').then(snapshot => {
     oauthTokens = snapshot.val();
     functionsOauthClient.credentials = oauthTokens;
-    db.ref('templog2').push().set({oauthTokens: oauthTokens, date: date.asCentralTime()})
     return functionsOauthClient;
   })
 }
@@ -245,7 +308,9 @@ function removeEmptyParameters(params) {
 We want to display 2 lists of playlists so we can visually confirm that what's in the
 database is in fact on youtube also
 ***/
-var listPlaylistsInDatabase = function(html) {
+var listPlaylistsInDatabase = function(stuff) {
+    var html = stuff.html
+    var uid = stuff.uid
     return db.ref('video/playlists').once('value').then(snapshot => {
         var playlists = []
         snapshot.forEach(function(child) {
@@ -274,8 +339,8 @@ var listPlaylistsInDatabase = function(html) {
         _.each(playlists, function(playlist) {
             html += '<tr>'
             html +=     '<td><a href="https://www.youtube.com/playlist?list='+playlist.id+'" target="yt">view</a></td>'
-            html +=     '<td><a href="/editPlaylist?key='+playlist.key+'&id='+playlist.id+'">edit</a></td>'
-            html +=     '<td><a href="/deletePlaylist?key='+playlist.key+'&id='+playlist.id+'">delete</a></td>'
+            html +=     '<td><a href="/testEditPlaylist?key='+playlist.key+'&id='+playlist.id+'&uid='+uid+'">edit</a></td>'
+            html +=     '<td><a href="/testDeletePlaylist?key='+playlist.key+'&id='+playlist.id+'&uid='+uid+'">delete</a></td>'
             html +=     '<td>'+playlist.key+'</td>'
             html +=     '<td>'+playlist.channelId+'</td>'
             html +=     '<td>'+playlist.channelTitle+'</td>'
@@ -288,6 +353,39 @@ var listPlaylistsInDatabase = function(html) {
         })
         html += '</table>'
         return html
+    })
+    .then(html => {
+        return db.ref('video/playlist_requests').once('value').then(snapshot => {
+            html += '<P/>'
+            html += '<table border="1" cellspacing="0" cellpadding="2">'
+            html += '<tr>'
+            html +=     '<th colspan="7">Playlist Requests at /video/playlist_requests</th>'
+            html += '</tr>'
+            html += '<tr>'
+            html +=     '<th>date</th>'
+            html +=     '<th>key</th>'
+            html +=     '<th>id</th>'
+            html +=     '<th>title</th>'
+            html +=     '<th>action</th>'
+            html +=     '<th>privacyStatus</th>'
+            html +=     '<th>uid</th>'
+            html += '</tr>'
+            _.each(snapshot.val(), function(playlist_request) {
+                var title = ''
+                if(playlist_request.title) title = playlist_request.title
+                html += '<tr>'
+                html +=     '<td>'+playlist_request.date+'</td>'
+                html +=     '<td>'+playlist_request.key+'</td>'
+                html +=     '<td>'+playlist_request.id+'</td>'
+                html +=     '<td>'+title+'</td>'
+                html +=     '<td>'+playlist_request.action+'</td>'
+                html +=     '<td>'+playlist_request.privacyStatus+'</td>'
+                html +=     '<td>'+playlist_request.uid+'</td>'
+                html += '</tr>'
+            })
+            html += '</table>'
+            return html
+        })
     })
 }
 
@@ -355,7 +453,10 @@ var listPlaylistsOnYouTube = function(input) {
 
 
 
-var render = function(req, res) {
+var render = function(stuff) {
+    var req = stuff.req
+    var res = stuff.res
+    var uid = stuff.uid
 
     var callback = function(h) {
         return res.status(200).send(h)
@@ -369,16 +470,17 @@ var render = function(req, res) {
         return db.ref('video/playlists/'+req.query.key).once('value').then(snapshot => {
             var data = snapshot.val()
             if(!data) {
-                html += playlistForm({})
+                html += playlistForm({uid: uid})
             }
             else {
                 data.key = snapshot.key
+                data.uid = uid
                 html += playlistForm(data)
             }
             return html
         })
         .then(html => {
-            return listPlaylistsInDatabase(html).then(playlistHtml => {
+            return listPlaylistsInDatabase({html: html, uid: uid}).then(playlistHtml => {
                 return db.ref('video/youtube/channelId').once('value').then(snapshot => {
                     var input = {channelId: snapshot.val(), html: playlistHtml, callback: callback}
                     listPlaylistsOnYouTube(input)
@@ -388,8 +490,8 @@ var render = function(req, res) {
     }
     else {
         // inserting...
-        html += playlistForm({})
-        return listPlaylistsInDatabase(html).then(playlistHtml => {
+        html += playlistForm({uid: uid})
+        return listPlaylistsInDatabase({html: html, uid: uid}).then(playlistHtml => {
             return db.ref('video/youtube/channelId').once('value').then(snapshot => {
                 var input = {channelId: snapshot.val(), html: playlistHtml, callback: callback}
                 listPlaylistsOnYouTube(input)
@@ -430,12 +532,15 @@ var playlistForm = function(data) {
     }
     var html = ''
     html += '<P/><b>Create/Edit YouTube Playlists</b>'
-    html += '<form method="post" action="/savePlaylist">'
+    html += '<form method="post" action="/testSavePlaylist">'
     html += '<input type"text" name="title" size="75" placeholder="Playlist" value="'+title+'">'
 
     // hidden field determines insert or update...
     html += '<input type="hidden" name="key" value="'+key+'">'
     html += '<input type="hidden" name="id" value="'+id+'">'
+
+    // text field specifies the user making the playlist request...
+    html += '<input type="text" name="uid" value="'+data.uid+'">'
 
     html += '<p/><textarea name="description" rows="10" cols="100">'+description+'</textarea>'
     html += '<P/><input type="submit" value="save">'
