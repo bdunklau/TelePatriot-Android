@@ -131,9 +131,10 @@ exports.amiready = amiready.amiready
 
 const youtube_playlists = require('./youtube-playlists')
 exports.youtube_playlists = youtube_playlists.youtube_playlists
-exports.savePlaylist = youtube_playlists.savePlaylist
-exports.deletePlaylist = youtube_playlists.deletePlaylist
-exports.editPlaylist = youtube_playlists.editPlaylist
+exports.testSavePlaylist = youtube_playlists.testSavePlaylist
+exports.testDeletePlaylist = youtube_playlists.testDeletePlaylist
+exports.testEditPlaylist = youtube_playlists.testEditPlaylist
+exports.handlePlaylistRequest = youtube_playlists.handlePlaylistRequest
 
 const twitter = require('./twitter')
 exports.twitter = twitter.twitter
