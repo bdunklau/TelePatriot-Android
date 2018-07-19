@@ -47,7 +47,8 @@ exports.testTweet = functions.https.onRequest((req, res) => {
         uid: req.body.uid,
         date: date.asCentralTime(),
         date_ms: date.asMillis(),
-        text: req.body.tweet
+        text: req.body.tweet,
+        twitter_callback_url: 'https://'+req.get('host')+'/callback_from_twitter'
     }
     return db.ref('tweet_requests').push().set(tweetRequest).then(() => {
         return render({req: req, res: res,
@@ -58,7 +59,7 @@ exports.testTweet = functions.https.onRequest((req, res) => {
 
 
 // This is the function that actually does the tweeting
-exports.handleTweetRequest = functions.database.ref('tweet_requests').onWrite(event => {
+exports.handleTweetRequest = functions.database.ref('tweet_requests/{key}').onWrite(event => {
     if(!event.data.val() && event.data.previous.val()) return false // ignore deleted rows
     return tweet({tweet_request: event.data.val()})
 })
@@ -71,7 +72,7 @@ var tweet = function(stuff) {
         var twitter = new twitterAPI({
                               consumerKey: snapshot.val().twitter_consumer_key,
                               consumerSecret: snapshot.val().twitter_consumer_secret,
-                              callback: 'https://'+req.get('host')+'/callback_from_twitter'
+                              callback: stuff.twitter_callback_url
                           })
 
         return twitter.statuses("update",
@@ -81,10 +82,13 @@ var tweet = function(stuff) {
                         function(error, data, response) {
                             if (error) {
                                 // something went wrong
-                                data.date = date.asCentralTime()
-                                data.date_ms = date.asMillis()
-                                data.text = 'error: '+error
-                                db.ref('tweets').push().set(data)
+                                // TODO need error handling strategy
+                                /********
+                                var text = 'no text (that is bad)'
+                                if(stuff.tweet_request.text)
+                                    text = stuff.tweet_request.text
+                                db.ref('templog2').set({error: error, text: text, event_data_val: stuff.tweet_request})
+                                *******/
                             } else {
                                 // data contains the data sent by twitter
                                 // don't try to log/debug the response object.  It contains a function
@@ -203,7 +207,7 @@ var render = function(stuff) {
     var req = stuff.req
     var res = stuff.res
     var html = ''
-    html += '<h3>Tweet as <a href="https://twitter.com/realTelePatriot" target="twitter">@realTelePatriot</a></h3>'
+    html += '<h3>Tweet as <a href="https://twitter.com/realTelePatriot" target="twitter">@realTelePatriot</a> | <a href="/twitter">Refresh</a></h3>'
     return db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
         var uid
         snapshot.forEach(function(child) { uid = child.key })
@@ -257,12 +261,14 @@ var tweetsRequestsAsHtml = function(tweet_requests) {
     html +=     '<th>date</th>'
     html +=     '<th>uid</th>'
     html +=     '<th>text</th>'
+    html +=     '<th>twitter_callback_url</th>'
     html += '</tr>'
     _.each(tweet_requests, function(tweet_request) {
         html += '<tr>'
         html +=     '<td>'+tweet_request.date+'</td>'
         html +=     '<td>'+tweet_request.uid+'</td>'
         html +=     '<td>'+tweet_request.text+'</td>'
+        html +=     '<td>'+tweet_request.twitter_callback_url+'</td>'
         html += '</tr>'
     })
     html += '</table>'
