@@ -40,7 +40,31 @@ exports.twitter = functions.https.onRequest((req, res) => {
 })
 
 
-exports.tweet = functions.https.onRequest((req, res) => {
+exports.testTweet = functions.https.onRequest((req, res) => {
+    // write to /tweet_requests.  handleTweetRequest listens for writes to that node.
+    // handleTweetRequest is what actually does the tweeting
+    var tweetRequest = {
+        uid: req.body.uid,
+        date: date.asCentralTime(),
+        date_ms: date.asMillis(),
+        text: req.body.tweet
+    }
+    return db.ref('tweet_requests').push().set(tweetRequest).then(() => {
+        return render({req: req, res: res,
+                       twitter_access_token: req.body.twitter_access_token,
+                       twitter_access_token_secret: req.body.twitter_access_token_secret})
+    })
+})
+
+
+// This is the function that actually does the tweeting
+exports.handleTweetRequest = functions.database.ref('tweet_requests').onWrite(event => {
+    if(!event.data.val() && event.data.previous.val()) return false // ignore deleted rows
+    return tweet({tweet_request: event.data.val()})
+})
+
+
+var tweet = function(stuff) {
     // send the tweet then render...
 
     return db.ref('api_tokens').once('value').then(snapshot => {
@@ -50,16 +74,17 @@ exports.tweet = functions.https.onRequest((req, res) => {
                               callback: 'https://'+req.get('host')+'/callback_from_twitter'
                           })
 
-        console.log('twitter: ', twitter)
-
-        return twitter.statuses("update", {
-                            status: req.body.tweet
-                        },
-                        req.body.twitter_access_token,
-                        req.body.twitter_access_token_secret,
+        return twitter.statuses("update",
+                        {status: stuff.tweet_request.text},
+                        snapshot.val().twitter_access_token,
+                        snapshot.val().twitter_access_token_secret,
                         function(error, data, response) {
                             if (error) {
                                 // something went wrong
+                                data.date = date.asCentralTime()
+                                data.date_ms = date.asMillis()
+                                data.text = 'error: '+error
+                                db.ref('tweets').push().set(data)
                             } else {
                                 // data contains the data sent by twitter
                                 // don't try to log/debug the response object.  It contains a function
@@ -69,15 +94,12 @@ exports.tweet = functions.https.onRequest((req, res) => {
                                 data.date_ms = date.asMillis()
                                 db.ref('tweets').push().set(data)
                             }
-                            return render({req: req, res: res,
-                                        twitter_access_token: req.body.twitter_access_token,
-                                        twitter_access_token_secret: req.body.twitter_access_token_secret})
                         }
-                    );
+                    )
 
     })
 
-})
+}
 
 
 exports.callback_from_twitter = functions.https.onRequest((req, res) => {
@@ -177,22 +199,23 @@ var initTwitterAPI = function(req, res) {
 }
 
 
-var tweetsInDatabase = function() {
-    return db.ref('tweets').once('value').then(snapshot => {
-        return snapshot.val()
-    })
-}
-
-
 var render = function(stuff) {
     var req = stuff.req
     var res = stuff.res
     var html = ''
     html += '<h3>Tweet as <a href="https://twitter.com/realTelePatriot" target="twitter">@realTelePatriot</a></h3>'
-    html += twitterForm(stuff)
-    return db.ref('tweets').once('value').then(snapshot => {
-        html += tweetsAsHtml(snapshot.val())
-        return res.status(200).send(html)
+    return db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
+        var uid
+        snapshot.forEach(function(child) { uid = child.key })
+        stuff.uid = uid
+        html += twitterForm(stuff)
+        return db.ref('tweets').once('value').then(snapshot => {
+            html += tweetsAsHtml(snapshot.val())
+            return db.ref('tweet_requests').once('value').then(snapshot => {
+                html += tweetsRequestsAsHtml(snapshot.val())
+                return res.status(200).send(html)
+            })
+        })
     })
 }
 
@@ -223,12 +246,37 @@ var tweetsAsHtml = function(tweets) {
     return html
 }
 
+var tweetsRequestsAsHtml = function(tweet_requests) {
+    // this is not all of the attributes returned by twitter.statuses(...)
+    var html = '<P/>'
+    html += '<table border="1" cellspacing="0" cellpadding="2">'
+    html += '<tr>'
+    html +=     '<th colspan="5">Tweets Requests in /tweet_requests</th>'
+    html += '</tr>'
+    html += '<tr>'
+    html +=     '<th>date</th>'
+    html +=     '<th>uid</th>'
+    html +=     '<th>text</th>'
+    html += '</tr>'
+    _.each(tweet_requests, function(tweet_request) {
+        html += '<tr>'
+        html +=     '<td>'+tweet_request.date+'</td>'
+        html +=     '<td>'+tweet_request.uid+'</td>'
+        html +=     '<td>'+tweet_request.text+'</td>'
+        html += '</tr>'
+    })
+    html += '</table>'
+    return html
+}
+
 var twitterForm = function(stuff) {
     var req = stuff.req
+    var uid = stuff.uid
     var html = ''
     if(stuff.twitter_access_token && stuff.twitter_access_token_secret) {
-        html += '<P/><form method="post" action="/tweet">'
+        html += '<P/><form method="post" action="/testTweet">'
         html += '<textarea name="tweet" rows="10" cols="100"></textarea>'
+        html += '<P/><input type="text" name="uid" value="'+uid+'" placeholder="user id / uid">'
         html += '<P/><input type="submit" value="tweet" />'
         html += '<input type="hidden" name="twitter_access_token" value="'+stuff.twitter_access_token+'">'
         html += '<input type="hidden" name="twitter_access_token_secret" value="'+stuff.twitter_access_token_secret+'">'
