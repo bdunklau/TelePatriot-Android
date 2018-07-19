@@ -140,6 +140,7 @@ const twitter = require('./twitter')
 exports.twitter = twitter.twitter
 exports.testTweet = twitter.testTweet
 exports.callback_from_twitter = twitter.callback_from_twitter
+exports.handleTweetRequest = twitter.handleTweetRequest
 //exports.deleteTweet = twitter.deleteTweet  // not supported, don't think
 
 
