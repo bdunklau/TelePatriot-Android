@@ -147,3 +147,4 @@ const facebook = require('./facebook')
 exports.facebook = facebook.facebook
 exports.testPostFacebook = facebook.testPostFacebook
 exports.handleFacebookRequest = facebook.handleFacebookRequest
+exports.triggerComment = facebook.triggerComment

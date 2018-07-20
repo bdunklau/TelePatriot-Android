@@ -25,13 +25,40 @@ exports.facebook = functions.https.onRequest((req, res) => {
 
 
 //  https://developers.facebook.com/tools/accesstoken
-exports.testPostFacebook = functions.https.onRequest((req, result) => {
+exports.testPostFacebook = functions.https.onRequest((req, res) => {
     /*******
     var facebook_request = {date: date.asCentralTime(), date_ms: date.asMillis(), uid: req.body.uid, text: req.body.text}
     return db.ref('facebook_requests').push().set(facebook_request).then(() => {
         return render({req: req, res: res, uid: req.body.uid})
     })
     ******/
+
+    var facebook_request = {
+        uid: req.body.uid,
+        date: date.asCentralTime(),
+        date_ms: date.asMillis(),
+        text: req.body.text,
+        link: req.body.link  // i.e. YouTube video link
+    }
+
+    // There are also facebook_comment_requests because that's where we will actually be tagging legislators - in the comments
+    return db.ref('facebook_post_requests').push().set(facebook_request).then(() => {
+        return render({req: req, res: res, uid: req.body.uid})
+    })
+})
+
+
+exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{key}').onWrite(event => {
+    if(!event.data.val() && event.data.previous.val()) return false // ignore deleted nodes
+    // this is where we actually post to FB
+
+    /**
+    Return early here also because all we did was write the FB post_id to this row.
+    We record the post_id at the bottom of this function.  This 'if' condition here prevents
+    infinite triggering
+    **/
+    if(event.data.val().post_id && !event.data.previous.val().post_id)
+        return false
 
     /****************
     WORKING cURL COMMAND !!!!!!!!!!!
@@ -50,29 +77,57 @@ exports.testPostFacebook = functions.https.onRequest((req, result) => {
         var facebook_page_access_token = snapshot.val().facebook_page_access_token
         FB.setAccessToken(facebook_page_access_token);
 
-        var body = req.body.text
-        FB.api(facebook_page_id+'/feed', 'post', { message: body }, function (res) {
+        var body = event.data.val().text
+        var postThis = {}
+        postThis['message'] = body
+        if(event.data.val().link)
+            postThis['link'] = event.data.val().link
+
+        FB.api(facebook_page_id+'/feed', 'post', postThis, function (res) {
             //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
 
             // TODO need some real error handling
             if(!res || res.error) {
                 console.log(!res ? 'error occurred' : res.error);
-                return render({req: req, res: result, uid: req.body.uid});
             }
             // TODO probably should write this to the db somewhere
             console.log('Post Id: ' + res.id);
-            return render({req: req, res: result, uid: req.body.uid})
+            event.data.ref.child('post_id').set(res.id)
         });
     })
-
 
 })
 
 
-exports.handleFacebookRequest = functions.database.ref('facebook_requests/{key}').onWrite(event => {
+// add a comment whenever a post is created...
+exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/post_id').onWrite(event => {
     if(!event.data.val() && event.data.previous.val()) return false // ignore deleted nodes
-    // this is where we actually post to FB
-    return false
+
+    var post_id = event.data.val()
+
+    return db.ref('api_tokens').once('value').then(snapshot => {
+
+        var facebook_page_id = snapshot.val().facebook_page_id
+        var facebook_page_access_token = snapshot.val().facebook_page_access_token
+        FB.setAccessToken(facebook_page_access_token);
+
+        var postThis = {}
+        postThis['message'] = 'Sign the petition and be part of the solution as big as the problem'
+        postThis['attachment_url'] = 'https://www.conventionofstates.com' // ref:  https://developers.facebook.com/docs/graph-api/reference/v3.0/object/comments#publish
+
+        db.ref('templog2').set({event_params_post_id: post_id, date: date.asCentralTime()})
+
+        FB.api(post_id+'/comments', 'post', postThis, function (res) {
+            //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
+
+            // TODO need some real error handling
+            if(!res || res.error) {
+                console.log(!res ? 'error occurred' : res.error);
+            }
+            // TODO probably should write this to the db somewhere
+            console.log('Post Id: ' + res.id);
+        });
+    })
 })
 
 
@@ -81,7 +136,46 @@ var render = function(stuff) {
     html += '<h3>Post to Facebook as <a href="https://www.facebook.com/TelePatriot/?modal=admin_todo_tour" target="facebook">@TelePatriot</a> | <a href="/facebook">Refresh</a></h3>'
     html += getFacebookForm(stuff)
 
-    return stuff.res.status(200).send(html)
+    return facebookPostRequests().then(asHtml => {
+        html += asHtml
+        return stuff.res.status(200).send(html)
+    })
+}
+
+
+var facebookPostRequests = function() {
+
+    return db.ref('facebook_post_requests').once('value').then(snapshot => {
+        var html = '<P/>'
+        html += '<table border="1" cellspacing="0" cellpadding="2">'
+        html += '<tr>'
+        html +=     '<td colspan="6">Database:  /facebook_post_requests</td>'
+        html += '</tr>'
+        html += '<tr>'
+        html +=     '<td>key</td>'
+        html +=     '<td>date</td>'
+        html +=     '<td>uid (user id)</td>'
+        html +=     '<td>post_id</td>'
+        html +=     '<td>text</td>'
+        html +=     '<td>link</td>'
+        html += '</tr>'
+        snapshot.forEach(function(child) {
+            var linkToPost = ''
+            if(child.val().post_id) {
+                linkToPost = '<a href="https://www.facebook.com/'+child.val().post_id+'">'+child.val().post_id+'</a>'
+            }
+            html += '<tr>'
+            html +=     '<td>'+child.key+'</td>'
+            html +=     '<td>'+child.val().date+'</td>'
+            html +=     '<td>'+child.val().uid+'</td>'
+            html +=     '<td>'+linkToPost+'</td>'
+            html +=     '<td>'+child.val().text+'</td>'
+            html +=     '<td><a href="'+child.val().link+'" target="checklink">'+child.val().link+'</a></td>'
+            html += '</tr>'
+        })
+        html += '</table>'
+        return html
+    })
 }
 
 
@@ -89,6 +183,8 @@ var getFacebookForm = function(stuff) {
     var html = ''
     html += '<P/><form method="post" action="/testPostFacebook">'
     html += '<P/><textarea name="text" rows="10" cols="100"></textarea>'
+    var link = stuff.link ? stuff.link : ''
+    html += '<P/><input type="text" name="link" value="'+link+'">'
     html += '<P/><input type="text" name="uid" value="'+stuff.uid+'">'
     html += '<input type="submit" value="post">'
     html += '</form>'
