@@ -1,13 +1,5 @@
 'use strict';
 
-/********************************************************************************
-See also video.js.  That file was created to test uploading videos to YouTube
-But we aren't going to be uploading videos from firebase functions because of the
-timeout limit.  Everything else, like creating playlists and adding videos to playlists,
-we ARE going to be doing from firebase functions.  And that's what we're going to
-do here
-********************************************************************************/
-
 // lodash dependency declared in firebase-functions/functions/package.json
 const _ = require('lodash');
 const functions = require('firebase-functions')

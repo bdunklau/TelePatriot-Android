@@ -143,4 +143,7 @@ exports.callback_from_twitter = twitter.callback_from_twitter
 exports.handleTweetRequest = twitter.handleTweetRequest
 //exports.deleteTweet = twitter.deleteTweet  // not supported, don't think
 
-
+const facebook = require('./facebook')
+exports.facebook = facebook.facebook
+exports.testPostFacebook = facebook.testPostFacebook
+exports.handleFacebookRequest = facebook.handleFacebookRequest
