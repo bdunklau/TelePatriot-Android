@@ -1,7 +1,5 @@
 package com.brentdunklau.telepatriot_android;
 
-import com.brentdunklau.telepatriot_android.util.User;
-
 /**
  * Created by bdunklau on 6/10/18.
  */
@@ -12,7 +10,7 @@ public class VideoInvitation {
     String guest_email, guest_id, guest_name, guest_photo_url, initiator_email, initiator_id, initiator_name, initiator_photo_url;
     String invitation_create_date;
     Long invitation_create_date_ms;
-    String room_id, video_node_id;
+    String room_id, video_node_key;
 
     public VideoInvitation() {
 
@@ -107,11 +105,11 @@ public class VideoInvitation {
         this.room_id = room_id;
     }
 
-    public String getVideo_node_id() {
-        return video_node_id;
+    public String getVideo_node_key() {
+        return video_node_key;
     }
 
-    public void setVideo_node_id(String video_node_id) {
-        this.video_node_id = video_node_id;
+    public void setVideo_node_key(String video_node_key) {
+        this.video_node_key = video_node_key;
     }
 }

@@ -3,26 +3,18 @@ package com.brentdunklau.telepatriot_android;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
 
-import com.brentdunklau.telepatriot_android.util.Mission;
-import com.brentdunklau.telepatriot_android.util.MissionItemEvent;
-import com.brentdunklau.telepatriot_android.util.MissionItemEventHolder;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
@@ -68,7 +60,7 @@ public class VideoInvitationsFragment extends BaseFragment  {
     // see MyMissionFragment.call() and .call2()
     // see also User.completeMissionItem()
     private void showInvitations() {
-        final Query q = FirebaseDatabase.getInstance().getReference("video/invitations").orderByChild("guest_id").equalTo(User.getInstance().getUid()); // i.e. actual human activities like making phone calls
+        final Query q = FirebaseDatabase.getInstance().getReference("video/invitations").orderByChild("guest_id").equalTo(User.getInstance().getUid());
         q.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -114,6 +106,7 @@ public class VideoInvitationsFragment extends BaseFragment  {
 
 
                                 if(dataSnapshot == null) {
+                                    System.out.println("VideoInvitationsFragment: dataSnapshot is null - that's not good");
                                     return;
                                 }
 
@@ -122,11 +115,11 @@ public class VideoInvitationsFragment extends BaseFragment  {
                                 // to send to VideoChatFragment
                                 //String videoInvId = dataSnapshot.getKey(); // might not need this
                                 VideoInvitation invitation = dataSnapshot.getValue(VideoInvitation.class);
-                                User.getInstance().setCurrent_video_node_key(invitation.getVideo_node_id());
+                                User.getInstance().setCurrent_video_node_key(invitation.getVideo_node_key());
 
                                 // Instead of going to an activity, we need to load a fragment...
                                 VidyoChatFragment fragment = new VidyoChatFragment();
-                                fragment.setRoom(invitation.getRoom_id());
+                                fragment.setRoom_id(invitation.getRoom_id());
 
                                 // What do we want to send to VidyoChatFragment?
                                 //fragment.setMissionId(missionId);

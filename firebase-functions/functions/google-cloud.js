@@ -35,6 +35,10 @@ const Compute = require('@google-cloud/compute');
 const compute = new Compute();
 // [END initialize]
 
+/***
+paste this on the command line...
+firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest
+***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
     return mainStuff({}).then(stuff => {
@@ -573,7 +577,7 @@ var startRecording = function(stuff) {
     return db.ref('video/list/'+stuff.video_node_key).once('value').then(snapshot => {
         var room_id = snapshot.val().room_id
 
-        var unique_file_ext = date.asMillis()
+        var unique_file_ext = stuff.video_node_key
         // not https ?!
         var recorderUrl = 'http://'+stuff.vm_host+':'+stuff.docker.port+'/record/'+room_id+'/'+unique_file_ext
         request(recorderUrl, function(error, response, body) {

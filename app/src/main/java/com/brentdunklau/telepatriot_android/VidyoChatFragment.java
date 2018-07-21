@@ -33,12 +33,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.brentdunklau.telepatriot_android.util.Legislator;
 import com.brentdunklau.telepatriot_android.util.User;
@@ -116,7 +112,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private EditText mHost;
     public EditText mDisplayName;
     //public static EditText mToken;
-    private EditText mResourceId;
+    //private EditText mResourceId;
     //private TextView mToolbarStatus;
     private TextView mClientVersion;
     private VideoFrameLayout mVideoFrame;
@@ -141,7 +137,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private String mTime;
     private String uid;
     private Integer videoTypeKey;
-    private String room; // the initiator's user id
+    private String room_id; // the initiator's user id
     private String missionDescription;  // we can probably get rid of this - we have vidyoChatDescriptionText
     private String nodeKey;
     private TextView vidyoChatDescriptionText;
@@ -250,8 +246,8 @@ public class VidyoChatFragment extends BaseFragment implements
         mDisplayName = myView.findViewById(R.id.displayName);
         mDisplayName.setText(User.getInstance().getName());
         //mToken = myView.findViewById(R.id.token);
-        mResourceId = myView.findViewById(R.id.resource);
-        mResourceId.setText(getRoom());
+        //mResourceId = myView.findViewById(R.id.resource);
+        //mResourceId.setText(getRoom_id());
         //mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
         mClientVersion = myView.findViewById(R.id.clientVersion);
         //mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
@@ -369,7 +365,7 @@ public class VidyoChatFragment extends BaseFragment implements
         });
 
         /*******
-        if(room != null) {
+        if(room_id != null) {
             connect_button.setChecked(true);
             _mVidyoConnector();
             connectionClicked();
@@ -595,14 +591,14 @@ public class VidyoChatFragment extends BaseFragment implements
         return new VideoNode(User.getInstance(), vtype);
     }
 
-    public void setRoom(String room) {
-        this.room = room;
+    public void setRoom_id(String room_id) {
+        this.room_id = room_id;
     }
 
-    public String getRoom() {
-        if(room == null)
-            room = User.getInstance().getUid();
-        return room;
+    public String getRoom_id() {
+        if(room_id == null)
+            room_id = User.getInstance().getCurrent_video_node_key();
+        return room_id;
     }
 
     private String getToken() {
@@ -1096,15 +1092,11 @@ public class VidyoChatFragment extends BaseFragment implements
 
         String token = getToken();
 
-        // Abort the Connect call if resource ID is invalid. It cannot contain empty spaces or "@".
-        String resourceId = mResourceId.getText().toString().trim(); // trim leading and trailing white space
-        resourceId = resourceId.replaceAll(" ", "").replaceAll("@", "");
-
         final boolean status = mVidyoConnector.connect(
                 mHost.getText().toString().trim(),
                 token,
                 mDisplayName.getText().toString().trim(),
-                resourceId, // room parameter
+                getRoom_id(),
                 this);
 
         if (!status) {
