@@ -112,10 +112,12 @@ exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/po
         FB.setAccessToken(facebook_page_access_token);
 
         var postThis = {}
-        postThis['message'] = 'Sign the petition and be part of the solution as big as the problem'
-        postThis['attachment_url'] = 'https://www.conventionofstates.com' // ref:  https://developers.facebook.com/docs/graph-api/reference/v3.0/object/comments#publish
 
-        db.ref('templog2').set({event_params_post_id: post_id, date: date.asCentralTime()})
+
+        /********* This works but I don't know what I want the comment to be yet
+        FB doesn't let you tag people and pages without permission
+
+        postThis['message'] = '' // ref:  https://developers.facebook.com/docs/graph-api/reference/v3.0/object/comments#publish
 
         FB.api(post_id+'/comments', 'post', postThis, function (res) {
             //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
@@ -127,6 +129,7 @@ exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/po
             // TODO probably should write this to the db somewhere
             console.log('Post Id: ' + res.id);
         });
+        *********/
     })
 })
 
