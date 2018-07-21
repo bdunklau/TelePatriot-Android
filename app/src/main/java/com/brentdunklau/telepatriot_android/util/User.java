@@ -72,7 +72,6 @@ public class User implements FirebaseAuth.AuthStateListener {
     private void login(/*FirebaseUser firebaseUser*/) {
         /**
          * NOTE: No point in checking to see if the user is logged in already via getFirebaseUser() != null
-         * If that is how we
          */
         this.database = FirebaseDatabase.getInstance();
         childEventListener = new ChildEventAdapter();
@@ -180,6 +179,18 @@ public class User implements FirebaseAuth.AuthStateListener {
             public void onCancelled(DatabaseError databaseError) {
 
             }
+        });
+
+
+        userRef.child("current_video_node_key").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User.this.current_video_node_key = dataSnapshot.getValue(String.class);
+                System.out.println("onDataChange(): current_video_node_key = "+User.this.current_video_node_key);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) { }
         });
 
     }
