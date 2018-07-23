@@ -17,6 +17,10 @@ var request = require('request')
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
+/***
+to deploy everything in this file...
+firebase deploy --only functions:civic,functions:listOfficials,functions:loadOfficials,functions:onOfficialUrl,functions:unloadOfficials,functions:listDivisions,functions:loadDivisionsAllStates,functions:unloadDivisions,functions:loadDivisions,functions:loadDivisionsTrigger
+***/
 
 exports.civic = functions.https.onRequest((req, res) => {
     return listStates().then(states => {
