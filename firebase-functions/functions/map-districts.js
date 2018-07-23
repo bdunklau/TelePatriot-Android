@@ -21,6 +21,12 @@ It's easier to create a long form of text fields and hand jam the values ...beca
 **************************/
 
 
+/***
+to deploy everything in this file...
+firebase deploy --only functions:districtMapper,functions:mapOpenStatesToGoogleCivic,functions:checkGoogleCivicDivision,functions:mapGoogleCivicToOpenStates
+***/
+
+
 // lodash dependency declared in firebase-functions/functions/package.json
 const _ = require('lodash');
 const functions = require('firebase-functions')
