@@ -159,8 +159,10 @@ exports.markForPublishVideo = functions.https.onRequest((req, res) => {
     })
 })
 
+//Error: "onChange" is now deprecated, please use "onArchive", "onDelete", "onFinalize", or "onMetadataUpdate".
 // Trigger - this gets called whenever a file is added to firebase storage
-exports.newStorageItem = functions.storage.object().onChange(event => {
+/**********
+exports.newStorageItem = functions.storage.object().onArchive(event => {
     if(!event.data) {
         return false
     }
@@ -173,6 +175,7 @@ exports.newStorageItem = functions.storage.object().onChange(event => {
     // for a single object
     return db.ref(`firebase_storage/${object.md5Hash}`).set(object)
 })
+*********/
 
 // This trigger is designed to fire when /firebase_storage/{md5Hash}/publish is set to 'publish'
 // bucket:  https://cloud.google.com/nodejs/docs/reference/storage/1.6.x/Bucket

@@ -169,7 +169,7 @@ exports.generateVidyoToken = vidyo.generateVidyoToken
 
 const videoManager = require('./video')
 exports.video = videoManager.video
-exports.newStorageItem = videoManager.newStorageItem
+//exports.newStorageItem = videoManager.newStorageItem
 exports.uploadToYouTube4 = videoManager.uploadToYouTube4
 exports.setFirebaseStorageRecord = videoManager.setFirebaseStorageRecord
 exports.unsetFirebaseStorageRecord = videoManager.unsetFirebaseStorageRecord

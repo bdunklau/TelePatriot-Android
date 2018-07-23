@@ -58,27 +58,29 @@ exports.testCreateVideoNode = functions.https.onRequest((req, res) => {
     sampleNode['node_create_date'] = date.asCentralTime()
     sampleNode['node_create_date_ms'] = date.asMillis()
     var video_participant = {}
-    video_participant['uid'] = 'dztOse5lKoNht9bPpOl3QeE33y22'
-    video_participant['name'] = 'Brent Dunklau'
-    video_participant['email'] = 'bdunklau@yahoo.com'
-    video_participant['start_date'] = date.asCentralTime()
-    video_participant['start_date_ms'] = date.asMillis()
-    sampleNode['video_participants'] = [video_participant]
-    sampleNode['room_id'] = date.asMillis() // create the room_id at the time the video node is created
-    sampleNode['video_mission_description'] = 'This is a video petition.  In a video petition, the person being interviewed *must* mention the legislator by name and must emphasize that the person being interviewed is a constituent of this legislator.  Next, one of the people in the video needs to state what the legislator\'s declared position is on COS (for, against, undecided)'
-    sampleNode['youtube_video_description'] = 'This is a video petition to legislator_rep_type legislator_full_name (legislator_state_abbrev_upper legislator_chamber_abbrev legislator_district) from a constituent, constituent_name, asking legislator_rep_type legislator_full_name to support the Convention of States resolution. \r\n \r\nIf you are a constituent, you can also ask legislator_rep_type legislator_full_name to support the Convention of States resolution by phone, email or social media. \r\nPhone: legislator_phone \r\nEmail: legislator_email \r\nFacebook: https://www.facebook.com/legislator_facebook \r\nTwitter: https://www.twitter.com/legislator_twitter \r\n \r\nAnd if you haven\'t signed the Convention of States petition, you can do that here: https:\/\/www.conventionofstates.com   Be sure to get your friends and family to sign also, then have them contact *their* state legislators. \r\n \r\nTogether, we can be a part of the solution that\'s as big as the problem!'
-    sampleNode['youtube_video_description_unevaluated'] = 'This is a video petition to legislator_rep_type legislator_full_name (legislator_state_abbrev_upper legislator_chamber_abbrev legislator_district) from a constituent, constituent_name, asking legislator_rep_type legislator_full_name to support the Convention of States resolution. \r\n \r\nIf you are a constituent, you can also ask legislator_rep_type legislator_full_name to support the Convention of States resolution by phone, email or social media. \r\nPhone: legislator_phone \r\nEmail: legislator_email \r\nFacebook: https://www.facebook.com/legislator_facebook \r\nTwitter: https://www.twitter.com/legislator_twitter \r\n \r\nAnd if you haven\'t signed the Convention of States petition, you can do that here: https:\/\/www.conventionofstates.com   Be sure to get your friends and family to sign also, then have them contact *their* state legislators. \r\n \r\nTogether, we can be a part of the solution that\'s as big as the problem!'
-    var key = db.ref('video/list').push().getKey()
-    return db.ref('video/list/'+key).set(sampleNode).then(() => {
-        var input = {video_node_key: key, vm_host: req.query.vm_host, vm_port: req.query.vm_port}
-        return mainStuff(input).then(stuff => {
-            return res.status(200).send(render(stuff))
+    db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
+        var uid
+        snapshot.forEach(function(child) {
+            uid = child.key
+        })
+        video_participant['uid'] = uid
+        video_participant['name'] = 'Brent Dunklau'
+        video_participant['email'] = 'bdunklau@yahoo.com'
+        video_participant['start_date'] = date.asCentralTime()
+        video_participant['start_date_ms'] = date.asMillis()
+        sampleNode['video_participants'] = [video_participant]
+        sampleNode['room_id'] = date.asMillis() // create the room_id at the time the video node is created
+        sampleNode['video_mission_description'] = 'This is a video petition.  In a video petition, the person being interviewed *must* mention the legislator by name and must emphasize that the person being interviewed is a constituent of this legislator.  Next, one of the people in the video needs to state what the legislator\'s declared position is on COS (for, against, undecided)'
+        sampleNode['youtube_video_description'] = 'This is a video petition to legislator_rep_type legislator_full_name (legislator_state_abbrev_upper legislator_chamber_abbrev legislator_district) from a constituent, constituent_name, asking legislator_rep_type legislator_full_name to support the Convention of States resolution. \r\n \r\nIf you are a constituent, you can also ask legislator_rep_type legislator_full_name to support the Convention of States resolution by phone, email or social media. \r\nPhone: legislator_phone \r\nEmail: legislator_email \r\nFacebook: https://www.facebook.com/legislator_facebook \r\nTwitter: https://www.twitter.com/legislator_twitter \r\n \r\nAnd if you haven\'t signed the Convention of States petition, you can do that here: https:\/\/www.conventionofstates.com   Be sure to get your friends and family to sign also, then have them contact *their* state legislators. \r\n \r\nTogether, we can be a part of the solution that\'s as big as the problem!'
+        sampleNode['youtube_video_description_unevaluated'] = 'This is a video petition to legislator_rep_type legislator_full_name (legislator_state_abbrev_upper legislator_chamber_abbrev legislator_district) from a constituent, constituent_name, asking legislator_rep_type legislator_full_name to support the Convention of States resolution. \r\n \r\nIf you are a constituent, you can also ask legislator_rep_type legislator_full_name to support the Convention of States resolution by phone, email or social media. \r\nPhone: legislator_phone \r\nEmail: legislator_email \r\nFacebook: https://www.facebook.com/legislator_facebook \r\nTwitter: https://www.twitter.com/legislator_twitter \r\n \r\nAnd if you haven\'t signed the Convention of States petition, you can do that here: https:\/\/www.conventionofstates.com   Be sure to get your friends and family to sign also, then have them contact *their* state legislators. \r\n \r\nTogether, we can be a part of the solution that\'s as big as the problem!'
+        var key = db.ref('video/list').push().getKey()
+        return db.ref('video/list/'+key).set(sampleNode).then(() => {
+            var input = {video_node_key: key, vm_host: req.query.vm_host, vm_port: req.query.vm_port}
+            return mainStuff(input).then(stuff => {
+                return res.status(200).send(render(stuff))
+            })
         })
     })
-
-    /********
-
-    *****/
 })
 
 
@@ -555,19 +557,27 @@ var startDocker = function(stuff) {
 var handleVideoEvent = function(input) {
     // create a video_event...
     var video_event = {}  // simulated user id...
-    video_event['uid'] = 'dztOse5lKoNht9bPpOl3QeE33y22'
-    video_event['request_type'] = input.request_type // could be 'start recording', 'stop recording', 'start publishing'
-    video_event['request_date'] = date.asCentralTime()
-    video_event['request_date_ms'] = date.asMillis()
-    video_event['video_node_key'] = input.video_node_key
-    //video_event['room_id'] = input.room_id           // don't think we need this here
-    //video_event['unique_file_ext'] = date.asMillis() // don't think we need this here
-    // we have a trigger listening on video/video_events - exports.dockerRequest
-    return db.ref('video/video_events').push().set(video_event).then(() => {
-        return mainStuff(input).then(stuff => {
-            return input.res.status(200).send(render(stuff))
+    // TODO query to get user id, don't hardcode because this uid is only for dev server
+    db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
+        var uid
+        snapshot.forEach(function(child) {
+            uid = child.key
+        })
+        video_event['uid'] = uid
+        video_event['request_type'] = input.request_type // could be 'start recording', 'stop recording', 'start publishing'
+        video_event['request_date'] = date.asCentralTime()
+        video_event['request_date_ms'] = date.asMillis()
+        video_event['video_node_key'] = input.video_node_key
+        //video_event['room_id'] = input.room_id           // don't think we need this here
+        //video_event['unique_file_ext'] = date.asMillis() // don't think we need this here
+        // we have a trigger listening on video/video_events - exports.dockerRequest
+        return db.ref('video/video_events').push().set(video_event).then(() => {
+            return mainStuff(input).then(stuff => {
+                return input.res.status(200).send(render(stuff))
+            })
         })
     })
+
 }
 
 
