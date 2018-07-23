@@ -14,6 +14,12 @@ var request = require('request')
 const db = admin.database();
 
 
+/***
+to deploy everything in this file...
+firebase deploy --only functions:officialMapper,functions:tryLoadingOfficialsAgain,functions:osToCivicOfficials
+***/
+
+
 exports.officialMapper = functions.https.onRequest((req, res) => {
     // report on any nodes under google_civic_data/divisions that aren't present in google_civic_data/officials
     // because it should be one to one but I found at least one instance where a node was missing: AL HD 59
