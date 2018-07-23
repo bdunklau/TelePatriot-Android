@@ -14,6 +14,11 @@ var request = require('request')
 const db = admin.database();
 
 
+/***
+to deploy everything in this file...
+firebase deploy --only functions:showStates,functions:loadStates,functions:loadLegislators,functions:viewLegislators,functions:saveDivision,functions:loadOpenStatesLegislators,functions:loadOpenStatesDistricts,functions:findCivicDataMatch,functions:lookupFacebookId,functions:facebookIdUpdated,functions:loadCivicData,functions:peopleWithoutCivicData,functions:youtubeVideoDescription,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:overwriteBadWithGoodData,functions:testUpdateSocialMedia
+***/
+
 // loop through each state
 var states = function() {
     return [
