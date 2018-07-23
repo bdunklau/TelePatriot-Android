@@ -17,6 +17,13 @@ const btoa = require('btoa')    // specifically needed to generate the vidyo tok
 const db = admin.database().ref()
 
 
+/***
+to deploy everything in this file...
+firebase deploy --only functions:generateVidyoToken
+***/
+
+
+
 exports.generateVidyoToken = functions.https.onRequest((req, res) => {
 
     // ref:   https://static.vidyo.io/4.1.11.4/docs/VidyoConnectorDeveloperGuide.html
