@@ -2,6 +2,7 @@ package com.brentdunklau.telepatriot_android;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,6 +12,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,14 +46,14 @@ public class EditLegislatorForVideoDlg extends Dialog {
     private FirebaseRecyclerAdapter<Legislator, LegislatorHolder> mAdapter;
     private RecyclerView legislatorRecyclerView;
 
-    public EditLegislatorForVideoDlg(Activity activity, VideoNode v) {
+    public EditLegislatorForVideoDlg(/*Activity*/Context activity, VideoNode v) {
         super(activity);
 
         setContentView(R.layout.edit_legislator_for_video_dlg);
 
-        state_spinner = (Spinner) findViewById(R.id.state_spinner);
-        chamber_spinner = (Spinner) findViewById(R.id.chamber_spinner);
-        district_spinner = (Spinner) findViewById(R.id.district_spinner);
+        state_spinner = findViewById(R.id.state_spinner);
+        chamber_spinner = findViewById(R.id.chamber_spinner);
+        district_spinner = findViewById(R.id.district_spinner);
 
         if(v != null) {
             currentVideoNode = v;
@@ -75,7 +77,7 @@ public class EditLegislatorForVideoDlg extends Dialog {
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
                 String selectedItem = (String) adapterView.getItemAtPosition(position);
                 // Notify the selected item text
-                Toast.makeText(getContext(), "Selected : " + selectedItem, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getContext(), "Selected : " + selectedItem, Toast.LENGTH_SHORT).show();
                 // look up the abbrev given the long state name...
                 selectedState = stateMap.get(selectedItem);
                 displayListOfDistricts(selectedState, selectedChamber);
@@ -91,7 +93,7 @@ public class EditLegislatorForVideoDlg extends Dialog {
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
                 String selectedItem = (String) adapterView.getItemAtPosition(position);
                 // Notify the selected item text
-                Toast.makeText(getContext(), "Selected : " + selectedItem, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getContext(), "Selected : " + selectedItem, Toast.LENGTH_SHORT).show();
                 selectedChamber = selectedItem;
                 displayListOfDistricts(selectedState, selectedChamber);
                 displayLegislators(selectedState, selectedChamber, selectedDistrict);
@@ -106,7 +108,7 @@ public class EditLegislatorForVideoDlg extends Dialog {
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
                 String selectedItem = (String) adapterView.getItemAtPosition(position);
                 // Notify the selected item text
-                Toast.makeText(getContext(), "Selected : " + selectedItem, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getContext(), "Selected : " + selectedItem, Toast.LENGTH_SHORT).show();
                 selectedDistrict = selectedItem;
                 displayLegislators(selectedState, selectedChamber, selectedDistrict);
             }
@@ -114,6 +116,7 @@ public class EditLegislatorForVideoDlg extends Dialog {
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) { }
         });
+
 
 
         legislatorRecyclerView = (RecyclerView) findViewById(R.id.legislator_list);

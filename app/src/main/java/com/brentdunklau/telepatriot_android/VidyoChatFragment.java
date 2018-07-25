@@ -13,12 +13,12 @@ import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.support.v4.app.ActivityCompat;
@@ -59,13 +59,14 @@ import org.json.JSONObject;
 
 
 public class VidyoChatFragment extends BaseFragment implements
-        View.OnClickListener,
-        Connector.IConnect,
-        Connector.IRegisterLogEventListener,
-        Connector.IRegisterNetworkInterfaceEventListener,
-        Connector.IRegisterLocalCameraEventListener,
-        Connector.IRegisterRemoteCameraEventListener,
-        IVideoFrameListener {
+        View.OnClickListener
+        ,Connector.IConnect
+        ,Connector.IRegisterLogEventListener
+        ,Connector.IRegisterNetworkInterfaceEventListener
+        ,Connector.IRegisterLocalCameraEventListener
+        ,Connector.IRegisterRemoteCameraEventListener
+        //,IVideoFrameListener
+{
 
     // Define the various states of this application.
     enum VidyoConnectorState {
@@ -106,49 +107,44 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean mVidyoClientInitialized = false;
     private Connector mVidyoConnector = null;
     private LocalCamera mLastSelectedCamera = null;
-    //private ProgressBar mConnectionSpinner;
-    //private LinearLayout mControlsLayout;
-    private LinearLayout mToolbarLayout;
-    private EditText mHost;
     public EditText mDisplayName;
     //public static EditText mToken;
-    //private EditText mResourceId;
-    //private TextView mToolbarStatus;
-    private TextView mClientVersion;
+
     private VideoFrameLayout mVideoFrame;
     private VideoFrameLayout remoteFrame;
-    private boolean mHideConfig = false;
-    private boolean mAutoJoin = false;
-    private boolean mAllowReconnect = true;
+    //private boolean mHideConfig = false;
+    //private boolean mAutoJoin = false;
+    //private boolean mAllowReconnect = true;
     private boolean mCameraPrivacy = false;
     private boolean mMicrophonePrivacy = false;
     private boolean mEnableDebug = false;
-    private String mReturnURL = null;
-    private String mExperimentalOptions = null;
+    //private String mReturnURL = null;
+    //private String mExperimentalOptions = null;
     private MainActivity mSelf;
     private boolean mRefreshSettings = true;
     private boolean mDevicesSelected = true;
     private View myView;
-    public static String jsonTokenData;
-    private DatabaseReference userDatabase;
-    private URL url = null;
-    private HttpURLConnection vmConnection;
-    private String mTimeMS;
-    private String mTime;
-    private String uid;
-    private Integer videoTypeKey;
+    //public static String jsonTokenData;
+    //private DatabaseReference userDatabase;
+    //private URL url = null;
+    //private HttpURLConnection vmConnection;
+    //private String mTimeMS;
+    //private String mTime;
+    //private String uid;
+    //private Integer videoTypeKey;
     private String room_id; // the initiator's user id
-    private String missionDescription;  // we can probably get rid of this - we have vidyoChatDescriptionText
-    private String nodeKey;
-    private TextView vidyoChatDescriptionText;
-    private EditText mRepEdit;
-    private TextView mRepButton;
-    private TextView mRepFB;
+    //private String missionDescription;  // we can probably get rid of this - we have videoChatDescriptionText
+    //private String nodeKey;
+    //private TextView videoChatDescriptionText;
+    //private EditText repNameEdit;
+    /***********
+    private TextView choose_legislator;
     private TextView mDescriptionEditButton;
-    private TextView mYouTubeEditButton;
-    private TextView mYouTubeDescription;
-    private Legislator legislator;
-    private ProgressDialog pd;
+    private TextView editYouTubeButton;
+    private TextView videoChatYouTubeDescription;
+     ***********/
+    //private Legislator legislator;
+    //private ProgressDialog pd;
     private String reasons;
     private LocalCamera localCamera;
     private VideoNode currentVideoNode;
@@ -159,13 +155,16 @@ public class VidyoChatFragment extends BaseFragment implements
     private ToggleButton microphone_button;
     private ToggleButton camera_button;
     private ToggleButton record_button;
+    private Button instructions_button;
 
+    /******
     private TextView legislator_first_name, legislator_last_name, legislator_state_abbrev, legislator_chamber, legislator_district;
     // put the Choose TextView "link" here
     private TextView legislator_facebook;
-    private ImageView edit_facebook;
+    //private ImageView edit_facebook;
     private TextView legislator_twitter;
-    private ImageView edit_twitter;
+    //private ImageView edit_twitter;
+     ********/
 
     /*
      *  Operating System Events
@@ -198,15 +197,16 @@ public class VidyoChatFragment extends BaseFragment implements
         ////////////////////////////////////////////////////////////////////////////
         // Legislator section
         // reference the Legislator Choose button here
+        /*****
         legislator_first_name = myView.findViewById(R.id.legislator_first_name);
         legislator_last_name = myView.findViewById(R.id.legislator_last_name);
         legislator_state_abbrev = myView.findViewById(R.id.legislator_state_abbrev);
         legislator_chamber = myView.findViewById(R.id.legislator_chamber);
         legislator_district = myView.findViewById(R.id.legislator_district);
         legislator_facebook = myView.findViewById(R.id.legislator_facebook);
-        edit_facebook = myView.findViewById(R.id.edit_facebook);
+        //edit_facebook = myView.findViewById(R.id.edit_facebook);
         legislator_twitter = myView.findViewById(R.id.legislator_twitter);
-        edit_twitter = myView.findViewById(R.id.edit_twitter);
+        //edit_twitter = myView.findViewById(R.id.edit_twitter);
         edit_facebook.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -225,44 +225,41 @@ public class VidyoChatFragment extends BaseFragment implements
                         "Twitter Handle");
             }
         });
+         *****/
 
 
 
 
         //TODO make dynamic mission keys
+        /*********
         VideoType videoType = videoTypes.get(0); // TODO how are we going to choose different video types?
         videoTypeKey = videoType.getKey();
         missionDescription = videoType.getVideo_mission_description();
         uid =  User.getInstance().getUid();
-        // Initialize the member variables
-        //mControlsLayout = myView.findViewById(R.id.controls_layout);
-        //mToolbarLayout = (LinearLayout) findViewById(R.id.toolbarLayout);
+         *********/
         mVideoFrame = myView.findViewById(R.id.vidyoChatMyScreen);
         remoteFrame = myView.findViewById(R.id.remoteChatScreen);
-        //mVideoFrame.Register(this);
-        //TODO change editText to import data
-        mHost = myView.findViewById(R.id.host);
-        mHost.setText("prod.vidyo.io");
-        mDisplayName = myView.findViewById(R.id.displayName);
-        mDisplayName.setText(User.getInstance().getName());
-        //mToken = myView.findViewById(R.id.token);
-        //mResourceId = myView.findViewById(R.id.resource);
-        //mResourceId.setText(getRoom_id());
-        //mToolbarStatus = myView.findViewById(R.id.toolbarStatusText);
-        mClientVersion = myView.findViewById(R.id.clientVersion);
-        //mConnectionSpinner = myView.findViewById(R.id.connectionSpinner);
-        mSelf = (MainActivity) getActivity();
-        //mToken.setText(jsonTokenData);
-        vidyoChatDescriptionText = myView.findViewById(R.id.videoChatDescriptionText);
-        vidyoChatDescriptionText.setText(videoType.getVideo_mission_description());
-        mRepEdit = myView.findViewById(R.id.repNameEdit);
-        mRepButton = myView.findViewById(R.id.repEdit);
-        mRepButton.setOnClickListener(new View.OnClickListener() {
+
+        instructions_button = myView.findViewById(R.id.instructions_button);
+        instructions_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showInstructionsDialog();
+            }
+        });
+
+        /********
+        videoChatDescriptionText = myView.findViewById(R.id.videoChatDescriptionText);
+        videoChatDescriptionText.setText(videoType.getVideo_mission_description());
+        //repNameEdit = myView.findViewById(R.id.repNameEdit);
+        choose_legislator = myView.findViewById(R.id.choose_legislator);
+        choose_legislator.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 chooseLegislator();
             }
         });
+         ********/
         //mFBButton = myView.findViewById(R.id.fbEdit);
         //mFBEdit = myView.findViewById(R.id.fbRepEdit);
         /******
@@ -282,7 +279,6 @@ public class VidyoChatFragment extends BaseFragment implements
                 setTwitterInfo();
             }
         });
-         *******/
 
         mDescriptionEditButton = myView.findViewById(R.id.editDescriptionButon);
         mDescriptionEditButton.setOnClickListener(new View.OnClickListener() {
@@ -292,15 +288,16 @@ public class VidyoChatFragment extends BaseFragment implements
             }
         });
 
-        mYouTubeDescription = myView.findViewById(R.id.videoChatYouTubeDescription);
+        videoChatYouTubeDescription = myView.findViewById(R.id.videoChatYouTubeDescription);
         //mYouTubeEditText = myView.findViewById(R.id.editYouTubeDescription);
-        mYouTubeEditButton = myView.findViewById(R.id.editYouTubeButton);
-        mYouTubeEditButton.setOnClickListener(new View.OnClickListener() {
+        editYouTubeButton = myView.findViewById(R.id.editYouTubeButton);
+        editYouTubeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 editYouTubeDescription();
             }
         });
+         *******/
 
 
         // Set the onClick listeners for the buttons
@@ -322,6 +319,7 @@ public class VidyoChatFragment extends BaseFragment implements
         String vtype = "Video Petition"; // TODO at some point, get this from the database
         final String videoNodeKey = getVideoNodeKey(vtype);
 
+        /***********/
         if(videoNodeKey != null) {
             FirebaseDatabase.getInstance().getReference("video/list/" + videoNodeKey).addValueEventListener(new ValueEventListener() {
                 @Override
@@ -330,16 +328,17 @@ public class VidyoChatFragment extends BaseFragment implements
                     if(vnode == null) return;
                     currentVideoNode = vnode;
                     currentVideoNode.setKey(videoNodeKey);
-                    vidyoChatDescriptionText.setText(currentVideoNode.getVideo_mission_description());
-                    setLegislatorFields(currentVideoNode);
+                    //videoChatDescriptionText.setText(currentVideoNode.getVideo_mission_description());
+                    //setLegislatorFields(currentVideoNode);
 
-                    mYouTubeDescription.setText(currentVideoNode.getYoutube_video_description());
+                    //videoChatYouTubeDescription.setText(currentVideoNode.getYoutube_video_description());
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) { }
             });
         }
+         /*************/
 
         record_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -435,6 +434,7 @@ public class VidyoChatFragment extends BaseFragment implements
         alertDialog.show();
     }
 
+    /**********
     private void setLegislatorFields(VideoNode node) {
         if(node.getLeg_id() == null || node.getLeg_id().trim().equals("")) {
             legislator_first_name.setText("");
@@ -473,6 +473,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
 
     }
+     **********/
 
     @Override
     public void onStart() {
@@ -704,20 +705,20 @@ public class VidyoChatFragment extends BaseFragment implements
         }
         pd.dismiss();
     }
-     ***********/
 
     private void editYouTubeDescription() {
-        if (mYouTubeEditButton.getText().toString().trim().equals("Edit")){
-            mYouTubeDescription.setVisibility(View.INVISIBLE);
+        if (editYouTubeButton.getText().toString().trim().equals("Edit")){
+            videoChatYouTubeDescription.setVisibility(View.INVISIBLE);
             //mYouTubeEditText.setVisibility(View.VISIBLE);
-            mYouTubeEditButton.setText("Done");
+            editYouTubeButton.setText("Done");
         }else{
-            //mYouTubeDescription.setText(mYouTubeEditText.getText());
-            mYouTubeDescription.setVisibility(View.VISIBLE);
+            //videoChatYouTubeDescription.setText(mYouTubeEditText.getText());
+            videoChatYouTubeDescription.setVisibility(View.VISIBLE);
             //mYouTubeEditText.setVisibility(View.GONE);
-            mYouTubeEditButton.setText("Edit");
+            editYouTubeButton.setText("Edit");
         }
     }
+     ***********/
 
     private void editVideoMissionDescription() {
         // custom dialog
@@ -745,7 +746,7 @@ public class VidyoChatFragment extends BaseFragment implements
             mFBEdit.setVisibility(View.VISIBLE);
             mFBButton.setText("Done");
         }else {
-            mRepFB.setText(mRepEdit.getText().toString().trim());
+            mRepFB.setText(repNameEdit.getText().toString().trim());
             mRepFB.setVisibility(View.VISIBLE);
             mFBEdit.setVisibility(View.GONE);
             mFBButton.setText("Edit");
@@ -753,10 +754,17 @@ public class VidyoChatFragment extends BaseFragment implements
     }
      **********/
 
+    private void showInstructionsDialog() {
+        VideoChatInstructionsDlg dialog = new VideoChatInstructionsDlg(getActivity(), myView);
+        dialog.show();
+    }
+
+    /*******
     private void chooseLegislator() {
         EditLegislatorForVideoDlg dialog = new EditLegislatorForVideoDlg(getActivity(), currentVideoNode);
         dialog.show();
     }
+     ********/
 
 
     //protected void onNewIntent(Intent intent) {
@@ -844,7 +852,6 @@ public class VidyoChatFragment extends BaseFragment implements
                         // Set the client version in the toolbar
                         String version =  mVidyoConnector.getVersion();
                         System.out.println("startVidyoConnector():  mVidyoConnector.getVersion() = "+mVidyoConnector.getVersion());
-                        mClientVersion.setText("VidyoClient-AndroidSDK " + version);
 
                         // Set initial position
                         //refreshUI();
@@ -874,7 +881,6 @@ public class VidyoChatFragment extends BaseFragment implements
                     // If enableDebug is configured then enable debugging
                     if (mEnableDebug) {
                         mVidyoConnector.enableDebug(7776, "warning info@VidyoClient info@VidyoConnector");
-                        mClientVersion.setVisibility(View.VISIBLE);
                     } else {
                         mVidyoConnector.disableDebug();
                     }
@@ -891,6 +897,7 @@ public class VidyoChatFragment extends BaseFragment implements
                         microphone_button.performClick();
                     }
 
+                    /********
                     // Set experimental options if any exist
                     if (mExperimentalOptions != null) {
                         ConnectorPkg.setExperimentalOptions(mExperimentalOptions);
@@ -900,6 +907,7 @@ public class VidyoChatFragment extends BaseFragment implements
                     if (mAutoJoin) {
                         connect_button.performClick();
                     }
+                     ***********/
                 }
             });
         }
@@ -987,6 +995,7 @@ public class VidyoChatFragment extends BaseFragment implements
                             connect_button.setChecked(false);
                             //mConnectionSpinner.setVisibility(View.INVISIBLE);
 
+                            /************
                             // If a return URL was provided as an input parameter, then return to that application
                             if (mReturnURL != null) {
                                 // Provide a callstate of either 0 or 1, depending on whether the call was successful
@@ -1006,6 +1015,7 @@ public class VidyoChatFragment extends BaseFragment implements
                                 // Display the controls
                                 //mControlsLayout.setVisibility(View.VISIBLE);
                             }
+                             ************/
                             break;
                         // There aren't cased for recoding started and recording stopped because we already
                         // have this method call: record_button.setOnCheckedChangeListener
@@ -1093,7 +1103,7 @@ public class VidyoChatFragment extends BaseFragment implements
         String token = getToken();
 
         final boolean status = mVidyoConnector.connect(
-                mHost.getText().toString().trim(),
+                "prod.vidyo.io",
                 token,
                 mDisplayName.getText().toString().trim(),
                 getRoom_id(),
@@ -1109,9 +1119,10 @@ public class VidyoChatFragment extends BaseFragment implements
         recording = true;
         record_button.setBackgroundResource(R.drawable.recordstop);
 
+        /************
         try {
-            // TODO What is the url?  It's not this...
-            url = new URL("http://35.185.56.20/record/demoRoom/uniquefield");
+            // TODO look at how the record button works in swift
+            // url = new URL("http://35.185.56.20/record/demoRoom/uniquefield");
             // We have to figure out what the url.
             // Is it the url to the vm?
             // How is the room_id passed?
@@ -1140,32 +1151,22 @@ public class VidyoChatFragment extends BaseFragment implements
             stopRecording();
             return;
         }
+         **************/
 
         // TODO FirebaseDatabase.getInstance()...
         // Need to write to the video node the time the recording started
     }
 
-    // See Swift VideoChatVC.stopRecording()
+    // TODO See Swift VideoChatVC.stopRecording()
     private void stopRecording() {
         recording = false;
         record_button.setBackgroundResource(R.drawable.record);
+        /********
         if (url != null) {
             vmConnection.disconnect();
             url = null;
         }
-    }
-
-
-    // Toggle visibility of the toolbar
-    @Override
-    public void onVideoFrameClicked() {
-        if (mVidyoConnectorState == VidyoConnectorState.Connected) {
-            if (mToolbarLayout.getVisibility() == View.VISIBLE) {
-                mToolbarLayout.setVisibility(View.INVISIBLE);
-            } else {
-                mToolbarLayout.setVisibility(View.VISIBLE);
-            }
-        }
+         *********/
     }
 
     /*

@@ -37,7 +37,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest
+firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
@@ -69,7 +69,8 @@ exports.testCreateVideoNode = functions.https.onRequest((req, res) => {
         video_participant['start_date'] = date.asCentralTime()
         video_participant['start_date_ms'] = date.asMillis()
         sampleNode['video_participants'] = [video_participant]
-        sampleNode['room_id'] = date.asMillis() // create the room_id at the time the video node is created
+        // No, room_id is = video_node_key (more convenient, easier to track that way)
+        //sampleNode['room_id'] = date.asMillis() // create the room_id at the time the video node is created
         sampleNode['video_mission_description'] = 'This is a video petition.  In a video petition, the person being interviewed *must* mention the legislator by name and must emphasize that the person being interviewed is a constituent of this legislator.  Next, one of the people in the video needs to state what the legislator\'s declared position is on COS (for, against, undecided)'
         sampleNode['youtube_video_description'] = 'This is a video petition to legislator_rep_type legislator_full_name (legislator_state_abbrev_upper legislator_chamber_abbrev legislator_district) from a constituent, constituent_name, asking legislator_rep_type legislator_full_name to support the Convention of States resolution. \r\n \r\nIf you are a constituent, you can also ask legislator_rep_type legislator_full_name to support the Convention of States resolution by phone, email or social media. \r\nPhone: legislator_phone \r\nEmail: legislator_email \r\nFacebook: https://www.facebook.com/legislator_facebook \r\nTwitter: https://www.twitter.com/legislator_twitter \r\n \r\nAnd if you haven\'t signed the Convention of States petition, you can do that here: https:\/\/www.conventionofstates.com   Be sure to get your friends and family to sign also, then have them contact *their* state legislators. \r\n \r\nTogether, we can be a part of the solution that\'s as big as the problem!'
         sampleNode['youtube_video_description_unevaluated'] = 'This is a video petition to legislator_rep_type legislator_full_name (legislator_state_abbrev_upper legislator_chamber_abbrev legislator_district) from a constituent, constituent_name, asking legislator_rep_type legislator_full_name to support the Convention of States resolution. \r\n \r\nIf you are a constituent, you can also ask legislator_rep_type legislator_full_name to support the Convention of States resolution by phone, email or social media. \r\nPhone: legislator_phone \r\nEmail: legislator_email \r\nFacebook: https://www.facebook.com/legislator_facebook \r\nTwitter: https://www.twitter.com/legislator_twitter \r\n \r\nAnd if you haven\'t signed the Convention of States petition, you can do that here: https:\/\/www.conventionofstates.com   Be sure to get your friends and family to sign also, then have them contact *their* state legislators. \r\n \r\nTogether, we can be a part of the solution that\'s as big as the problem!'
@@ -772,6 +773,16 @@ var getVms = function(callback) {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Triggers
+
+// probably other attributes of the video node that we should set here on the server so that
+// we don't have to do that in both clients.  Something to think about TODO
+exports.setRoom_id = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
+    if(!event.data.val() && event.data.previous.val())
+        return false //ignore deleted nodes
+    if(event.data.previous.val().room_id)
+        return false // if room_id was already set, return early
+    return event.data.ref.child('room_id').set(event.params.video_node_key)
+})
 
 
 /*************************************************************
