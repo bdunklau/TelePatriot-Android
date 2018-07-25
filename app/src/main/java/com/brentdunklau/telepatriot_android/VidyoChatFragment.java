@@ -120,7 +120,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean mEnableDebug = false;
     //private String mReturnURL = null;
     //private String mExperimentalOptions = null;
-    private MainActivity mSelf;
+    //private MainActivity mSelf;  // replaced with getActivity()
     private boolean mRefreshSettings = true;
     private boolean mDevicesSelected = true;
     private View myView;
@@ -347,7 +347,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
                 int SDK_INT = android.os.Build.VERSION.SDK_INT;
                 if (SDK_INT < 9) {
-                    Toast.makeText(mSelf, "Android Update Required", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "Android Update Required", Toast.LENGTH_LONG).show();
                 }
 
                 StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
@@ -929,8 +929,10 @@ public class VidyoChatFragment extends BaseFragment implements
 
         mVidyoConnectorState = state;
 
+        System.out.println("getActivity() = "+getActivity());
+
         // Execute this code on the main thread since it is updating the UI layout.
-        mSelf.runOnUiThread(new Runnable() {
+        getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
@@ -946,14 +948,14 @@ public class VidyoChatFragment extends BaseFragment implements
                         case Connecting:
                             connect_button.setChecked(true);
                             //mConnectionSpinner.setVisibility(View.VISIBLE);
-                            Toast.makeText(mSelf, "connecting", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), "connecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Connected:
                             connect_button.setChecked(true);
                             record_button.setVisibility(View.VISIBLE);
                             //mConnectionSpinner.setVisibility(View.INVISIBLE);
-                            Toast.makeText(mSelf, "connected", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), "connected", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnecting:
@@ -970,28 +972,28 @@ public class VidyoChatFragment extends BaseFragment implements
                             // before swapping to the callStart image.
                             connect_button.setChecked(true);
                             record_button.setVisibility(View.GONE);
-                            Toast.makeText(mSelf, "disconnecting", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), "disconnecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnected:
                             record_button.setVisibility(View.GONE);
-                            Toast.makeText(mSelf, "disconnected", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), "disconnected", Toast.LENGTH_SHORT).show();
                             connect_button.setChecked(false);
                             break;
                         case DisconnectedUnexpected:
                             // TODO not sure what to do about these error conditions
                             // displaying this kind of toast isn't helpful for the user
-                            //Toast.makeText(mSelf, "disconnect unexpected", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getActivity(), "disconnect unexpected", Toast.LENGTH_SHORT).show();
                             break;
                         case Failure:
                             // TODO not sure what to do about these error conditions
                             // displaying this kind of toast isn't helpful for the user
-                            //Toast.makeText(mSelf, "failure", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getActivity(), "failure", Toast.LENGTH_SHORT).show();
                             break;
                         case FailureInvalidResource:
                             // TODO not sure what to do about these error conditions
                             // displaying this kind of toast isn't helpful for the user
-                            //Toast.makeText(mSelf, "invalid resource", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getActivity(), "invalid resource", Toast.LENGTH_SHORT).show();
                             connect_button.setChecked(false);
                             //mConnectionSpinner.setVisibility(View.INVISIBLE);
 
@@ -1105,7 +1107,7 @@ public class VidyoChatFragment extends BaseFragment implements
         final boolean status = mVidyoConnector.connect(
                 "prod.vidyo.io",
                 token,
-                mDisplayName.getText().toString().trim(),
+                User.getInstance().getName(),
                 getRoom_id(),
                 this);
 
@@ -1141,12 +1143,12 @@ public class VidyoChatFragment extends BaseFragment implements
             OutputStream stream= new BufferedOutputStream(vmConnection.getOutputStream());
 
         } catch (MalformedURLException e) {
-            Toast.makeText(mSelf, "Cannot Record (Err 1)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Cannot Record (Err 1)", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
             stopRecording();
             return;
         } catch (IOException e) {
-            Toast.makeText(mSelf, "Cannot Record (Err 2)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Cannot Record (Err 2)", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
             stopRecording();
             return;
@@ -1202,7 +1204,7 @@ public class VidyoChatFragment extends BaseFragment implements
     public void onLocalCameraAdded(LocalCamera localCamera) {
         this.localCamera = localCamera;
         if(mVidyoConnector != null) {
-            mVidyoConnector.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
+            mVidyoConnector.assignViewToLocalCamera(mVideoFrame, localCamera, false, false);
             mVidyoConnector.showViewAt(mVideoFrame, 0, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
         }
     }
