@@ -59,8 +59,8 @@
             android:id="@+id/vert1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="@+id/videoChatYouTubeVideoDescription"
-            app:layout_constraintStart_toEndOf="@+id/videoChatYouTubeVideoDescription">
+            app:layout_constraintEnd_toEndOf="@+id/youtube_video_description_header"
+            app:layout_constraintStart_toEndOf="@+id/youtube_video_description_header">
 
 
             <TextView
@@ -75,7 +75,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/videoChatDescriptionTitle" />
+                app:layout_constraintTop_toBottomOf="@+id/video_mission_description_header" />
 
 
             <TextView
@@ -191,7 +191,7 @@
 
 
             <TextView
-                android:id="@+id/videoChatYouTubeVideoDescription"
+                android:id="@+id/youtube_video_description_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -202,18 +202,18 @@
                 app:layout_constraintTop_toBottomOf="@+id/legislator_twitter" />
 
             <TextView
-                android:id="@+id/editYouTubeButton"
+                android:id="@+id/edit_youtube_video_description_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
                 android:text="Edit"
                 android:textColor="@color/colorPrimaryDark"
-                app:layout_constraintStart_toEndOf="@+id/videoChatYouTubeVideoDescription"
-                app:layout_constraintTop_toTopOf="@+id/videoChatYouTubeVideoDescription" />
+                app:layout_constraintStart_toEndOf="@+id/youtube_video_description_header"
+                app:layout_constraintTop_toTopOf="@+id/youtube_video_description_header" />
 
 
             <TextView
-                android:id="@+id/videoChatYouTubeDescription"
+                android:id="@+id/youtube_video_description"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
@@ -225,11 +225,11 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/videoChatYouTubeVideoDescription"
+                app:layout_constraintTop_toBottomOf="@+id/youtube_video_description_header"
                 app:layout_constraintVertical_bias="0.0" />
 
             <TextView
-                android:id="@+id/videoChatDescriptionTitle"
+                android:id="@+id/video_mission_description_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -240,14 +240,14 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/editDescriptionButton"
+                android:id="@+id/edit_video_mission_description_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
                 android:text="Edit"
                 android:textColor="@color/colorPrimaryDark"
-                app:layout_constraintStart_toEndOf="@+id/videoChatDescriptionTitle"
-                app:layout_constraintTop_toTopOf="@+id/videoChatDescriptionTitle" />
+                app:layout_constraintStart_toEndOf="@+id/video_mission_description_header"
+                app:layout_constraintTop_toTopOf="@+id/video_mission_description_header" />
 
         </android.support.constraint.ConstraintLayout>
 

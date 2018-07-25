@@ -55,6 +55,7 @@ public class LegislatorHolder extends RecyclerView.ViewHolder {
         select_legislator.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // See VideoChatInstructionsDlg.  mClickListener should be videoChatYouTubeDescription
                 mClickListener.onItemClick(v, getAdapterPosition());
             }
         });
@@ -72,6 +73,7 @@ public class LegislatorHolder extends RecyclerView.ViewHolder {
     }
 
     // https://stackoverflow.com/a/41629505
+    // See EditLegislatorForVideoDlg.doit(): viewHolder.setOnClickListener(...)
     public void setOnClickListener(LegislatorHolder.ClickListener clickListener){
         mClickListener = clickListener;
     }

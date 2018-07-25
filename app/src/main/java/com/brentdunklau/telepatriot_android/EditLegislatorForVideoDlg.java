@@ -223,7 +223,16 @@ public class EditLegislatorForVideoDlg extends Dialog {
             public LegislatorHolder onCreateViewHolder(ViewGroup parent, int viewType) {
                 LegislatorHolder viewHolder = super.onCreateViewHolder(parent, viewType);
 
-                viewHolder.setOnClickListener(new LegislatorHolder.ClickListener() {
+                /*************************************************************************************
+                 See LegislatorHolder.setOnClickListener()
+                 See LegislatorHolder.select_legislator.setOnClickListener(...mClickListener.onItemClick...)
+                 Use case: Click "Select" next to a legislator -> fires the onClickListener attached to LegislatorHolder.select_legislator
+                 The onClickListener is LegislatorHolder.mClickListener
+                 And LegislatorHolder.mClickListener = clickListener below
+                 So clicking "Select" next to a legislator's name has the effect of updating the /video/list/[video_node_key] node with the
+                 selected legislator's info
+                *************************************************************************************/
+                LegislatorHolder.ClickListener clickListener = new LegislatorHolder.ClickListener() {
                     @Override
                     public void onItemClick(View view, int position) {
                         mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
@@ -241,16 +250,15 @@ public class EditLegislatorForVideoDlg extends Dialog {
                             }
 
                             @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
+                            public void onCancelled(DatabaseError databaseError) { }
                         });
                     }
 
                     //@Override
                     //public void onItemLongClick(View view, int position) {
                     //}
-                });
+                };
+                viewHolder.setOnClickListener(clickListener);
                 return viewHolder;
             }
         };

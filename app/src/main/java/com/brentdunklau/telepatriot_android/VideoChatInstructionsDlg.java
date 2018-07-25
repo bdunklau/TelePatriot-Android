@@ -32,8 +32,8 @@ public class VideoChatInstructionsDlg extends Dialog {
     //private EditText repNameEdit;
     //private EditText fbRepEdit;
     //private EditText twitterInfoEdit;
-    private TextView videoChatDescriptionTitle;
-    private TextView editDescriptionButton;
+    private TextView video_mission_description_header;
+    private TextView edit_video_mission_description_button;
     private TextView videoChatDescriptionText;
     private TextView legislator_header;
     private TextView choose_legislator;
@@ -46,9 +46,9 @@ public class VideoChatInstructionsDlg extends Dialog {
     private ImageView edit_facebook;
     private TextView legislator_twitter;
     private ImageView edit_twitter;
-    private TextView videoChatYouTubeVideoDescription;
-    private TextView editYouTubeButton;
-    private TextView videoChatYouTubeDescription;
+    private TextView youtube_video_description_header;
+    private TextView edit_youtube_video_description_button;
+    private TextView youtube_video_description;
     private VideoNode currentVideoNode;
     private Button back_to_video;
     private View myView;
@@ -64,8 +64,12 @@ public class VideoChatInstructionsDlg extends Dialog {
         //repNameEdit = findViewById(R.id.repNameEdit);
         //fbRepEdit = findViewById(R.id.fbRepEdit);
         //twitterInfoEdit = findViewById(R.id.twitterInfoEdit);
-        videoChatDescriptionTitle = findViewById(R.id.videoChatDescriptionTitle);
-        editDescriptionButton = findViewById(R.id.editDescriptionButton);
+        video_mission_description_header = findViewById(R.id.video_mission_description_header);
+        edit_video_mission_description_button = findViewById(R.id.edit_video_mission_description_button);
+        // TODO setting this to GONE until we put the code in to actually edit the video mission description - iOS version can already do this
+        edit_video_mission_description_button.setVisibility(View.GONE);
+
+
         videoChatDescriptionText = findViewById(R.id.videoChatDescriptionText);
         legislator_header = findViewById(R.id.legislator_header);
         choose_legislator = findViewById(R.id.choose_legislator);
@@ -78,16 +82,22 @@ public class VideoChatInstructionsDlg extends Dialog {
         edit_facebook = findViewById(R.id.edit_facebook);
         legislator_twitter = findViewById(R.id.legislator_twitter);
         edit_twitter = findViewById(R.id.edit_twitter);
-        videoChatYouTubeVideoDescription = findViewById(R.id.videoChatYouTubeVideoDescription);
-        editYouTubeButton = findViewById(R.id.editYouTubeButton);
-        editYouTubeButton.setOnClickListener(new View.OnClickListener() {
+        youtube_video_description_header = findViewById(R.id.youtube_video_description_header);
+        edit_youtube_video_description_button = findViewById(R.id.edit_youtube_video_description_button);
+
+        youtube_video_description = findViewById(R.id.youtube_video_description);
+        // See LegislatorHolder - select_legislator.setOnClickListener(...)
+        // TODO remove this, then uncomment and code the setOnClickListener() call below
+        edit_youtube_video_description_button.setVisibility(View.GONE);
+        /************************
+        edit_youtube_video_description_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 editYouTubeDescription();
             }
         });
+         **************/
 
-        videoChatYouTubeDescription = findViewById(R.id.videoChatYouTubeDescription);
 
         videoChatDescriptionText = findViewById(R.id.videoChatDescriptionText);
         List<VideoType> videoTypes = VideoType.getTypes();
@@ -136,7 +146,7 @@ public class VideoChatInstructionsDlg extends Dialog {
                     videoChatDescriptionText.setText(currentVideoNode.getVideo_mission_description());
                     setLegislatorFields(currentVideoNode);
 
-                    editYouTubeButton.setText(currentVideoNode.getYoutube_video_description());
+                    youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
                 }
 
                 @Override
@@ -282,18 +292,20 @@ public class VideoChatInstructionsDlg extends Dialog {
         alertDialog.show();
     }
 
+    /**************
     private void editYouTubeDescription() {
         if (editYouTubeButton.getText().toString().trim().equals("Edit")){
-            videoChatYouTubeDescription.setVisibility(View.INVISIBLE);
+            youtube_video_description.setVisibility(View.INVISIBLE);
             //mYouTubeEditText.setVisibility(View.VISIBLE);
             editYouTubeButton.setText("Done");
         }else{
-            //videoChatYouTubeDescription.setText(mYouTubeEditText.getText());
-            videoChatYouTubeDescription.setVisibility(View.VISIBLE);
+            //youtube_video_description.setText(mYouTubeEditText.getText());
+            youtube_video_description.setVisibility(View.VISIBLE);
             //mYouTubeEditText.setVisibility(View.GONE);
             editYouTubeButton.setText("Edit");
         }
     }
+     ***************/
 
     private VideoNode createVideoNode(String t) {
         VideoType vtype = VideoType.getType(t /*"Video Petition"*/);
