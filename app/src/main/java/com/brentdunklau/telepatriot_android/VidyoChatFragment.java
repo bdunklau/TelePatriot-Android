@@ -1254,7 +1254,7 @@ public class VidyoChatFragment extends BaseFragment implements
     public void onRemoteCameraAdded(RemoteCamera remoteCamera, Participant participant) {
         // see XCode VideoChatVC.onRemoteCameraAdded()  line 742
         if(mVidyoConnector != null) {
-            mVidyoConnector.assignViewToRemoteCamera(remoteFrame, remoteCamera, true, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
+            mVidyoConnector.assignViewToRemoteCamera(remoteFrame, remoteCamera, false, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
             mVidyoConnector.showViewAt(remoteFrame, 0, 0, remoteFrame.getWidth(), remoteFrame.getHeight());
         }
 
