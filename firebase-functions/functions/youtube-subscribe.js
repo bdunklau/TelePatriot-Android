@@ -14,9 +14,10 @@ const db = admin.database()
 
 exports.youtube_subscribe_callback = functions.https.onRequest((req, res) => {
 
-    var stuff = {nothing: 'nothing', date: date.asCentralTime()}
-    if(req.body)
+    var stuff = {date: date.asCentralTime()}
+    if(req.body) stuff.body = req.body
 
-    db.ref('templog2').push().set(req)
+    return db.ref('templog2').push().set(stuff).then(() => {
         return res.status(200).send("hub_challenge")
+    })
 })
