@@ -1,9 +1,7 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +14,6 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.view.View;
 import android.widget.Toast;
@@ -24,25 +21,21 @@ import android.widget.ToggleButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.ArrayList;
 
-import com.brentdunklau.telepatriot_android.util.Legislator;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
 import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.vidyo.VidyoClient.Connector.ConnectorPkg;
@@ -111,7 +104,7 @@ public class VidyoChatFragment extends BaseFragment implements
     //public static EditText mToken;
 
     private VideoFrameLayout mVideoFrame;
-    private VideoFrameLayout remoteFrame;
+    private VideoFrameLayout remoteChatScreen;
     //private boolean mHideConfig = false;
     //private boolean mAutoJoin = false;
     //private boolean mAllowReconnect = true;
@@ -238,7 +231,7 @@ public class VidyoChatFragment extends BaseFragment implements
         uid =  User.getInstance().getUid();
          *********/
         mVideoFrame = myView.findViewById(R.id.vidyoChatMyScreen);
-        remoteFrame = myView.findViewById(R.id.remoteChatScreen);
+        remoteChatScreen = myView.findViewById(R.id.remoteChatScreen);
 
         instructions_button = myView.findViewById(R.id.instructions_button);
         instructions_button.setOnClickListener(new View.OnClickListener() {
@@ -1254,8 +1247,8 @@ public class VidyoChatFragment extends BaseFragment implements
     public void onRemoteCameraAdded(RemoteCamera remoteCamera, Participant participant) {
         // see XCode VideoChatVC.onRemoteCameraAdded()  line 751
         if(mVidyoConnector != null) {
-            mVidyoConnector.assignViewToRemoteCamera(remoteFrame, remoteCamera, false, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
-            mVidyoConnector.showViewAt(remoteFrame, 0, 0, remoteFrame.getWidth(), remoteFrame.getHeight());
+            mVidyoConnector.assignViewToRemoteCamera(remoteChatScreen, remoteCamera, false, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
+            mVidyoConnector.showViewAt(remoteChatScreen, 0, 0, remoteChatScreen.getWidth(), remoteChatScreen.getHeight());
         }
 
     }
@@ -1263,12 +1256,17 @@ public class VidyoChatFragment extends BaseFragment implements
     // per Connector.IRegisterRemoteCameraEventListener
     @Override
     public void onRemoteCameraRemoved(RemoteCamera remoteCamera, Participant participant) {
-
+        System.out.println("onRemoteCameraRemoved ---------");
+        if(mVidyoConnector != null) {
+            mVidyoConnector.assignViewToRemoteCamera(remoteChatScreen, null, false, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
+            mVidyoConnector.showViewAt(remoteChatScreen, 0, 0, 0, 0);
+        }
     }
 
     // per Connector.IRegisterRemoteCameraEventListener
     @Override
     public void onRemoteCameraStateUpdated(RemoteCamera remoteCamera, Participant participant, Device.DeviceState deviceState) {
+        System.out.println("onRemoteCameraStateUpdated:  deviceState = "+deviceState);
     }
 
 
