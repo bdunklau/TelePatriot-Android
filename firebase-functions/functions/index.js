@@ -136,6 +136,9 @@ exports.testDeletePlaylist = youtube_playlists.testDeletePlaylist
 exports.testEditPlaylist = youtube_playlists.testEditPlaylist
 exports.handlePlaylistRequest = youtube_playlists.handlePlaylistRequest
 
+const youtube_subscribe = require('./youtube-subscribe')
+exports.youtube_subscribe_callback = youtube_subscribe.youtube_subscribe_callback
+
 const twitter = require('./twitter')
 exports.twitter = twitter.twitter
 exports.testTweet = twitter.testTweet
