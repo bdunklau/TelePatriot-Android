@@ -300,6 +300,22 @@ exports.deleteMissionItem = functions.https.onRequest((req, res) => {
 
 })
 
+var getTeamRoster = function(team_name) {
+    return db.ref(`users`).once('value').then(snapshot => {
+        var team = []
+        snapshot.forEach(function(child) {
+            if(child.val().teams) {
+                var onteam = _.find(child.val().teams, {'team_name': team_name})
+                if(onteam && child.val().name && child.val().email && child.val().phone) {
+                    team.push({name: child.val().name, email: child.val().email, phone: child.val().phone})
+                }
+            }
+        })
+        return team
+    })
+
+}
+
 
 var getMissionItems = function(team_name, mission_id) {
     return db.ref(`/teams/${team_name}/missions/${mission_id}/mission_items`).orderByChild('name').once('value').then(snapshot => {
@@ -373,6 +389,25 @@ exports.downloadMissionReport = functions.https.onRequest((req, res) => {
 })
 
 
+exports.downloadTeamRoster = functions.https.onRequest((req, res) => {
+    var team_name = req.query.team
+    var filename = team_name+' Roster.xls' // just a default value, expect this to be overwritten below
+
+    return getTeamRoster(team_name).then(members => {
+        var stuff = '' // csv data
+        stuff = 'name\tphone\temail\n'
+        _.forEach(members, function(value) {
+            stuff += value.name+'\t'
+            stuff += value.phone+'\t'
+            stuff += value.email+'\t'
+            stuff += '\n'
+        })
+
+        return res.set({'Content-Type': 'application/vnd.ms-excel', 'Content-Disposition': 'attachment;filename='+filename}).status(200).send(stuff)
+    })
+})
+
+
 exports.viewMissionReport = functions.https.onRequest((req, res) => {
     var team_name = req.query.team
     var mission_id = req.query.mission_id
@@ -404,7 +439,7 @@ var listMembers = function(team_name) {
     .then(sortedMembers => {
         stuff += '<table><tr><td colspan="4"><b>Team: '+team_name+'</b></td></tr>'
         stuff += '<tr><td colspan="4"><form method="post" action="/copyTeam?team='+team_name+'"><input type="submit" value="Copy '+team_name+'"/>&nbsp;&nbsp;<input type="text" name="copyteam" placeholder="New Team"/></form></td></tr>'
-
+        stuff += '<tr><td><a href="/downloadTeamRoster?team='+team_name+'">Download Roster</a></td></tr>'
         _.forEach(sortedMembers, function(value) {
             stuff += '<tr>'
             stuff += '<td><a style="'+style+'" href="/removePeopleFromTeam?team='+team_name+'&email='+value.email+'">Remove</a></td>'

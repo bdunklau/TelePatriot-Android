@@ -1,22 +1,27 @@
 {
+  "//": "btoa is for vidyo.js to generate Vidyo tokens",
   "//": "jssha is for vidyo.js to generate Vidyo tokens",
+
   "name": "functions",
   "description": "Cloud Functions for Firebase",
   "dependencies": {
     "@google-cloud/compute": "^0.10.0",
     "btoa": "^1.2.1",
+    "fb": "^2.0.0",
+    "firebase-admin": "^5.10.0",
+    "firebase-functions": "^0.8.2",
     "firebase-admin": "^5.10.0",
     "firebase-functions": "^0.8.1",
     "fs": "0.0.1-security",
     "google-auth-library": "^0.11.0",
     "googleapis": "^22.2.0",
     "jssha": "^2.3.1",
-    "lodash": "^4.17.4",
-    "moment": "^2.18.1",
+    "lodash": "^4.17.10",
+    "moment": "^2.22.2",
     "moment-timezone": "^0.5.13",
+    "node-twitter-api": "^1.8.0",
     "nodemailer": "^4.6.0",
-    "request": "^2.83.0",
-    "xml-js": "^1.6.4"
+    "request": "^2.83.0"
   },
   "private": true
 }

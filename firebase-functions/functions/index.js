@@ -21,8 +21,6 @@ exports.roleUnassigned = roles.roleUnassigned
 exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
 
-exports.authgoogleapi = sheetsDemo.authgoogleapi
-exports.oauthcallback = sheetsDemo.oauthcallback
 exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
@@ -32,6 +30,8 @@ exports.readSpreadsheet = sheetReader.readSpreadsheet
 exports.deleteMissionItems = sheetReader.deleteMissionItems
 exports.testReadSpreadsheet = sheetReader.testReadSpreadsheet
 exports.testMergeMissions = sheetReader.testMergeMissions
+exports.oauthcallback = sheetReader.oauthcallback
+exports.authgoogleapi = sheetReader.authgoogleapi
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
@@ -56,6 +56,7 @@ exports.deleteTeam = teams.deleteTeam
 //exports.deleteTeam = teams.deleteTeam
 exports.addPeopleToTeam = teams.addPeopleToTeam
 exports.downloadMissionReport = teams.downloadMissionReport
+exports.downloadTeamRoster = teams.downloadTeamRoster
 exports.removePeopleFromTeam = teams.removePeopleFromTeam
 exports.viewMembers = teams.viewMembers
 exports.viewMissions = teams.viewMissions
@@ -116,6 +117,7 @@ exports.sendEmail = email.sendEmail
 exports.chooseEmailType = email.chooseEmailType
 
 const legislators = require('./legislators')
+exports.downloadFromOpenStates = legislators.downloadFromOpenStates
 exports.loadStates = legislators.loadStates
 exports.loadOpenStatesDistricts = legislators.loadOpenStatesDistricts
 exports.loadOpenStatesLegislators = legislators.loadOpenStatesLegislators
@@ -162,11 +164,35 @@ exports.tryLoadingOfficialsAgain = officialMapper.tryLoadingOfficialsAgain
 
 const testing = require('./test/testing')
 exports.testApi = testing.testApi
-exports.testPing = testing.testPing
 
 const vidyo = require('./vidyo')
 exports.generateVidyoToken = vidyo.generateVidyoToken
 
+const amiready = require('./user-amiready')
+exports.amiready = amiready.amiready
+
+const youtube_playlists = require('./youtube-playlists')
+exports.youtube_playlists = youtube_playlists.youtube_playlists
+exports.testSavePlaylist = youtube_playlists.testSavePlaylist
+exports.testDeletePlaylist = youtube_playlists.testDeletePlaylist
+exports.testEditPlaylist = youtube_playlists.testEditPlaylist
+exports.handlePlaylistRequest = youtube_playlists.handlePlaylistRequest
+
+const youtube_subscribe = require('./youtube-subscribe')
+exports.video_processing_callback = youtube_subscribe.video_processing_callback
+
+const twitter = require('./twitter')
+exports.twitter = twitter.twitter
+exports.testTweet = twitter.testTweet
+exports.callback_from_twitter = twitter.callback_from_twitter
+exports.handleTweetRequest = twitter.handleTweetRequest
+//exports.deleteTweet = twitter.deleteTweet  // not supported, don't think
+
+const facebook = require('./facebook')
+exports.facebook = facebook.facebook
+exports.testPostFacebook = facebook.testPostFacebook
+exports.handleFacebookRequest = facebook.handleFacebookRequest
+exports.triggerComment = facebook.triggerComment
 const videoManager = require('./video')
 exports.video = videoManager.video
 //exports.newStorageItem = videoManager.newStorageItem

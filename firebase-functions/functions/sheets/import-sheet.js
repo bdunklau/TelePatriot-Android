@@ -101,7 +101,9 @@ const HARDCODED_SHEET_ID = '1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs'
 const HARDCODED_MISSION_ID = '2'
 
 // setup for authGoogleAPI
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/youtube',
+                'https://www.googleapis.com/auth/youtubepartner']; // ref: https://developers.google.com/youtube/v3/docs/playlists/insert
 var OAuth2 = google.auth.OAuth2;
 var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
                                 FUNCTIONS_REDIRECT);
@@ -132,7 +134,7 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
       res.status(400).send(err);
       return;
     }
-    db.ref(DB_TOKEN_PATH).set(tokens).then(
+    db.ref(DB_TOKEN_PATH).update(tokens).then(
         () => res.status(200).send('App successfully configured with new Credentials. ' +
                                    'You can now close this page.'));
   });
