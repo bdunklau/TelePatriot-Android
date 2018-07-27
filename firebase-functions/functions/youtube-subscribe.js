@@ -11,13 +11,24 @@ const date = require('./dateformat')
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database()
 
-var parseString = require('xml2js').parseString;
 
 // Docker containers call this url when video uploading begins and again when
 // processing is complete and the video is ready to be viewed.
 exports.video_processing_callback = functions.https.onRequest((req, res) => {
 
-    var stuff = {date: date.asCentralTime()}
+    // See upload_video.py in the docker containers for these parameters
+    // See also google-cloud.js:startPublishing - that's where the callback url is
+    // constructed that gets sent to the docker container.
+    var stuff = {date: date.asCentralTime(),
+                date_ms: date.asMillis(),
+                video_node_key: req.query.video_node_key,
+                video_id: req.query.video_id,
+                event_type: req.query.event_type,
+                uid: req.query.uid}
+
+    return db.ref('video/video_events').push().set(stuff).then(() => {
+        return db.ref('video/list/'+req.query.video_node_key).update({video_id: req.query.video_id})
+    })
 
 
 })

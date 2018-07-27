@@ -223,6 +223,8 @@ exports.removeRecording = googleCloud.removeRecording
 exports.dockerRequest = googleCloud.dockerRequest
 exports.testCreateVideoNode = googleCloud.testCreateVideoNode
 exports.setRoom_id = googleCloud.setRoom_id
+exports.addVideoNodeInfo = googleCloud.addVideoNodeInfo
+exports.startPublishing = googleCloud.startPublishing
 
 
 const googleAuth = require('./google-auth')

@@ -33,7 +33,7 @@ exports.generateVidyoToken = functions.https.onRequest((req, res) => {
     var userName = req.query.userName
     var expiresInSecs = 600
 
-    db.child(`api_tokens`).once('value').then(snapshot => {
+    db.child('api_tokens').once('value').then(snapshot => {
         var devKey = snapshot.val().vidyo_developer_key
         var appID = snapshot.val().vidyo_app_id
 

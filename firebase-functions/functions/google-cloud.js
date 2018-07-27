@@ -37,7 +37,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id
+firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:addVideoNodeInfo
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
@@ -926,8 +926,59 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onWri
 })
 
 
+// Originally, the trigger was created to support the "start publishing" request
+// See VideoChatVC.publishClicked().  To publish, we need to know the vm ip and the
+// name of the docker container.  This info is on the video node, but at the client,
+// all we typically know is the video_node_key.  So this trigger will query /video/list/[video_node_key]
+// for:  vm_host, vm_port, and docker_name.  With this information, we can construct the
+// url that will allow us to start the publishing action
+exports.addVideoNodeInfo = functions.database.ref('video/video_events/{key}').onWrite(event => {
+    if(!event.data.val() && event.data.previous.val())
+        return false // ignore deletes
+    if(!event.data.val().request_type || !event.data.val().video_node_key)
+        return false // ignore malformed records
+    if(event.data.val().request_type != 'start publishing')
+        return false // only do this for 'start publishing' requests
+    if(event.data.val().vm_host || event.data.val().vm_port || event.data.val().docker_name)
+        return false // we've already written the info we're looking for
+    //console.log('event.data.val().video_node_key = ', event.data.val().video_node_key)
+    return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
+        if(snapshot.val().vm_host && snapshot.val().vm_port && snapshot.val().docker_name) {
+            // multi-path update
+            return event.data.ref.update({vm_host: snapshot.val().vm_host,
+                                    vm_port: snapshot.val().vm_port,
+                                    docker_name: snapshot.val().docker_name,
+                                    ready_to_publish: true}) // we have another trigger just below
+                                        // this one that looks for this ready_to_publish flag.
+
+        }
+        else return false
+    })
+})
 
 
+exports.startPublishing = functions.database.ref('video/video_events/{key}').onWrite(event => {
+    if(!event.data.val().ready_to_publish)
+        return false // not ready to publish (see the addVideoNodeInfo trigger above)
+    return event.data.adminRef.root.child('administration/hosts').orderByChild('type')
+        .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot => {
+        // get the url of this server to construct a callback url that the docker container
+        // will call back to when uploading starts and finishes
+        var host
+        snapshot.forEach(function(child) { host = child.val().host })
+        var callbackurl = 'https://'+host+'/video_processing_callback?video_node_key='+event.data.val().video_node_key // assume port 80
+
+        // See ~/nodejs/index.js on the virtual machines
+        var vmUrl = 'http://'+event.data.val().vm_host+':'+event.data.val().vm_port+'/publish?title='+title
+            +'&description='+description+'&docker_name='+event.data.val().docker_name+'&callbackurl='+callbackurl
+            +'&uid='+event.data.val().uid
+
+        return request(vmUrl, function(error, response, body) {
+            // response doesn't matter because we have passed a callback url that will be called
+            // when the uploading begins and ends.
+        })
+    })
+})
 
 
 

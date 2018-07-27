@@ -11,7 +11,6 @@ const admin = require('firebase-admin')
 const date = require('./dateformat')
 const google = require('googleapis'); // import-sheet.js also uses this
 const fs = require('fs');
-const xml2js = require('xml-js');
 
 const bucket = admin.storage().bucket()
 
@@ -322,47 +321,8 @@ Response looks like this...
 }
 ***********************************/
 
-/**********************************
-Below, when I say "has this structure", I don't mean this is ALL that's returned.
-I am just pointing out the attributes that I care about.  There are some I DON'T care about
 
-When posting a video, the response from YouTube has this structure...
-feed/entry/author/name/_text = TelePatriot-Dev
-feed/entry/author/uri/_text = https://www.youtube.com/channel/UCiC2Q-noJ-2uxQeDKC6IHKg
-feed/entry/link/_attributes/href = https://www.youtube.com/watch?v=k7OGVYZL-i4
-feed/entry/title/_text = (the title of the video)
-feed/entry/yt:channelId/_text = UCiC2Q-noJ-2uxQeDKC6IHKg
-feed/entry/yt:videoId/_text = k7OGVYZL-i4
-
-
-When deleting a video, the response from YouTube has this structure...
-feed/at:deleted-entry/at:by/name/_text = TelePatriot-Dev
-feed/at:deleted-entry/at:by/uri/_text = https://www.youtube.com/channel/UCiC2Q-noJ-2uxQeDKC6IHKg
-feed/at:deleted-entry/link/_attributes/href = https://www.youtube.com/watch?v=_u0SEvSCZZI
-
-THE SUCKY PART is that the video description isn't returned in this notification from YouTube
-We have to create a trigger that listens for writes to this node and make ANOTHER api call to
-get the video's description - geez
-***********************************/
-var YOUTUBE_NOTIFICATIONS = 'youtube_notifications'
-exports.youtubewebhook1 = functions.https.onRequest((req, res) => {
-    var youtube_notifications = YOUTUBE_NOTIFICATIONS
-    var notf = {}
-    if(req.rawBody) {
-        notf['youtube_notification'] = xml2js.xml2js(req.rawBody, {compact: true})
-    }
-    var hub_challenge = "better find req parm!!!"
-    if(req.query['hub.challenge']) {
-        hub_challenge = req.query['hub.challenge']
-    }
-    notf['date'] = date.asCentralTime()
-    notf['date_ms'] = date.asMillis()
-    return db.ref(youtube_notifications).push().set(notf).then(() => {
-        return res.status(200).send(hub_challenge)
-    })
-})
-
-
+/******************
 // Triggered when YouTube calls us back and writes to /youtube_notifications
 // When YouTube calls us back, we have to turn around and make an api call here to get the
 // video's description - hassle
@@ -406,6 +366,7 @@ exports.getAdditionalYouTubeInfo = functions.database.ref(YOUTUBE_NOTIFICATIONS+
         });
     })
 })
+*********************/
 
 
 var debugs = []
