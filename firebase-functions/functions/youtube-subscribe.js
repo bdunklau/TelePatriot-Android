@@ -11,13 +11,25 @@ const date = require('./dateformat')
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database()
 
+var parseString = require('xml2js').parseString;
 
-exports.youtube_subscribe_callback = functions.https.onRequest((req, res) => {
+// Docker containers call this url when video uploading begins and again when
+// processing is complete and the video is ready to be viewed.
+exports.video_processing_callback = functions.https.onRequest((req, res) => {
 
     var stuff = {date: date.asCentralTime()}
-    if(req.body) stuff.body = req.body
 
-    return db.ref('templog2').push().set(stuff).then(() => {
-        return res.status(200).send("hub_challenge")
-    })
+
 })
+
+/***********
+Example of a deleted action...
+
+<at:deleted-entry ref="yt:video:xScSTh-gHpQ" when="2018-07-26T17:43:36+00:00">
+  <link href="https://www.youtube.com/watch?v=xScSTh-gHpQ"/>
+  <at:by>
+   <name>TelePatriot-Dev</name>
+   <uri>https://www.youtube.com/channel/UCiC2Q-noJ-2uxQeDKC6IHKg</uri>
+  </at:by>
+ </at:deleted-entry>
+***********/
