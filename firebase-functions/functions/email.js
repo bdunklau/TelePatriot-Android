@@ -44,6 +44,7 @@ var emailTypeDropdown = function(selectedValue) {
     html += '<option value="noselection" '+isSelected(selectedValue, "noselection")+'> - </option>'
     html += '<option value="welcome_email" '+isSelected(selectedValue, "welcome_email")+'>Welcome Email</option>'
     html += '<option value="petition_ca_email" '+isSelected(selectedValue, "petition_ca_email")+'>Petition, Conf Agreement</option>'
+    html += '<option value="video_in_process_email" '+isSelected(selectedValue, "video_in_process_email")+'>Your Video is being processed</option>'
     html += '</select>'
     html += '</form>'
     return html
@@ -244,7 +245,7 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
                     emailType: req.body.emailType}
 
 
-    return db.ref(`administration/${req.body.emailType}/pass`).once('value').then(snapshot => {
+    return db.ref('administration/'+req.body.emailType+'/pass').once('value').then(snapshot => {
         var pass = snapshot.val()
 
         var smtpTransport = nodemailer.createTransport({

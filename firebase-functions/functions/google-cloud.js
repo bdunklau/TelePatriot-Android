@@ -37,7 +37,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:recording_has_started
+firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:recording_has_started,functions:sendVideoInProcessEmail
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
