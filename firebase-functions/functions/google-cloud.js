@@ -37,7 +37,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:addVideoNodeInfo
+firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:recording_has_started
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
@@ -330,7 +330,22 @@ exports.listImages = functions.https.onRequest((req, res) => {
 })
 
 
+// Need this callback function because recording doesn't start instantly.  So we display a spinner for the
+// user in VideoChatVC.startRecording().  In startRecording() in this script, we construct a callback url
+// which we send to the docker container.  The docker container does a GET request on this url which
+// sets the recording_started/recording_started_ms attributes.  The live query on the video node (video/list/{key})
+// in the mobile clients detects 'recording_started' which has the effect of dismissing the spinner
+exports.recording_has_started = functions.https.onRequest((req, res) => {
+    var updates = {}
+    updates['video/list/'+req.query.video_node_key+'/recording_started'] = date.asCentralTime()
+    updates['video/list/'+req.query.video_node_key+'/recording_started_ms'] = date.asMillis()
+    updates['administration/dockers/'+req.query.docker_key+'/recording_started'] = date.asCentralTime()
+    updates['administration/dockers/'+req.query.docker_key+'/recording_started_ms'] = date.asMillis()
 
+    return db.ref('/').update(updates).then(() => {
+        return res.status(200).send('ok: google-cloud.js:recording_has_started() handled your request')
+    })
+})
 
 
 
@@ -588,36 +603,64 @@ var startRecording = function(stuff) {
     return db.ref('video/list/'+stuff.video_node_key).once('value').then(snapshot => {
         var room_id = snapshot.val().room_id
 
-        var unique_file_ext = stuff.video_node_key
-        // not https ?!
-        var recorderUrl = 'http://'+stuff.vm_host+':'+stuff.docker.port+'/record/'+room_id+'/'+unique_file_ext
-        request(recorderUrl, function(error, response, body) {
-            // note: you cannot send the reponse object to the database for debugging. That will cause an error because
-            // the response object contains functions as attributes and firebase doesn't like that
-            if(!error) {
-                var updates = {}
-                // multi-path updates...
-                updates['administration/dockers/'+stuff.docker_key+'/running'] = true
-                updates['administration/dockers/'+stuff.docker_key+'/recording'] = true
-                updates['administration/dockers/'+stuff.docker_key+'/recording_started'] = date.asCentralTime()
-                updates['administration/dockers/'+stuff.docker_key+'/recording_started_ms'] = date.asMillis()
-                updates['administration/dockers/'+stuff.docker_key+'/recording_stopped'] = null
-                updates['administration/dockers/'+stuff.docker_key+'/recording_stopped_ms'] = null
-                // also need to update the video node at /video/list/[video_node_key] with...
-                updates['video/list/'+stuff.video_node_key+'/recording_started'] = date.asCentralTime()
-                updates['video/list/'+stuff.video_node_key+'/recording_started_ms'] = date.asMillis()
-                updates['video/list/'+stuff.video_node_key+'/recording_stopped'] = null
-                updates['video/list/'+stuff.video_node_key+'/recording_stopped_ms'] = null
-                updates['video/list/'+stuff.video_node_key+'/vm_host'] = stuff.vm_host
-                updates['video/list/'+stuff.video_node_key+'/vm_port'] = stuff.vm_port
-                updates['video/list/'+stuff.video_node_key+'/docker_name'] = stuff.docker.name
-                updates['video/list/'+stuff.video_node_key+'/docker_port'] = stuff.docker.port
-                updates['video/list/'+stuff.video_node_key+'/docker_key'] = stuff.docker_key
-                updates['video/list/'+stuff.video_node_key+'/unique_file_ext'] = unique_file_ext
-                return db.ref('/').update(updates)
-            }
-            // TODO what if error is thrown?
+        // make the docker container call back to us once recording has actually started...
+
+
+        return db.ref('administration/hosts').orderByChild('type')
+            .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot2 => {
+
+            var firebase_host
+            snapshot2.forEach(function(child) { firebase_host = child.val().host })
+
+            // See docker: /home/webapp/app.py
+            var callback_server = firebase_host
+            var callback_uri = 'recording_has_started'
+            var video_node_key = stuff.video_node_key
+            var docker_key = stuff.docker_key
+
+            // not https ?!
+            var recorderUrl = 'http://'+stuff.vm_host+':'+stuff.docker.port+'/record/'+room_id
+            recorderUrl += '/'+callback_server
+            recorderUrl += '/'+callback_uri
+            recorderUrl += '/'+video_node_key
+            recorderUrl += '/'+docker_key
+
+            db.ref('video/video_events').push().set({
+                date: date.asCentralTime(), date_ms: date.asMillis(),
+                event_type: 'call_docker', 'docker_url': recorderUrl
+            })
+
+            request(recorderUrl, function(error, response, body) {
+                // note: you cannot send the reponse object to the database for debugging. That will cause an error because
+                // the response object contains functions as attributes and firebase doesn't like that
+                if(!error) {
+                    var updates = {}
+                    // multi-path updates...
+                    updates['administration/dockers/'+stuff.docker_key+'/running'] = true
+                    updates['administration/dockers/'+stuff.docker_key+'/recording'] = true
+                    updates['administration/dockers/'+stuff.docker_key+'/recording_stopped'] = null
+                    updates['administration/dockers/'+stuff.docker_key+'/recording_stopped_ms'] = null
+
+                    // also need to update the video node at /video/list/[video_node_key] with...
+                    updates['video/list/'+stuff.video_node_key+'/recording_stopped'] = null
+                    updates['video/list/'+stuff.video_node_key+'/recording_stopped_ms'] = null
+                    updates['video/list/'+stuff.video_node_key+'/vm_host'] = stuff.vm_host
+                    updates['video/list/'+stuff.video_node_key+'/vm_port'] = stuff.vm_port
+                    updates['video/list/'+stuff.video_node_key+'/docker_name'] = stuff.docker.name
+                    updates['video/list/'+stuff.video_node_key+'/docker_port'] = stuff.docker.port
+                    updates['video/list/'+stuff.video_node_key+'/docker_key'] = stuff.docker_key
+                    return db.ref('/').update(updates)
+                }
+                else {
+                    snapshot.ref.set({
+                        date: date.asCentralTime(), date_ms: date.asMillis(),
+                        error: error
+                    })
+                }
+            })
+
         })
+
     })
 
 }
@@ -644,21 +687,6 @@ var stopRecording = function(stuff) {
 
         }
         // TODO what if error is thrown?
-    })
-}
-
-
-var startPublishing = function(stuff) {
-
-    return db.ref('video/list/'+stuff.video_node_key).once('value').then(snapshot => {
-        // not https ?!
-        var url = 'http://'+snapshot.val().vm_host+':'+snapshot.val().vm_port+'/publish?filename=recording-'+snapshot.val().unique_file_ext+'.flv'
-        request(url, function(error, response, body) {
-            var updates = {}
-            updates['video/list/'+stuff.video_node_key+'/publishing_stopped'] = date.asCentralTime()
-            updates['video/list/'+stuff.video_node_key+'/publishing_stopped_ms'] = date.asMillis()
-            return db.ref('/').update(updates)
-        })
     })
 }
 
@@ -785,6 +813,59 @@ exports.setRoom_id = functions.database.ref('video/list/{video_node_key}').onWri
 })
 
 
+// youtube-subscribe.js:video_processing_callback() writes the newly minted video_id to
+// the video node.  So here, we listen for that write and we call back to the docker container
+// and tell it to notify us when the video is actually ready for viewing.
+exports.monitor_video_processing = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
+    if(!event.data.val() && event.data.previous.val())
+        return false //ignore deleted nodes
+    if(!event.data.val().video_id)
+        return false // only listen when video/list/{video_node_key}/video_id is written
+    if(event.data.previous.val().video_id && event.data.val().video_id == event.data.previous.val().video_id)
+        return false // ignore if video/list/{video_node_key}/video_id didn't actually change
+
+    return db.ref('administration/hosts').once('value').then(snapshot => {
+        var firebase, vm;
+        snapshot.forEach(function(child) {
+            if(child.val().type == 'virtual machine') vm = child.val()
+            else if(child.val().type = 'firebase functions') firebase = child.val().host // assume port 80
+        })
+
+        return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snap2 => {
+            var monitor_url = 'http://'+vm.host+':'+vm.port
+                +'/monitor_video_processing?video_node_key='+event.params.video_node_key
+                +'&docker_name='+snap2.val().docker_name
+                +'&video_id='+event.data.val()
+                +'&callback_server='+firebase
+                +'&callback_uri=video_processing_complete'
+                +'&maxRetries=100&secondsBetweenRetries=30'
+            request(monitor_url, function(error, response, body) {
+                // the real response isn't here - it's in youtube-subscribe:video_processing_complete()
+            })
+        })
+    })
+})
+
+
+// This is like a companion to the exports.monitor_video_processing() trigger function above because they
+// are both triggered by the same function: youtube-subscribe.js:video_processing_callback()
+// THIS function sends an email to all the video/list/{video_node_key}/video_participants
+// BUT we only want to trigger this function when video/list/{video_node_key}/
+exports.sendVideoInProcessEmail = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
+    if(!event.data.val() && event.data.previous.val())
+        return false //ignore deleted nodes
+    if(!event.data.val().video_id)
+        return false // only listen when video/list/{video_node_key}/video_id is written
+    if(event.data.previous.val().video_id && event.data.val().video_id == event.data.previous.val().video_id)
+        return false // ignore if video/list/{video_node_key}/video_id didn't actually change
+
+    var video_url = 'https://www.youtube.com/watch?v='+event.data.val().video_id
+    return event.data.ref.child('video_url').set('https://www.youtube.com/watch?v='+event.data.val().video_id).then(() => {
+        // now send the email
+    })
+})
+
+
 /*************************************************************
 Mobile clients write to video/video_events and we have a test method above that
 writes to video/video_events also - testStartRecording2
@@ -798,7 +879,7 @@ start the recording
 
 WHAT DO WE EXPECT TO HAPPEN HERE?...
 *************************************************************/
-exports.dockerRequest = functions.database.ref('video/video_events/{key}').onWrite(event => {
+exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
     // ignore deletes...
     if(!event.data.val()) {
         db.ref('templog2').push().set({dockerRequest: 'oops: !event.data.val()', date: date.asCentralTime()})
@@ -815,14 +896,6 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onWri
     }
     var type = event.data.val().request_type
 
-    var typeDidntChange = event.data.val().request_type
-                        && event.data.previous.val()
-                        && event.data.previous.val().request_type
-                        && event.data.val().request_type == event.data.previous.val().request_type
-    if(typeDidntChange) {
-        db.ref('templog2').push().set({message: 'OK: type did not change, return early', date: date.asCentralTime()})
-        return false
-    }
 
     // we don't 'request a room' - we are requesting a 'recording secretary'.  The room is just a
     // name/string that we already know
@@ -911,73 +984,46 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onWri
         })
     }
     else if(type == 'start publishing') {
-        return db.ref('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
-            var video_node = snapshot.val()
-            var args = {video_node_key: event.data.val().video_node_key,
-                        vm_host: video_node.vm_host,
-                        vm_port: video_node.vm_port,
-                        docker_name: video_node.docker_name,
-                        docker_key: video_node.docker_key}
-            return startPublishing(args)
+
+        return event.data.adminRef.root.child('administration/hosts').orderByChild('type')
+            .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot => {
+
+            var firebase_host
+            snapshot.forEach(function(child) { firebase_host = child.val().host })
+
+            return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
+
+                snapshot.ref.update({publishing_started: date.asCentralTime(), publishing_started_ms: date.asMillis()})
+
+                var vm_host = snapshot.val().vm_host
+                var vm_port = snapshot.val().vm_port
+                var title = 'Still Need to Construct Title'
+                var description = 'Still Need to Feed in Description'
+                var docker_name = snapshot.val().docker_name
+                var uid = event.data.val().uid
+                var callbackurl = 'https://'+firebase_host+'/video_processing_callback?video_node_key='+event.data.val().video_node_key // assume port 80
+
+                // See ~/nodejs/index.js on the virtual machines
+                var vmUrl = 'http://'+vm_host+':'+vm_port+'/publish?title='+title
+                    +'&description='+description+'&docker_name='+docker_name+'&uid='+uid+'&callbackurl='+callbackurl
+
+                return request(vmUrl, function(error, response, body) {
+                    // response doesn't matter because we have passed a callback url that will be called
+                    // when the uploading begins and ends.
+                    if(error) {
+                        event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/publishing_error')
+                            .set({date: date.asCentralTime(), date_ms: date.asMillis(), error: error, vm_url: vmUrl})
+                    }
+                })
+
+            })
+
         })
+
     }
+
     // ignore all others...
     else return false
-})
-
-
-// Originally, the trigger was created to support the "start publishing" request
-// See VideoChatVC.publishClicked().  To publish, we need to know the vm ip and the
-// name of the docker container.  This info is on the video node, but at the client,
-// all we typically know is the video_node_key.  So this trigger will query /video/list/[video_node_key]
-// for:  vm_host, vm_port, and docker_name.  With this information, we can construct the
-// url that will allow us to start the publishing action
-exports.addVideoNodeInfo = functions.database.ref('video/video_events/{key}').onWrite(event => {
-    if(!event.data.val() && event.data.previous.val())
-        return false // ignore deletes
-    if(!event.data.val().request_type || !event.data.val().video_node_key)
-        return false // ignore malformed records
-    if(event.data.val().request_type != 'start publishing')
-        return false // only do this for 'start publishing' requests
-    if(event.data.val().vm_host || event.data.val().vm_port || event.data.val().docker_name)
-        return false // we've already written the info we're looking for
-    //console.log('event.data.val().video_node_key = ', event.data.val().video_node_key)
-    return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
-        if(snapshot.val().vm_host && snapshot.val().vm_port && snapshot.val().docker_name) {
-            // multi-path update
-            return event.data.ref.update({vm_host: snapshot.val().vm_host,
-                                    vm_port: snapshot.val().vm_port,
-                                    docker_name: snapshot.val().docker_name,
-                                    ready_to_publish: true}) // we have another trigger just below
-                                        // this one that looks for this ready_to_publish flag.
-
-        }
-        else return false
-    })
-})
-
-
-exports.startPublishing = functions.database.ref('video/video_events/{key}').onWrite(event => {
-    if(!event.data.val().ready_to_publish)
-        return false // not ready to publish (see the addVideoNodeInfo trigger above)
-    return event.data.adminRef.root.child('administration/hosts').orderByChild('type')
-        .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot => {
-        // get the url of this server to construct a callback url that the docker container
-        // will call back to when uploading starts and finishes
-        var host
-        snapshot.forEach(function(child) { host = child.val().host })
-        var callbackurl = 'https://'+host+'/video_processing_callback?video_node_key='+event.data.val().video_node_key // assume port 80
-
-        // See ~/nodejs/index.js on the virtual machines
-        var vmUrl = 'http://'+event.data.val().vm_host+':'+event.data.val().vm_port+'/publish?title='+title
-            +'&description='+description+'&docker_name='+event.data.val().docker_name+'&callbackurl='+callbackurl
-            +'&uid='+event.data.val().uid
-
-        return request(vmUrl, function(error, response, body) {
-            // response doesn't matter because we have passed a callback url that will be called
-            // when the uploading begins and ends.
-        })
-    })
 })
 
 

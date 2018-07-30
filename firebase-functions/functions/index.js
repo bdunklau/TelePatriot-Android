@@ -180,6 +180,8 @@ exports.handlePlaylistRequest = youtube_playlists.handlePlaylistRequest
 
 const youtube_subscribe = require('./youtube-subscribe')
 exports.video_processing_callback = youtube_subscribe.video_processing_callback
+exports.video_processing_complete = youtube_subscribe.video_processing_complete
+
 
 const twitter = require('./twitter')
 exports.twitter = twitter.twitter
@@ -223,8 +225,8 @@ exports.removeRecording = googleCloud.removeRecording
 exports.dockerRequest = googleCloud.dockerRequest
 exports.testCreateVideoNode = googleCloud.testCreateVideoNode
 exports.setRoom_id = googleCloud.setRoom_id
-exports.addVideoNodeInfo = googleCloud.addVideoNodeInfo
-exports.startPublishing = googleCloud.startPublishing
+exports.recording_has_started = googleCloud.recording_has_started
+exports.monitor_video_processing = googleCloud.monitor_video_processing
 
 
 const googleAuth = require('./google-auth')
