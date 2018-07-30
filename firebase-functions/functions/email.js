@@ -22,6 +22,11 @@ var tableheading = style + ';background-color:#ededed'
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
+/***
+paste this on the command line...
+firebase deploy --only functions:email,functions:chooseEmailType,functions:renderEmail,functions:saveEmail,functions:sendEmail
+***/
+
 
 exports.email = functions.https.onRequest((req, res) => {
 
