@@ -66,9 +66,6 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
     [facebook_page_access_token] is at /api_tokens/facebook_page_access_token
     [facebook_page_id] is at /api_tokens/facebook_page_id
     curl -i -X POST "https://graph.facebook.com/v3.0/[facebook_page_id]/feed?message=just+another+test&access_token=[facebook_page_access_token]"
-
-    curl -i -X POST "https://graph.facebook.com/v3.0/1307580742712791/feed?message=just+another+test&access_token=EAABlr4HjXpUBAJzEs3d6XZCcikDlmQqkXcvhBZCkV2yQeoewhbRmLF05QBAAWNjF2m0MO2znLOvmZCBuMhodl10RkLZAnwglq4lvl76iEvZCd4Ig2kEcpHycQZASnJMBJDRf28wZCVYysyj1PKj5tOijnCncpn1r1otwVT4jg7iwQZDZD"
-
     ****************/
 
 

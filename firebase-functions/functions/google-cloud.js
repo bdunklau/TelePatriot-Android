@@ -37,7 +37,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:recording_has_started,functions:sendVideoInProcessEmail
+firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:recording_has_started,functions:whenVideoIdIsCreated
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
@@ -942,11 +942,15 @@ exports.monitor_video_processing = functions.database.ref('video/list/{video_nod
 })
 
 
-// This is like a companion to the exports.monitor_video_processing() trigger function above because they
-// are both triggered by the same function: youtube-subscribe.js:video_processing_callback()
-// THIS function sends an email to all the video/list/{video_node_key}/video_participants
-// BUT we only want to trigger this function when video/list/{video_node_key}/
-exports.sendVideoInProcessEmail = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
+/************************************
+This function was named whenVideoIdIsCreated() because it's supposed to be those things that happen
+when video/list/{video_node_key}/video_id is created.  But I realized that the trigger function
+above, exports.monitor_video_processing(), is also triggered by the creation of the video_id attribute
+So whenVideoIdIsCreated() isn't the greatest name.  But in whenVideoIdIsCreated(), what we're doing is
+creating the video_url and then we're posting to FB and TW and then we're sending out an email with
+links to YT, FB and TW
+**********************************/
+exports.whenVideoIdIsCreated = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
     if(!event.data.val() && event.data.previous.val())
         return false //ignore deleted nodes
     if(!event.data.val().video_id)
@@ -955,8 +959,23 @@ exports.sendVideoInProcessEmail = functions.database.ref('video/list/{video_node
         return false // ignore if video/list/{video_node_key}/video_id didn't actually change
 
     var video_url = 'https://www.youtube.com/watch?v='+event.data.val().video_id
-    return event.data.ref.child('video_url').set('https://www.youtube.com/watch?v='+event.data.val().video_id).then(() => {
-        // now send the email
+    return event.data.ref.child('video_url').set(video_url).then(() => {
+        // post to FB
+        var facebook_request = {
+            //uid: req.query.uid, // do we care what the uid is?
+            date: date.asCentralTime(),
+            date_ms: date.asMillis(),
+            text: event.data.val().youtube_video_description, // Make the FB post the same as the YT video description
+            link: video_url  // i.e. YouTube video link
+        }
+
+        // This call triggers facebook.js:handleFacebookRequest()
+        // Old comment not as helpful as it could be: There are also facebook_comment_requests because that's where we will actually be tagging legislators - in the comments
+        return db.ref('facebook_post_requests').push().set(facebook_request)
+
+        // post to TW
+
+        // Send the email
     })
 })
 
