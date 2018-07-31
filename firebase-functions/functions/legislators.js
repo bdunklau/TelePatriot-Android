@@ -756,7 +756,7 @@ For iOS and maybe Android too, to open the FB app directly to the legislator's p
 the legislator's FB ID.  The username is not enough.  The only way I've found so far (5/18/18) to look up someone's
 FB ID is to do an http get on their page and then look through the response for either: 'fb://page/?id='  or 'fb://profile/'
 *******************************************/
-exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/channels/{idx).onWrite(event => {
+exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/channels/{idx}').onWrite(event => {
     var legId = event.params.legId // TXL0000033
 
     //quit early when this node is deleted
@@ -946,7 +946,7 @@ exports.peopleWithoutCivicData = functions.https.onRequest((req, res) => {
  And because all this is done with triggers, all we have to do in the mobile code is do one write to
  social_media/user_updates and the triggers do all the rest.  We can even test this just using the firebase database client
  ******************************************************/
-exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_updates/{key).onWrite(event => {
+exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
     // This function is "Step 2a" described above
 
     if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
@@ -976,7 +976,7 @@ exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_
 
 
 // This function is "Step 2b" described above
-exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_updates/{key).onWrite(event => {
+exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
 
     if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
 
@@ -994,7 +994,7 @@ exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_u
 })
 
 // see if we accidentally overwrote good data with bad data and correct if we did
-exports.overwriteBadWithGoodData = functions.database.ref('states/legislators/{leg_id}/channels/{idx).onWrite(event => {
+exports.overwriteBadWithGoodData = functions.database.ref('states/legislators/{leg_id}/channels/{idx}').onWrite(event => {
     if(!event.data.exists() && event.data.previous.exists())
         return false;  // ignore the case where the node is deleted
 
