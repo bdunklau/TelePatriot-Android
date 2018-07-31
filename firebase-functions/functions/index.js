@@ -226,7 +226,7 @@ exports.testCreateVideoNode = googleCloud.testCreateVideoNode
 exports.setRoom_id = googleCloud.setRoom_id
 exports.recording_has_started = googleCloud.recording_has_started
 exports.monitor_video_processing = googleCloud.monitor_video_processing
-exports.sendVideoInProcessEmail = googleCloud.sendVideoInProcessEmail
+exports.whenVideoIdIsCreated = googleCloud.whenVideoIdIsCreated
 exports.youtubeVideoDescription = googleCloud.youtubeVideoDescription
 
 
