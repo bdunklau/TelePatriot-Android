@@ -34,16 +34,34 @@ exports.video_processing_callback = functions.https.onRequest((req, res) => {
     return db.ref('video/video_events').push().set(stuff).then(() => {
         var updates = {}
         if(req.query.video_id) {
-            updates['video/list/'+stuff.video_node_key+'/video_id'] = req.query.video_id
+            return db.ref('video/list/'+stuff.video_node_key).once('value').then(snapshot => {
+                snapshot.ref.child('video_id').set(req.query.video_id)
+
+                var facebook_request = {
+                    uid: req.query.uid,
+                    date: date.asCentralTime(),
+                    date_ms: date.asMillis(),
+                    text: snapshot.val().youtube_video_description, // Make the FB post the same as the YT video description
+                    link: snapshot.val().video_url  // i.e. YouTube video link
+                }
+
+                // There are also facebook_comment_requests because that's where we will actually be tagging legislators - in the comments
+                return db.ref('facebook_post_requests').push().set(facebook_request).then(() => {
+                    //return render({req: req, res: res, uid: req.body.uid})
+                    return res.status(200).send('ok: youtube-subscribe.js:video_processing_callback() handled your request')
+                })
+            })
+
         }
-        return db.ref('/').update(updates).then(() => {
-            return res.status(200).send('ok: youtube-subscribe.js:video_processing_callback() handled your request')
-        })
+        else return res.status(200).send('ok - sort of - youtube-subscribe.js:video_processing_callback() did not receive a "video_id" request parameter.  So could not do anything meaningful with this request')
+
     })
 
 })
 
 
+// We're going to try posting to FB above before the video is officially 'succeeded'
+// not in this function
 // See google-cloud.js:monitor_video_processing()
 exports.video_processing_complete = functions.https.onRequest((req, res) => {
     var updates  = {}
@@ -52,6 +70,7 @@ exports.video_processing_complete = functions.https.onRequest((req, res) => {
     updates['video/list/'+req.query.video_node_key+'/publishing_stopped'] = date.asCentralTime()
     updates['video/list/'+req.query.video_node_key+'/publishing_stopped_ms'] = date.asMillis()
     return db.ref('/').update(updates).then(() => {
+
         return res.status(200).send('OK from youtube-subscribe.js: video_processing_complete()')
     })
 })
