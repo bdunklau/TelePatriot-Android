@@ -813,6 +813,101 @@ exports.setRoom_id = functions.database.ref('video/list/{video_node_key}').onWri
 })
 
 
+
+// Creates the YouTube video description and video title using legislator info (name, email, phone, etc)
+// and video type.  ALSO SETS/UPDATES THE VIDEO'S TITLE THAT WILL BE USED ON YOUTUBE
+exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}').onWrite(event => {
+    if(!event.data.exists())
+        return false //return early if node was deleted
+    if(!event.data.val().youtube_video_description_unevaluated)
+        return false // this has to exist, otherwise quit
+
+    var descriptionAlreadyEvaluated = event.data.val().youtube_video_description && event.data.val().youtube_video_description_unevaluated
+        && event.data.val().youtube_video_description != event.data.val().youtube_video_description_unevaluated
+
+    var legislatorDidntChange = event.data.val().leg_id && event.data.previous.val().leg_id && event.data.val().leg_id == event.data.previous.val().leg_id
+
+    var currentCount = !event.data.val().video_participants ? 0 : event.data.val().video_participants.length
+    var prevCount =  !event.data.previous.val().video_participants ? 0 : event.data.previous.val().video_participants.length
+    var differentPerson = event.data.val().video_participants && event.data.previous.val().video_participants
+                    && event.data.val().video_participants[event.data.val().video_participants.length-1].uid != event.data.previous.val().video_participants[event.data.previous.val().video_participants.length-1].uid
+
+    var participantsAdded = currentCount > prevCount
+    var personChanged = differentPerson || participantsAdded
+
+    var youtubeVideoDescriptionChanged = event.data.val().youtube_video_description && event.data.previous.val().youtube_video_description
+                                && event.data.val().youtube_video_description != event.data.previous.val().youtube_video_description
+
+    /***** You can debug the conditional that makes us return early below by uncommenting this block, then manually changing
+    the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...
+    event.data.adminRef.root.child('templog').set({descriptionAlreadyEvaluated: descriptionAlreadyEvaluated, legislatorDidntChange: legislatorDidntChange,
+                personChanged: personChanged, youtubeVideoDescriptionChanged: youtubeVideoDescriptionChanged,
+                differentPerson: differentPerson, participantsAdded: participantsAdded})
+    ******/
+
+    // If the only thing that changed was the video description itself, return early.  Don't overwrite the
+    // user's manual edit of the video description field
+    if(descriptionAlreadyEvaluated && legislatorDidntChange && !personChanged && youtubeVideoDescriptionChanged)
+        return false
+
+    // BUT if we add a participant, we should re-evaluate the description because the second person is assumed
+    // to be the constituent.  But if there's only one person on the call, we assume THAT person is the constituent
+    // We may end up blowing away user changes.  We'll see...
+
+    var description = event.data.val().youtube_video_description_unevaluated
+    var ch = event.data.val().legislator_chamber && event.data.val().legislator_chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
+    var rep = event.data.val().legislator_chamber && event.data.val().legislator_chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
+    var constituent
+    if(!event.data.val().video_participants || !event.data.val().video_participants.length) {
+        constituent = 'constituent_name'
+    }
+    else {
+        constituent = event.data.val().video_participants[event.data.val().video_participants.length-1].name
+    }
+
+    var replace = [
+        {"this": "constituent_name", "withThat": constituent},
+        {"this": "legislator_chamber_abbrev", "withThat": ch},
+        {"this": "legislator_district", "withThat": event.data.val().legislator_district},
+        {"this": "legislator_email", "withThat": event.data.val().legislator_email},
+        {"this": "legislator_facebook", "withThat": event.data.val().legislator_facebook},
+        {"this": "legislator_facebook_id", "withThat": event.data.val().legislator_facebook_id},
+        {"this": "legislator_twitter", "withThat": event.data.val().legislator_twitter},
+        {"this": "legislator_rep_type", "withThat": rep},
+        {"this": "legislator_full_name", "withThat": event.data.val().legislator_full_name},
+        {"this": "legislator_phone", "withThat": event.data.val().legislator_phone}
+    ]
+
+    // "internal confusion" about whether I should be using _abbrev or not  LOL
+    if(event.data.val().legislator_state_abbrev) {
+        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state_abbrev.toUpperCase()})
+    }
+    else if(event.data.val().legislator_state) {
+        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state.toUpperCase()})
+    }
+
+    _.each(replace, function(rep) {
+        description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+
+    // construct the video title...
+    var from = ''
+    if(event.data.val().video_participants && event.data.val().video_participants.length > 0) {
+        from = ' from '+event.data.val().video_participants[event.data.val().video_participants.length-1].name
+    }
+    var to = ''
+    if(event.data.val())
+    // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
+    var video_title = event.data.val().video_type+from+' to '+rep+' '+event.data.val().legislator_first_name+' '+event.data.val().legislator_last_name+' ('+event.data.val().legislator_state.toUpperCase()+' '+ch+' '+event.data.val().legislator_district+')'
+
+    var updates = {}
+    updates['video/list/'+event.params.videoKey+'/video_title'] = video_title
+    updates['video/list/'+event.params.videoKey+'/youtube_video_description'] = description
+
+    return event.data.adminRef.root.child('/').update(updates)
+})
+
+
 // youtube-subscribe.js:video_processing_callback() writes the newly minted video_id to
 // the video node.  So here, we listen for that write and we call back to the docker container
 // and tell it to notify us when the video is actually ready for viewing.
@@ -997,8 +1092,8 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
 
                 var vm_host = snapshot.val().vm_host
                 var vm_port = snapshot.val().vm_port
-                var title = 'Still Need to Construct Title'
-                var description = 'Still Need to Feed in Description'
+                var title = snapshot.val().video_title
+                var description = snapshot.val().youtube_video_description
                 var docker_name = snapshot.val().docker_name
                 var uid = event.data.val().uid
                 var callbackurl = 'https://'+firebase_host+'/video_processing_callback?video_node_key='+event.data.val().video_node_key // assume port 80

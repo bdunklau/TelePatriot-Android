@@ -900,57 +900,6 @@ exports.peopleWithoutCivicData = functions.https.onRequest((req, res) => {
     })
 })
 
-
-
-// Creates the YouTube video description using legislator info (name, email, phone, etc)
-exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}').onWrite(event => {
-    if(!event.data.exists())
-        return false //return early if node was deleted
-    if(!event.data.val().youtube_video_description_unevaluated)
-        return false // this has to exist, otherwise quit
-
-    var descriptionAlreadyEvaluated = event.data.val().youtube_video_description && event.data.val().youtube_video_description_unevaluated
-        && event.data.val().youtube_video_description != event.data.val().youtube_video_description_unevaluated
-
-    var legislatorDidntChange = event.data.val().leg_id && event.data.previous.val().leg_id && event.data.val().leg_id == event.data.previous.val().leg_id
-
-    // If the video description has already been evaluated AND the legislator didn't change, don't overwrite.
-    // That would undo anything the user specifically wanted to change.
-    if(descriptionAlreadyEvaluated && legislatorDidntChange)
-        return false
-
-    var description = event.data.val().youtube_video_description_unevaluated
-    var ch = event.data.val().chamber && event.data.val().chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
-    var rep = event.data.val().chamber && event.data.val().chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
-
-    var replace = [
-        {"this": "constituent_name", "withThat": "a constituent"}, // fix this later
-        {"this": "legislator_chamber_abbrev", "withThat": ch},
-        {"this": "legislator_district", "withThat": event.data.val().legislator_district},
-        {"this": "legislator_email", "withThat": event.data.val().legislator_email},
-        {"this": "legislator_facebook", "withThat": event.data.val().legislator_facebook},
-        {"this": "legislator_facebook_id", "withThat": event.data.val().legislator_facebook_id},
-        {"this": "legislator_twitter", "withThat": event.data.val().legislator_twitter},
-        {"this": "legislator_rep_type", "withThat": rep},
-        {"this": "legislator_full_name", "withThat": event.data.val().legislator_full_name},
-        {"this": "legislator_phone", "withThat": event.data.val().legislator_phone}
-    ]
-
-    // "internal confusion" about whether I should be using _abbrev or not  LOL
-    if(event.data.val().legislator_state_abbrev) {
-        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state_abbrev.toUpperCase()})
-    }
-    else if(event.data.val().legislator_state) {
-        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state.toUpperCase()})
-    }
-
-    _.each(replace, function(rep) {
-        description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
-    })
-
-    return event.data.adminRef.root.child(`video/list/${event.params.videoKey}/youtube_video_description`).set(description)
-})
-
 /******************************************************
  How to update legislators social media handles without letting incorrect data overwrite good data
 
