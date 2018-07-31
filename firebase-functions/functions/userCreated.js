@@ -114,7 +114,7 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
 
 var sendEmail = function(emailType, email, name) {
 
-        return db.child(`/administration/${emailType}`).once('value').then(snapshot => {
+        return db.child('/administration/'+emailType).once('value').then(snapshot => {
 
             var rep = "(newbie)"
             var message = snapshot.val().message.replace(rep, name)
