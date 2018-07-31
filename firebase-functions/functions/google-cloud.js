@@ -898,7 +898,7 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
     var to = ''
     if(event.data.val())
     // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
-    var video_title = event.data.val().video_type+from+' to '+rep+' '+event.data.val().legislator_first_name+' '+event.data.val().legislator_last_name+' ('+event.data.val().legislator_state.toUpperCase()+' '+ch+' '+event.data.val().legislator_district+')'
+    var video_title = event.data.val().video_type+from+' to '+rep+' '+event.data.val().legislator_first_name+' '+event.data.val().legislator_last_name+' ('+event.data.val().legislator_state_abbrev.toUpperCase()+' '+ch+' '+event.data.val().legislator_district+')'
 
     var updates = {}
     updates['video/list/'+event.params.videoKey+'/video_title'] = video_title
