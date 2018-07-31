@@ -91,22 +91,22 @@ exports.loadStates = functions.https.onRequest((req, res) => {
     var sts = states()
     for(var i=0; i < sts.length; i++) {
         var abbrev = sts[i].state_abbreviation.toLowerCase() // My abbreviations above are upper case but OpenStates and Google both use lower case abbreviations
-        updates[`states/list/${abbrev}/state_name`] = sts[i].state_name
-        updates[`states/list/${abbrev}/hd_actual`] = sts[i].hd
-        updates[`states/list/${abbrev}/sd_actual`] = sts[i].sd
-        updates[`states/list/${abbrev}/sd_loaded`] = 0
-        updates[`states/list/${abbrev}/hd_loaded`] = 0
-        updates[`states/list/${abbrev}/channels_loaded`] = 0
-        updates[`states/list/${abbrev}/civic_officials_loaded`] = 0
+        updates['states/list/'+abbrev+'/state_name'] = sts[i].state_name
+        updates['states/list/'+abbrev+'/hd_actual'] = sts[i].hd
+        updates['states/list/'+abbrev+'/sd_actual'] = sts[i].sd
+        updates['states/list/'+abbrev+'/sd_loaded'] = 0
+        updates['states/list/'+abbrev+'/hd_loaded'] = 0
+        updates['states/list/'+abbrev+'/channels_loaded'] = 0
+        updates['states/list/'+abbrev+'/civic_officials_loaded'] = 0
         var special_load = false
         if(sts[i].special_load) {
             special_load = sts[i].special_load
         }
-        updates[`states/list/${abbrev}/special_load`] = special_load
+        updates['states/list/'+abbrev+'/special_load'] = special_load
     }
 
     // good example of multi-path updates
-    return db.ref(`/`).update(updates).then(() => {
+    return db.ref('/').update(updates).then(() => {
         return listStates(res, {})
     })
 
@@ -114,7 +114,7 @@ exports.loadStates = functions.https.onRequest((req, res) => {
 
 
 var listStates = function(res, stuff) {
-    return db.ref(`states/list`).once('value').then(snapshot => {
+    return db.ref('states/list').once('value').then(snapshot => {
         var statelist = []
         snapshot.forEach(function(stateNode) {
             var state = {state_name: stateNode.val().state_name,
@@ -242,7 +242,7 @@ var listStates = function(res, stuff) {
         if(stuff.state_abbrev) {
 
             var state_chamber = stuff.state_abbrev+'-upper'
-            return db.ref(`states/legislators`).orderByChild('state_chamber').equalTo(state_chamber).once('value').then(snapshot => {
+            return db.ref('states/legislators').orderByChild('state_chamber').equalTo(state_chamber).once('value').then(snapshot => {
                 var legislators = []
                 snapshot.forEach(function(child) {
                     var leg = child.val()
@@ -257,7 +257,7 @@ var listStates = function(res, stuff) {
             .then(senators => {
                 if(stuff.state_abbrev != 'ne') {
                     state_chamber = stuff.state_abbrev+'-lower'
-                    return db.ref(`states/legislators`).orderByChild('state_chamber').equalTo(state_chamber).once('value').then(snapshot => {
+                    return db.ref('states/legislators').orderByChild('state_chamber').equalTo(state_chamber).once('value').then(snapshot => {
                         var reps = []
                         db.ref('templog').push().set({'rep_count': snapshot.numChildren()})
                         snapshot.forEach(function(child) {
@@ -405,20 +405,20 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
 
     // the first thing we're going to do is delete the states/districts and states/legislators for this
     // state so that we will re-trigger the loading of social media handles (See findCivicDataMatch() below)
-    return db.ref(`states/districts`).orderByChild('abbr').equalTo(state_abbrev).once('value').then(snapshot => {
+    return db.ref('states/districts').orderByChild('abbr').equalTo(state_abbrev).once('value').then(snapshot => {
         var deletes = {}
         snapshot.forEach(function(child) {
-            deletes[`states/districts/${child.key}`] = null
+            deletes['states/districts/'+child.key] = null
         })
 
         // now get rid of all the /states/legislators for this state...
-        return snapshot.ref.root.child(`states/legislators`).orderByChild('state').equalTo(state_abbrev).once('value').then(snap2 => {
+        return snapshot.ref.root.child('states/legislators').orderByChild('state').equalTo(state_abbrev).once('value').then(snap2 => {
             snap2.forEach(function(child) {
-                deletes[`states/legislators/${child.key}`] = null
+                deletes['states/legislators/'+child.key] = null
             })
             snap2.ref.root.update(deletes).then(() => {
                 // now that all the state's districts and legislators have been deleted, re-add them
-                return db.ref(`openstates/${state_abbrev}/districts`).once('value').then(snapshot => {
+                return db.ref('openstates/'+state_abbrev+'/districts').once('value').then(snapshot => {
                     var updates2 = {}
                     snapshot.forEach(function(child) {
                         var key = child.val().id  //i.e. nh-lower-Belknap 2
@@ -426,12 +426,12 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
                         // i.e. get all the districts in the Texas House
                         var district = child.val()
                         district.state_chamber = child.val().abbr+'-'+child.val().chamber
-                        updates2[`states/districts/${key}`] = district
+                        updates2['states/districts/'+key] = district
                     })
 
                     return snapshot.ref.root.update(updates2).then(() => {
 
-                        return db.ref(`openstates/${state_abbrev}/legislators`).once('value').then(snapshot => {
+                        return db.ref('openstates/'+state_abbrev+'/legislators').once('value').then(snapshot => {
                             var updates = {}
                             var legislators = []
                             snapshot.forEach(function(child) {
@@ -445,14 +445,14 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
                                     legislator.state_chamber_district = legislator.state_chamber+'-'+legislator.district
                                     legislator.civic_data_loaded_date = '(not loaded)'
                                     legislator.civic_data_loaded_date_ms = -1
-                                    updates[`states/legislators/${key}`] = legislator
+                                    updates['states/legislators/'+key] = legislator
                                     legislators.push(legislator)
                                 }
                             })
                             var hd = _.sumBy(legislators, l => (l.chamber == 'lower' ? 1 : 0))
                             var sd = _.sumBy(legislators, l => (l.chamber == 'upper' ? 1 : 0))
-                            updates[`states/list/${state_abbrev}/hd_loaded`] = hd
-                            updates[`states/list/${state_abbrev}/sd_loaded`] = sd
+                            updates['states/list/'+state_abbrev+'/hd_loaded'] = hd
+                            updates['states/list/'+state_abbrev+'/sd_loaded'] = sd
                             snapshot.ref.root.update(updates).then(() => {
                                 return listStates(res, {state_abbrev: state_abbrev})
                             })
@@ -471,15 +471,15 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
 exports.viewLegislators = functions.https.onRequest((req, res) => {
     var state_abbrev = req.query.state
     // update 'channels_loaded' count for the state...
-    return db.ref(`states/legislators`).orderByChild('state').equalTo(state_abbrev).once('value').then(snapshot => {
-        db.ref(`templog2/${state_abbrev}/snapshot_val`).set(snapshot.val())
+    return db.ref('states/legislators').orderByChild('state').equalTo(state_abbrev).once('value').then(snapshot => {
+        db.ref('templog2/'+state_abbrev+'/snapshot_val').set(snapshot.val())
         var legislators = []
         snapshot.forEach(function(child) {
             legislators.push(child.val())
         })
         var c = _.filter(legislators, function(l) {return l.channels})
         var channels_loaded = _.sumBy(c, l => (l.channels.length > 0 ? 1 : 0))
-        return snapshot.ref.root.child(`states/list/${state_abbrev}/channels_loaded`).set(channels_loaded).then(() => {
+        return snapshot.ref.root.child('states/list/'+state_abbrev+'/channels_loaded').set(channels_loaded).then(() => {
             return listStates(res, {state_abbrev: state_abbrev})
         })
     })
@@ -618,8 +618,8 @@ exports.saveDivision = functions.https.onRequest((req, res) => {
     var legislator_pkey = req.body.legislator_pkey
     //var idx = req.body.idx // integer key node under state_abbrev node
     var updates = {}
-    updates[`states/legislators/${legislator_pkey}/division`] = req.body.division
-    db.ref(`/`).update(updates).then(() => {
+    updates['states/legislators/'+legislator_pkey+'/division'] = req.body.division
+    db.ref('/').update(updates).then(() => {
         return listStates(res, {state_abbrev: state_abbrev})
     })
 })
@@ -630,12 +630,12 @@ exports.saveDivision = functions.https.onRequest((req, res) => {
 exports.loadOpenStatesLegislators = functions.https.onRequest((req, res) => {
     var state_abbrev = req.query.state
 
-    return db.ref(`api_tokens/openstates`).once('value').then(snapshot => {
+    return db.ref('api_tokens/openstates').once('value').then(snapshot => {
         var apikey = snapshot.val()
 
         var legQuery = "https://openstates.org/api/v1/legislators/?state="+state_abbrev+"&apikey="+apikey
         request(legQuery, function (error, response, body) {
-            db.ref(`openstates/${state_abbrev}/legislators`).set(JSON.parse(body))
+            db.ref('openstates/'+state_abbrev+'/legislators').set(JSON.parse(body))
         })
     })
     .then(() => {
@@ -649,12 +649,12 @@ exports.loadOpenStatesLegislators = functions.https.onRequest((req, res) => {
 exports.loadOpenStatesDistricts = functions.https.onRequest((req, res) => {
     var state_abbrev = req.query.state
 
-    return db.ref(`api_tokens/openstates`).once('value').then(snapshot => {
+    return db.ref('api_tokens/openstates').once('value').then(snapshot => {
         var apikey = snapshot.val()
 
         var distQuery = "https://openstates.org/api/v1/districts/"+state_abbrev+"/?apikey="+apikey
         request(distQuery, function (error, response, body) {
-            db.ref(`openstates/${state_abbrev}/districts`).set(JSON.parse(body))
+            db.ref('openstates/'+state_abbrev+'/districts').set(JSON.parse(body))
         })
     })
     .then(() => {
@@ -680,15 +680,15 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
 
     var key = event.params.key // TXL0000033
     var legislatorNode = event.data.val()
-            //db.ref(`templog2`).push().set({'state_chamber_district':legislatorNode.state_chamber_district})
+            //db.ref('templog2').push().set({'state_chamber_district':legislatorNode.state_chamber_district})
 
-    return db.ref(`states/districts/${legislatorNode.state_chamber_district}`).once('value').then(snapshot => {
+    return db.ref('states/districts/'+legislatorNode.state_chamber_district).once('value').then(snapshot => {
         if(!snapshot.val()) {
-            //db.ref(`templog2/null_snapshot`).set({'key': key, 'thing': 'null snapshot.val() for'+legislatorNode.state_chamber_district})
+            //db.ref('templog2/null_snapshot').set({'key': key, 'thing': 'null snapshot.val() for'+legislatorNode.state_chamber_district})
             return {}
         }
         if(!snapshot.val().division_id) {
-            //db.ref(`templog2/null_division_id`).set({'key': key, 'thing': 'null division_id for'+legislatorNode.state_chamber_district})
+            //db.ref('templog2/null_division_id').set({'key': key, 'thing': 'null division_id for'+legislatorNode.state_chamber_district})
             return {}
         }
         var division = snapshot.val().division_id
@@ -699,12 +699,12 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
     })
     .then(stuff => {
         if(!stuff.division) {
-            //db.ref(`templog2/${date.asMillis()}`).set(legislatorNode.state_chamber_district)
+            //db.ref('templog2/'+date.asMillis()).set(legislatorNode.state_chamber_district)
             return false
         }
         var division = stuff.division
-        //db.ref(`templog2`).push().set({lookfor: division})
-        return stuff.ref.root.child(`google_civic_data/officials/`).orderByChild('division').equalTo(division).once('value').then(snapshot => {
+        //db.ref('templog2').push().set({lookfor: division})
+        return stuff.ref.root.child('google_civic_data/officials/').orderByChild('division').equalTo(division).once('value').then(snapshot => {
             // snapshot.val() is a list of legislators (though usually the list only has 1 person in it)
             var found = _.find(snapshot.val(), function(official) {
                 var debug = false
@@ -715,33 +715,33 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
                 var emailFound = _.find(officialEmails, function(email) {
                         return email && legislatorNode.email && email.toLowerCase() == legislatorNode.email.toLowerCase()
                 })
-                //if(debug) db.ref(`templog2`).push().set({official: official, legislator: legislatorNode, sameName: sameName, emailFound: (emailFound ? emailFound : 'no email found')})
+                //if(debug) db.ref('templog2').push().set({official: official, legislator: legislatorNode, sameName: sameName, emailFound: (emailFound ? emailFound : 'no email found')})
                 return sameName || emailFound
             })
 
             if(found) {
                 var updates = {}
                 if(found.channels)
-                    updates[`states/legislators/${key}/channels`] = found.channels
+                    updates['states/legislators/'+key+'/channels'] = found.channels
                 if(found.emails) {
                     var alreadyContains = _.find(found.emails, function(email) { return email.toLowerCase() == legislatorNode.email.toLowerCase()} )
                     if(legislatorNode.email && !alreadyContains)  found.emails.push(legislatorNode.email)
-                    updates[`states/legislators/${key}/emails`] = found.emails
+                    updates['states/legislators/'+key+'/emails'] = found.emails
                 }
                 if(found.phones) {
-                    updates[`states/legislators/${key}/phones`] = found.phones
+                    updates['states/legislators/'+key+'/phones'] = found.phones
                 }
                 if(found.photoUrl) {
-                    updates[`states/legislators/${key}/photoUrl`] = found.photoUrl
+                    updates['states/legislators/'+key+'/photoUrl'] = found.photoUrl
                 }
                 if(found.urls) {
-                    updates[`states/legislators/${key}/urls`] = found.urls
+                    updates['states/legislators/'+key+'/urls'] = found.urls
                 }
                 // now add some timestamps
-                updates[`states/legislators/${key}/civic_data_loaded_date`] = date.asCentralTime()
-                updates[`states/legislators/${key}/civic_data_loaded_date_ms`] = date.asMillis()
-                updates[`google_civic_data/officials/${found.key}/openstates_match_date`] = date.asCentralTime()
-                updates[`google_civic_data/officials/${found.key}/openstates_match_date_ms`] = date.asMillis()
+                updates['states/legislators/'+key+'/civic_data_loaded_date'] = date.asCentralTime()
+                updates['states/legislators/'+key+'/civic_data_loaded_date_ms'] = date.asMillis()
+                updates['google_civic_data/officials/'+found.key+'/openstates_match_date'] = date.asCentralTime()
+                updates['google_civic_data/officials/'+found.key+'/openstates_match_date_ms'] = date.asMillis()
                 return stuff.ref.root.update(updates)
             }
 
@@ -756,12 +756,12 @@ For iOS and maybe Android too, to open the FB app directly to the legislator's p
 the legislator's FB ID.  The username is not enough.  The only way I've found so far (5/18/18) to look up someone's
 FB ID is to do an http get on their page and then look through the response for either: 'fb://page/?id='  or 'fb://profile/'
 *******************************************/
-exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/channels/{idx}').onWrite(event => {
+exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/channels/{idx).onWrite(event => {
     var legId = event.params.legId // TXL0000033
 
     //quit early when this node is deleted
     if(!event.data.exists()) {
-        if(legId == 'TXL000690') event.data.adminRef.root.child(`templog2`).set({facebook_lookup_error: event.data.val()})
+        if(legId == 'TXL000690') event.data.adminRef.root.child('templog2').set({facebook_lookup_error: event.data.val()})
         return false
     }
 
@@ -771,11 +771,11 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
     var channelIdx = event.params.idx  // i.e.  0, 1, 2,...
     var channelNode = event.data.val()
     if(!channelNode.type || channelNode.type.toLowerCase() != 'facebook') {
-        event.data.adminRef.root.child(`templog2`).set({facebook_lookup_error: channelNode})
+        event.data.adminRef.root.child('templog2').set({facebook_lookup_error: channelNode})
         return false
     }
     if(channelNode.facebook_id || channelNode.facebook_lookup_error) {
-        if(legId == 'TXL000690') event.data.adminRef.root.child(`templog2`).set({facebook_lookup_error: 'channelNode.facebook_id || channelNode.facebook_lookup_error'})
+        if(legId == 'TXL000690') event.data.adminRef.root.child('templog2').set({facebook_lookup_error: 'channelNode.facebook_id || channelNode.facebook_lookup_error'})
         return false // if it already exists, quit.  Otherwise, we'll cause infinite recursive trigger
     }
     var fbname = channelNode.id
@@ -790,7 +790,7 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
 
     return request(options, function(error, response, body) {
         if(error)
-            return event.data.adminRef.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_lookup_error`).set(error)
+            return event.data.adminRef.root.child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_lookup_error').set(error)
         var lookfor = ['fb://page/?id=', 'fb://profile/']
         var findings = _.map(lookfor, function(str) {
             return {'item': str, 'index': body.indexOf(str)}
@@ -801,8 +801,8 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
         if(!xxx) {
             // good chance the page is invalid
             var thisStuff = _.join(lookfor, ' and ')
-            var err = `This page: ${url} is does not appear to be valid.  We searched the content for ${thisStuff} but did not find instances of either.`
-            return event.data.adminRef.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_lookup_error`).set({'err': err, 'body': body})
+            var err = 'This page: '+url+' is does not appear to be valid.  We searched the content for '+thisStuff+' but did not find instances of either.'
+            return event.data.adminRef.root.child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_lookup_error').set({'err': err, 'body': body})
         }
         else {
             var magicString = xxx.item
@@ -812,8 +812,8 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
             var fbId = chop.substring(0, magicIndex2)
             console.log('legId: ', legId, 'channelIdx', channelIdx, 'FB ID: ', fbId)
             // If you ever want to see exactly what Facebook is returning in their html...
-            //event.data.adminRef.root.child(`states/legislators/${legId}/channels/${channelIdx}/check_body`).set(body)
-            return event.data.adminRef.root.child(`states/legislators/${legId}/channels/${channelIdx}/facebook_id`).set(fbId)
+            //event.data.adminRef.root.child('states/legislators/'+legId+'/channels/'+channelIdx+'/check_body').set(body)
+            return event.data.adminRef.root.child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_id').set(fbId)
         }
     })
 
@@ -829,14 +829,14 @@ exports.facebookIdUpdated = functions.database.ref('states/legislators/{leg_id}/
 
     var fbId = event.data.val()
 
-    return event.data.adminRef.root.child(`states/legislators/${event.params.leg_id}/channels/${event.params.idx}`).once('value').then(snapshot => {
+    return event.data.adminRef.root.child('states/legislators/'+event.params.leg_id+'/channels/'+event.params.idx).once('value').then(snapshot => {
         var facebookHandle = snapshot.val().id
-        return event.data.adminRef.root.child(`video/list`).orderByChild('leg_id').equalTo(event.params.leg_id).once('value').then(snapshot => {
+        return event.data.adminRef.root.child('video/list').orderByChild('leg_id').equalTo(event.params.leg_id).once('value').then(snapshot => {
             var updates = {}
             snapshot.forEach(function(child) {
                 var videoListKey = child.key
-                updates[`video/list/${videoListKey}/legislator_facebook_id`] = fbId
-                updates[`video/list/${videoListKey}/legislator_facebook`] = facebookHandle
+                updates['video/list/'+videoListKey+'/legislator_facebook_id'] = fbId
+                updates['video/list/'+videoListKey+'/legislator_facebook'] = facebookHandle
             })
             return snapshot.ref.root.update(updates)
         })
@@ -854,13 +854,13 @@ exports.loadCivicData = functions.https.onRequest((req, res) => {
     var state_abbrev = req.query.state
     // hack/cheat maybe? I copy the legislator's node to a temp location, then delete the legislator's node
     // Finally I re-add the legislator's node which triggers findCivicDataMatch()
-    return db.ref(`states/legislators/${legId}`).once('value').then(snapshot => {
-        return snapshot.ref.root.child(`states/temp/${legId}`).set(snapshot.val()).then(() => {
+    return db.ref('states/legislators/'+legId).once('value').then(snapshot => {
+        return snapshot.ref.root.child('states/temp/'+legId).set(snapshot.val()).then(() => {
             return snapshot.ref.remove().then(() => {
                 // now add the node back to trigger findCivicDataMatch()
                 return snapshot.ref.set(snapshot.val()).then(() => {
                     // finall, remove the temp node...
-                    return snapshot.ref.root.child(`states/temp/${legId}`).remove().then(() => {
+                    return snapshot.ref.root.child('states/temp/'+legId).remove().then(() => {
                         return listStates(res, {state_abbrev: state_abbrev})
                     })
                 })
@@ -878,12 +878,12 @@ exports.peopleWithoutCivicData = functions.https.onRequest((req, res) => {
         return false
     var attribute = req.query.attribute
     var value = req.query.value
-    var query = db.ref(`states/legislators`).orderByChild(attribute).equalTo('')
+    var query = db.ref('states/legislators').orderByChild(attribute).equalTo('')
     if(attribute == 'civic_data_loaded_date_ms') {
         if(value == 'notempty')
-            query = db.ref(`states/legislators`).orderByChild(attribute).startAt(0)
+            query = db.ref('states/legislators').orderByChild(attribute).startAt(0)
     }
-    //query = db.ref(`states/legislators`).orderByChild('civic_data_loaded_date_ms').startAt(10000)
+    //query = db.ref('states/legislators').orderByChild('civic_data_loaded_date_ms').startAt(10000)
 
     return query.once('value').then(snapshot => {
         var legs = []
@@ -946,7 +946,7 @@ exports.peopleWithoutCivicData = functions.https.onRequest((req, res) => {
  And because all this is done with triggers, all we have to do in the mobile code is do one write to
  social_media/user_updates and the triggers do all the rest.  We can even test this just using the firebase database client
  ******************************************************/
-exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
+exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_updates/{key).onWrite(event => {
     // This function is "Step 2a" described above
 
     if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
@@ -954,7 +954,7 @@ exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_
     var channel = {id: event.data.val().id, type: event.data.val().type, user_update: event.params.key}
 
     // query states/legislators/{event.data.val().leg_id}
-    return db.ref(`states/legislators/${event.data.val().leg_id}`).once('value').then(snapshot => {
+    return db.ref('states/legislators/'+event.data.val().leg_id).once('value').then(snapshot => {
         if(!snapshot.val().channels) {
             // no channels is ok.  We just add one
             var channels = [channel]
@@ -976,25 +976,25 @@ exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_
 
 
 // This function is "Step 2b" described above
-exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
+exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_updates/{key).onWrite(event => {
 
     if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
 
     var which_handle = event.data.val().type.toLowerCase() == 'facebook' ? 'legislator_facebook' : 'legislator_twitter'
 
-    return db.ref(`video/list`).orderByChild('leg_id').equalTo(event.data.val().leg_id).once('value').then(snapshot => {
+    return db.ref('video/list').orderByChild('leg_id').equalTo(event.data.val().leg_id).once('value').then(snapshot => {
         var updates = {}
         snapshot.forEach(function(child) {
             // get each node/path that needs to be updated...
             updates['video/list/'+child.key+'/'+which_handle] = event.data.val().id
         })
         // multi-path update
-        return db.ref(`/`).update(updates)
+        return db.ref('/').update(updates)
     })
 })
 
 // see if we accidentally overwrote good data with bad data and correct if we did
-exports.overwriteBadWithGoodData = functions.database.ref('states/legislators/{leg_id}/channels/{idx}').onWrite(event => {
+exports.overwriteBadWithGoodData = functions.database.ref('states/legislators/{leg_id}/channels/{idx).onWrite(event => {
     if(!event.data.exists() && event.data.previous.exists())
         return false;  // ignore the case where the node is deleted
 
@@ -1007,13 +1007,13 @@ exports.overwriteBadWithGoodData = functions.database.ref('states/legislators/{l
     var leg_id = event.params.leg_id
     var idx = event.params.idx
 
-    return db.ref(`social_media/user_updates/${event.data.val().user_update}`).once('value').then(snapshot => {
+    return db.ref('social_media/user_updates/'+event.data.val().user_update).once('value').then(snapshot => {
         // check this social_media/user_updates/aSDfsdfaSDfwE/id  node and see if it's the same
         // as the states/legislators/leg_id/channels/{idx}/id node
         // If it's not -> that's a problem and needs to be corrected
         var goodHandle = snapshot.val().id
         if(event.data.val().id != goodHandle) {
-            return db.ref(`states/legislators/${leg_id}/channels/${idx}/id`).set(goodHandle)
+            return db.ref('states/legislators/'+leg_id+'/channels/'+idx+'/id').set(goodHandle)
         }
     })
 })
@@ -1032,7 +1032,7 @@ exports.testUpdateSocialMedia = functions.https.onRequest((req, res) => {
         result.push({message:'NOTE This page will report false negatives because triggers fire after this function has sent its response'})
 
         // now query and make sure the triggers worked...
-        return db.ref(`states/legislators/${req.query.leg_id}/channels`).orderByChild('type').equalTo(req.query.type).once('value').then(snapshot => {
+        return db.ref('states/legislators/'+req.query.leg_id+'/channels').orderByChild('type').equalTo(req.query.type).once('value').then(snapshot => {
             var ct = snapshot.numChildren()
             if(ct != 1) {
                 result.push({message:'NOT OK - We got '+ct+' '+req.query.type+'channels. We should have gotten exactly 1'})
@@ -1048,7 +1048,7 @@ exports.testUpdateSocialMedia = functions.https.onRequest((req, res) => {
                         result.push({message:'NOT OK - Actually states/legislators/'+req.query.leg_id+'/channels/'+child.key+'/id = '+child.val().id})
                     }
                 })
-                return db.ref(`video/list`).orderByChild('leg_id').equalTo(req.query.leg_id).once('value').then(snapshot => {
+                return db.ref('video/list').orderByChild('leg_id').equalTo(req.query.leg_id).once('value').then(snapshot => {
                     var videoNodeKeys = []
                     var attribute = req.query.type.toLowerCase() == 'facebook' ? 'legislator_facebook' : 'legislator_twitter'
                     snapshot.forEach(function(child) {
