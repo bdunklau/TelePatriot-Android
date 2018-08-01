@@ -79,7 +79,7 @@ var renderItems = function(items) {
         html +=         '<input type="text" size="45" placeholder="state playlist" value="Convention of States Texas" name="state_playlist"><p/>'
         html +=         '<input type="text" size="45" placeholder="district playlist" value="Convention of States Texas - HD 33 - Justin Holland" name="district_playlist"><p/>'
         html +=         '<input type="hidden" value="'+item.md5Hash+'" name="md5Hash"/>'
-        html +=         '<input type="text" size="45" placeholder="video title" value="Video Petition to Rep Justin Holland" name="youtube_video_title"><p/>'
+        html +=         '<input type="text" size="45" placeholder="video title" value="Video Petition to Rep Justin Holland" name="video_title"><p/>'
         html +=         '<textarea placeholder="YouTube video description" rows="10" cols="45" name="youtube_video_description">This is a video to TX Rep Justin Holland (HD 33) thanking him for supporting the Convention of States resolution in May 2017.'
         html +=         '\n\nSign the Convention of States petition at https://www.conventionofstates.com'
         html +=         '\n\n[MD5]'+item["md5Hash"]+'[MD5]'
@@ -109,7 +109,7 @@ exports.setFirebaseStorageRecord = functions.https.onRequest((req, res) => {
     updates[`firebase_storage/${req.body.md5Hash}/state_abbrev`] = req.body.state_abbrev
     updates[`firebase_storage/${req.body.md5Hash}/state_playlist`] = req.body.state_playlist
     updates[`firebase_storage/${req.body.md5Hash}/district_playlist`] = req.body.district_playlist
-    updates[`firebase_storage/${req.body.md5Hash}/youtube_video_title`] = req.body.youtube_video_title
+    updates[`firebase_storage/${req.body.md5Hash}/video_title`] = req.body.video_title
     updates[`firebase_storage/${req.body.md5Hash}/youtube_video_description`] = req.body.youtube_video_description
 
     // multi-path update
@@ -130,7 +130,7 @@ exports.unsetFirebaseStorageRecord = functions.https.onRequest((req, res) => {
     updates[`firebase_storage/${req.body.md5Hash}/publish`] = null
     updates[`firebase_storage/${req.body.md5Hash}/progress`] = null
     updates[`firebase_storage/${req.body.md5Hash}/district_playlist`] = null
-    updates[`firebase_storage/${req.body.md5Hash}/youtube_video_title`] = null
+    updates[`firebase_storage/${req.body.md5Hash}/video_title`] = null
     updates[`firebase_storage/${req.body.md5Hash}/youtube_video_description`] = null
 
     // multi-path update
@@ -184,7 +184,7 @@ exports.uploadToYouTube4 = functions.database.ref(`firebase_storage/{md5Hash}`).
         dbg('uploadToYouTube4', 'begin')
 
         var vdescr = event.data.val().youtube_video_description
-        var vtitle = event.data.val().youtube_video_title
+        var vtitle = event.data.val().video_title
 
         // Lots of conditions under which we DON'T want this trigger to fire...
         if( !event.data.val()                                   // if the firebase_storage/{md5Hash} record was deleted

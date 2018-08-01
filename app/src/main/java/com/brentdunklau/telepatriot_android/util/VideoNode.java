@@ -16,15 +16,20 @@ public class VideoNode {
     String key;
     String node_create_date;
     long node_create_date_ms;
+
     List<VideoParticipant> video_participants = new ArrayList<VideoParticipant>();
-    String video_mission_description;
+
+    String video_type;
+    String video_id;
+    String video_title;
     String youtube_video_description;
     String youtube_video_description_unevaluated;
-    String youtube_url;
-    String video_recording_begin_date;
-    long video_recording_begin_date_ms;
-    String video_recording_end_date;
-    long video_recording_end_date_ms;
+
+    String video_mission_description;
+    String recording_started;
+    long recording_started_ms;
+    String recording_stopped;
+    long recording_stopped_ms;
 
     String leg_id, legislator_chamber, legislator_cos_position, legislator_district, legislator_email,
             legislator_facebook, legislator_facebook_id, legislator_first_name, legislator_full_name,
@@ -40,6 +45,7 @@ public class VideoNode {
         node_create_date = Util.getDate_Day_MMM_d_hmmss_am_z_yyyy();
         node_create_date_ms = Util.getDate_as_millis();
         video_participants.add(new VideoParticipant(user));
+        video_type = t.getType();
         video_mission_description = t.getVideo_mission_description();
         youtube_video_description = t.getYoutube_video_description();
         youtube_video_description_unevaluated = t.getYoutube_video_description();
@@ -64,18 +70,19 @@ public class VideoNode {
         m.put("node_create_date", node_create_date);
         m.put("node_create_date_ms", node_create_date_ms);
         m.put("video_participants", list(video_participants));
-        m.put("youtube_url", youtube_url);
+        m.put("video_type", video_type);
+        m.put("video_id", video_id);
+        m.put("video_title", video_title);
         m.put("youtube_video_description", youtube_video_description);
         m.put("youtube_video_description_unevaluated", youtube_video_description_unevaluated);
         m.put("video_mission_description", video_mission_description);
-        m.put("video_recording_begin_date", video_recording_begin_date);
-        m.put("video_recording_begin_date_ms", video_recording_begin_date_ms);
-        m.put("video_recording_end_date", video_recording_end_date);
-        m.put("video_recording_end_date_ms", video_recording_end_date_ms);
+        m.put("recording_started", recording_started);
+        m.put("recording_started_ms", recording_started_ms);
+        m.put("recording_stopped", recording_stopped);
+        m.put("recording_stopped_ms", recording_stopped_ms);
 
-        m.put("legislator_name", getLegislator_full_name());
-        //m.put("legislator_title", legislator_details);  legislator_title ????
         m.put("leg_id", getLeg_id());
+        m.put("legislator_name", getLegislator_full_name());
         m.put("legislator_state", getLegislator_state());
         m.put("legislator_state_abbrev", legislator_state_abbrev);
         m.put("legislator_district", legislator_district);

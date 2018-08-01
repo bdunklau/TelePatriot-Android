@@ -319,6 +319,11 @@ public class Legislator {
     public void setState(String state) {
         this.state = state;
         this.legislator_state = state;
+
+        // google-cloud.js:youtubeVideoDescription() is expecting legislator_state_abbrev
+        if(state != null && state.length() == 2) {
+            this.setLegislator_state_abbrev(state);
+        }
     }
 
     public List<String> getUrls() {

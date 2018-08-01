@@ -258,6 +258,8 @@ public class EditLegislatorForVideoDlg extends Dialog {
                     //public void onItemLongClick(View view, int position) {
                     //}
                 };
+
+                // LegislatorHolder.setOnClickListener
                 viewHolder.setOnClickListener(clickListener);
                 return viewHolder;
             }

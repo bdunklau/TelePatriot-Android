@@ -20,7 +20,7 @@
         app:layout_constraintHeight_percent="0.5"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_default="percent"
-        app:layout_constraintWidth_percent="0.5"
+        app:layout_constraintWidth_percent="0.4"
         app:layout_constraintStart_toStartOf="parent">
     </com.brentdunklau.telepatriot_android.VideoFrameLayout>
 
@@ -32,11 +32,9 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/vidyoChatMyScreen"
         app:layout_constraintHeight_percent="0.5"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/vidyoChatMyScreen"
-        app:layout_constraintVertical_bias="1.0"
-        app:layout_constraintWidth_percent="0.5"></com.brentdunklau.telepatriot_android.VideoFrameLayout>
+        app:layout_constraintVertical_bias="1.0"></com.brentdunklau.telepatriot_android.VideoFrameLayout>
 
     <!-- works but not sure if useful - the buttons to mute the camera and mic
     <ToggleButton
@@ -71,7 +69,7 @@
         android:textOff=""
         android:textOn=""
         android:visibility="gone"
-        app:layout_constraintStart_toEndOf="@+id/microphone_button"
+        app:layout_constraintStart_toEndOf="@+id/connect_button"
         app:layout_constraintTop_toTopOf="@+id/connect_button" />
 
     <!-- Took this out because null viewId in mVidyoConnector() keeps the camera from flipping around
@@ -87,16 +85,6 @@
                 -->
 
 
-    <Button
-        android:id="@+id/instructions_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="Instructions"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <ToggleButton
         android:id="@+id/connect_button"
         android:layout_width="32dp"
@@ -108,6 +96,219 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+
+    <ScrollView
+        android:id="@+id/instructionsScrollView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:fillViewport="true"
+        android:background="#ffffff"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="1.0"
+        app:layout_constraintStart_toEndOf="@+id/vidyoChatMyScreen"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/vert1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="@+id/youtube_video_description_header"
+            app:layout_constraintStart_toEndOf="@+id/youtube_video_description_header">
+
+            <TextView
+                android:id="@+id/video_mission_description_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:text="Description"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/edit_video_mission_description_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="Edit"
+                android:textColor="@color/colorPrimaryDark"
+                app:layout_constraintStart_toEndOf="@+id/video_mission_description_header"
+                app:layout_constraintTop_toTopOf="@+id/video_mission_description_header" />
+
+
+            <TextView
+                android:id="@+id/videoChatDescriptionText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:inputType="textMultiLine"
+                android:text="Text"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/video_mission_description_header" />
+
+
+            <TextView
+                android:id="@+id/legislator_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="15dp"
+                android:text="Legislator"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/videoChatDescriptionText" />
+
+            <TextView
+                android:id="@+id/choose_legislator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="Choose"
+                android:textColor="@color/colorPrimaryDark"
+                app:layout_constraintStart_toEndOf="@+id/legislator_header"
+                app:layout_constraintTop_toTopOf="@+id/legislator_header" />
+
+            <TextView
+                android:id="@+id/legislator_first_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:text=""
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/legislator_header" />
+
+            <TextView
+                android:id="@+id/legislator_last_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text=""
+                app:layout_constraintStart_toEndOf="@+id/legislator_first_name"
+                app:layout_constraintTop_toTopOf="@+id/legislator_first_name" />
+
+            <TextView
+                android:id="@+id/legislator_state_abbrev"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text=""
+                app:layout_constraintStart_toEndOf="@+id/legislator_last_name"
+                app:layout_constraintTop_toTopOf="@+id/legislator_last_name" />
+
+            <TextView
+                android:id="@+id/legislator_chamber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text=""
+                app:layout_constraintStart_toEndOf="@+id/legislator_state_abbrev"
+                app:layout_constraintTop_toTopOf="@+id/legislator_state_abbrev" />
+
+            <TextView
+                android:id="@+id/legislator_district"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text=""
+                app:layout_constraintStart_toEndOf="@+id/legislator_chamber"
+                app:layout_constraintTop_toTopOf="@+id/legislator_chamber" />
+
+
+            <TextView
+                android:id="@+id/legislator_facebook"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:text="FB: @RepHaventMadeUpMyMind"
+                android:textColor="@color/colorPrimaryDark"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/legislator_first_name" />
+
+            <ImageView
+                android:id="@+id/edit_facebook"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="24dp"
+                app:layout_constraintBottom_toBottomOf="@+id/legislator_facebook"
+                app:layout_constraintStart_toEndOf="@+id/legislator_facebook"
+                app:layout_constraintTop_toTopOf="@+id/legislator_facebook"
+                app:srcCompat="@drawable/baseline_edit_black_18dp" />
+
+
+            <TextView
+                android:id="@+id/legislator_twitter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:text="TW: @RepFenceSitter"
+                android:textColor="@color/colorPrimaryDark"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/legislator_facebook" />
+
+            <ImageView
+                android:id="@+id/edit_twitter"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="24dp"
+                app:layout_constraintBottom_toBottomOf="@+id/legislator_twitter"
+                app:layout_constraintStart_toEndOf="@+id/legislator_twitter"
+                app:layout_constraintTop_toTopOf="@+id/legislator_twitter"
+                app:srcCompat="@drawable/baseline_edit_black_18dp" />
+
+
+            <TextView
+                android:id="@+id/youtube_video_description_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="24dp"
+                android:text="YouTube Video Description"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/legislator_twitter" />
+
+            <TextView
+                android:id="@+id/edit_youtube_video_description_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="Edit"
+                android:textColor="@color/colorPrimaryDark"
+                app:layout_constraintStart_toEndOf="@+id/youtube_video_description_header"
+                app:layout_constraintTop_toTopOf="@+id/youtube_video_description_header" />
+
+
+            <TextView
+                android:id="@+id/youtube_video_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:inputType="textMultiLine"
+                android:text="What you see here will be used for the YouTube video description"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/youtube_video_description_header"
+                app:layout_constraintVertical_bias="0.0" />
+
+        </android.support.constraint.ConstraintLayout>
+
+
+    </ScrollView>
 
 
 </android.support.constraint.ConstraintLayout>

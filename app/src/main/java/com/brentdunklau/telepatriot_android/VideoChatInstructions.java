@@ -26,7 +26,7 @@ import java.util.List;
  * Created by bdunklau on 7/24/18.
  */
 
-public class VideoChatInstructionsDlg extends Dialog {
+public class VideoChatInstructions extends Dialog {
 
 
     //private EditText repNameEdit;
@@ -54,7 +54,7 @@ public class VideoChatInstructionsDlg extends Dialog {
     private View myView;
 
 
-    public VideoChatInstructionsDlg(Activity activity, View myView) {
+    public VideoChatInstructions(Activity activity, View myView) {
         super(activity);
 
         setContentView(R.layout.video_chat_instructions_dlg);
@@ -158,7 +158,7 @@ public class VideoChatInstructionsDlg extends Dialog {
         back_to_video.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                VideoChatInstructionsDlg.this.dismiss();
+                VideoChatInstructions.this.dismiss();
             }
         });
 
