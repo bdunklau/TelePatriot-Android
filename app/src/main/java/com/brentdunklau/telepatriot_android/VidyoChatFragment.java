@@ -265,12 +265,12 @@ public class VidyoChatFragment extends BaseFragment implements
         });
 
         youtube_video_description = myView.findViewById(R.id.youtube_video_description);
-        //mYouTubeEditText = myView.findViewById(R.id.editYouTubeDescription);
+        //mYouTubeEditText = myView.findViewById(R.id.editYoutubeVideoDescription);
         edit_youtube_video_description_button = myView.findViewById(R.id.edit_youtube_video_description_button);
         edit_youtube_video_description_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                editYouTubeDescription();
+                editYoutubeVideoDescription();
             }
         });
 
@@ -382,6 +382,10 @@ public class VidyoChatFragment extends BaseFragment implements
                 .setPositiveButton("OK",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog,int id) {
+                                // In Swift, this is EditSocialMediaVC.saveSocialMedia() which internall calls socialMediaDelegate.saveSocialMedia()
+                                // socialMediaDelegate.saveSocialMedia() is VideoChatInstructionsView.saveSocialMedia()
+
+
                                 // this is where we save the new value to the database
                                 String newval = ((EditText) promptsView.findViewById(R.id.dialog_input)).getText().toString();
 
@@ -681,22 +685,16 @@ public class VidyoChatFragment extends BaseFragment implements
      ***********/
 
     // TODO woops - not implemented yet
-    private void editYouTubeDescription() {
-        if (edit_video_mission_description_button.getText().toString().trim().equals("Edit")){
-//            videoChatYouTubeDescription.setVisibility(View.INVISIBLE);
-//            mYouTubeEditText.setVisibility(View.VISIBLE);
-//            editYouTubeButton.setText("Done");
-        }else{
-//            videoChatYouTubeDescription.setText(mYouTubeEditText.getText());
-//            videoChatYouTubeDescription.setVisibility(View.VISIBLE);
-//            mYouTubeEditText.setVisibility(View.GONE);
-//            editYouTubeButton.setText("Edit");
-        }
+    private void editYoutubeVideoDescription() {
+        // TODO really should rename EditVideoMissionDescriptionDlg to something like EditSomeVideoNodeAttribute
+        // because we're making EditVideoMissionDescriptionDlg do double duty.
+        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode.getKey(),"youtube_video_description", currentVideoNode.getYoutube_video_description());
+        dialog.show();
     }
 
     private void editVideoMissionDescription() {
         // custom dialog
-        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode);
+        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode.getKey(),"video_mission_description", currentVideoNode.getVideo_mission_description());
         dialog.show();
     }
 
