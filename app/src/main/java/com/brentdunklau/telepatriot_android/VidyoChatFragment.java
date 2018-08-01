@@ -145,8 +145,8 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean recording = false;
 
     private ToggleButton connect_button;
-    private ToggleButton microphone_button;
-    private ToggleButton camera_button;
+    //private ToggleButton microphone_button;
+    //private ToggleButton camera_button;
     private ToggleButton record_button;
     private Button instructions_button;
 
@@ -233,6 +233,8 @@ public class VidyoChatFragment extends BaseFragment implements
         mVideoFrame = myView.findViewById(R.id.vidyoChatMyScreen);
         remoteChatScreen = myView.findViewById(R.id.remoteChatScreen);
 
+        mVideoFrame.setMinimumWidth(mVideoFrame.getHeight() * 16 / 9);
+
         instructions_button = myView.findViewById(R.id.instructions_button);
         instructions_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -296,10 +298,10 @@ public class VidyoChatFragment extends BaseFragment implements
         // Set the onClick listeners for the buttons
         connect_button = myView.findViewById(R.id.connect_button);
         connect_button.setOnClickListener(this);
-        microphone_button = myView.findViewById(R.id.microphone_button);
-        microphone_button.setOnClickListener(this);
-        camera_button = myView.findViewById(R.id.camera_button);
-        camera_button.setOnClickListener(this);
+//        microphone_button = myView.findViewById(R.id.microphone_button);
+//        microphone_button.setOnClickListener(this);
+//        camera_button = myView.findViewById(R.id.camera_button);
+//        camera_button.setOnClickListener(this);
         record_button = myView.findViewById(R.id.record_button);
 
 
@@ -878,17 +880,17 @@ public class VidyoChatFragment extends BaseFragment implements
                         mVidyoConnector.disableDebug();
                     }
 
-                    // If cameraPrivacy is configured then mute the camera
-                    camera_button.setChecked(false); // reset state
-                    if (mCameraPrivacy) {
-                        camera_button.performClick();
-                    }
+//                    // If cameraPrivacy is configured then mute the camera
+//                    camera_button.setChecked(false); // reset state
+//                    if (mCameraPrivacy) {
+//                        camera_button.performClick();
+//                    }
 
-                    // If microphonePrivacy is configured then mute the microphone
-                    microphone_button.setChecked(false); // reset state
-                    if (mMicrophonePrivacy) {
-                        microphone_button.performClick();
-                    }
+//                    // If microphonePrivacy is configured then mute the microphone
+//                    microphone_button.setChecked(false); // reset state
+//                    if (mMicrophonePrivacy) {
+//                        microphone_button.performClick();
+//                    }
 
                     /********
                     // Set experimental options if any exist
@@ -1040,17 +1042,17 @@ public class VidyoChatFragment extends BaseFragment implements
                 mVidyoConnector.cycleCamera();
                 break;
             *************/
-            case R.id.camera_button:
-                // Toggle the camera privacy.
-                mCameraPrivacy = camera_button.isChecked();
-                mVidyoConnector.setCameraPrivacy(mCameraPrivacy);
-                break;
-
-            case R.id.microphone_button:
-                // Toggle the microphone privacy.
-                mMicrophonePrivacy = microphone_button.isChecked();
-                mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
-                break;
+//            case R.id.camera_button:
+//                // Toggle the camera privacy.
+//                mCameraPrivacy = camera_button.isChecked();
+//                mVidyoConnector.setCameraPrivacy(mCameraPrivacy);
+//                break;
+//
+//            case R.id.microphone_button:
+//                // Toggle the microphone privacy.
+//                mMicrophonePrivacy = microphone_button.isChecked();
+//                mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
+//                break;
 
             //case R.id.toggle_debug:
                 // Toggle debugging.
