@@ -839,11 +839,11 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
                                 && event.data.val().youtube_video_description != event.data.previous.val().youtube_video_description
 
     /***** You can debug the conditional that makes us return early below by uncommenting this block, then manually changing
-    the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...
-    event.data.adminRef.root.child('templog').set({descriptionAlreadyEvaluated: descriptionAlreadyEvaluated, legislatorDidntChange: legislatorDidntChange,
-                personChanged: personChanged, youtubeVideoDescriptionChanged: youtubeVideoDescriptionChanged,
-                differentPerson: differentPerson, participantsAdded: participantsAdded})
-    ******/
+    the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...    ****/
+//    event.data.adminRef.root.child('templog').set({descriptionAlreadyEvaluated: descriptionAlreadyEvaluated, legislatorDidntChange: legislatorDidntChange,
+//                personChanged: personChanged, youtubeVideoDescriptionChanged: youtubeVideoDescriptionChanged,
+//                differentPerson: differentPerson, participantsAdded: participantsAdded})
+
 
     // If the only thing that changed was the video description itself, return early.  Don't overwrite the
     // user's manual edit of the video description field
