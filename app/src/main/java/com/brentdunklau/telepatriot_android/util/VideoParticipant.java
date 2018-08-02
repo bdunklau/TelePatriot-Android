@@ -9,6 +9,7 @@ import java.util.Map;
 
 public class VideoParticipant {
 
+    // TODO these are not the same attributes as in Swift !!!!!
     String uid, name, email, start_date, phone, connect_date, disconnect_date, end_date, role;
     long start_date_ms, connect_date_ms, disconnect_date_ms, end_date_ms;
     boolean present = true;

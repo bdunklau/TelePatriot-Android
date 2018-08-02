@@ -17,7 +17,10 @@ public class VideoNode {
     String node_create_date;
     long node_create_date_ms;
 
-    List<VideoParticipant> video_participants = new ArrayList<VideoParticipant>();
+    // keyed by the user's id so that we can update a participant's node easily later on
+    // like when their "present" status changes between true and false (when they enter and leave
+    // the VidyoChatFragment)
+    Map<String, VideoParticipant> video_participants = new HashMap<String, VideoParticipant>();
 
     String video_type;
     String video_id;
@@ -44,7 +47,7 @@ public class VideoNode {
 
         node_create_date = Util.getDate_Day_MMM_d_hmmss_am_z_yyyy();
         node_create_date_ms = Util.getDate_as_millis();
-        video_participants.add(new VideoParticipant(user));
+        video_participants.put(user.getUid(), new VideoParticipant(user));
         video_type = t.getType();
         video_mission_description = t.getVideo_mission_description();
         youtube_video_description = t.getYoutube_video_description();
@@ -75,7 +78,7 @@ public class VideoNode {
         Map m = new HashMap();
         m.put("node_create_date", node_create_date);
         m.put("node_create_date_ms", node_create_date_ms);
-        m.put("video_participants", list(video_participants));
+        m.put("video_participants", video_participants);
         m.put("video_type", video_type);
         m.put("video_id", video_id);
         m.put("video_title", video_title);
@@ -103,18 +106,6 @@ public class VideoNode {
         return m;
     }
 
-    private List list(List list) {
-        List ret = new ArrayList();
-        if(list == null || list.isEmpty())
-            return ret;
-        if(!(list.get(0) instanceof VideoParticipant))
-            return ret;
-        for(Object o : list) {
-            ret.add(((VideoParticipant)o).map());
-        }
-        return ret;
-    }
-
     public void setKey(String key) {
         this.key = key;
     }
@@ -135,13 +126,14 @@ public class VideoNode {
         this.node_create_date_ms = node_create_date_ms;
     }
 
-    public List<VideoParticipant> getVideo_participants() {
+    public Map<String, VideoParticipant> getVideo_participants() {
         return video_participants;
     }
 
-    public void setVideo_participants(List<VideoParticipant> video_participants) {
-        this.video_participants = video_participants;
-    }
+//    Not sure if we need the setter - we "set" by writing to the db
+//    public void setVideo_participants(List<VideoParticipant> video_participants) {
+//        this.video_participants = video_participants;
+//    }
 
     public String getVideo_title() {
         return video_title;
@@ -294,4 +286,19 @@ public class VideoNode {
     public void setLegislator_twitter(String legislator_twitter) {
         this.legislator_twitter = legislator_twitter;
     }
+
+//    public void setUserPresent(User user, boolean present) {
+//        int idx = getParticipantIdx(user);
+//        if(idx != -1) {
+//            FirebaseDatabase.getInstance().getReference("video/list/"+key+"/video_participants/"+idx+"/present").setValue(present);
+//        }
+//    }
+//
+//    private int getParticipantIdx(User user) {
+//        for(int i=0; i < video_participants.size(); ++i) {
+//            if(video_participants.get(i).getUid().equals(user.getUid()))
+//                return i;
+//        }
+//        return -1;
+//    }
 }

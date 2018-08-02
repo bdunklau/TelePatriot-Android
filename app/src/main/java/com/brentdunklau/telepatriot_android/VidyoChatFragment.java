@@ -1,7 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -30,7 +29,6 @@ import android.widget.ToggleButton;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.Util;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
-import com.brentdunklau.telepatriot_android.util.VideoParticipant;
 import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -322,28 +320,7 @@ public class VidyoChatFragment extends BaseFragment implements
         // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
         mVidyoClientInitialized = ConnectorPkg.initialize();
 
-        String vtype = "Video Petition"; // TODO at some point, get this from the database
-        final String videoNodeKey = getVideoNodeKey(vtype);
-
-        if(videoNodeKey != null) {
-            FirebaseDatabase.getInstance().getReference("video/list/" + videoNodeKey).addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    VideoNode vnode = dataSnapshot.getValue(VideoNode.class);
-                    if(vnode == null) return;
-                    currentVideoNode = vnode;
-                    currentVideoNode.setKey(videoNodeKey);
-                    video_mission_description.setText(currentVideoNode.getVideo_mission_description());
-                    setLegislatorFields(currentVideoNode);
-
-                    video_title.setText(currentVideoNode.getVideo_title());
-                    youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) { }
-            });
-        }
+        queryCurrentVideoNode();
 
         record_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -377,6 +354,36 @@ public class VidyoChatFragment extends BaseFragment implements
          ********/
 
         return myView;
+    }
+
+    private String getVideoNodeKey() {
+        String vtype = "Video Petition"; // TODO at some point, get this from the database
+        String videoNodeKey = getVideoNodeKey(vtype);
+        return videoNodeKey;
+    }
+
+    private void queryCurrentVideoNode() {
+        final String videoNodeKey = getVideoNodeKey();
+
+        if(videoNodeKey != null) {
+            FirebaseDatabase.getInstance().getReference("video/list/" + videoNodeKey).addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    VideoNode vnode = dataSnapshot.getValue(VideoNode.class);
+                    if(vnode == null) return;
+                    currentVideoNode = vnode;
+                    currentVideoNode.setKey(videoNodeKey);
+                    video_mission_description.setText(currentVideoNode.getVideo_mission_description());
+                    setLegislatorFields(currentVideoNode);
+
+                    video_title.setText(currentVideoNode.getVideo_title());
+                    youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) { }
+            });
+        }
     }
 
     //method to get the right URL to use in the intent
@@ -549,9 +556,16 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
+    private void setUserPresent(User user, boolean present) {
+        String videoNodeKey = getVideoNodeKey();
+        FirebaseDatabase.getInstance().getReference("video/list/"+videoNodeKey+"/video_participants/"+user.getUid()+"/present").setValue(present);
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume");
+        setUserPresent(User.getInstance(), true);
 
         // Set the application's UI context to this activity.
         //ConnectorPkg.setApplicationUIContext(getActivity());
@@ -563,11 +577,14 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onPause() {
         super.onPause();
+        Log.d(TAG, "onPause");
+        setUserPresent(User.getInstance(), false);
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        Log.d(TAG, "onStop");
 
         if (mVidyoConnector != null) {
             if (mVidyoConnectorState != VidyoConnectorState.Connected &&
@@ -591,6 +608,7 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy");
 
         // Release device resources
         mLastSelectedCamera = null;
@@ -1343,35 +1361,6 @@ public class VidyoChatFragment extends BaseFragment implements
         if(currentVideoNode != null) {
             currentVideoNode.addParticipant(user);
         }
-    }
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume");
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause");
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop");
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        Log.d(TAG, "onDestroyView");
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy");
     }
 
 }
