@@ -1,6 +1,7 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -20,6 +21,7 @@ import android.view.ViewTreeObserver;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -138,7 +140,7 @@ public class VidyoChatFragment extends BaseFragment implements
     //private ToggleButton microphone_button;
     //private ToggleButton camera_button;
     private ToggleButton record_button;
-
+    private ProgressBar progressBar5;
 
     private TextView legislator_first_name, legislator_last_name, legislator_state_abbrev, legislator_chamber, legislator_district;
     // put the Choose TextView "link" here

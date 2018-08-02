@@ -9,19 +9,22 @@
     android:orientation="vertical"
     android:weightSum="3">
 
+    <!--true value for indeterminate-->
+
 
     <com.brentdunklau.telepatriot_android.VideoFrameLayout
         android:id="@+id/vidyoChatMyScreen"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_marginTop="0dp"
+        android:layout_marginTop="8dp"
         android:background="@android:color/darker_gray"
         app:layout_constraintHeight_default="percent"
         app:layout_constraintHeight_percent="0.5"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_default="percent"
-        app:layout_constraintWidth_percent="0.4"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintWidth_percent="0.4">
+
     </com.brentdunklau.telepatriot_android.VideoFrameLayout>
 
     <com.brentdunklau.telepatriot_android.VideoFrameLayout
@@ -103,8 +106,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
-        android:fillViewport="true"
         android:background="#ffffff"
+        android:fillViewport="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="1.0"
         app:layout_constraintStart_toEndOf="@+id/vidyoChatMyScreen"
@@ -339,6 +342,20 @@
 
 
     </ScrollView>
+
+    <ProgressBar
+        android:id="@+id/progressBar9"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </android.support.constraint.ConstraintLayout>
