@@ -11,6 +11,7 @@ public class VideoParticipant {
 
     String uid, name, email, start_date, phone, connect_date, disconnect_date, end_date, role;
     long start_date_ms, connect_date_ms, disconnect_date_ms, end_date_ms;
+    boolean present = true;
 
     // MUST have a no-arg constructor for firebase deserialization
     public VideoParticipant() {}
@@ -41,7 +42,16 @@ public class VideoParticipant {
         m.put("end_date", end_date);
         m.put("end_date_ms", end_date_ms);
         m.put("role", role);
+        m.put("present", present);
         return m;
+    }
+
+    public boolean isPresent() {
+        return present;
+    }
+
+    public void setPresent(boolean present) {
+        this.present = present;
     }
 
     public String getUid() {

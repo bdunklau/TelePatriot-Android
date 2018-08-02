@@ -14,6 +14,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ import android.widget.ToggleButton;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.Util;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
+import com.brentdunklau.telepatriot_android.util.VideoParticipant;
 import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -68,6 +70,8 @@ public class VidyoChatFragment extends BaseFragment implements
         ,Connector.IRegisterRemoteCameraEventListener
         //,IVideoFrameListener
 {
+
+    private static String TAG = "VidyoChatFragment";
 
     // Define the various states of this application.
     enum VidyoConnectorState {
@@ -1333,6 +1337,41 @@ public class VidyoChatFragment extends BaseFragment implements
     public void doNegativeClick() {
         // Do stuff here.
         System.out.println("FragmentAlertDialog: Negative click!");
+    }
+
+    public void addParticipant(User user) {
+        if(currentVideoNode != null) {
+            currentVideoNode.addParticipant(user);
+        }
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume");
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause");
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop");
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.d(TAG, "onDestroyView");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy");
     }
 
 }

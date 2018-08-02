@@ -120,6 +120,7 @@ public class VideoInvitationsFragment extends BaseFragment  {
                                 // Instead of going to an activity, we need to load a fragment...
                                 VidyoChatFragment fragment = new VidyoChatFragment();
                                 fragment.setRoom_id(invitation.getRoom_id());
+                                fragment.addParticipant(User.getInstance());
 
                                 // What do we want to send to VidyoChatFragment?
                                 //fragment.setMissionId(missionId);

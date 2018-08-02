@@ -65,6 +65,12 @@ public class VideoNode {
         FirebaseDatabase.getInstance().getReference("video/list/"+key).setValue(map());
     }
 
+    public void addParticipant(User user) {
+        VideoParticipant vp = new VideoParticipant(user);
+        int idx = video_participants.size();
+        FirebaseDatabase.getInstance().getReference("video/list/"+key+"/video_participants/"+idx).setValue(vp.map());
+    }
+
     private Map map() {
         Map m = new HashMap();
         m.put("node_create_date", node_create_date);
