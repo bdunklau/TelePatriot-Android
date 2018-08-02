@@ -229,7 +229,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
-                android:text="FB: @RepHaventMadeUpMyMind"
+                android:text=""
                 android:textColor="@color/colorPrimaryDark"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/legislator_first_name" />
@@ -251,7 +251,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
-                android:text="TW: @RepFenceSitter"
+                android:text=""
                 android:textColor="@color/colorPrimaryDark"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/legislator_facebook" />
@@ -272,11 +272,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="8dp"
                 android:text="YouTube Video Description"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/legislator_twitter" />
+                app:layout_constraintTop_toBottomOf="@+id/video_title" />
 
             <TextView
                 android:id="@+id/edit_youtube_video_description_button"
@@ -288,6 +288,16 @@
                 app:layout_constraintStart_toEndOf="@+id/youtube_video_description_header"
                 app:layout_constraintTop_toTopOf="@+id/youtube_video_description_header" />
 
+
+            <TextView
+                android:id="@+id/edit_youtube_video_title_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="Edit"
+                android:textColor="@color/colorPrimaryDark"
+                app:layout_constraintStart_toEndOf="@+id/youtube_video_title_header"
+                app:layout_constraintTop_toTopOf="@+id/youtube_video_title_header" />
 
             <TextView
                 android:id="@+id/youtube_video_description"
@@ -304,6 +314,26 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/youtube_video_description_header"
                 app:layout_constraintVertical_bias="0.0" />
+
+            <TextView
+                android:id="@+id/youtube_video_title_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="24dp"
+                android:text="YouTube Video Title"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/edit_twitter" />
+
+            <TextView
+                android:id="@+id/video_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="TextView"
+                app:layout_constraintStart_toStartOf="@+id/youtube_video_title_header"
+                app:layout_constraintTop_toBottomOf="@+id/youtube_video_title_header" />
 
         </android.support.constraint.ConstraintLayout>
 

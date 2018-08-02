@@ -1,8 +1,11 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -22,6 +25,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.Util;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
 import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.google.firebase.database.DataSnapshot;
@@ -48,7 +52,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class VidyoChatFragment extends BaseFragment implements
@@ -105,37 +111,23 @@ public class VidyoChatFragment extends BaseFragment implements
 
     private VideoFrameLayout mVideoFrame;
     private VideoFrameLayout remoteChatScreen;
-    //private boolean mHideConfig = false;
-    //private boolean mAutoJoin = false;
-    //private boolean mAllowReconnect = true;
     private boolean mCameraPrivacy = false;
     private boolean mMicrophonePrivacy = false;
     private boolean mEnableDebug = false;
-    //private String mReturnURL = null;
-    //private String mExperimentalOptions = null;
-    //private MainActivity mSelf;  // replaced with getActivity()
     private boolean mRefreshSettings = true;
     private boolean mDevicesSelected = true;
     private View myView;
-    //public static String jsonTokenData;
-    //private DatabaseReference userDatabase;
-    //private URL url = null;
-    //private HttpURLConnection vmConnection;
-    //private String mTimeMS;
-    //private String mTime;
     private String uid;
     private Integer videoTypeKey;
     private String room_id; // the initiator's user id
     private String missionDescription;  // we can probably get rid of this - we have video_mission_description
-    //private String nodeKey;
     private TextView video_mission_description;
-    //private EditText repNameEdit;
     private TextView choose_legislator;
+    private TextView edit_youtube_video_title_button;
+    private TextView video_title;
     private TextView edit_video_mission_description_button;
     private TextView edit_youtube_video_description_button;
     private TextView youtube_video_description;
-    //private Legislator legislator;
-    //private ProgressDialog pd;
     private String reasons;
     private LocalCamera localCamera;
     private VideoNode currentVideoNode;
@@ -192,8 +184,32 @@ public class VidyoChatFragment extends BaseFragment implements
         legislator_chamber = myView.findViewById(R.id.legislator_chamber);
         legislator_district = myView.findViewById(R.id.legislator_district);
         legislator_facebook = myView.findViewById(R.id.legislator_facebook);
+        legislator_facebook.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent facebookIntent = new Intent(Intent.ACTION_VIEW);
+                String facebookUrl = getFacebookPageURL(myView.getContext(), legislator_facebook.getText()+"");
+                facebookIntent.setData(Uri.parse(facebookUrl));
+                startActivity(facebookIntent);
+            }
+        });
+
         edit_facebook = myView.findViewById(R.id.edit_facebook);
         legislator_twitter = myView.findViewById(R.id.legislator_twitter);
+        legislator_twitter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String tw = legislator_twitter.getText()+"";
+                if(tw.startsWith("TW: "))
+                    tw = tw.substring("TW: ".length()).trim();
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("twitter://user?screen_name=" + tw)));
+                }catch (Exception e) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://twitter.com/#!/" + tw)));
+                }
+            }
+        });
+
         edit_twitter = myView.findViewById(R.id.edit_twitter);
         edit_facebook.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -256,6 +272,15 @@ public class VidyoChatFragment extends BaseFragment implements
 //            }
 //        });
 
+        video_title = myView.findViewById(R.id.video_title);
+        edit_youtube_video_title_button = myView.findViewById(R.id.edit_youtube_video_title_button);
+        edit_youtube_video_title_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editYoutubeVideoTitle();
+            }
+        });
+
         edit_video_mission_description_button = myView.findViewById(R.id.edit_video_mission_description_button);
         edit_video_mission_description_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -305,6 +330,7 @@ public class VidyoChatFragment extends BaseFragment implements
                     video_mission_description.setText(currentVideoNode.getVideo_mission_description());
                     setLegislatorFields(currentVideoNode);
 
+                    video_title.setText(currentVideoNode.getVideo_title());
                     youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
                 }
 
@@ -347,6 +373,24 @@ public class VidyoChatFragment extends BaseFragment implements
         return myView;
     }
 
+    //method to get the right URL to use in the intent
+    public String getFacebookPageURL(Context context, String FACEBOOK_PAGE) {
+        String fb = FACEBOOK_PAGE;
+        if(fb.startsWith("FB: "))
+            fb = fb.substring("FB: ".length()).trim();
+        PackageManager packageManager = context.getPackageManager();
+        try {
+            int versionCode = packageManager.getPackageInfo("com.facebook.katana", 0).versionCode;
+            if (versionCode >= 3002850) { //newer versions of fb app
+                return "fb://facewebmodal/f?href=https://www.facebook.com/" + fb;
+            } else { //older versions of fb app
+                return "fb://page/" + fb;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            return "https://www.facebook.com/" + fb; //normal web url
+        }
+    }
+
     /**
      * Created so that we could pop up a simple dialog and edit facebook and twitter handles
      * for legislators
@@ -382,19 +426,28 @@ public class VidyoChatFragment extends BaseFragment implements
                 .setPositiveButton("OK",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog,int id) {
+
                                 // In Swift, this is EditSocialMediaVC.saveSocialMedia() which internall calls socialMediaDelegate.saveSocialMedia()
                                 // socialMediaDelegate.saveSocialMedia() is VideoChatInstructionsView.saveSocialMedia()
-
 
                                 // this is where we save the new value to the database
                                 String newval = ((EditText) promptsView.findViewById(R.id.dialog_input)).getText().toString();
 
-                                // See EditSocialMediaVC in Swift - You can't just update the social media node like this.
-                                // You have to update the legislator's channel.  And I'm not even sure if the swift code then
-                                // updates the social handle under /video/list/{key}/legislator_facebook or legislator_twitter
-                                // That might be happening via firebase trigger function.  I would have to see how the iPhone
-                                // version works to be sure.
-                                FirebaseDatabase.getInstance().getReference("video/list/"+videoNode.getKey()+"/"+attributeName).setValue(newval);
+                                Map updates = new HashMap();
+                                updates.put("leg_id", currentVideoNode.getLeg_id());
+                                updates.put("type", attributeName.equalsIgnoreCase("legislator_facebook") ? "Facebook" : "Twitter");
+                                updates.put("id", newval);
+                                updates.put("legislator_full_name", currentVideoNode.getLegislator_full_name());
+                                updates.put("state_abbrev", currentVideoNode.getLegislator_state_abbrev());
+                                updates.put("state_chamber", currentVideoNode.getLegislator_chamber());
+                                updates.put("state_chamber_district", currentVideoNode.getLegislator_state_abbrev()+"-"+currentVideoNode.getLegislator_chamber()+"-"+currentVideoNode.getLegislator_district());
+                                updates.put("updating_user_id", User.getInstance().getUid());
+                                updates.put("updating_user_name", User.getInstance().getName());
+                                updates.put("updating_user_email", User.getInstance().getEmail());
+                                updates.put("updated_date", Util.getDate_MMM_d_yyyy_hmm_am_z());
+                                updates.put("updated_date_ms", Util.getDate_as_millis());
+
+                                FirebaseDatabase.getInstance().getReference("social_media/user_updates").push().setValue(updates);
                                 dialog.dismiss();
                             }
                         })
@@ -684,19 +737,42 @@ public class VidyoChatFragment extends BaseFragment implements
     }
      ***********/
 
-    // TODO woops - not implemented yet
+    /****
+     * See google-cloud.js:video_title()
+     * That function will honor the edits you made to the youtube video description attribute IF
+     * you edit that field AFTER selecting the legislator.  But whenever you select or change the legislator,
+     * your custom youtube video description will be overwritten.  So always pick the legislator FIRST
+     * and THEN edit the youtube video description
+     */
+    private void editYoutubeVideoTitle() {
+        // custom dialog
+        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode.getKey(),
+                "YouTube Video Title","video_title", currentVideoNode.getVideo_title());
+        dialog.show();
+    }
+
+    /****
+     * See google-cloud.js:youtubeVideoDescription()
+     * That function will honor the edits you made to the youtube video description attribute IF
+     * you edit that field AFTER selecting the legislator.  But whenever you select or change the legislator,
+     * your custom youtube video description will be overwritten.  So always pick the legislator FIRST
+     * and THEN edit the youtube video description
+     */
     private void editYoutubeVideoDescription() {
         // TODO really should rename EditVideoMissionDescriptionDlg to something like EditSomeVideoNodeAttribute
         // because we're making EditVideoMissionDescriptionDlg do double duty.
-        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode.getKey(),"youtube_video_description", currentVideoNode.getYoutube_video_description());
+        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode.getKey(), "YouTube Video Description",
+                "youtube_video_description", currentVideoNode.getYoutube_video_description());
         dialog.show();
     }
 
     private void editVideoMissionDescription() {
         // custom dialog
-        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode.getKey(),"video_mission_description", currentVideoNode.getVideo_mission_description());
+        EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode.getKey(),
+                "Video Mission Description","video_mission_description", currentVideoNode.getVideo_mission_description());
         dialog.show();
     }
+
 
 //    private void setTwitterInfo() {
 //        if (mTwitterButton.getText().toString().equals("Edit")) {

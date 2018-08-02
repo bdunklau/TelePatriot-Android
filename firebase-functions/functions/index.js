@@ -227,6 +227,7 @@ exports.setRoom_id = googleCloud.setRoom_id
 exports.recording_has_started = googleCloud.recording_has_started
 exports.monitor_video_processing = googleCloud.monitor_video_processing
 exports.whenVideoIdIsCreated = googleCloud.whenVideoIdIsCreated
+exports.video_title = googleCloud.video_title
 exports.youtubeVideoDescription = googleCloud.youtubeVideoDescription
 
 

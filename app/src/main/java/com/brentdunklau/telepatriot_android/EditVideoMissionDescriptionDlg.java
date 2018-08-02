@@ -24,13 +24,14 @@ public class EditVideoMissionDescriptionDlg extends Dialog {
     String attribute, video_node_key;
     private EditText description;
 
-    public EditVideoMissionDescriptionDlg(Activity activity, String video_node_key, String attribute, String initialValue) {
+    public EditVideoMissionDescriptionDlg(Activity activity, String video_node_key, String heading, String attribute, String initialValue) {
         super(activity);
         this.attribute = attribute;
         this.video_node_key = video_node_key;
         setContentView(R.layout.edit_video_mission_description_dlg);
 
-//        TextView description_header = (TextView) findViewById(R.id.description_header);
+        TextView description_header = (TextView) findViewById(R.id.description_header);
+        description_header.setText(heading);
 
         description = (EditText) findViewById(R.id.video_mission_description);
         description.setText(initialValue);

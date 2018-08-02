@@ -37,7 +37,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:recording_has_started,functions:whenVideoIdIsCreated
+firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:recording_has_started,functions:whenVideoIdIsCreated,functions:youtubeVideoDescription,functions:video_title
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
@@ -814,8 +814,58 @@ exports.setRoom_id = functions.database.ref('video/list/{video_node_key}').onWri
 
 
 
-// Creates the YouTube video description and video title using legislator info (name, email, phone, etc)
-// and video type.  ALSO SETS/UPDATES THE VIDEO'S TITLE THAT WILL BE USED ON YOUTUBE
+// Creates the YouTube video title using legislator info
+// and video type.
+exports.video_title = functions.database.ref('video/list/{videoKey}').onWrite(event => {
+    if(!event.data.exists())
+        return false //return early if node was deleted
+    if(!event.data.val().youtube_video_description_unevaluated)
+        return false // this has to exist, otherwise quit
+    if(event.data.val().video_title && event.data.previous.val().video_title && event.data.val().video_title == event.data.previous.val().video_title)
+        return false // the video title didn't change
+
+    var legislatorDidntChange = event.data.val().leg_id && event.data.previous.val().leg_id && event.data.val().leg_id == event.data.previous.val().leg_id
+
+    var currentCount = !event.data.val().video_participants ? 0 : event.data.val().video_participants.length
+    var prevCount =  !event.data.previous.val().video_participants ? 0 : event.data.previous.val().video_participants.length
+    var differentPerson = event.data.val().video_participants && event.data.previous.val().video_participants
+                    && event.data.val().video_participants[event.data.val().video_participants.length-1].uid != event.data.previous.val().video_participants[event.data.previous.val().video_participants.length-1].uid
+
+    var participantsAdded = currentCount > prevCount
+    var personChanged = differentPerson || participantsAdded
+    /***** You can debug the conditional that makes us return early below by uncommenting this block, then manually changing
+    the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...    ****/
+//    event.data.adminRef.root.child('templog').set({legislatorDidntChange: legislatorDidntChange,
+//                personChanged: personChanged,
+//                differentPerson: differentPerson, participantsAdded: participantsAdded})
+
+
+    // If the only thing that changed was the video description itself, return early.  Don't overwrite the
+    // user's manual edit of the video description field
+    if(legislatorDidntChange && !personChanged)
+        return false
+
+    // construct the video title...
+    var from = ''
+    if(event.data.val().video_participants && event.data.val().video_participants.length > 0) {
+        from = ' from '+event.data.val().video_participants[event.data.val().video_participants.length-1].name
+    }
+    var to = ''
+    if(event.data.val())
+    // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
+    var video_title = event.data.val().video_type+from+' to '+rep+' '+event.data.val().legislator_first_name+' '+event.data.val().legislator_last_name+' ('+event.data.val().legislator_state_abbrev.toUpperCase()+' '+ch+' '+event.data.val().legislator_district+')'
+
+    // multi-path update even if in this case, it's only one path
+    var updates = {}
+    updates['video/list/'+event.params.videoKey+'/video_title'] = video_title
+
+    return event.data.adminRef.root.child('/').update(updates)
+})
+
+
+
+// Creates the YouTube video description using legislator info (name, email, phone, etc)
+// and video type.
 exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}').onWrite(event => {
     if(!event.data.exists())
         return false //return early if node was deleted
@@ -890,18 +940,8 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
         description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
     })
 
-    // construct the video title...
-    var from = ''
-    if(event.data.val().video_participants && event.data.val().video_participants.length > 0) {
-        from = ' from '+event.data.val().video_participants[event.data.val().video_participants.length-1].name
-    }
-    var to = ''
-    if(event.data.val())
-    // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
-    var video_title = event.data.val().video_type+from+' to '+rep+' '+event.data.val().legislator_first_name+' '+event.data.val().legislator_last_name+' ('+event.data.val().legislator_state_abbrev.toUpperCase()+' '+ch+' '+event.data.val().legislator_district+')'
-
+    // multi-path update even if in this case, it's only one path
     var updates = {}
-    updates['video/list/'+event.params.videoKey+'/video_title'] = video_title
     updates['video/list/'+event.params.videoKey+'/youtube_video_description'] = description
 
     return event.data.adminRef.root.child('/').update(updates)

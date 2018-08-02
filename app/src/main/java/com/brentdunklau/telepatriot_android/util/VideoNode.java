@@ -137,6 +137,14 @@ public class VideoNode {
         this.video_participants = video_participants;
     }
 
+    public String getVideo_title() {
+        return video_title;
+    }
+
+    public void setVideo_title(String video_title) {
+        this.video_title = video_title;
+    }
+
     public String getVideo_mission_description() {
         return video_mission_description;
     }
