@@ -123,7 +123,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private String missionDescription;  // we can probably get rid of this - we have video_mission_description
     private TextView video_mission_description;
     private TextView choose_legislator;
-    private TextView edit_youtube_video_title_button;
+    private TextView edit_video_title_button;
     private TextView video_title;
     private TextView edit_video_mission_description_button;
     private TextView edit_youtube_video_description_button;
@@ -273,8 +273,8 @@ public class VidyoChatFragment extends BaseFragment implements
 //        });
 
         video_title = myView.findViewById(R.id.video_title);
-        edit_youtube_video_title_button = myView.findViewById(R.id.edit_youtube_video_title_button);
-        edit_youtube_video_title_button.setOnClickListener(new View.OnClickListener() {
+        edit_video_title_button = myView.findViewById(R.id.edit_video_title_button);
+        edit_video_title_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 editYoutubeVideoTitle();
