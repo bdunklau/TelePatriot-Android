@@ -378,10 +378,16 @@ public class VidyoChatFragment extends BaseFragment implements
                         currentVideoNode = vnode;
                         currentVideoNode.setKey(videoNodeKey);
                         video_mission_description.setText(currentVideoNode.getVideo_mission_description());
-                        setLegislatorFields(currentVideoNode);
-
                         video_title.setText(currentVideoNode.getVideo_title());
                         youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
+
+                        setLegislatorFields(currentVideoNode);
+
+                        if(noLegislator(currentVideoNode)) {
+                            // use then before any legislator is chosen
+                            youtube_video_description.setText("Choose a legislators and TelePatriot will create the YouTube video description for you.  (Doesn't get any easier than that!)");
+                        }
+
                         if(currentVideoNode.bothParticipantsPresent()) {
                             Log.d(TAG, "BOTH PARTICIPANTS READY !!!!!!");
                             // connect automatically !!!
@@ -494,17 +500,28 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
 
+    private boolean noLegislator(VideoNode node) {
+        return node.getLeg_id() == null || node.getLeg_id().trim().equals("");
+    }
+
+    private void setLegislatorFieldVisibility(int vis) {
+        edit_facebook.setVisibility(vis);
+        edit_twitter.setVisibility(vis);
+        legislator_first_name.setVisibility(vis);
+        legislator_last_name.setVisibility(vis);
+        legislator_state_abbrev.setVisibility(vis);
+        legislator_chamber.setVisibility(vis);
+        legislator_district.setVisibility(vis);
+        legislator_facebook.setVisibility(vis);
+        legislator_twitter.setVisibility(vis);
+    }
+
     private void setLegislatorFields(VideoNode node) {
-        if(node.getLeg_id() == null || node.getLeg_id().trim().equals("")) {
-            legislator_first_name.setText("");
-            legislator_last_name.setText("");
-            legislator_state_abbrev.setText("");
-            legislator_chamber.setText("");
-            legislator_district.setText("");
-            legislator_facebook.setText("");
-            legislator_twitter.setText("");
+        if(noLegislator(node)) {
+            setLegislatorFieldVisibility(View.GONE);
         }
         else {
+            setLegislatorFieldVisibility(View.VISIBLE);
             legislator_first_name.setText(node.getLegislator_first_name());
             legislator_last_name.setText(node.getLegislator_last_name());
             String state_abbrev = "";

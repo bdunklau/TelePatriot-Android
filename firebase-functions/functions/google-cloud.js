@@ -828,11 +828,9 @@ exports.video_title = functions.database.ref('video/list/{videoKey}').onWrite(ev
 
     var currentCount = !event.data.val().video_participants ? 0 : event.data.val().video_participants.length
     var prevCount =  !event.data.previous.val().video_participants ? 0 : event.data.previous.val().video_participants.length
-    var differentPerson = event.data.val().video_participants && event.data.previous.val().video_participants
-                    && event.data.val().video_participants[event.data.val().video_participants.length-1].uid != event.data.previous.val().video_participants[event.data.previous.val().video_participants.length-1].uid
 
-    var participantsAdded = currentCount > prevCount
-    var personChanged = differentPerson || participantsAdded
+    var participantAdded = currentCount > prevCount
+    var personChanged = participantAdded
     /***** You can debug the conditional that makes us return early below by uncommenting this block, then manually changing
     the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...    ****/
 //    event.data.adminRef.root.child('templog').set({legislatorDidntChange: legislatorDidntChange,
