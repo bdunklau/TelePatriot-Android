@@ -4,6 +4,7 @@
 const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
+const date = require('./dateformat')
 const jsSHA = require('jssha')  // specifically needed to generate the vidyo token
 const btoa = require('btoa')    // specifically needed to generate the vidyo token
 
