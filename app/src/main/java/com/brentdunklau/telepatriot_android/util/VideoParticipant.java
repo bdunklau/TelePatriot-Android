@@ -9,9 +9,19 @@ import java.util.Map;
 
 public class VideoParticipant {
 
-    // TODO these are not the same attributes as in Swift !!!!!
-    String uid, name, email, start_date, phone, connect_date, disconnect_date, end_date, role;
-    long start_date_ms, connect_date_ms, disconnect_date_ms, end_date_ms;
+    String uid;
+    String name;
+    String email;
+    String start_date;
+    long start_date_ms;
+    String phone;
+    String connect_date;
+    long connect_date_ms;
+    String disconnect_date;
+    long disconnect_date_ms;
+    String end_date;
+    long end_date_ms;
+    String role;
     boolean present = true;
 
     // MUST have a no-arg constructor for firebase deserialization

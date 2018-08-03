@@ -12,12 +12,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.VideoParticipant;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by bdunklau on 6/10/18.
@@ -117,10 +121,22 @@ public class VideoInvitationsFragment extends BaseFragment  {
                                 VideoInvitation invitation = dataSnapshot.getValue(VideoInvitation.class);
                                 User.getInstance().setCurrent_video_node_key(invitation.getVideo_node_key());
 
-                                // Instead of going to an activity, we need to load a fragment...
                                 VidyoChatFragment fragment = new VidyoChatFragment();
-                                fragment.setRoom_id(invitation.getRoom_id());
-                                fragment.addParticipant(User.getInstance());
+                                // don't set attributes on the fragment, update the database.  Then let the realtime query
+                                // in the fragment get these values
+                                Map values = new HashMap();
+                                VideoParticipant videoParticipant = new VideoParticipant(User.getInstance());
+                                for(Object key : videoParticipant.map().keySet()) {
+                                    String absPath = "video/list/"+invitation.getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/"+key;
+                                    Object value = videoParticipant.map().get(key);
+                                    values.put(absPath, value);
+                                }
+                                // setting 'present' to false here because it should be set to true when VidyoChatFragment loads
+                                // I don't want it set to true until that screen actually loads because we use these 'present' values
+                                // to tell the app it's ok to connect people.
+                                values.put("video/list/"+invitation.getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/present", false);
+                                values.put("video/list/"+invitation.getVideo_node_key()+"/room_id", invitation.getRoom_id());
+                                FirebaseDatabase.getInstance().getReference("/").updateChildren(values);
 
                                 // What do we want to send to VidyoChatFragment?
                                 //fragment.setMissionId(missionId);

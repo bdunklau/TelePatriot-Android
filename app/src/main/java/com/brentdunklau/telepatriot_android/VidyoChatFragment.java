@@ -1,6 +1,7 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -320,7 +321,7 @@ public class VidyoChatFragment extends BaseFragment implements
         // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
         mVidyoClientInitialized = ConnectorPkg.initialize();
 
-        queryCurrentVideoNode();
+        //queryCurrentVideoNode();
 
         record_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -363,26 +364,37 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
     private void queryCurrentVideoNode() {
-        final String videoNodeKey = getVideoNodeKey();
 
-        if(videoNodeKey != null) {
-            FirebaseDatabase.getInstance().getReference("video/list/" + videoNodeKey).addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    VideoNode vnode = dataSnapshot.getValue(VideoNode.class);
-                    if(vnode == null) return;
-                    currentVideoNode = vnode;
-                    currentVideoNode.setKey(videoNodeKey);
-                    video_mission_description.setText(currentVideoNode.getVideo_mission_description());
-                    setLegislatorFields(currentVideoNode);
+        if(currentVideoNode == null) {
+            final String videoNodeKey = getVideoNodeKey();
+            if (videoNodeKey != null) {
+                FirebaseDatabase.getInstance().getReference("video/list/" + videoNodeKey).addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        VideoNode vnode = dataSnapshot.getValue(VideoNode.class);
+                        if (vnode == null) return;
+                        currentVideoNode = vnode;
+                        currentVideoNode.setKey(videoNodeKey);
+                        video_mission_description.setText(currentVideoNode.getVideo_mission_description());
+                        setLegislatorFields(currentVideoNode);
 
-                    video_title.setText(currentVideoNode.getVideo_title());
-                    youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
-                }
+                        video_title.setText(currentVideoNode.getVideo_title());
+                        youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
+                        if(currentVideoNode.bothParticipantsPresent()) {
+                            Log.d(TAG, "BOTH PARTICIPANTS READY !!!!!!");
+                            // connect automatically !!!
+                            connectIfNotConnected();
+                        }
+                        else {
+                            Log.d(TAG, "BOTH PARTICIPANTS >>>NOT<<< READY");
+                        }
+                    }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) { }
-            });
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+            }
         }
     }
 
@@ -414,6 +426,8 @@ public class VidyoChatFragment extends BaseFragment implements
      * @param screenElement the corresponding screen element on this fragmenet, i.e. legislator_facebook
      */
     private void dlg(final VideoNode videoNode, final String attributeName, String attributeValue, TextView screenElement, String what) {
+        if(getActivity().isFinishing())
+            return;
         LayoutInflater li = LayoutInflater.from(myView.getContext());
         final View promptsView = li.inflate(R.layout.ok_cancel_dialog_one_numeric_input, null);
         TextView heading = promptsView.findViewById(R.id.dialog_heading);
@@ -526,14 +540,24 @@ public class VidyoChatFragment extends BaseFragment implements
         // Each successive time that onStart is called, app is coming back to foreground so check if the
         // settings need to be refreshed again, as app may have been launched via URI.
 
-
-
         mRefreshSettings = false;
 
+        geeez();
+    }
+
+    private void geeez() {
+
+        if(!mVidyoClientInitialized) {
+            // Set the application's UI context to this activity.
+            ConnectorPkg.setApplicationUIContext(getActivity());
+
+            // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
+            mVidyoClientInitialized = ConnectorPkg.initialize();
+        }
 
         // If Vidyo Client has been successfully initialized and the Connector has
         // not yet been constructed, then check permissions and construct Connector.
-        if (mVidyoClientInitialized && mVidyoConnector == null) {
+        if (mVidyoConnector == null) {
             // Beginning in Android 6.0 (API level 23), users grant permissions to apps while
             // app is running, not when they install the app. Check whether app has permission
             // to access what is declared in its manifest.
@@ -554,6 +578,7 @@ public class VidyoChatFragment extends BaseFragment implements
                 startVidyoConnector();
             }
         }
+
     }
 
     private void setUserPresent(User user, boolean present) {
@@ -646,10 +671,8 @@ public class VidyoChatFragment extends BaseFragment implements
         return new VideoNode(User.getInstance(), vtype);
     }
 
-    public void setRoom_id(String room_id) {
-        this.room_id = room_id;
-    }
-
+    // set the room_id by updating the database.  The realtime query will cause the fields in
+    // this class to be updated
     public String getRoom_id() {
         if(room_id == null)
             room_id = User.getInstance().getCurrent_video_node_key();
@@ -1162,6 +1185,12 @@ public class VidyoChatFragment extends BaseFragment implements
         return connect_button.isChecked();
     }
 
+    private void connectIfNotConnected() {
+        if(mVidyoConnectorState != VidyoConnectorState.Connected)
+            doConnect();
+        else Log.d(TAG, "already connected to Vidyo server");
+    }
+
     // modeled after Swift VideoChatVC.doConnect()
     private void doConnect() {
         changeState(VidyoConnectorState.Connecting);
@@ -1355,12 +1384,6 @@ public class VidyoChatFragment extends BaseFragment implements
     public void doNegativeClick() {
         // Do stuff here.
         System.out.println("FragmentAlertDialog: Negative click!");
-    }
-
-    public void addParticipant(User user) {
-        if(currentVideoNode != null) {
-            currentVideoNode.addParticipant(user);
-        }
     }
 
 }

@@ -287,18 +287,11 @@ public class VideoNode {
         this.legislator_twitter = legislator_twitter;
     }
 
-//    public void setUserPresent(User user, boolean present) {
-//        int idx = getParticipantIdx(user);
-//        if(idx != -1) {
-//            FirebaseDatabase.getInstance().getReference("video/list/"+key+"/video_participants/"+idx+"/present").setValue(present);
-//        }
-//    }
-//
-//    private int getParticipantIdx(User user) {
-//        for(int i=0; i < video_participants.size(); ++i) {
-//            if(video_participants.get(i).getUid().equals(user.getUid()))
-//                return i;
-//        }
-//        return -1;
-//    }
+    public boolean bothParticipantsPresent() {
+        int count = 0;
+        for(VideoParticipant vp : video_participants.values()) {
+            if(vp.isPresent()) ++count;
+        }
+        return count == 2;
+    }
 }
