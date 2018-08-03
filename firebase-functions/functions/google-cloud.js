@@ -845,6 +845,10 @@ exports.video_title = functions.database.ref('video/list/{videoKey}').onWrite(ev
 
     // construct the video title...
     var from = ''
+    // TODO the 'from' person is the participant with the greater value of start_date_ms
+    var uids = Object.keys(event.data.val().video_participants)
+    console.log("keys of event.data.val().video_participants", uids)
+
     if(event.data.val().video_participants && event.data.val().video_participants.length > 0) {
         from = ' from '+event.data.val().video_participants[event.data.val().video_participants.length-1].name
     }
