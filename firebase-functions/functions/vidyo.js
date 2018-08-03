@@ -20,7 +20,7 @@ const db = admin.database().ref()
 
 /***
 to deploy everything in this file...
-firebase deploy --only functions:generateVidyoToken
+firebase deploy --only functions:askForVidyoToken
 ***/
 
 
