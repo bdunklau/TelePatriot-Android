@@ -886,6 +886,7 @@ exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}'
 
     var currentCount = !event.data.val().video_participants ? 0 : event.data.val().video_participants.length
     var prevCount =  !event.data.previous.val().video_participants ? 0 : event.data.previous.val().video_participants.length
+    // TODO more stuff to fix here...  [event.data.val().video_participants.length-1] WRONG!
     var differentPerson = event.data.val().video_participants && event.data.previous.val().video_participants
                     && event.data.val().video_participants[event.data.val().video_participants.length-1].uid != event.data.previous.val().video_participants[event.data.previous.val().video_participants.length-1].uid
 
