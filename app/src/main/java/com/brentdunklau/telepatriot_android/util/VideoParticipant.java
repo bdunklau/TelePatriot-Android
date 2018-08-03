@@ -22,7 +22,8 @@ public class VideoParticipant {
     String end_date;
     long end_date_ms;
     String role;
-    boolean present = true;
+    boolean present = true; // because basically a participant has to be present for this object to be instantiated
+    String vidyo_token;
 
     // MUST have a no-arg constructor for firebase deserialization
     public VideoParticipant() {}
@@ -54,6 +55,7 @@ public class VideoParticipant {
         m.put("end_date_ms", end_date_ms);
         m.put("role", role);
         m.put("present", present);
+        m.put("vidyo_token", vidyo_token);
         return m;
     }
 
@@ -103,5 +105,13 @@ public class VideoParticipant {
 
     public void setStart_date_ms(long start_date_ms) {
         this.start_date_ms = start_date_ms;
+    }
+
+    public String getVidyo_token() {
+        return vidyo_token;
+    }
+
+    public void setVidyo_token(String vidyo_token) {
+        this.vidyo_token = vidyo_token;
     }
 }

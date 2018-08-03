@@ -23,6 +23,45 @@ firebase deploy --only functions:generateVidyoToken
 ***/
 
 
+exports.askForVidyoToken = functions.database.ref('video/list/{video_node_key}/video_participants/{uid}/vidyo_token_requested').onCreate(event => {
+    // mobile clients write boolean true to video/list/{video_node_key}/video_participants/{uid}/vidyo_token_requested
+    // When that write occurs, this function fires, determines the token, and writes the token to
+    // video/list/{video_node_key}/video_participants/{uid}/vidyo_token  NOTE - this is not video/list/{video_node_key}/video_participants/{uid}/vidyo_token_requested
+    // Once the token is determined we erase the request by setting video/list/{video_node_key}/video_participants/{uid}/vidyo_token_requested to null
+
+    // ref:   https://static.vidyo.io/4.1.11.4/docs/VidyoConnectorDeveloperGuide.html
+
+    // node.js Ex:  node generateToken.js --key=rUlaMASgt1Byi4Kp3sKYDeQzo --appID=ApplicationID --userName=user1 --expiresInSecs=10000
+
+    // used to be 'userName'
+    var uniqueId = date.asMillis()//req.query.userName
+    var expiresInSecs = 3600 // allow plenty of time between when we issue the token and when we actually use it
+
+    return event.data.adminRef.root.child('api_tokens').once('value').then(snapshot => {
+        var devKey = snapshot.val().vidyo_developer_key
+        var appID = snapshot.val().vidyo_app_id
+
+        var EPOCH_SECONDS = 62167219200;
+        var expires = Math.floor(Date.now() / 1000) + expiresInSecs + EPOCH_SECONDS;
+        var shaObj = new jsSHA("SHA-384", "TEXT");
+        shaObj.setHMACKey(devKey, "TEXT");
+        var jid = uniqueId + '@' + appID;
+        var vCard = ""
+        var body = 'provision' + '\x00' + jid + '\x00' + expires + '\x00' + vCard;
+        shaObj.update(body);
+        var mac = shaObj.getHMAC("HEX");
+        var serialized = body + '\0' + mac;
+        var token = btoa(serialized)
+
+        // multi-path update...
+        var updates = {}
+        updates['video/list/'+event.params.video_node_key+'/video_participants/'+event.params.uid+'/vidyo_token_requested'] = null
+        updates['video/list/'+event.params.video_node_key+'/video_participants/'+event.params.uid+'/vidyo_token'] = token
+        return event.data.adminRef.root.child('/').update(updates)
+    })
+
+})
+
 
 exports.generateVidyoToken = functions.https.onRequest((req, res) => {
 
@@ -31,7 +70,7 @@ exports.generateVidyoToken = functions.https.onRequest((req, res) => {
     // node.js Ex:  node generateToken.js --key=rUlaMASgt1Byi4Kp3sKYDeQzo --appID=ApplicationID --userName=user1 --expiresInSecs=10000
 
     var userName = req.query.userName
-    var expiresInSecs = 600
+    var expiresInSecs = 3600 // allow plenty of time between when we issue the token and when we actually use it
 
     db.child('api_tokens').once('value').then(snapshot => {
         var devKey = snapshot.val().vidyo_developer_key

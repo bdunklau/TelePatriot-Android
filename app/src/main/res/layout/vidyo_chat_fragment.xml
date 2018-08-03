@@ -16,7 +16,6 @@
         android:id="@+id/vidyoChatMyScreen"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
         android:background="@android:color/darker_gray"
         app:layout_constraintHeight_default="percent"
         app:layout_constraintHeight_percent="0.5"
@@ -42,8 +41,8 @@
     <!-- works but not sure if useful - the buttons to mute the camera and mic
     <ToggleButton
         android:id="@+id/camera_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:background="@drawable/toggle_camera_privacy"
         android:textOff=""
@@ -53,8 +52,8 @@
 
     <ToggleButton
         android:id="@+id/microphone_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:background="@drawable/toggle_mic_privacy"
         android:textOff=""
@@ -65,8 +64,8 @@
 
     <ToggleButton
         android:id="@+id/record_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:background="@drawable/record"
         android:textOff=""
@@ -90,8 +89,8 @@
 
     <ToggleButton
         android:id="@+id/connect_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginStart="32dp"
         android:background="@drawable/toggle_connect"
         android:textOff=""
@@ -353,6 +352,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

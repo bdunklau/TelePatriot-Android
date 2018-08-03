@@ -30,6 +30,7 @@ import android.widget.ToggleButton;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.Util;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
+import com.brentdunklau.telepatriot_android.util.VideoParticipant;
 import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -164,11 +165,12 @@ public class VidyoChatFragment extends BaseFragment implements
         int SDK_INT = Build.VERSION.SDK_INT;
         if (SDK_INT > 8)
         {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()  // What is this good for?
                     .permitAll().build();
             StrictMode.setThreadPolicy(policy);
+
             //your codes here
-            getToken();
+//            getToken(); // this doesn't do anything.  It gets a token but doesn't return it or set it
         }
 
         // We need to know if we are coming to this screen from a video invitation or if the user
@@ -321,7 +323,7 @@ public class VidyoChatFragment extends BaseFragment implements
         // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
         mVidyoClientInitialized = ConnectorPkg.initialize();
 
-        //queryCurrentVideoNode();
+        queryCurrentVideoNode();
 
         record_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -583,7 +585,12 @@ public class VidyoChatFragment extends BaseFragment implements
 
     private void setUserPresent(User user, boolean present) {
         String videoNodeKey = getVideoNodeKey();
-        FirebaseDatabase.getInstance().getReference("video/list/"+videoNodeKey+"/video_participants/"+user.getUid()+"/present").setValue(present);
+        Map updates = new HashMap();
+        updates.put("present", present);
+        if(present)
+            updates.put("vidyo_token_requested", true);
+
+        FirebaseDatabase.getInstance().getReference("video/list/"+videoNodeKey+"/video_participants/"+user.getUid()).updateChildren(updates);
     }
 
     @Override
@@ -679,57 +686,76 @@ public class VidyoChatFragment extends BaseFragment implements
         return room_id;
     }
 
+
     private String getToken() {
-        String token = "";
-        HttpURLConnection connection = null;
-        BufferedReader reader = null;
-
-        try {
-            String uid = User.getInstance().getUid();
-            if(uid.contains("@")){
-                uid = uid.replaceAll("@","_");
-            }
-            // TODO maybe get this url from the database instead?
-            // TODO not good to have parm named userName if the value is the user's id
-            String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + uid;
-            URL url = new URL(urlString);
-
-            connection = (HttpURLConnection) url.openConnection();
-            connection.connect();
-            InputStream inputStream = connection.getInputStream();
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-
-            StringBuffer buffer = new StringBuffer();
-            String line = "";
-
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line + "/n");
-            }
-
-            String bufferString = buffer.toString();
-            JSONObject jsonObject = new JSONObject(bufferString);
-            token = jsonObject.getString("token").trim();
-        } catch (MalformedURLException e) {
-            // TODO what are we supposed to do in this case?
-        } catch (IOException e) {
-            // TODO what are we supposed to do in this case?
-        } catch (JSONException e) {
-            // TODO what are we supposed to do in this case?
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-            try {
-                if (reader != null) {
-                    reader.close();
-                }
-            }
-            catch (IOException e) {
-                // TODO what are we supposed to do in this case?
-            }
+        if(currentVideoNode == null)
+            return "";
+        for(VideoParticipant vp : currentVideoNode.getVideo_participants().values()) {
+            if(vp.getUid().equals(User.getInstance().getUid()))
+                return vp.getVidyo_token();
         }
-        return token;
+        return "";
     }
+
+
+    /**
+     * Don't GET a token.  ASK for a token by writing to the video_participant's node and then creating
+     * a trigger function that will listen for writes to that node and generate a token and write that token
+     * to the participant's node
+     */
+//    private String getToken() {
+//        String token = "";
+//        HttpURLConnection connection = null;
+//        BufferedReader reader = null;
+//
+//        try {
+//            String uid = User.getInstance().getUid();
+//            if(uid.contains("@")){
+//                uid = uid.replaceAll("@","_");
+//            }
+//            // TODO maybe get this url from the database instead?
+//            // TODO not good to have parm named userName if the value is the user's id
+//            String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + uid;
+//            URL url = new URL(urlString);
+//
+//            connection = (HttpURLConnection) url.openConnection();
+//            connection.connect();
+//            InputStream inputStream = connection.getInputStream();
+//            reader = new BufferedReader(new InputStreamReader(inputStream));
+//
+//            StringBuffer buffer = new StringBuffer();
+//            String line = "";
+//
+//            while ((line = reader.readLine()) != null) {
+//                buffer.append(line + "/n");
+//            }
+//
+//            String bufferString = buffer.toString();
+//            JSONObject jsonObject = new JSONObject(bufferString);
+//            token = jsonObject.getString("token").trim();
+//        } catch (MalformedURLException e) {
+//            // TODO what are we supposed to do in this case?
+//        } catch (IOException e) {
+//            // TODO what are we supposed to do in this case?
+//        } catch (JSONException e) {
+//            // TODO what are we supposed to do in this case?
+//        } finally {
+//            if (connection != null) {
+//                connection.disconnect();
+//            }
+//            try {
+//                if (reader != null) {
+//                    reader.close();
+//                }
+//            }
+//            catch (IOException e) {
+//                // TODO what are we supposed to do in this case?
+//            }
+//        }
+//        return token;
+//    }
+
+
 
     /********* get rid of this once the new version above is working
     private void getToken_orig() {
@@ -932,7 +958,7 @@ public class VidyoChatFragment extends BaseFragment implements
                                 // BUT null means the "camera flip" button won't activate the back camera (probably doesn't matter)
                                 Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
                                 1,
-                                "info@VidyoClient info@VidyoConnector warning", // don't know what these next 3 lines do
+                                "error@VidyoClient error@VidyoConnector error", // don't know what these next 3 lines do
                                 "",
                                 0);
 
@@ -953,7 +979,8 @@ public class VidyoChatFragment extends BaseFragment implements
                         mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) VidyoChatFragment.this);
 
                         // Register for log events
-                        mVidyoConnector.registerLogEventListener((Connector.IRegisterLogEventListener) VidyoChatFragment.this, "info@VidyoClient info@VidyoConnector warning");
+                        // You can do this, but it's going to fill up the console with crap and you'll never be able to find YOUR log output
+                        //mVidyoConnector.registerLogEventListener((Connector.IRegisterLogEventListener) VidyoChatFragment.this, "info@VidyoClient info@VidyoConnector warning");
 
                         // Apply the app settings
                         applySettings();
@@ -1019,12 +1046,17 @@ public class VidyoChatFragment extends BaseFragment implements
         System.out.println("getActivity() = "+getActivity());
 
         // Execute this code on the main thread since it is updating the UI layout.
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
+        getActivity().runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run() {
 
-                    // Set the status text in the toolbar.
-                    //mToolbarStatus.setText(mStateDescription.get(mVidyoConnectorState));
+                    // REGARDING ALL THE COMMENTED-OUT Toast CALLS...
+                    // I think the call in case Connected was throwing a nasty exception because we are
+                    // now connecting automatically whenever both participants (video/list/[key]/video_participants) are 'present'
+                    // The problem (I think) is that getActivity() above is not ready at the point that we
+                    // call changeState() - hence the exception.
+
 
                     // Depending on the state, do a subset of the following:
                     // - update the toggle connect button to either start call or end call image: connect_button
@@ -1035,14 +1067,14 @@ public class VidyoChatFragment extends BaseFragment implements
                         case Connecting:
                             connect_button.setChecked(true);
                             //mConnectionSpinner.setVisibility(View.VISIBLE);
-                            Toast.makeText(getActivity(), "connecting", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(getActivity(), "connecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Connected:
                             connect_button.setChecked(true);
                             record_button.setVisibility(View.VISIBLE);
                             //mConnectionSpinner.setVisibility(View.INVISIBLE);
-                            Toast.makeText(getActivity(), "connected", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(getActivity(), "connected", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnecting:
@@ -1059,12 +1091,12 @@ public class VidyoChatFragment extends BaseFragment implements
                             // before swapping to the callStart image.
                             connect_button.setChecked(true);
                             record_button.setVisibility(View.GONE);
-                            Toast.makeText(getActivity(), "disconnecting", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(getActivity(), "disconnecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnected:
                             record_button.setVisibility(View.GONE);
-                            Toast.makeText(getActivity(), "disconnected", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(getActivity(), "disconnected", Toast.LENGTH_SHORT).show();
                             connect_button.setChecked(false);
                             break;
                         case DisconnectedUnexpected:
@@ -1111,7 +1143,7 @@ public class VidyoChatFragment extends BaseFragment implements
                     }
                 }
             });
-            }
+        }
 
     /*
      * Button Event Callbacks
@@ -1315,6 +1347,7 @@ public class VidyoChatFragment extends BaseFragment implements
         // If a camera is selected, then update mLastSelectedCamera.
         if (localCamera != null) {
             mLastSelectedCamera = localCamera;
+            mLastSelectedCamera.setPreviewLabel(User.getInstance().getName());
         }
     }
 
@@ -1363,10 +1396,10 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onRemoteCameraRemoved(RemoteCamera remoteCamera, Participant participant) {
         System.out.println("onRemoteCameraRemoved ---------");
-        if(mVidyoConnector != null) {
-            mVidyoConnector.assignViewToRemoteCamera(remoteChatScreen, null, false, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
-            mVidyoConnector.showViewAt(remoteChatScreen, 0, 0, 0, 0);
-        }
+//        if(mVidyoConnector != null) {
+//            mVidyoConnector.assignViewToRemoteCamera(remoteChatScreen, null, false, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
+//            mVidyoConnector.showViewAt(remoteChatScreen, 0, 0, 0, 0);
+//        }
     }
 
     // per Connector.IRegisterRemoteCameraEventListener
