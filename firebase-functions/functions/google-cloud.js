@@ -848,10 +848,13 @@ exports.video_title = functions.database.ref('video/list/{videoKey}').onWrite(ev
     // TODO the 'from' person is the participant with the greater value of start_date_ms
     var uids = Object.keys(event.data.val().video_participants)
     console.log("keys of event.data.val().video_participants", uids)
-
-    if(event.data.val().video_participants && event.data.val().video_participants.length > 0) {
-        from = ' from '+event.data.val().video_participants[event.data.val().video_participants.length-1].name
+    var max = 0
+    for(var i=0; i < uids.length; i++) {
+        var vp = event.data.val().video_participants[uids[i]]
+        if(max < vp.start_date_ms)
+            from = ' from '+vp.name
     }
+
     var to = ''
     if(event.data.val())
     // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
