@@ -13,7 +13,7 @@
 
 
     <com.brentdunklau.telepatriot_android.VideoFrameLayout
-        android:id="@+id/vidyoChatMyScreen"
+        android:id="@+id/local_camera_view"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:background="@android:color/darker_gray"
@@ -27,16 +27,60 @@
     </com.brentdunklau.telepatriot_android.VideoFrameLayout>
 
     <com.brentdunklau.telepatriot_android.VideoFrameLayout
-        android:id="@+id/remoteChatScreen"
+        android:id="@+id/remote_camera_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@android:color/darker_gray"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/vidyoChatMyScreen"
+        app:layout_constraintEnd_toEndOf="@+id/local_camera_view"
         app:layout_constraintHeight_percent="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/vidyoChatMyScreen"
-        app:layout_constraintVertical_bias="1.0"></com.brentdunklau.telepatriot_android.VideoFrameLayout>
+        app:layout_constraintTop_toBottomOf="@+id/local_camera_view"
+        app:layout_constraintVertical_bias="1.0">
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/invite_someone_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="invite someone"
+                android:visibility="gone"
+                android:textColor="@color/colorPrimaryDark"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/guest_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="24dp"
+                android:text="You have invited someone to participate in a video chat"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/revoke_invitation_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="16dp"
+                android:text="cancel invitation"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/guest_name" />
+        </android.support.constraint.ConstraintLayout>
+    </com.brentdunklau.telepatriot_android.VideoFrameLayout>
 
     <!-- works but not sure if useful - the buttons to mute the camera and mic
     <ToggleButton
@@ -124,7 +168,7 @@
         android:fillViewport="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="1.0"
-        app:layout_constraintStart_toEndOf="@+id/vidyoChatMyScreen"
+        app:layout_constraintStart_toEndOf="@+id/local_camera_view"
         app:layout_constraintTop_toTopOf="parent">
 
 

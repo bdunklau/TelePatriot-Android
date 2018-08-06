@@ -46,6 +46,8 @@ public class VideoNode {
             legislator_last_name, legislator_name, legislator_phone, legislator_state, legislator_state_abbrev,
             legislator_twitter;
 
+    String video_invitation_key, video_invitation_extended_to;
+
     // MUST have a no-arg constructor for firebase deserialization
     public VideoNode() {
     }
@@ -113,6 +115,9 @@ public class VideoNode {
         m.put("email_to_legislator", email_to_legislator);
         m.put("post_to_facebook", post_to_facebook);
         m.put("post_to_twitter", post_to_twitter);
+
+        m.put("video_invitation_key", video_invitation_key);
+        m.put("video_invitation_extended_to", video_invitation_extended_to);
         return m;
     }
 
@@ -351,6 +356,22 @@ public class VideoNode {
 
     public void setRecording_stopped_ms(long recording_stopped_ms) {
         this.recording_stopped_ms = recording_stopped_ms;
+    }
+
+    public String getVideo_invitation_key() {
+        return video_invitation_key;
+    }
+
+    public void setVideo_invitation_key(String video_invitation_key) {
+        this.video_invitation_key = video_invitation_key;
+    }
+
+    public String getVideo_invitation_extended_to() {
+        return video_invitation_extended_to;
+    }
+
+    public void setVideo_invitation_extended_to(String video_invitation_extended_to) {
+        this.video_invitation_extended_to = video_invitation_extended_to;
     }
 
     public boolean bothParticipantsPresent() {

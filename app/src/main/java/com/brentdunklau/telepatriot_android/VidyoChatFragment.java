@@ -1,7 +1,8 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,10 +26,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.util.Util;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
 import com.brentdunklau.telepatriot_android.util.VideoParticipant;
@@ -47,16 +48,6 @@ import com.vidyo.VidyoClient.Endpoint.LogRecord;
 import com.vidyo.VidyoClient.Endpoint.Participant;
 import com.vidyo.VidyoClient.NetworkInterface;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,6 +63,7 @@ public class VidyoChatFragment extends BaseFragment implements
         ,Connector.IRegisterLocalMicrophoneEventListener
         ,Connector.IRegisterRemoteCameraEventListener
         //,IVideoFrameListener
+        ,FragmentContainingUser
 {
 
     private static String TAG = "VidyoChatFragment";
@@ -118,8 +110,12 @@ public class VidyoChatFragment extends BaseFragment implements
     public EditText mDisplayName;
     //public static EditText mToken;
 
-    private VideoFrameLayout mVideoFrame;
-    private VideoFrameLayout remoteChatScreen;
+    private VideoFrameLayout local_camera_view;
+
+    private VideoFrameLayout remote_camera_view;
+    private boolean remoteCameraVisible;
+    private TextView invite_someone_button, guest_name, revoke_invitation_button;
+
     private boolean mCameraPrivacy = false;
     private boolean mMicrophonePrivacy = false;
     private boolean mEnableDebug = false;
@@ -163,6 +159,10 @@ public class VidyoChatFragment extends BaseFragment implements
 
     private ProgressBar video_chat_spinner;
 
+    private FragmentManager fragmentManager;
+    private Fragment back;
+
+
     /*
      *  Operating System Events
      */
@@ -191,6 +191,29 @@ public class VidyoChatFragment extends BaseFragment implements
 
         List<VideoType> videoTypes = VideoType.getTypes();
 
+
+        invite_someone_button = myView.findViewById(R.id.invite_someone_button);
+        invite_someone_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                SearchUsersFragment f = new SearchUsersFragment();
+                f.setWhereTo(VidyoChatFragment.this); // means we'll come back to this fragment once we select a user
+                showFragment(f);
+            }
+        });
+
+        guest_name = myView.findViewById(R.id.guest_name);
+        revoke_invitation_button = myView.findViewById(R.id.revoke_invitation_button);
+        revoke_invitation_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Map updates = new HashMap();
+                updates.put("video/list/"+currentVideoNode.getKey()+"/video_invitation_key", null);
+                updates.put("video/list/"+currentVideoNode.getKey()+"/video_invitation_extended_to", null);
+                updates.put("video/invitations/"+currentVideoNode.getVideo_invitation_key(), null);
+                FirebaseDatabase.getInstance().getReference().updateChildren(updates);
+            }
+        });
 
         ////////////////////////////////////////////////////////////////////////////
         // Legislator section
@@ -256,10 +279,10 @@ public class VidyoChatFragment extends BaseFragment implements
         missionDescription = videoType.getVideo_mission_description();
         uid =  User.getInstance().getUid();
 
-        mVideoFrame = myView.findViewById(R.id.vidyoChatMyScreen);
-        remoteChatScreen = myView.findViewById(R.id.remoteChatScreen);
+        local_camera_view = myView.findViewById(R.id.local_camera_view);
+        remote_camera_view = myView.findViewById(R.id.remote_camera_view);
 
-        mVideoFrame.setMinimumWidth(mVideoFrame.getHeight() * 16 / 9);
+        local_camera_view.setMinimumWidth(local_camera_view.getHeight() * 16 / 9);
 
         video_mission_description = myView.findViewById(R.id.videoChatDescriptionText);
         video_mission_description.setText(videoType.getVideo_mission_description());
@@ -454,6 +477,8 @@ public class VidyoChatFragment extends BaseFragment implements
                         post_to_facebook.setChecked(currentVideoNode.isPost_to_facebook());
                         post_to_twitter.setChecked(currentVideoNode.isPost_to_twitter());
 
+                        inviteLinks();
+
                         if(currentVideoNode.getRecording_started() != null)
                             recordingStarted();
 
@@ -477,6 +502,15 @@ public class VidyoChatFragment extends BaseFragment implements
                     }
                 });
             }
+        }
+    }
+
+    private void inviteLinks() {
+        invite_someone_button.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()==null ? View.VISIBLE : View.GONE);
+        guest_name.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()!=null ? View.VISIBLE : View.GONE);
+        revoke_invitation_button.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()!=null ? View.VISIBLE : View.GONE);
+        if(guest_name.getVisibility() == View.VISIBLE) {
+            guest_name.setText("You have invited "+currentVideoNode.getVideo_invitation_extended_to()+" to participate in a video chat");
         }
     }
 
@@ -690,6 +724,29 @@ public class VidyoChatFragment extends BaseFragment implements
             }
         }
 
+    }
+
+    // per FragmentContainingUser
+    public void userSelected(UserBean guest) {
+        // this is the person that was just invited - it's not the current user.  The current user invited this person
+        if(currentVideoNode == null)
+            return;
+        VideoInvitation inv = new VideoInvitation(User.getInstance(), guest, currentVideoNode.getKey());
+        String key = inv.save();
+        Map updates = new HashMap();
+        updates.put("video_invitation_key", key);
+        updates.put("video_invitation_extended_to", guest.getName());
+        FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey()).updateChildren(updates);
+    }
+
+    // per FragmentContainingUser
+    public void setFragmentManager(FragmentManager fragmentManager, Fragment back) {
+        this.fragmentManager = fragmentManager;
+        this.back = back;
+    }
+
+    public Fragment getFragment() {
+        return this;
     }
 
     private void setUserPresent(User user, boolean present) {
@@ -1007,12 +1064,12 @@ public class VidyoChatFragment extends BaseFragment implements
         super.onConfigurationChanged(newConfig);
 
         // Refresh the video size after it is painted
-        ViewTreeObserver viewTreeObserver = mVideoFrame.getViewTreeObserver();
+        ViewTreeObserver viewTreeObserver = local_camera_view.getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
             viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    mVideoFrame.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    local_camera_view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
 
                     // Width/height values of views not updated at this point so need to wait
                     // before refreshing UI
@@ -1049,14 +1106,14 @@ public class VidyoChatFragment extends BaseFragment implements
     // Construct Connector and register for event listeners.
     private void startVidyoConnector() {
 
-        // Wait until mVideoFrame is drawn until getting started.
-        ViewTreeObserver viewTreeObserver = mVideoFrame.getViewTreeObserver();
+        // Wait until local_camera_view is drawn until getting started.
+        ViewTreeObserver viewTreeObserver = local_camera_view.getViewTreeObserver();
         boolean isAlive = viewTreeObserver.isAlive();
         if (isAlive) {
             viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    mVideoFrame.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    local_camera_view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
 
                     // Construct Connector
                     try {
@@ -1145,8 +1202,8 @@ public class VidyoChatFragment extends BaseFragment implements
     private void refreshUI() {
         // Refresh the rendering of the video
         System.out.println("refreshUI:  mLastSelectedCamera = "+mLastSelectedCamera);
-        mVidyoConnector.assignViewToLocalCamera(mVideoFrame, mLastSelectedCamera, false, false);
-        mVidyoConnector.showViewAt(mVideoFrame, 100, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
+        mVidyoConnector.assignViewToLocalCamera(local_camera_view, mLastSelectedCamera, false, false);
+        mVidyoConnector.showViewAt(local_camera_view, 100, 0, local_camera_view.getWidth(), local_camera_view.getHeight());
     }
      **************/
 
@@ -1449,8 +1506,8 @@ public class VidyoChatFragment extends BaseFragment implements
             // We set displayCropped:true on Android because that gets rid any any little black borders around
             // the video frames.  In XCode, I didn't have to do this because I was able to figure out the dimensions
             // of the parent view programmatically
-            mVidyoConnector.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
-            mVidyoConnector.showViewAt(mVideoFrame, 0, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
+            mVidyoConnector.assignViewToLocalCamera(local_camera_view, localCamera, true, false);
+            mVidyoConnector.showViewAt(local_camera_view, 0, 0, local_camera_view.getWidth(), local_camera_view.getHeight());
             mVidyoConnector.setMicrophonePrivacy(false);
         }
     }
@@ -1527,8 +1584,10 @@ public class VidyoChatFragment extends BaseFragment implements
             // We set displayCropped:true on Android because that gets rid any any little black borders around
             // the video frames.  In XCode, I didn't have to do this because I was able to figure out the dimensions
             // of the parent view programmatically
-            mVidyoConnector.assignViewToRemoteCamera(remoteChatScreen, remoteCamera, true, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
-            mVidyoConnector.showViewAt(remoteChatScreen, 0, 0, remoteChatScreen.getWidth(), remoteChatScreen.getHeight());
+            remoteCameraVisible = true;
+            inviteLinks();
+            mVidyoConnector.assignViewToRemoteCamera(remote_camera_view, remoteCamera, true, false);//.assignViewToLocalCamera(local_camera_view, localCamera, true, false);
+            mVidyoConnector.showViewAt(remote_camera_view, 0, 0, remote_camera_view.getWidth(), remote_camera_view.getHeight());
         }
 
     }
@@ -1537,9 +1596,11 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onRemoteCameraRemoved(RemoteCamera remoteCamera, Participant participant) {
         System.out.println("onRemoteCameraRemoved ---------");
+        remoteCameraVisible = false;
+        inviteLinks();
 //        if(mVidyoConnector != null) {
-//            mVidyoConnector.assignViewToRemoteCamera(remoteChatScreen, null, false, false);//.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
-//            mVidyoConnector.showViewAt(remoteChatScreen, 0, 0, 0, 0);
+//            mVidyoConnector.assignViewToRemoteCamera(remote_camera_view, null, false, false);//.assignViewToLocalCamera(local_camera_view, localCamera, true, false);
+//            mVidyoConnector.showViewAt(remote_camera_view, 0, 0, 0, 0);
 //        }
     }
 

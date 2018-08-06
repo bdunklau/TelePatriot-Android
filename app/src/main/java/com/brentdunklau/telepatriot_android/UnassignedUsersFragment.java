@@ -132,10 +132,7 @@ public class UnassignedUsersFragment extends AdminFragment {
                                     ((AssignUserFragment) next).setFragmentManager(fragmentManager, UnassignedUsersFragment.this); // ugly - fix this
                                 }
 
-                                // Instead of going to an activity, we need to load a fragment...
-                                //AssignUserFragment next = new AssignUserFragment();
-                                //next.setUid(uid);
-                                //next.setFragmentManager(fragmentManager, UnassignedUsersFragment.this);
+
                                 try {
 
                                     fragmentManager.beginTransaction()

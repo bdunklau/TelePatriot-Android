@@ -70,17 +70,17 @@ public class ChooseSpreadsheetTypeFragment extends DirectorFragment {
         });
     }
 
-    private void showFragment(Fragment fragment) {
-        FragmentManager fragmentManager = getFragmentManager();
-        try {
-            FragmentTransaction t = fragmentManager.beginTransaction();
-            t.replace(R.id.content_frame, fragment);
-            t.addToBackStack(fragment.getClass().getName());
-            t.commit();
-        } catch(Throwable t) {
-            // TODO show alert dialog or  something - not this
-            t.printStackTrace();
-        }
-    }
+//    private void showFragment(Fragment fragment) {
+//        FragmentManager fragmentManager = getFragmentManager();
+//        try {
+//            FragmentTransaction t = fragmentManager.beginTransaction();
+//            t.replace(R.id.content_frame, fragment);
+//            t.addToBackStack(fragment.getClass().getName());
+//            t.commit();
+//        } catch(Throwable t) {
+//            // TODO show alert dialog or  something - not this
+//            t.printStackTrace();
+//        }
+//    }
 
 }

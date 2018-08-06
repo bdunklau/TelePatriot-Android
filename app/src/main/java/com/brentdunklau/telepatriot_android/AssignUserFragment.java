@@ -35,7 +35,7 @@ import java.util.Map;
  * Created by bdunklau on 10/5/2017.
  */
 
-public class AssignUserFragment extends AdminFragment {
+public class AssignUserFragment extends AdminFragment implements FragmentContainingUser {
 
     private SwitchCompat enabledDisabledSwitch;
     private SwitchCompat adminSwitch;
@@ -64,9 +64,20 @@ public class AssignUserFragment extends AdminFragment {
         this.uid = uid;
     }
 
+    // per FragmentContainingUser
+    public void userSelected(UserBean user) {
+        this.uid = user.getUid();
+    }
+
+    // per FragmentContainingUser
     public void setFragmentManager(FragmentManager fragmentManager, Fragment back) {
         this.fragmentManager = fragmentManager;
         this.back = back;
+    }
+
+    // per FragmentContainingUser
+    public Fragment getFragment() {
+        return this;
     }
 
     private void setUI() {
@@ -364,18 +375,6 @@ public class AssignUserFragment extends AdminFragment {
                 .replace(R.id.content_frame, back)
                 .addToBackStack(back.getClass().getName())
                 .commit();
-    }
-
-    private void setValue(String uid, String attribute, Boolean value) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/"+attribute).setValue(value);
-    }
-
-    private void setRole(String role) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/roles/"+role).setValue("true");
-    }
-
-    private void unsetRole(String role) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/roles/"+role).removeValue();
     }
 
     private void setSwitch(final boolean value, final SwitchCompat switchCompat) {

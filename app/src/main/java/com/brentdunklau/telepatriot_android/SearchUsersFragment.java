@@ -33,8 +33,13 @@ public class SearchUsersFragment extends BaseFragment {
 
     private FirebaseRecyclerAdapter<UserBean, UserHolder> firebaseRecyclerAdapter22;
     private RecyclerView users;
+    private FragmentContainingUser whereTo;
     SearchView search_users;
     View myView;
+
+    public void setWhereTo(FragmentContainingUser whereTo) {
+        this.whereTo = whereTo;
+    }
 
     @Nullable
     @Override
@@ -95,11 +100,16 @@ public class SearchUsersFragment extends BaseFragment {
                                         // at the user's roles at /users/uid/roles because we need to set the role switches
                                         // to the right values
                                         String uid = dataSnapshot.getKey();
+                                        UserBean ub = dataSnapshot.getValue(UserBean.class);
+                                        ub.setUid(uid);
 
-                                        // Instead of going to an activity, we need to load a fragment...
-                                        AssignUserFragment fragment = new AssignUserFragment();
-                                        fragment.setUid(uid);
-                                        fragment.setFragmentManager(fragmentManager, SearchUsersFragment.this);
+                                        // need to allow this screen to go to any fragment we want - specified by whatever fragment called THIS fragment
+                                        // primarily because of the invite_someone link in VidyoChatFragment
+                                        if(whereTo == null)
+                                            whereTo = new AssignUserFragment();
+                                        whereTo.userSelected(ub);
+                                        whereTo.setFragmentManager(fragmentManager, SearchUsersFragment.this);
+
                                         try {
                                             /******
                                             FragmentTransaction t1 = fragmentManager.beginTransaction();
@@ -109,8 +119,8 @@ public class SearchUsersFragment extends BaseFragment {
                                             ********/
 
                                             fragmentManager.beginTransaction()
-                                                    .replace(R.id.content_frame, fragment)
-                                                    .addToBackStack(fragment.getClass().getName())
+                                                    .replace(R.id.content_frame, whereTo.getFragment())
+                                                    .addToBackStack(whereTo.getFragment().getClass().getName())
                                                     .commit();
 
 
