@@ -29,10 +29,17 @@ public class VideoNode {
     String youtube_video_description_unevaluated;
 
     String video_mission_description;
+
     String recording_started;
     long recording_started_ms;
     String recording_stopped;
     long recording_stopped_ms;
+
+    // The "What do you want to do with your video" fields...
+    // all true by default and the user can set them to false in the VidyoChatFragment if he doesn't like them
+    private boolean email_to_legislator = true;
+    private boolean post_to_facebook = true;
+    private boolean post_to_twitter = true;
 
     String leg_id, legislator_chamber, legislator_cos_position, legislator_district, legislator_email,
             legislator_facebook, legislator_facebook_id, legislator_first_name, legislator_full_name,
@@ -103,6 +110,9 @@ public class VideoNode {
         m.put("legislator_email", legislator_email);
         m.put("legislator_phone", legislator_phone);
 
+        m.put("email_to_legislator", email_to_legislator);
+        m.put("post_to_facebook", post_to_facebook);
+        m.put("post_to_twitter", post_to_twitter);
         return m;
     }
 
@@ -285,6 +295,62 @@ public class VideoNode {
 
     public void setLegislator_twitter(String legislator_twitter) {
         this.legislator_twitter = legislator_twitter;
+    }
+
+    public boolean isEmail_to_legislator() {
+        return email_to_legislator;
+    }
+
+    public void setEmail_to_legislator(boolean email_to_legislator) {
+        this.email_to_legislator = email_to_legislator;
+    }
+
+    public boolean isPost_to_facebook() {
+        return post_to_facebook;
+    }
+
+    public void setPost_to_facebook(boolean post_to_facebook) {
+        this.post_to_facebook = post_to_facebook;
+    }
+
+    public boolean isPost_to_twitter() {
+        return post_to_twitter;
+    }
+
+    public void setPost_to_twitter(boolean post_to_twitter) {
+        this.post_to_twitter = post_to_twitter;
+    }
+
+    public String getRecording_started() {
+        return recording_started;
+    }
+
+    public void setRecording_started(String recording_started) {
+        this.recording_started = recording_started;
+    }
+
+    public long getRecording_started_ms() {
+        return recording_started_ms;
+    }
+
+    public void setRecording_started_ms(long recording_started_ms) {
+        this.recording_started_ms = recording_started_ms;
+    }
+
+    public String getRecording_stopped() {
+        return recording_stopped;
+    }
+
+    public void setRecording_stopped(String recording_stopped) {
+        this.recording_stopped = recording_stopped;
+    }
+
+    public long getRecording_stopped_ms() {
+        return recording_stopped_ms;
+    }
+
+    public void setRecording_stopped_ms(long recording_stopped_ms) {
+        this.recording_stopped_ms = recording_stopped_ms;
     }
 
     public boolean bothParticipantsPresent() {

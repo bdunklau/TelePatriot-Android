@@ -14,6 +14,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +41,7 @@ import com.vidyo.VidyoClient.Connector.Connector;
 import com.vidyo.VidyoClient.Connector.ConnectorPkg;
 import com.vidyo.VidyoClient.Device.Device;
 import com.vidyo.VidyoClient.Device.LocalCamera;
+import com.vidyo.VidyoClient.Device.LocalMicrophone;
 import com.vidyo.VidyoClient.Device.RemoteCamera;
 import com.vidyo.VidyoClient.Endpoint.LogRecord;
 import com.vidyo.VidyoClient.Endpoint.Participant;
@@ -67,6 +69,7 @@ public class VidyoChatFragment extends BaseFragment implements
         ,Connector.IRegisterLogEventListener
         ,Connector.IRegisterNetworkInterfaceEventListener
         ,Connector.IRegisterLocalCameraEventListener
+        ,Connector.IRegisterLocalMicrophoneEventListener
         ,Connector.IRegisterRemoteCameraEventListener
         //,IVideoFrameListener
 {
@@ -144,6 +147,7 @@ public class VidyoChatFragment extends BaseFragment implements
     //private ToggleButton microphone_button;
     //private ToggleButton camera_button;
     private ToggleButton record_button;
+    private ToggleButton publish_button;
     private ProgressBar progressBar5;
 
     private TextView legislator_first_name, legislator_last_name, legislator_state_abbrev, legislator_chamber, legislator_district;
@@ -152,6 +156,12 @@ public class VidyoChatFragment extends BaseFragment implements
     private ImageView edit_facebook;
     private TextView legislator_twitter;
     private ImageView edit_twitter;
+
+    private SwitchCompat email_to_legislator;
+    private SwitchCompat post_to_facebook;
+    private SwitchCompat post_to_twitter;
+
+    private ProgressBar video_chat_spinner;
 
     /*
      *  Operating System Events
@@ -314,7 +324,8 @@ public class VidyoChatFragment extends BaseFragment implements
 //        microphone_button.setOnClickListener(this);
 //        camera_button = myView.findViewById(R.id.camera_button);
 //        camera_button.setOnClickListener(this);
-        record_button = myView.findViewById(R.id.record_button);
+
+        video_chat_spinner = myView.findViewById(R.id.video_chat_spinner);
 
 
         // Set the application's UI context to this activity.
@@ -325,28 +336,78 @@ public class VidyoChatFragment extends BaseFragment implements
 
         queryCurrentVideoNode();
 
-        record_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        record_button = myView.findViewById(R.id.record_button);
+        record_button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-
-                int SDK_INT = Build.VERSION.SDK_INT;
-                if (SDK_INT < 9) {
-                    Toast.makeText(getActivity(), "Android Update Required", Toast.LENGTH_LONG).show();
-                }
-
-                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-                        .permitAll().build();
-                StrictMode.setThreadPolicy(policy);
-
-                if (isChecked) {
-                    startRecording();
-                } else {
+            public void onClick(View v) {
+                if (recording) {
                     stopRecording();
                 }
-
+                else {
+                    startRecording();
+                }
             }
         });
+
+        publish_button = myView.findViewById(R.id.publish_button);
+        publish_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                publishClicked();
+            }
+        });
+
+
+        email_to_legislator = myView.findViewById(R.id.email_to_legislator);
+        email_to_legislator.setSwitchPadding(50);
+        email_to_legislator.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                setVideoNodeAttribute("email_to_legislator", b);
+            }
+        });
+
+        post_to_facebook = myView.findViewById(R.id.post_to_facebook);
+        post_to_facebook.setSwitchPadding(50);
+        post_to_facebook.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                setVideoNodeAttribute("post_to_facebook", b);
+            }
+        });
+
+        post_to_twitter = myView.findViewById(R.id.post_to_twitter);
+        post_to_twitter.setSwitchPadding(50);
+        post_to_twitter.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                setVideoNodeAttribute("post_to_twitter", b);
+            }
+        });
+
+
+//        record_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//
+//
+//                int SDK_INT = Build.VERSION.SDK_INT;
+//                if (SDK_INT < 9) {
+//                    Toast.makeText(getActivity(), "Android Update Required", Toast.LENGTH_LONG).show();
+//                }
+//
+//                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+//                        .permitAll().build();
+//                StrictMode.setThreadPolicy(policy);
+//
+//                if (isChecked) {
+//                    startRecording();
+//                } else {
+//                    stopRecording();
+//                }
+//
+//            }
+//        });
 
         /*******
         if(room_id != null) {
@@ -357,6 +418,12 @@ public class VidyoChatFragment extends BaseFragment implements
          ********/
 
         return myView;
+    }
+
+    private void setVideoNodeAttribute(String attribute, boolean b) {
+        if(currentVideoNode == null)
+            return;
+        FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey()+"/"+attribute).setValue(b);
     }
 
     private String getVideoNodeKey() {
@@ -383,9 +450,16 @@ public class VidyoChatFragment extends BaseFragment implements
 
                         setLegislatorFields(currentVideoNode);
 
+                        email_to_legislator.setChecked(currentVideoNode.isEmail_to_legislator());
+                        post_to_facebook.setChecked(currentVideoNode.isPost_to_facebook());
+                        post_to_twitter.setChecked(currentVideoNode.isPost_to_twitter());
+
+                        if(currentVideoNode.getRecording_started() != null)
+                            recordingStarted();
+
                         if(noLegislator(currentVideoNode)) {
                             // use then before any legislator is chosen
-                            youtube_video_description.setText("Choose a legislators and TelePatriot will create the YouTube video description for you.  (Doesn't get any easier than that!)");
+                            youtube_video_description.setText("Choose a legislator and TelePatriot will create the YouTube video description for you.  (Doesn't get any easier than that!)");
                         }
 
                         if(currentVideoNode.bothParticipantsPresent()) {
@@ -422,6 +496,24 @@ public class VidyoChatFragment extends BaseFragment implements
         } catch (PackageManager.NameNotFoundException e) {
             return "https://www.facebook.com/" + fb; //normal web url
         }
+    }
+
+    private void chooseLegislatorFirst() {
+        // pop up a dialog if the user tries to start the recording before choosing a legislator
+        // We need the legislator chosen first (or at least before publishing) because we create
+        // the YouTube video title and description using legislator name and contact info
+        // Even though we only NEED this info before publishing, it makes more sense to ask for it
+        // before recording starts.
+        AlertDialog.Builder builder = new AlertDialog.Builder(myView.getContext());
+        builder.setMessage("Choose the legislator first and then start the recording")
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //do things
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 
     /**
@@ -683,7 +775,7 @@ public class VidyoChatFragment extends BaseFragment implements
             if(vn == null)
                 return null;
             User.getInstance().setCurrent_video_node_key(vn.getKey());
-            return vn.getKey();
+            return vn.getKey(); // <-- inside this method is where we actually save the new video node
         }
     }
 
@@ -989,8 +1081,12 @@ public class VidyoChatFragment extends BaseFragment implements
                         // Register for local camera events
                         mVidyoConnector.registerLocalCameraEventListener((Connector.IRegisterLocalCameraEventListener) VidyoChatFragment.this);
 
+                        mVidyoConnector.registerLocalMicrophoneEventListener((Connector.IRegisterLocalMicrophoneEventListener) VidyoChatFragment.this);
+
                         // Register for remote camera events - this is the good stuff right here :)
                         mVidyoConnector.registerRemoteCameraEventListener((Connector.IRegisterRemoteCameraEventListener) VidyoChatFragment.this);
+
+                        mVidyoConnector.registerRemoteMicrophoneEventListener((Connector.IRegisterRemoteMicrophoneEventListener) VidyoChatFragment.this);
 
                         // Register for network interface events
                         mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) VidyoChatFragment.this);
@@ -1046,13 +1142,14 @@ public class VidyoChatFragment extends BaseFragment implements
 
     /****************************
     // Refresh the UI
-    private void refreshUIxxxxxxx() {
+    private void refreshUI() {
         // Refresh the rendering of the video
         System.out.println("refreshUI:  mLastSelectedCamera = "+mLastSelectedCamera);
         mVidyoConnector.assignViewToLocalCamera(mVideoFrame, mLastSelectedCamera, false, false);
         mVidyoConnector.showViewAt(mVideoFrame, 100, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
     }
      **************/
+
 
     // The state of the VidyoConnector vmConnection changed, reconfigure the UI.
     // If connected, dismiss the controls layout
@@ -1159,8 +1256,9 @@ public class VidyoChatFragment extends BaseFragment implements
                         // have this method call: record_button.setOnCheckedChangeListener
                     }
                 }
-            });
-        }
+            }
+        );
+    }
 
     /*
      * Button Event Callbacks
@@ -1258,59 +1356,61 @@ public class VidyoChatFragment extends BaseFragment implements
         }
     }
 
-    // See Swift VideoChatVC.startRecording()
-    private void startRecording() {
-        recording = true;
-        record_button.setBackgroundResource(R.drawable.recordstop);
-
-        /************
-        try {
-            // TODO look at how the record button works in swift
-            // url = new URL("http://35.185.56.20/record/demoRoom/uniquefield");
-            // We have to figure out what the url.
-            // Is it the url to the vm?
-            // How is the room_id passed?
-            // What will the unique identifier be?  Do we even need it?
-            // When should the url be determined?
-            //      When the user first comes to the Video Chat screen?
-            //      When the user clicks the connect button?
-            //      When the user clicks the record button?
-            // Seems like we should wait till the user clicks record to actually determine the url
-            // So are we going to write the url to the video node?  Seems like we would have to.
-            // Each vm and docker instance may need to write themselves to a log table in the database
-            // so that we can query that log table here for an available vm and docker instance
-            // We might start small and assume only one vm, but still, we have to have a way of
-            // determining what that url is.  We can't hardcode the vm's ip here
-            vmConnection = (HttpURLConnection) url.openConnection();
-            OutputStream stream= new BufferedOutputStream(vmConnection.getOutputStream());
-
-        } catch (MalformedURLException e) {
-            Toast.makeText(getActivity(), "Cannot Record (Err 1)", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-            stopRecording();
-            return;
-        } catch (IOException e) {
-            Toast.makeText(getActivity(), "Cannot Record (Err 2)", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-            stopRecording();
-            return;
-        }
-         **************/
-
-        // TODO FirebaseDatabase.getInstance()...
-        // Need to write to the video node the time the recording started
+    private void showSpinner() {
+        video_chat_spinner.setVisibility(View.VISIBLE);
     }
 
-    // TODO See Swift VideoChatVC.stopRecording()
+    // See Swift VideoChatVC.startRecording()
+    private void startRecording() {
+        if(currentVideoNode.getLeg_id() == null)
+            chooseLegislatorFirst();
+        else {
+            recording = true;
+            showSpinner();
+            record_button.setBackgroundResource(R.drawable.recordstop);
+            createRecordingEvent("start recording");
+            publish_button.setVisibility(View.GONE);
+        }
+    }
+
+    // See Swift VideoChatVC.stopRecording()
     private void stopRecording() {
         recording = false;
         record_button.setBackgroundResource(R.drawable.record);
-        /********
-        if (url != null) {
-            vmConnection.disconnect();
-            url = null;
-        }
-         *********/
+        createRecordingEvent("stop recording");
+        publish_button.setVisibility(View.VISIBLE);
+    }
+
+    private void recordingStarted() {
+        dismissSpinner();
+    }
+
+    private void dismissSpinner() {
+        video_chat_spinner.setVisibility(View.GONE);
+    }
+
+    // See Swift VideoChatVC.createRecordingEvent()
+    private void createRecordingEvent(String request_type) {
+        // write at least this much to /video/video_events
+        Map recording_request = new HashMap();
+        recording_request.put("request_type", request_type);
+        recording_request.put("video_node_key", User.getInstance().getCurrent_video_node_key());
+        recording_request.put("room_id", User.getInstance().getCurrent_video_node_key());
+        recording_request.put("uid", User.getInstance().getUid());
+        recording_request.put("date", Util.getDate_MMM_d_yyyy_hmm_am_z());
+        recording_request.put("date_ms", Util.getDate_as_millis());
+        // might also want to capture who made the request and when
+
+        // There's a trigger function: exports.dockerRequest that listens for writes to this node
+        // and selects a docker instance that can serve as "recording secretary" for the call
+        FirebaseDatabase.getInstance().getReference("video/video_events").push().setValue(recording_request);
+    }
+
+
+    private void publishClicked() {
+        showSpinner();
+        // See google-cloud.js:dockerRequest()
+        createRecordingEvent("start publishing");
     }
 
     /*
@@ -1351,6 +1451,7 @@ public class VidyoChatFragment extends BaseFragment implements
             // of the parent view programmatically
             mVidyoConnector.assignViewToLocalCamera(mVideoFrame, localCamera, true, false);
             mVidyoConnector.showViewAt(mVideoFrame, 0, 0, mVideoFrame.getWidth(), mVideoFrame.getHeight());
+            mVidyoConnector.setMicrophonePrivacy(false);
         }
     }
 
@@ -1370,6 +1471,27 @@ public class VidyoChatFragment extends BaseFragment implements
 
     @Override
     public void onLocalCameraStateUpdated(LocalCamera localCamera, Device.DeviceState state) {
+    }
+
+    @Override
+    public void onLocalMicrophoneAdded(LocalMicrophone localMicrophone) {
+        System.out.println("onLocalMicrophoneAdded");
+    }
+
+    @Override
+    public void onLocalMicrophoneRemoved(LocalMicrophone localMicrophone) {
+        System.out.println("onLocalMicrophoneRemoved");
+    }
+
+    @Override
+    public void onLocalMicrophoneSelected(LocalMicrophone localMicrophone) {
+        System.out.println("onLocalMicrophoneSelected");
+
+    }
+
+    @Override
+    public void onLocalMicrophoneStateUpdated(LocalMicrophone localMicrophone, Device.DeviceState deviceState) {
+        System.out.println("onLocalMicrophoneStateUpdated");
     }
 
     // Handle a message being logged.
@@ -1395,6 +1517,8 @@ public class VidyoChatFragment extends BaseFragment implements
    }
 
 
+    // NOTE: See the commented-out method refreshUI() in this class - that method may bring the remote camera view back to life
+    // after the iPhone reconnects
     // per Connector.IRegisterRemoteCameraEventListener
     @Override
     public void onRemoteCameraAdded(RemoteCamera remoteCamera, Participant participant) {

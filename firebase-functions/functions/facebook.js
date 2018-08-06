@@ -92,7 +92,18 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
             }
             // TODO probably should write this to the db somewhere
             console.log('Post Id: ' + res.id);
-            event.data.ref.child('post_id').set(res.id)
+            event.data.ref.child('post_id').set(res.id) // not even sure if we NEED the post_id written here
+
+            if(event.data.val().video_node_key) { // may not exist in testing classes
+                // There's a trigger (not created yet) that listens for writes to this node and also to
+                // twitter_post_id.  The trigger then examines the values of post_to_facebook, post_to_twitter and
+                // email_to_legislator to figure out what the text of the emails should be.  There are two emails:
+                // one to the participants but not the legislator, and another to the participants AND the legislator
+                // The email to the legislator is addressed to him.  Whereas the other one is a congratulatory email to
+                // the participants
+                // SEE google-cloud:socialMediaPostsCreated()
+                event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/facebook_post_id').set(res.id)
+            }
         });
     })
 

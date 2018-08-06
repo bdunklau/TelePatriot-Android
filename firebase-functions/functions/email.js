@@ -293,3 +293,113 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
 })
 
 
+// called from google-cloud:socialMediaPostsCreated() - that file was just getting too big
+// and this file is for creating/sending emails anyway
+exports.sendLegislatorEmailRegardingVideo = function(subject, message, to /*legislator*/, cc) {
+    /**************
+    Dear Sen/Rep Legislator,
+    My name is (second participant) and I am a constituent of yours.  I recorded a short video message to
+    you letting you know that I support the Convention of States resolution and I'd like you to support it also.
+
+    <b>Watch on YouTube</b> - [video_url]
+
+    [if posted to facebook...]
+    <b>Watch on Facebook</b>
+    This video was also shared on Facebook here - [facebook_post_id]
+
+    [if posted to twitter...]
+    <b>Watch on Twitter</b>
+    This video was also shared on Twitter here - [facebook_post_id]
+
+    Sincerely,
+    [second participant]
+    [address if available]
+    [email address]
+    ***************/
+
+    var stuff = exports.createLegislatorEmailRegardingVideo(subject, message, to /*legislator*/, cc)
+
+    sendEmail(stuff)
+}
+
+
+exports.createLegislatorEmailRegardingVideo = function(subject, message, to /*legislator*/, cc) {
+    var replace = [
+    {'this': 'video_type', 'withThat': 'Video Petition'},
+    {'this': 'legislator_title', 'withThat': 'Rep'},
+    {'this': 'legislator_first_name', 'withThat': 'Justin'},
+    {'this': 'legislator_last_name', 'withThat': 'Holland'},
+    {'this': 'constituent_name', 'withThat': 'John Smith'},
+    {'this': 'request_based_on_cos_position', 'withThat': 'I just want to thank you for supporting the Convention of States resolution.'},
+    {'this': 'video_url', 'withThat': 'https://www.youtube.com/watch?v=dfldjewk'},
+    {'this': 'facebook_post_id', 'withThat': 'https://www.facebook.com/234523452345234_31243423452345'},
+    {'this': 'twitter_post_id', 'withThat': 'https://www.twitter.com/345634563456345635764567456'},
+    {'this': 'constituent_address', 'withThat': '2070 Belfry Ct'},
+    {'this': 'constituent_city', 'withThat': 'Dallas'},
+    {'this': 'constituent_state', 'withThat': 'TX'},
+    {'this': 'constituent_zip', 'withThat': '75214'},
+    {'this': 'constituent_phone', 'withThat': '214-000-0000'},
+    {'this': 'constituent_email', 'withThat': 'jsmith@yahoo.com'}
+    ]
+
+    var subj = mailMerge(subject, replace)
+    var msg = mailMerge(message, replace)
+    var stuff = {subject: subj, message: msg, to: to, cc: cc}
+    return stuff
+}
+
+
+var sendEmail = function(stuff) {
+
+    return db.ref('administration/email_config').once('value').then(snapshot => {
+        var smtpTransport = nodemailer.createTransport({
+            host: snapshot.val().host,
+                  port: snapshot.val().port,
+                  secure: true, // true for 465, false for other ports
+            auth: {
+                user: snapshot.val().user, pass: snapshot.val().pass
+            }
+        })
+
+        // setup e-mail data with unicode symbols
+        var mailOptions = {
+            from: snapshot.val().from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
+            to: stuff.to, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
+            cc: stuff.cc,
+            subject: stuff.subject, // Subject line
+            //text: "plain text: "+snapshot.val().message, // plaintext body
+            html: stuff.message // html body
+        }
+
+        // send mail with defined transport object
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.message);
+            }
+
+            // if you don't want to use this transport object anymore, uncomment following line
+            smtpTransport.close(); // shut down the connection pool, no more messages
+
+
+            // what are we going to return here?
+        });
+    })
+}
+
+var mailMerge = function(str, replace) {
+    _.each(replace, function(rep) {
+        str = _.replace(str, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+    return str
+}
+
+
+// called from google-cloud:socialMediaPostsCreated() - that file was just getting too big
+// and this file is for creating/sending emails anyway
+exports.sendCongratulatoryEmailRegardingVideo = function(video_node) {
+
+}
+
+

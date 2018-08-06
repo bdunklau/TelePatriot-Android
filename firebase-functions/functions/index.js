@@ -240,4 +240,12 @@ exports.dbg = debug.dbg
 exports.dbgKeys = debug.dbgKeys
 exports.dbgKeyValues = debug.dbgKeyValues
 
+const videoTypes = require('./video-types')
+exports.listVideoTypes = videoTypes.listVideoTypes
+exports.testSaveVideoType = videoTypes.testSaveVideoType
+exports.testSendLegislatorEmail = videoTypes.testSendLegislatorEmail
+exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
+
+
+
 
