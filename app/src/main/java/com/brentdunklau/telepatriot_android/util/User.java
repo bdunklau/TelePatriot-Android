@@ -33,7 +33,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     //private List<String> teamNames = new ArrayList<String>();
-    private boolean isAdmin, isDirector, isVolunteer;
+    private boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
     private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
     private String current_video_node_key;
@@ -356,12 +356,14 @@ public class User implements FirebaseAuth.AuthStateListener {
         return isVolunteer;
     }
 
+    public boolean isVideoCreator() { return isVideoCreator; }
+
     public boolean isVolunteerOnly() {
-        return isVolunteer && !isDirector && !isAdmin;
+        return isVolunteer && !isDirector && !isAdmin && !isVideoCreator;
     }
 
     public boolean hasAnyRole() {
-        return isAdmin || isDirector || isVolunteer;
+        return isAdmin || isDirector || isVolunteer || isVideoCreator;
     }
 
     @Override
@@ -378,7 +380,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private class ChildEventAdapter implements ChildEventListener {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-            boolean notAssignedYet = !isAdmin && !isDirector && !isVolunteer;
+            boolean notAssignedYet = !isAdmin && !isDirector && !isVolunteer && !isVideoCreator;
             doRole(dataSnapshot.getKey(), true);
             fireRoleAdded(dataSnapshot.getKey());
         }
@@ -390,6 +392,8 @@ public class User implements FirebaseAuth.AuthStateListener {
                 isDirector = val;
             else if(role.equalsIgnoreCase("volunteer"))
                 isVolunteer = val;
+            else if(role.equalsIgnoreCase("video creator"))
+                isVideoCreator = val;
         }
 
         @Override

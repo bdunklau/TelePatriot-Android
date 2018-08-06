@@ -4,7 +4,7 @@ const admin = require('firebase-admin')
 const date = require('./dateformat')
 
 // see:  https://www.youtube.com/watch?v=7E13ZBCyKT0&index=2&list=PLl-K7zZEsYLkPZHe41m4jfAxUi0JjLgSM
- 
+
 /****
 firebase deploy --only functions:roleAssigned,functions:roleUnassigned
 Prod deployments: 8/6/18

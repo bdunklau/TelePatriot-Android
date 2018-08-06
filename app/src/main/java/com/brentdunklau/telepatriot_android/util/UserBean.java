@@ -21,7 +21,7 @@ public class UserBean {
 
     private Boolean is_banned;
     //private Boolean enabled = true;
-    private boolean isAdmin, isDirector, isVolunteer;
+    private boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
 
     private String account_disposition;
     private String account_dispositioned_by;
@@ -218,6 +218,14 @@ public class UserBean {
         isVolunteer = volunteer;
     }
 
+    public boolean isVideoCreator() {
+        return isVideoCreator;
+    }
+
+    public void setVideoCreator(boolean videoCreator) {
+        isVideoCreator = videoCreator;
+    }
+
     public String getResidential_address_line1() {
         return residential_address_line1;
     }
@@ -327,9 +335,11 @@ public class UserBean {
         roleMap.put("Admin", isAdmin ? "true" : null); // will forever regret making these strings instead of booleans
         roleMap.put("Director", isDirector ? "true" : null); // will forever regret making these strings instead of booleans
         roleMap.put("Volunteer", isVolunteer ? "true" : null); // will forever regret making these strings instead of booleans
+        roleMap.put("Video Creator", isVideoCreator ? "true" : null); // will forever regret making these strings instead of booleans
 
         m.put("roles", roleMap);
 
+        // multi-path update example
         // what about teams ?
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference userRef = database.getReference("users").child(uid);
