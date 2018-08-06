@@ -8,7 +8,6 @@ const date = require('./dateformat')
 // TODO fix this
 /* Listens for new messages added to __________ and then ____________ */
 exports.roleAssigned = functions.database.ref('/users/{uid}/roles/{role}').onCreate( event => {
-    console.log("roleAssigned: uid=", event.params.uid, "role=", event.params.role)
 
     // event.params.role will be the value of the key so make the key 'Admin' and the value doesn't matter
     var uid = event.params.uid
@@ -38,26 +37,25 @@ exports.roleAssigned = functions.database.ref('/users/{uid}/roles/{role}').onCre
 
 
 exports.roleUnassigned = functions.database.ref('/users/{uid}/roles/{role}').onDelete( event => {
-    console.log("roleUnassigned: uid=", event.params.uid, "role=", event.params.role)
 
     var role = event.params.role
     var uid = event.params.uid
 
-    event.data.previous.adminRef.root.child(`/roles/${role}/users/${uid}`).remove()
+    event.data.previous.adminRef.root.child('/roles/'+role+'/users/'+uid).remove()
 
-    return event.data.adminRef.root.child(`/roles/${role}/topics`).once('value').then(snapshot => {
-
-          snapshot.forEach(function(child) {
-            console.log("child.val(): ", child.val())
+    return event.data.adminRef.root.child('roles/'+role+'/topics').once('value').then(snapshot => {
+        var updates = {}
+        snapshot.forEach(function(child) {
             var topic = child.val().name
-            event.data.adminRef.root.child(`/users/${uid}/topics/${topic}`).remove()
-          });
+            updates[topic] = null
+        });
 
+        event.data.adminRef.root.child('/users/'+uid+'/topics/').update(updates)
     })
     .then(() => {
         var datestr = date.asCentralTime()
         var msg = "Admin has removed you from the "+role+" group"
-        event.data.adminRef.root.child(`/users/${uid}/account_status_events`).push({date: datestr, event: msg})
+        event.data.adminRef.root.child('/users/'+uid+'/account_status_events').push({date: datestr, event: msg})
     })
 
 });
