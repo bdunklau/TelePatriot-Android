@@ -5,8 +5,11 @@ const date = require('./dateformat')
 
 // see:  https://www.youtube.com/watch?v=7E13ZBCyKT0&index=2&list=PLl-K7zZEsYLkPZHe41m4jfAxUi0JjLgSM
 
-// TODO fix this
-/* Listens for new messages added to __________ and then ____________ */
+/****
+firebase deploy --only functions:roleAssigned,functions:roleUnassigned
+Prod deployments: 8/6/18
+****/
+
 exports.roleAssigned = functions.database.ref('/users/{uid}/roles/{role}').onCreate( event => {
 
     // event.params.role will be the value of the key so make the key 'Admin' and the value doesn't matter
