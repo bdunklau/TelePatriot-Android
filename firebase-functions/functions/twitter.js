@@ -11,6 +11,10 @@ const twitterAPI = require('node-twitter-api')  // ref:  https://www.npmjs.com/p
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
+/***
+paste this on the command line...
+firebase deploy --only functions:twitter,functions:testTweet,functions:handleTweetRequest,functions:callback_from_twitter
+***/
 
 exports.twitter = functions.https.onRequest((req, res) => {
     // if we have 'twitter_access_token' and 'twitter_access_token_secret' then we've already
@@ -58,7 +62,7 @@ exports.handleTweetRequest = functions.database.ref('tweet_requests/{key}').onWr
 
 
 var tweet = function(stuff) {
-    // send the tweet then render...
+    // send the tweet...
 
     return db.ref('api_tokens').once('value').then(snapshot => {
         var twitter = new twitterAPI({
@@ -68,19 +72,18 @@ var tweet = function(stuff) {
                           })
 
         return twitter.statuses("update",
-                        {status: stuff.tweet_request.text},
+                        {status: stuff.tweet_request.text}, // 'text' has to be < 140 chars
                         snapshot.val().twitter_access_token,
                         snapshot.val().twitter_access_token_secret,
                         function(error, data, response) {
                             if (error) {
                                 // something went wrong
                                 // TODO need error handling strategy
-                                /********
                                 var text = 'no text (that is bad)'
                                 if(stuff.tweet_request.text)
                                     text = stuff.tweet_request.text
-                                db.ref('templog2').set({error: error, text: text, event_data_val: stuff.tweet_request})
-                                *******/
+                                db.ref('templog2').set({error: error, text: text, event_data_val: stuff.tweet_request,
+                                                    date: date.asCentralTime(), date_ms: date.asMillis()})
                             } else {
                                 // data contains the data sent by twitter
                                 // don't try to log/debug the response object.  It contains a function
@@ -88,7 +91,22 @@ var tweet = function(stuff) {
                                 // add some of my own attrs to data...
                                 data.date = date.asCentralTime()
                                 data.date_ms = date.asMillis()
-                                db.ref('tweets').push().set(data)
+                                db.ref('tweets').push().set(data) // don't believe we use this for anything other than auditing (8/5/18)
+
+                                if(event.data.val().video_node_key) { // may not exist in testing classes
+                                    // There's a trigger (not created yet) that listens for writes to this node and also to
+                                    // facebook_post_id.  The trigger then examines the values of post_to_facebook, post_to_twitter and
+                                    // email_to_legislator to figure out if the emails are ready to go out and if they are,
+                                    // what the text of the emails should be.
+                                    //
+                                    // There are two emails:
+                                    // one to the participants but not the legislator, and another to the participants AND the legislator
+                                    // The email to the legislator is addressed to him.  Whereas the other one is a congratulatory email to
+                                    // the participants
+                                    // SEE google-cloud:socialMediaPostsCreated()
+                                    event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/twitter_post_id').set(data.id_str)
+                                }
+
                             }
                         }
                     )

@@ -41,6 +41,7 @@ exports.video_processing_callback = functions.https.onRequest((req, res) => {
     var updates = {}
     if(req.query.video_id && req.query.video_node_key) {
 
+        // SEE google-cloud.js:whenVideoIdIsCreated()
         // Writing to 'video/list/{video_node_key}/video_id' triggers google-cloud.js:whenVideoIdIsCreated()
         return db.ref('video/list/'+req.query.video_node_key+'/video_id').set(req.query.video_id).then(() => {
             return res.status(200).send('ok: youtube-subscribe.js:video_processing_callback() handled your request')
