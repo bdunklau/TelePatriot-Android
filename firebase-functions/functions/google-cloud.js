@@ -1144,12 +1144,16 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
         // first thing, write recording_requested:true to the video node so that both clients can listen for this attribute
         // why?  so that both clients can show the spinner while the recorder is starting up.
         updates['video/list/'+event.data.val().video_node_key+'/recording_requested'] = true
-        updates['video/list/'+event.data.val().video_node_key+'/recording_started'] = date.asCentralTime()
-        updates['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = date.asMillis()
-        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started'] = date.asCentralTime()
-        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started_ms'] = date.asMillis()
+        updates['video/list/'+event.data.val().video_node_key+'/recording_started'] = null
+        updates['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = null
+        updates['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = null
+        updates['video/list/'+event.data.val().video_node_key+'/recording_stopped_ms'] = null
+        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started'] = null
+        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started_ms'] = null
+        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped'] = null
+        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped_ms'] = null
         db.ref('/').update(updates)
-        
+
 
         db.ref('templog2').push().set({dockerRequest: 'OK: type = start recording', date: date.asCentralTime()})
 
