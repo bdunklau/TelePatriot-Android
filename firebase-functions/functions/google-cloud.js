@@ -1143,6 +1143,7 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
     if(type == 'start recording') {
         // first thing, write recording_requested:true to the video node so that both clients can listen for this attribute
         // why?  so that both clients can show the spinner while the recorder is starting up.
+        var updates = {}
         updates['video/list/'+event.data.val().video_node_key+'/recording_requested'] = true
         updates['video/list/'+event.data.val().video_node_key+'/recording_started'] = null
         updates['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = null
