@@ -45,6 +45,7 @@ import com.vidyo.VidyoClient.Device.Device;
 import com.vidyo.VidyoClient.Device.LocalCamera;
 import com.vidyo.VidyoClient.Device.LocalMicrophone;
 import com.vidyo.VidyoClient.Device.RemoteCamera;
+import com.vidyo.VidyoClient.Device.RemoteMicrophone;
 import com.vidyo.VidyoClient.Endpoint.LogRecord;
 import com.vidyo.VidyoClient.Endpoint.Participant;
 import com.vidyo.VidyoClient.NetworkInterface;
@@ -63,6 +64,7 @@ public class VidyoChatFragment extends BaseFragment implements
         ,Connector.IRegisterLocalCameraEventListener
         ,Connector.IRegisterLocalMicrophoneEventListener
         ,Connector.IRegisterRemoteCameraEventListener
+        ,Connector.IRegisterRemoteMicrophoneEventListener
         //,IVideoFrameListener
 {
 
@@ -483,11 +485,11 @@ public class VidyoChatFragment extends BaseFragment implements
                         inviteLinks();
 
                         if(Boolean.TRUE == currentVideoNode.getRecording_requested()) {
-                            showSpinner();
+                            showSpinner(); // dismissed just below here, once currentVideoNode.getRecording_started() != null
                         }
 
                         if(currentVideoNode.getRecording_started() != null)
-                            recordingStarted();
+                            dismissSpinner();
 
                         if(noLegislator(currentVideoNode)) {
                             // use then before any legislator is chosen
@@ -1460,9 +1462,10 @@ public class VidyoChatFragment extends BaseFragment implements
 //    }
 
     private void connectIfNotConnected() {
-        if(mVidyoConnectorState != VidyoConnectorState.Connected)
-            doConnect();
-        else Log.d(TAG, "already connected to Vidyo server");
+        //TODO if we put this auto-connect logic back in, we have to remember that we connect using "connect request" calls now.  We don't directly call doConnect()
+//        if(mVidyoConnectorState != VidyoConnectorState.Connected)
+//            doConnect();
+//        else Log.d(TAG, "already connected to Vidyo server");
     }
 
     // modeled after Swift VideoChatVC.doConnect()
@@ -1516,10 +1519,6 @@ public class VidyoChatFragment extends BaseFragment implements
         record_button.setBackgroundResource(R.drawable.record);
         createRecordingEvent("stop recording");
         publish_button.setVisibility(View.VISIBLE);
-    }
-
-    private void recordingStarted() {
-        dismissSpinner();
     }
 
     private void dismissSpinner() {
@@ -1629,6 +1628,21 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onLocalMicrophoneStateUpdated(LocalMicrophone localMicrophone, Device.DeviceState deviceState) {
         System.out.println("onLocalMicrophoneStateUpdated");
+    }
+
+    @Override
+    public void onRemoteMicrophoneAdded(RemoteMicrophone remoteMicrophone, Participant participant) {
+
+    }
+
+    @Override
+    public void onRemoteMicrophoneRemoved(RemoteMicrophone remoteMicrophone, Participant participant) {
+
+    }
+
+    @Override
+    public void onRemoteMicrophoneStateUpdated(RemoteMicrophone remoteMicrophone, Participant participant, Device.DeviceState deviceState) {
+
     }
 
     // Handle a message being logged.
