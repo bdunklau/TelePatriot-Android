@@ -31,4 +31,5 @@ exports.onConnectRequest = functions.database.ref('video/video_events/{key}').on
     updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+event.data.val().uid+'/connect_date_ms'] = date.asMillis()
     updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+event.data.val().uid+'/disconnect_date'] = null
     updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+event.data.val().uid+'/disconnect_date_ms'] = null
+    return event.data.adminRef.root.child('/').update(updates)
 })
