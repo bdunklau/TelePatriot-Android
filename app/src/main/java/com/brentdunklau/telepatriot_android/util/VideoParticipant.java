@@ -114,4 +114,8 @@ public class VideoParticipant {
     public void setVidyo_token(String vidyo_token) {
         this.vidyo_token = vidyo_token;
     }
+
+    public boolean isConnected() {
+        return connect_date != null && disconnect_date == null;
+    }
 }

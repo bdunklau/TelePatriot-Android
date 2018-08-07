@@ -1412,7 +1412,14 @@ public class VidyoChatFragment extends BaseFragment implements
     public void connectionClicked() {
         if(currentVideoNode == null)
             return;
-        VideoEvent ve = new VideoEvent(User.getInstance(), currentVideoNode.getKey(), /*room_id*/currentVideoNode.getKey(), "connect request");
+        VideoParticipant vp = currentVideoNode.getParticipant(User.getInstance().getUid());
+        if(vp == null)
+            return;
+        String request_type = "connect request";
+        if(vp.isConnected()) {
+            request_type = "disconnect request";
+        }
+        VideoEvent ve = new VideoEvent(User.getInstance(), currentVideoNode.getKey(), /*room_id*/currentVideoNode.getKey(), request_type);
         ve.save();
 
 

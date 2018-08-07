@@ -381,4 +381,8 @@ public class VideoNode {
         }
         return count == 2;
     }
+
+    public VideoParticipant getParticipant(String uid) {
+        return video_participants.get(uid);
+    }
 }
