@@ -63,7 +63,6 @@ public class VidyoChatFragment extends BaseFragment implements
         ,Connector.IRegisterLocalMicrophoneEventListener
         ,Connector.IRegisterRemoteCameraEventListener
         //,IVideoFrameListener
-        ,FragmentContainingUser
 {
 
     private static String TAG = "VidyoChatFragment";
@@ -159,8 +158,8 @@ public class VidyoChatFragment extends BaseFragment implements
 
     private ProgressBar video_chat_spinner;
 
-    private FragmentManager fragmentManager;
-    private Fragment back;
+//    private FragmentManager fragmentManager;
+//    private Fragment back;
 
 
     /*
@@ -196,9 +195,7 @@ public class VidyoChatFragment extends BaseFragment implements
         invite_someone_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SearchUsersFragment f = new SearchUsersFragment();
-                f.setWhereTo(VidyoChatFragment.this); // means we'll come back to this fragment once we select a user
-                showFragment(f);
+                inviteSomeone();
             }
         });
 
@@ -207,11 +204,7 @@ public class VidyoChatFragment extends BaseFragment implements
         revoke_invitation_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Map updates = new HashMap();
-                updates.put("video/list/"+currentVideoNode.getKey()+"/video_invitation_key", null);
-                updates.put("video/list/"+currentVideoNode.getKey()+"/video_invitation_extended_to", null);
-                updates.put("video/invitations/"+currentVideoNode.getVideo_invitation_key(), null);
-                FirebaseDatabase.getInstance().getReference().updateChildren(updates);
+                revokeInvitation();
             }
         });
 
@@ -506,12 +499,19 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
     private void inviteLinks() {
-        invite_someone_button.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()==null ? View.VISIBLE : View.GONE);
-        guest_name.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()!=null ? View.VISIBLE : View.GONE);
-        revoke_invitation_button.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()!=null ? View.VISIBLE : View.GONE);
-        if(guest_name.getVisibility() == View.VISIBLE) {
-            guest_name.setText("You have invited "+currentVideoNode.getVideo_invitation_extended_to()+" to participate in a video chat");
-        }
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                invite_someone_button.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()==null ? View.VISIBLE : View.GONE);
+                guest_name.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()!=null ? View.VISIBLE : View.GONE);
+                revoke_invitation_button.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()!=null ? View.VISIBLE : View.GONE);
+                if(guest_name.getVisibility() == View.VISIBLE) {
+                    guest_name.setText("You have invited "+currentVideoNode.getVideo_invitation_extended_to()+" to participate in a video chat");
+                }
+            }
+        });
+
+
     }
 
     //method to get the right URL to use in the intent
@@ -726,24 +726,24 @@ public class VidyoChatFragment extends BaseFragment implements
 
     }
 
-    // per FragmentContainingUser
-    public void userSelected(UserBean guest) {
-        // this is the person that was just invited - it's not the current user.  The current user invited this person
-        if(currentVideoNode == null)
-            return;
-        VideoInvitation inv = new VideoInvitation(User.getInstance(), guest, currentVideoNode.getKey());
-        String key = inv.save();
-        Map updates = new HashMap();
-        updates.put("video_invitation_key", key);
-        updates.put("video_invitation_extended_to", guest.getName());
-        FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey()).updateChildren(updates);
-    }
+//    // per FragmentContainingUser
+//    public void userSelected(UserBean guest) {
+//        // this is the person that was just invited - it's not the current user.  The current user invited this person
+//        if(currentVideoNode == null)
+//            return;
+//        VideoInvitation inv = new VideoInvitation(User.getInstance(), guest, currentVideoNode.getKey());
+//        String key = inv.save();
+//        Map updates = new HashMap();
+//        updates.put("video_invitation_key", key);
+//        updates.put("video_invitation_extended_to", guest.getName());
+//        FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey()).updateChildren(updates);
+//    }
 
-    // per FragmentContainingUser
-    public void setFragmentManager(FragmentManager fragmentManager, Fragment back) {
-        this.fragmentManager = fragmentManager;
-        this.back = back;
-    }
+//    // per FragmentContainingUser
+//    public void setFragmentManager(FragmentManager fragmentManager, Fragment back) {
+//        this.fragmentManager = fragmentManager;
+//        this.back = back;
+//    }
 
     public Fragment getFragment() {
         return this;
@@ -1010,6 +1010,20 @@ public class VidyoChatFragment extends BaseFragment implements
         EditVideoMissionDescriptionDlg dialog = new EditVideoMissionDescriptionDlg(getActivity(), currentVideoNode.getKey(),
                 "Video Mission Description","video_mission_description", currentVideoNode.getVideo_mission_description());
         dialog.show();
+    }
+
+    private void inviteSomeone() {
+        SearchUsersDlg dialog = new SearchUsersDlg(getActivity(), currentVideoNode);
+        dialog.show();
+//        SearchUsersFragment f = new SearchUsersFragment();
+//        f.setWhereTo(VidyoChatFragment.this); // means we'll come back to this fragment once we select a user
+//        showFragment(f);
+    }
+
+    private void revokeInvitation() {
+        if(currentVideoNode == null)
+            return;
+        new VideoInvitation(currentVideoNode).delete();
     }
 
 

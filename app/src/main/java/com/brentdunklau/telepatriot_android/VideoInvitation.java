@@ -3,6 +3,8 @@ package com.brentdunklau.telepatriot_android;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.util.Util;
+import com.brentdunklau.telepatriot_android.util.VideoNode;
+import com.brentdunklau.telepatriot_android.util.VideoParticipant;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
@@ -59,14 +61,26 @@ public class VideoInvitation {
         this.video_node_key = video_node_key;
     }
 
+    // convenience constructor for delete()
+    public VideoInvitation(VideoNode videoNode) {
+        this.video_node_key = videoNode.getKey();
+        this.key = videoNode.getVideo_invitation_key();
+        this.guest_id = this.key.substring(this.key.indexOf("guest")+"guest".length());
+        this.initiator_id = this.key.substring(this.key.indexOf("initiator")+"initiator".length(), this.key.indexOf("guest"));
+    }
+
     /**
      *
      * @return the key of the node
      */
     public String save() {
-        String key = "initiator"+initiator_id+"guest"+guest_id;
+        String key = constructKey(initiator_id, guest_id);
         FirebaseDatabase.getInstance().getReference("video/invitations/"+key).setValue(dictionary());
         return key;
+    }
+
+    private String constructKey(String initiator_id, String guest_id) {
+        return "initiator"+initiator_id+"guest"+guest_id;
     }
 
     private Map dictionary() {
@@ -224,5 +238,44 @@ public class VideoInvitation {
 
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public void delete() {
+        if(video_node_key==null || key==null || guest_id==null)
+            return; // can't delete - some data is missing
+        Map updates = new HashMap();
+        updates.put("video/list/"+video_node_key+"/video_invitation_key", null);
+        updates.put("video/list/"+video_node_key+"/video_invitation_extended_to", null);
+        updates.put("video/list/"+video_node_key+"/video_participants/"+guest_id, null);
+        updates.put("video/invitations/"+key, null);
+        updates.put("users/"+guest_id+"/current_video_node_key", null);
+        FirebaseDatabase.getInstance().getReference().updateChildren(updates);
+    }
+
+    public void accept() {
+        Map values = new HashMap();
+        if(User.getInstance().getCurrent_video_node_key() != null) {
+            values.put("video/list/"+User.getInstance().getCurrent_video_node_key()+"/video_participants/present", false);
+        }
+
+        User.getInstance().setCurrent_video_node_key(video_node_key);
+
+        VideoParticipant videoParticipant = new VideoParticipant(User.getInstance());
+        for(Object key : videoParticipant.map().keySet()) {
+            String absPath = "video/list/"+getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/"+key;
+            Object value = videoParticipant.map().get(key);
+            values.put(absPath, value);
+        }
+
+        // setting 'present' to true here because we are about to go to the Video Chat screen
+        // Sure, we also set present=true onResume() and onStart() but ... anyway
+        values.put("video/list/"+getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/present", true);
+        values.put("video/list/"+getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/vidyo_token_requested", true);
+        values.put("video/list/"+getVideo_node_key()+"/room_id", getRoom_id());
+        FirebaseDatabase.getInstance().getReference("/").updateChildren(values);
+    }
+
+    public void decline() {
+        delete();
     }
 }

@@ -21,7 +21,9 @@ public class VideoInvitationHolder  extends RecyclerView.ViewHolder {
 
 
     // https://stackoverflow.com/a/41629505
-    private VideoInvitationHolder.ClickListener mClickListener;
+//    private VideoInvitationHolder.ClickListener mClickListener;
+    private VideoInvitationHolder.ClickListener acceptInvitationListener;
+    private VideoInvitationHolder.ClickListener declineInvitationListener;
 
     // See VideoInvitationsFragment and video_invitation.xml
     public VideoInvitationHolder(View itemView) {
@@ -30,6 +32,7 @@ public class VideoInvitationHolder  extends RecyclerView.ViewHolder {
         initiator_name = itemView.findViewById(R.id.initiator_name);
         invitation_create_date = itemView.findViewById(R.id.invitation_create_date);
         Button accept_invitation_button = itemView.findViewById(R.id.accept_invitation_button);
+        Button decline_invitation_button = itemView.findViewById(R.id.decline_invitation_button);
 
         // https://stackoverflow.com/a/41629505
         // In other XxxxHolders, we do:  itemView.setOnClickListener() so that the whole row
@@ -38,7 +41,15 @@ public class VideoInvitationHolder  extends RecyclerView.ViewHolder {
             @Override
             public void onClick(View v) {
                 // the listener is (probably) over at VideoInvitationsFragment
-                mClickListener.onItemClick(v, getAdapterPosition());
+                acceptInvitationListener.onItemClick(v, getAdapterPosition());
+            }
+        });
+
+        decline_invitation_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // the listener is (probably) over at VideoInvitationsFragment
+                declineInvitationListener.onItemClick(v, getAdapterPosition());
             }
         });
     }
@@ -55,9 +66,19 @@ public class VideoInvitationHolder  extends RecyclerView.ViewHolder {
         invitation_create_date.setText(invitation.getInvitation_create_date());
     }
 
+//    // https://stackoverflow.com/a/41629505
+//    public void setOnClickListener(VideoInvitationHolder.ClickListener clickListener){
+//        mClickListener = clickListener;
+//    }
+
     // https://stackoverflow.com/a/41629505
-    public void setOnClickListener(VideoInvitationHolder.ClickListener clickListener){
-        mClickListener = clickListener;
+    public void setOnAcceptInvitationListener(VideoInvitationHolder.ClickListener clickListener){
+        acceptInvitationListener = clickListener;
+    }
+
+    // https://stackoverflow.com/a/41629505
+    public void setOnDeclineInvitationListener(VideoInvitationHolder.ClickListener clickListener){
+        declineInvitationListener = clickListener;
     }
 
     // TODO duplicated in UserHolder

@@ -808,7 +808,7 @@ var getVms = function(callback) {
 exports.setRoom_id = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
     if(!event.data.val() && event.data.previous.val())
         return false //ignore deleted nodes
-    if(event.data.previous.val().room_id)
+    if(event.data.previous.val() && event.data.previous.val().room_id)
         return false // if room_id was already set, return early
     return event.data.ref.child('room_id').set(event.params.video_node_key)
 })

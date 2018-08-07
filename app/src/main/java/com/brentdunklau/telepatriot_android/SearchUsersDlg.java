@@ -1,15 +1,11 @@
 package com.brentdunklau.telepatriot_android;
 
-import android.app.Fragment;
+import android.app.Dialog;
 import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.Context;
-import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -17,39 +13,36 @@ import android.view.inputmethod.InputMethodManager;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.util.UserHolder;
+import com.brentdunklau.telepatriot_android.util.VideoNode;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Created by bdunklau on 10/19/2017.
+ * Created by bdunklau on 8/6/18.
  */
 
-public class SearchUsersFragment extends BaseFragment {
+public class SearchUsersDlg extends Dialog {
 
     private FirebaseRecyclerAdapter<UserBean, UserHolder> firebaseRecyclerAdapter22;
     private RecyclerView users;
     SearchView search_users;
-    private FragmentContainingUser whereTo;
-    View myView;
 
-    public void setWhereTo(FragmentContainingUser whereTo) {
-        this.whereTo = whereTo;
-    }
+    public SearchUsersDlg(Context activity, final VideoNode currentVideoNode) {
+        super(activity);
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.search_users_fragment, container, false);
-        search_users = myView.findViewById(R.id.search_users);
+        setContentView(R.layout.search_users_fragment);
+        search_users = findViewById(R.id.search_users);
         search_users.setQueryHint("Search by name");
 
-        users = (RecyclerView) myView.findViewById(R.id.user_list);
-        users.setLayoutManager(new LinearLayoutManager(myView.getContext()));
+        users = (RecyclerView) findViewById(R.id.user_list);
+        users.setLayoutManager(new LinearLayoutManager(getContext()));
 
         search_users.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -69,7 +62,7 @@ public class SearchUsersFragment extends BaseFragment {
 
                 Query query = FirebaseDatabase.getInstance().getReference().child("users").orderByChild("name").startAt(newText).endAt(newText+"\uf8ff");
 
-                final FragmentManager fragmentManager = getFragmentManager();
+                //final FragmentManager fragmentManager = getFragmentManager();
 
                 firebaseRecyclerAdapter22 = new FirebaseRecyclerAdapter<UserBean, UserHolder>(
                         UserBean.class,
@@ -90,7 +83,7 @@ public class SearchUsersFragment extends BaseFragment {
                             @Override
                             public void onItemClick(View view, int position) {
 
-                                InputMethodManager imm = (InputMethodManager) myView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                                 imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 
                                 firebaseRecyclerAdapter22.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
@@ -100,34 +93,19 @@ public class SearchUsersFragment extends BaseFragment {
                                         // at the user's roles at /users/uid/roles because we need to set the role switches
                                         // to the right values
                                         String uid = dataSnapshot.getKey();
-                                        UserBean ub = dataSnapshot.getValue(UserBean.class);
-                                        ub.setUid(uid);
+                                        UserBean guest = dataSnapshot.getValue(UserBean.class);
+                                        guest.setUid(uid);
 
-                                        // need to allow this screen to go to any fragment we want - specified by whatever fragment called THIS fragment
-                                        // primarily because of the invite_someone link in VidyoChatFragment
-                                        if(whereTo == null)
-                                            whereTo = new AssignUserFragment();
-                                        whereTo.userSelected(ub);
-                                        whereTo.setFragmentManager(fragmentManager, SearchUsersFragment.this);
-
-                                        try {
-                                            /******
-                                            FragmentTransaction t1 = fragmentManager.beginTransaction();
-                                            FragmentTransaction t2 = t1.replace(R.id.content_frame, fragment);
-                                            int res = t2.commit();
-                                            int i=1;
-                                            ********/
-
-                                            fragmentManager.beginTransaction()
-                                                    .replace(R.id.content_frame, whereTo.getFragment())
-                                                    .addToBackStack(whereTo.getFragment().getClass().getName())
-                                                    .commit();
-
-
-                                        } catch(Throwable t) {
-                                            // TODO don't do this
-                                            t.printStackTrace();
-                                        }
+                                        // write the invitation and dismiss...
+                                        if(currentVideoNode == null)
+                                            return;
+                                        VideoInvitation inv = new VideoInvitation(User.getInstance(), guest, currentVideoNode.getKey());
+                                        String key = inv.save();
+                                        Map updates = new HashMap();
+                                        updates.put("video_invitation_key", key);
+                                        updates.put("video_invitation_extended_to", guest.getName());
+                                        FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey()).updateChildren(updates);
+                                        SearchUsersDlg.this.dismiss();
                                     }
 
                                     @Override
@@ -150,9 +128,5 @@ public class SearchUsersFragment extends BaseFragment {
                 return false;
             }
         });
-
-
-        return myView;
     }
-
 }

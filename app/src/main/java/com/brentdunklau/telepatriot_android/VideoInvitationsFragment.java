@@ -99,7 +99,51 @@ public class VideoInvitationsFragment extends BaseFragment  {
             @Override
             public VideoInvitationHolder onCreateViewHolder(ViewGroup parent, int viewType) {
                 VideoInvitationHolder viewHolder = super.onCreateViewHolder(parent, viewType);
-                viewHolder.setOnClickListener(new VideoInvitationHolder.ClickListener() {
+
+
+                viewHolder.setOnDeclineInvitationListener(new VideoInvitationHolder.ClickListener() {
+                    @Override
+                    public void onItemClick(View view, int position) {
+                        mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                // see MissionListFragment for an example of how to do something when
+                                // the user touches a row in a table
+
+                                if(dataSnapshot == null) {
+                                    System.out.println("VideoInvitationsFragment: dataSnapshot is null - that's not good");
+                                    return;
+                                }
+
+                                // whenever you touch one of the video invitations, that triggers another query
+                                // that creates a VideoInvitation object and then pulls out relevant info
+                                // to send to VideoChatFragment
+                                //String videoInvId = dataSnapshot.getKey(); // might not need this
+                                VideoInvitation invitation = dataSnapshot.getValue(VideoInvitation.class);
+                                invitation.setKey(dataSnapshot.getKey());
+                                // declining the invitation does the same thing as revoking/cancelling the invitation by the initiator
+                                invitation.decline();
+
+                                // after the invitation is declined - we will just leave the user on the Video Invitation page with
+                                // a note/label to the user telling him there are no invitations, swipe left to right for the menu, etc
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onItemLongClick(View view, int position) {
+                    }
+                });
+
+
+
+                viewHolder.setOnAcceptInvitationListener(new VideoInvitationHolder.ClickListener() {
                     @Override
                     public void onItemClick(View view, int position) {
                         mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
@@ -119,25 +163,11 @@ public class VideoInvitationsFragment extends BaseFragment  {
                                 // to send to VideoChatFragment
                                 //String videoInvId = dataSnapshot.getKey(); // might not need this
                                 VideoInvitation invitation = dataSnapshot.getValue(VideoInvitation.class);
-                                User.getInstance().setCurrent_video_node_key(invitation.getVideo_node_key());
+                                invitation.accept();
 
                                 VidyoChatFragment fragment = new VidyoChatFragment();
                                 // don't set attributes on the fragment, update the database.  Then let the realtime query
                                 // in the fragment get these values
-                                Map values = new HashMap();
-                                VideoParticipant videoParticipant = new VideoParticipant(User.getInstance());
-                                for(Object key : videoParticipant.map().keySet()) {
-                                    String absPath = "video/list/"+invitation.getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/"+key;
-                                    Object value = videoParticipant.map().get(key);
-                                    values.put(absPath, value);
-                                }
-                                // setting 'present' to false here because it should be set to true when VidyoChatFragment loads
-                                // I don't want it set to true until that screen actually loads because we use these 'present' values
-                                // to tell the app it's ok to connect people.
-                                values.put("video/list/"+invitation.getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/present", false);
-                                values.put("video/list/"+invitation.getVideo_node_key()+"/room_id", invitation.getRoom_id());
-                                FirebaseDatabase.getInstance().getReference("/").updateChildren(values);
-
                                 // What do we want to send to VidyoChatFragment?
                                 //fragment.setMissionId(missionId);
                                 //fragment.setMission(mission);
@@ -164,6 +194,7 @@ public class VideoInvitationsFragment extends BaseFragment  {
                     public void onItemLongClick(View view, int position) {
                     }
                 });
+
                 return viewHolder;
             }
         };
