@@ -643,6 +643,7 @@ var startRecording = function(stuff) {
                     updates['administration/dockers/'+stuff.docker_key+'/recording_stopped_ms'] = null
 
                     // also need to update the video node at /video/list/[video_node_key] with...
+                    updates['video/list/'+stuff.video_node_key+'/recording_requested'] = null // makes sure the spinner doesn't come back
                     updates['video/list/'+stuff.video_node_key+'/recording_stopped'] = null
                     updates['video/list/'+stuff.video_node_key+'/recording_stopped_ms'] = null
                     updates['video/list/'+stuff.video_node_key+'/vm_host'] = stuff.vm_host
@@ -1140,6 +1141,11 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
     // we don't 'request a room' - we are requesting a 'recording secretary'.  The room is just a
     // name/string that we already know
     if(type == 'start recording') {
+        // first thing, write recording_requested:true to the video node so that both clients can listen for this attribute
+        // why?  so that both clients can show the spinner while the recorder is starting up.
+        db.ref('video/list/'+event.data.val().video_node_key+'/recording_requested').set(true)
+
+
         db.ref('templog2').push().set({dockerRequest: 'OK: type = start recording', date: date.asCentralTime()})
 
         //find the first 'virtual machine' node from /administration/hosts

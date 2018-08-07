@@ -336,7 +336,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
         // Set the onClick listeners for the buttons
         connect_button = myView.findViewById(R.id.connect_button);
-        connect_button.setOnClickListener(this);
+        connect_button.setOnClickListener(this); // See onClick() in this class
 //        microphone_button = myView.findViewById(R.id.microphone_button);
 //        microphone_button.setOnClickListener(this);
 //        camera_button = myView.findViewById(R.id.camera_button);
@@ -471,7 +471,20 @@ public class VidyoChatFragment extends BaseFragment implements
                         post_to_facebook.setChecked(currentVideoNode.isPost_to_facebook());
                         post_to_twitter.setChecked(currentVideoNode.isPost_to_twitter());
 
+                        // the connect_button toggles its image as soon as it's clicked.  This code will just keep it in sync if a disconnect is forced from somewhere else
+                        if(currentVideoNode.getParticipant(User.getInstance().getUid()).isConnected()) {
+                            connect_button.setChecked(true);
+                            doConnect();
+                        } else {
+                            connect_button.setChecked(false);
+                            doDisconnect();
+                        }
+
                         inviteLinks();
+
+                        if(Boolean.TRUE == currentVideoNode.getRecording_requested()) {
+                            showSpinner();
+                        }
 
                         if(currentVideoNode.getRecording_started() != null)
                             recordingStarted();
@@ -563,7 +576,7 @@ public class VidyoChatFragment extends BaseFragment implements
         // Even though we only NEED this info before publishing, it makes more sense to ask for it
         // before recording starts.
         AlertDialog.Builder builder = new AlertDialog.Builder(myView.getContext());
-        builder.setMessage("Choose the legislator first and then start the recording")
+        builder.setMessage("Choose a legislator before recording")
                 .setCancelable(false)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
@@ -1281,7 +1294,7 @@ public class VidyoChatFragment extends BaseFragment implements
 
                         case Connected:
                             connect_button.setChecked(true);
-                            record_button.setVisibility(View.VISIBLE);
+                            //record_button.setVisibility(View.VISIBLE);
                             //mConnectionSpinner.setVisibility(View.INVISIBLE);
 //                            Toast.makeText(getActivity(), "connected", Toast.LENGTH_SHORT).show();
                             break;
@@ -1299,12 +1312,12 @@ public class VidyoChatFragment extends BaseFragment implements
                             // call will actually end the call. Need to wait for the callback to be received
                             // before swapping to the callStart image.
                             connect_button.setChecked(true);
-                            record_button.setVisibility(View.GONE);
+                            //record_button.setVisibility(View.GONE);
 //                            Toast.makeText(getActivity(), "disconnecting", Toast.LENGTH_SHORT).show();
                             break;
 
                         case Disconnected:
-                            record_button.setVisibility(View.GONE);
+                            //record_button.setVisibility(View.GONE);
 //                            Toast.makeText(getActivity(), "disconnected", Toast.LENGTH_SHORT).show();
                             connect_button.setChecked(false);
                             break;
@@ -1415,6 +1428,7 @@ public class VidyoChatFragment extends BaseFragment implements
         VideoParticipant vp = currentVideoNode.getParticipant(User.getInstance().getUid());
         if(vp == null)
             return;
+        showSpinner(); // dismissed in doConnect() and doDisconnect()
         String request_type = "connect request";
         if(vp.isConnected()) {
             request_type = "disconnect request";
@@ -1441,9 +1455,9 @@ public class VidyoChatFragment extends BaseFragment implements
 //        }
     }
 
-    private boolean connectionRequested() {
-        return connect_button.isChecked();
-    }
+//    private boolean connectionRequested() {
+//        return connect_button.isChecked();
+//    }
 
     private void connectIfNotConnected() {
         if(mVidyoConnectorState != VidyoConnectorState.Connected)
@@ -1453,8 +1467,8 @@ public class VidyoChatFragment extends BaseFragment implements
 
     // modeled after Swift VideoChatVC.doConnect()
     private void doConnect() {
-        changeState(VidyoConnectorState.Connecting);
-
+        //changeState(VidyoConnectorState.Connecting);
+        if(mVidyoConnector==null) return;
         String token = getToken();
 
         final boolean status = mVidyoConnector.connect(
@@ -1464,9 +1478,19 @@ public class VidyoChatFragment extends BaseFragment implements
                 getRoom_id(),
                 this);
 
+        record_button.setVisibility(View.VISIBLE);
+        dismissSpinner();
+
+        // TODO what should we do here? Don't like the changeState() method
         if (!status) {
             changeState(VidyoConnectorState.Failure);
         }
+    }
+
+    private void doDisconnect() {
+        if(mVidyoConnector!=null) mVidyoConnector.disconnect();
+        record_button.setVisibility(View.GONE);
+        dismissSpinner();
     }
 
     private void showSpinner() {

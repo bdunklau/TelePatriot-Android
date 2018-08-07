@@ -30,6 +30,7 @@ public class VideoNode {
 
     String video_mission_description;
 
+    Boolean recording_requested; // See google-cloud:dockerRequest - for the spinner while the recorder is starting up
     String recording_started;
     long recording_started_ms;
     String recording_stopped;
@@ -372,6 +373,14 @@ public class VideoNode {
 
     public void setVideo_invitation_extended_to(String video_invitation_extended_to) {
         this.video_invitation_extended_to = video_invitation_extended_to;
+    }
+
+    public Boolean getRecording_requested() {
+        return recording_requested;
+    }
+
+    public void setRecording_requested(Boolean recording_requested) {
+        this.recording_requested = recording_requested;
     }
 
     public boolean bothParticipantsPresent() {
