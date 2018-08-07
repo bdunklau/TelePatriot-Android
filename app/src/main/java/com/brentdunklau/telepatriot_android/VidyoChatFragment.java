@@ -31,6 +31,7 @@ import android.widget.ToggleButton;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.util.Util;
+import com.brentdunklau.telepatriot_android.util.VideoEvent;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
 import com.brentdunklau.telepatriot_android.util.VideoParticipant;
 import com.brentdunklau.telepatriot_android.util.VideoType;
@@ -502,9 +503,32 @@ public class VidyoChatFragment extends BaseFragment implements
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                invite_someone_button.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()==null ? View.VISIBLE : View.GONE);
-                guest_name.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()!=null ? View.VISIBLE : View.GONE);
-                revoke_invitation_button.setVisibility(!remoteCameraVisible && currentVideoNode.getVideo_invitation_key()!=null ? View.VISIBLE : View.GONE);
+                if(remoteCameraVisible) {
+                    invite_someone_button.setVisibility(View.GONE);
+                    guest_name.setVisibility(View.GONE);
+                    revoke_invitation_button.setVisibility(View.GONE);
+                }
+                else if(currentVideoNode.getVideo_invitation_key()!=null) {
+                    invite_someone_button.setVisibility(View.GONE);
+                    // weird side effect of accepting someone's invitation: When you join someone's video node,
+                    // the guest_name label will say you have invited yourself.  Not true, but that's how it will read
+                    // So compare current user with the name the invitation was extended to and don't show the
+                    // guest_name label
+                    if(User.getInstance().getName().equals(currentVideoNode.getVideo_invitation_extended_to())) {
+                        guest_name.setVisibility(View.GONE);
+                    }
+                    else {
+                        guest_name.setVisibility(View.VISIBLE);
+                    }
+                    revoke_invitation_button.setVisibility(View.VISIBLE);
+                }
+                else {
+                    // means the remote camera is not visible and there's no invitation extended yet
+                    invite_someone_button.setVisibility(View.VISIBLE);
+                    guest_name.setVisibility(View.GONE);
+                    revoke_invitation_button.setVisibility(View.GONE);
+                }
+
                 if(guest_name.getVisibility() == View.VISIBLE) {
                     guest_name.setText("You have invited "+currentVideoNode.getVideo_invitation_extended_to()+" to participate in a video chat");
                 }
@@ -1386,17 +1410,28 @@ public class VidyoChatFragment extends BaseFragment implements
     // If in a call, disconnect.
     // See in Swift: VideoChatVC.connectionClicked()
     public void connectionClicked() {
-        // The logic for Android is opposite from the iOS logic.  Here, connect_button.isChecked() means we just
-        // touched the connect_button but we haven't made the vmConnection yet.  In the iOS version (VideoChatVC.connectionClicked()),
-        // "if connected..." means we already are connected and we want to disconnect
-        if (connectionRequested()) {
-            doConnect();
-        } else {
-            // The user is either connected to a resource or is in the process of connecting to a resource;
-            // Call VidyoConnectorDisconnect to either disconnect or abort the vmConnection attempt.
-            changeState(VidyoConnectorState.Disconnecting);
-            mVidyoConnector.disconnect();
-        }
+        if(currentVideoNode == null)
+            return;
+        VideoEvent ve = new VideoEvent(User.getInstance(), currentVideoNode.getKey(), /*room_id*/currentVideoNode.getKey(), "connect request");
+        ve.save();
+
+
+
+
+
+//        This is the old way of connecting/disconnecting
+
+//        // The logic for Android is opposite from the iOS logic.  Here, connect_button.isChecked() means we just
+//        // touched the connect_button but we haven't made the vmConnection yet.  In the iOS version (VideoChatVC.connectionClicked()),
+//        // "if connected..." means we already are connected and we want to disconnect
+//        if (connectionRequested()) {
+//            doConnect();
+//        } else {
+//            // The user is either connected to a resource or is in the process of connecting to a resource;
+//            // Call VidyoConnectorDisconnect to either disconnect or abort the vmConnection attempt.
+//            changeState(VidyoConnectorState.Disconnecting);
+//            mVidyoConnector.disconnect();
+//        }
     }
 
     private boolean connectionRequested() {

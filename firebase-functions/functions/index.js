@@ -246,6 +246,9 @@ exports.testSaveVideoType = videoTypes.testSaveVideoType
 exports.testSendLegislatorEmail = videoTypes.testSendLegislatorEmail
 exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
+const switchboard = require('./switchboard')
+exports.onConnectRequest = switchboard.onConnectRequest
+
 
 
 
