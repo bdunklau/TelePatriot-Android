@@ -248,6 +248,7 @@ exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
 const switchboard = require('./switchboard')
 exports.onConnectRequest = switchboard.onConnectRequest
+exports.onDisconnectRequest = switchboard.onDisconnectRequest
 
 
 
