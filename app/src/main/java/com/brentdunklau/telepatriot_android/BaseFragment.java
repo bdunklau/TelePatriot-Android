@@ -1,6 +1,8 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.util.Log;
 
 import com.brentdunklau.telepatriot_android.util.User;
@@ -73,7 +75,22 @@ public class BaseFragment extends Fragment {
         }
     }
 
+    // TODO what's the difference between gotoFragment() and showFragment() !?!?!
     protected void gotoFragment(Fragment fragment) {
         getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment).commit();
+    }
+
+    // TODO what's the difference between gotoFragment() and showFragment() !?!?!
+    protected void showFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getFragmentManager();
+        try {
+            FragmentTransaction t = fragmentManager.beginTransaction();
+            t.replace(R.id.content_frame, fragment);
+            t.addToBackStack(fragment.getClass().getName());
+            t.commit();
+        } catch(Throwable t) {
+            // TODO show alert dialog or  something - not this
+            t.printStackTrace();
+        }
     }
 }

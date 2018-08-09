@@ -19,6 +19,10 @@
     <string name="unassigned_users">Unassigned Users</string>
     <string name="volunteer_view">Volunteer View</string>
 
+    <string name="some_dialog_title">some dialog title</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+
 
     <!--
     In xcode, this list is in WrapUpViewController.swift   At some point, we should probably put this

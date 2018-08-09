@@ -20,6 +20,7 @@ You do that from the command line on local pc, from the firebase-functions/funct
 The command looks like this:
 
 firebase functions:config:set googleapi.client_id="****EXPLAINED BELOW****" googleapi.client_secret="****EXPLAINED BELOW****" googleapi.function_redirect="****EXPLAINED BELOW****"
+firebase functions:config:set googleapi.client_id="377732711004-bap6eu3jmefke76gbud433c3od72lab1.apps.googleusercontent.com" googleapi.client_secret="cMVG3qDLKK5fo4vm0BPiu92f" googleapi.function_redirect="https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback"
 
 
 Here's how you get the client id, client secret and function_redirect values...
@@ -39,7 +40,7 @@ If you have to create a new OAuth 2.0 client ID, here's how you do it.
 4.  Choose "OAuth client ID"
 5.  Choose "Web application"
 6.  "Authorized redirect URIs" is the only field we care about
-7.  Enter https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback
+7.  Enter https://us-central1-telepatriot-[bd737 or dev].cloudfunctions.net/oauthcallback
 8.  Hit save/create/whatever - done
 
 Put the client id and client secret into the "firebase functions:config:set..." command above
@@ -81,6 +82,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 //const googleAuth = require('google-auth-library');
 const google = require('googleapis');
+const _ = require('lodash');
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -103,7 +105,14 @@ const HARDCODED_MISSION_ID = '1'
 
 
 // setup for authGoogleAPI
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
+// all scope options:  https://developers.google.com/identity/protocols/googlescopes#youtubev3
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/youtube.upload',
+                'https://www.googleapis.com/auth/youtube.readonly',
+                'https://www.googleapis.com/auth/youtube',
+                'https://www.googleapis.com/auth/compute',         // https://cloud.google.com/compute/docs/reference/rest/v1/images/insert
+                'https://www.googleapis.com/auth/cloud-platform',  // https://cloud.google.com/compute/docs/reference/rest/v1/images/insert
+                'https://www.googleapis.com/auth/compute.readonly']; // https://cloud.google.com/compute/docs/reference/rest/v1/images/insert
 var OAuth2 = google.auth.OAuth2;
 var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
                                 FUNCTIONS_REDIRECT);
@@ -112,6 +121,7 @@ var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
 let oauthTokens = null;
 
 
+/*************** clashes with  import-sheet.js:authgoogleapi
 // visit the URL for this Function to request tokens
 exports.authgoogleapi = functions.https.onRequest((req, res) =>
   res.redirect(functionsOauthClient.generateAuthUrl({
@@ -120,12 +130,14 @@ exports.authgoogleapi = functions.https.onRequest((req, res) =>
     prompt: 'consent'
   }))
 );
+****************/
 
 // setup for OauthCallback
 const DB_TOKEN_PATH = '/api_tokens';
 
 // after you grant access, you will be redirected to the URL for this Function
 // this Function stores the tokens to your Firebase database
+/*************** clashes with  import-sheet.js:oauthcallback
 exports.oauthcallback = functions.https.onRequest((req, res) => {
   const code = req.query.code;
   functionsOauthClient.getToken(code, (err, tokens) => {
@@ -134,11 +146,17 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
       res.status(400).send(err);
       return;
     }
-    db.ref(DB_TOKEN_PATH).set(tokens).then(
+    var keys = Object.keys(tokens)
+    var updates = {}
+    _.each(keys, function(key) {
+        updates[DB_TOKEN_PATH+'/'+key] = tokens[key]
+    })
+    db.ref('/').update(updates).then(
         () => res.status(200).send('App successfully configured with new Credentials. ' +
                                    'You can now close this page.'));
   });
 });
+****************/
 
 
 /*

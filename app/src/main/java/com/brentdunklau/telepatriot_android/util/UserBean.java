@@ -1,5 +1,12 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,9 +18,30 @@ public class UserBean {
     private String name, email, uid, photoUrl, created, reviewed_by, recruiter_id;
     private Boolean has_signed_petition;
     private Boolean has_signed_confidentiality_agreement;
-    //private boolean do_not_approve;
 
     private Boolean is_banned;
+    //private Boolean enabled = true;
+    private boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
+
+    private String account_disposition;
+    private String account_dispositioned_by;
+    private String account_dispositioned_by_uid;
+    private String account_dispositioned_on;
+    private Long account_dispositioned_on_ms;
+
+    private String residential_address_line1;
+    private String residential_address_line2;
+    private String residential_address_city;
+    private String residential_address_state_abbrev;
+    private String residential_address_zip;
+    private String legislative_house_district;
+    private String legislative_senate_district;
+    private Double current_latitude;
+    private Double current_longitude;
+
+    private String current_video_node_key;
+
+    private List<Team> teams;
 
     private Map<String, Object> roles;
 
@@ -113,16 +141,208 @@ public class UserBean {
         this.is_banned = is_banned;
     }
 
-    /******
-    public boolean getDo_not_approve() {
-        boolean banned = is_banned != null && is_banned.booleanValue();
-        boolean not_signed_ca = has_signed_confidentiality_agreement == null || !has_signed_confidentiality_agreement.booleanValue();
-        return banned || not_signed_ca;
+    public boolean isEnabled() {
+        return account_disposition == null || account_disposition.equalsIgnoreCase("enabled");
     }
 
-    public boolean canApprove() {
-        return !getDo_not_approve();
+    public void setEnabled(boolean enabled) {
+        //this.enabled = enabled;
+        account_disposition = enabled ? "enabled" : "disabled";
+        account_dispositioned_by = User.getInstance().getName();
+        account_dispositioned_by_uid = User.getInstance().getUid();
+        account_dispositioned_on = new SimpleDateFormat("MMM d, yyyy h:mm a z").format(new Date());
+        account_dispositioned_on_ms = System.currentTimeMillis();
     }
-    *******/
 
+    public String getAccount_disposition() {
+        return account_disposition;
+    }
+
+    public void setAccount_disposition(String account_disposition) {
+        this.account_disposition = account_disposition;
+    }
+
+    public String getAccount_dispositioned_by() {
+        return account_dispositioned_by;
+    }
+
+    public void setAccount_dispositioned_by(String account_dispositioned_by) {
+        this.account_dispositioned_by = account_dispositioned_by;
+    }
+
+    public String getAccount_dispositioned_by_uid() {
+        return account_dispositioned_by_uid;
+    }
+
+    public void setAccount_dispositioned_by_uid(String account_dispositioned_by_uid) {
+        this.account_dispositioned_by_uid = account_dispositioned_by_uid;
+    }
+
+    public String getAccount_dispositioned_on() {
+        return account_dispositioned_on;
+    }
+
+    public void setAccount_dispositioned_on(String account_dispositioned_on) {
+        this.account_dispositioned_on = account_dispositioned_on;
+    }
+
+    public Long getAccount_dispositioned_on_ms() {
+        return account_dispositioned_on_ms;
+    }
+
+    public void setAccount_dispositioned_on_ms(Long account_dispositioned_on_ms) {
+        this.account_dispositioned_on_ms = account_dispositioned_on_ms;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
+    }
+
+    public boolean isDirector() {
+        return isDirector;
+    }
+
+    public void setDirector(boolean director) {
+        isDirector = director;
+    }
+
+    public boolean isVolunteer() {
+        return isVolunteer;
+    }
+
+    public void setVolunteer(boolean volunteer) {
+        isVolunteer = volunteer;
+    }
+
+    public boolean isVideoCreator() {
+        return isVideoCreator;
+    }
+
+    public void setVideoCreator(boolean videoCreator) {
+        isVideoCreator = videoCreator;
+    }
+
+    public String getResidential_address_line1() {
+        return residential_address_line1;
+    }
+
+    public void setResidential_address_line1(String residential_address_line1) {
+        this.residential_address_line1 = residential_address_line1;
+    }
+
+    public String getResidential_address_line2() {
+        return residential_address_line2;
+    }
+
+    public void setResidential_address_line2(String residential_address_line2) {
+        this.residential_address_line2 = residential_address_line2;
+    }
+
+    public String getResidential_address_city() {
+        return residential_address_city;
+    }
+
+    public void setResidential_address_city(String residential_address_city) {
+        this.residential_address_city = residential_address_city;
+    }
+
+    public String getResidential_address_state_abbrev() {
+        return residential_address_state_abbrev;
+    }
+
+    public void setResidential_address_state_abbrev(String residential_address_state_abbrev) {
+        this.residential_address_state_abbrev = residential_address_state_abbrev;
+    }
+
+    public String getResidential_address_zip() {
+        return residential_address_zip;
+    }
+
+    public void setResidential_address_zip(String residential_address_zip) {
+        this.residential_address_zip = residential_address_zip;
+    }
+
+    public String getLegislative_house_district() {
+        return legislative_house_district;
+    }
+
+    public void setLegislative_house_district(String legislative_house_district) {
+        this.legislative_house_district = legislative_house_district;
+    }
+
+    public String getLegislative_senate_district() {
+        return legislative_senate_district;
+    }
+
+    public void setLegislative_senate_district(String legislative_senate_district) {
+        this.legislative_senate_district = legislative_senate_district;
+    }
+
+    public Double getCurrent_latitude() {
+        return current_latitude;
+    }
+
+    public void setCurrent_latitude(Double current_latitude) {
+        this.current_latitude = current_latitude;
+    }
+
+    public Double getCurrent_longitude() {
+        return current_longitude;
+    }
+
+    public void setCurrent_longitude(Double current_longitude) {
+        this.current_longitude = current_longitude;
+    }
+
+    public String getCurrent_video_node_key() {
+        return current_video_node_key;
+    }
+
+    public void setCurrent_video_node_key(String current_video_node_key) {
+        this.current_video_node_key = current_video_node_key;
+    }
+
+    // modeled after TPUser.update() in Swift
+    public void update() {
+        // ref:  https://firebase.googleblog.com/2015/09/introducing-multi-location-updates-and_86.html
+        // multi-path updates...
+
+        Map m = new HashMap();
+        m.put("account_disposition", account_disposition);
+        m.put("account_dispositioned_by", account_dispositioned_by);
+        m.put("account_dispositioned_by_uid", account_dispositioned_by_uid);
+        m.put("account_dispositioned_on", account_dispositioned_on);
+        m.put("account_dispositioned_on_ms", account_dispositioned_on_ms);
+        m.put("residential_address_line1", residential_address_line1);
+        m.put("residential_address_line2", residential_address_line2);
+        m.put("residential_address_city", residential_address_city);
+        m.put("residential_address_state_abbrev", residential_address_state_abbrev);
+        m.put("residential_address_zip", residential_address_zip);
+        m.put("legislative_house_district", legislative_house_district);
+        m.put("legislative_senate_district", legislative_senate_district);
+        m.put("current_latitude", current_latitude);
+        m.put("current_longitude", current_longitude);
+        m.put("has_signed_confidentiality_agreement", has_signed_confidentiality_agreement);
+        m.put("has_signed_petition", has_signed_petition);
+        m.put("is_banned", is_banned);
+        m.put("current_video_node_key", current_video_node_key);
+
+        Map roleMap = new HashMap();
+        roleMap.put("Admin", isAdmin ? "true" : null); // will forever regret making these strings instead of booleans
+        roleMap.put("Director", isDirector ? "true" : null); // will forever regret making these strings instead of booleans
+        roleMap.put("Volunteer", isVolunteer ? "true" : null); // will forever regret making these strings instead of booleans
+        roleMap.put("Video Creator", isVideoCreator ? "true" : null); // will forever regret making these strings instead of booleans
+
+        m.put("roles", roleMap);
+
+        // multi-path update example
+        // what about teams ?
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference userRef = database.getReference("users").child(uid);
+        userRef.updateChildren(m);
+    }
 }

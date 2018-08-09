@@ -8,6 +8,12 @@ exports.asCentralTime = function() {
     return now
 }
 
+exports.as_yyyyMMdd = function() {
+    // case MATTERS in the format string below !
+    var now = moment().tz('America/Chicago').format('YYYYMMDD')
+    return now
+}
+
 exports.asMillis = function() {
     return moment().valueOf()
 }

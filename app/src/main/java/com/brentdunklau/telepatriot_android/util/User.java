@@ -1,6 +1,7 @@
 package com.brentdunklau.telepatriot_android.util;
 
 import android.accounts.Account;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.auth.AccountChangeEvent;
@@ -8,6 +9,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -31,9 +33,10 @@ public class User implements FirebaseAuth.AuthStateListener {
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     //private List<String> teamNames = new ArrayList<String>();
-    private boolean isAdmin, isDirector, isVolunteer;
+    private boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
     private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
+    private String current_video_node_key;
 
     private Team currentTeam;
     //private List<Team> teams = new ArrayList<Team>();
@@ -53,7 +56,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public boolean isLoggedIn() {
-        return getFirebaseUser() != null;
+        boolean bool = getFirebaseUser() != null;
+        return bool;
     }
 
 
@@ -68,7 +72,6 @@ public class User implements FirebaseAuth.AuthStateListener {
     private void login(/*FirebaseUser firebaseUser*/) {
         /**
          * NOTE: No point in checking to see if the user is logged in already via getFirebaseUser() != null
-         * If that is how we
          */
         this.database = FirebaseDatabase.getInstance();
         childEventListener = new ChildEventAdapter();
@@ -152,9 +155,7 @@ public class User implements FirebaseAuth.AuthStateListener {
                 // team nodes are keyed by the team name and they also have a "team_name" node
                 // under the key that is also the name of the team.  The team_name node is so
                 // that we can take advantage of the deserialization function built in to firebase
-                database.getReference("temp").push().setValue("about to create Team");
                 Team team = dataSnapshot.getValue(Team.class);
-                database.getReference("temp").push().setValue("ok: created Team");
                 //setCurrentTeam(team);
                 User.this.currentTeam = team;
                 fireTeamSelected(User.this.currentTeam);
@@ -178,6 +179,18 @@ public class User implements FirebaseAuth.AuthStateListener {
             public void onCancelled(DatabaseError databaseError) {
 
             }
+        });
+
+
+        userRef.child("current_video_node_key").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User.this.current_video_node_key = dataSnapshot.getValue(String.class);
+                System.out.println("onDataChange(): current_video_node_key = "+User.this.current_video_node_key);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) { }
         });
 
     }
@@ -236,6 +249,8 @@ public class User implements FirebaseAuth.AuthStateListener {
         String team = User.getInstance().getCurrentTeamName();
         FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items/"+missionItemId).removeValue();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions/"+missionId+"/mission_items/"+missionItemId);
+
+        // TODO this should be a multi-path update
         ref.child("accomplished").setValue("complete");
         ref.child("active").setValue(false);
         ref.child("active_and_accomplished").setValue("false_complete");
@@ -269,12 +284,47 @@ public class User implements FirebaseAuth.AuthStateListener {
         return getFirebaseUser()!=null ? getFirebaseUser().getDisplayName() : "name not available";
     }
 
+    public void update(String name, final String email, String photoUrl, final OnCompleteListener<Void> listener) {
+        //UpdateProfileChangeRequest upc = new UpdateProfileChangeRequest();
+        //FirebaseAuth.getInstance().getCurrentUser().up//.updateProfile();new UpdateProfileChangeRequest() { });
+        //FirebaseAuth.getInstance().getCurrentUser().updateEmail(email);
+
+        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .setPhotoUri(Uri.parse(photoUrl))
+                .build();
+
+        user.updateProfile(profileUpdates)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        boolean succ = task.isSuccessful();
+                        if (succ) {
+                            //Log.d(TAG, "User profile updated.");
+                            user.updateEmail(email).addOnCompleteListener(listener);
+                        }
+                    }
+                });
+    }
+
     public String getUid() {
         return getFirebaseUser()!=null ? getFirebaseUser().getUid() : "uid not available";
     }
 
     public String getEmail() {
-        return getFirebaseUser()!=null ? getFirebaseUser().getEmail() : "email not available";
+        if(getFirebaseUser()==null) {
+            return "";
+        }
+        else if(getFirebaseUser().getEmail()==null || getFirebaseUser().getEmail().trim().equals("")) {
+            return "Email Required (touch here)";
+        }
+        return getFirebaseUser().getEmail();
+    }
+
+    public boolean isEmailMissing() {
+        return getFirebaseUser()!=null && (getFirebaseUser().getEmail()==null || getFirebaseUser().getEmail().trim().equals(""));
     }
 
     public void setRecruiter_id(final String recruiter_id) {
@@ -306,12 +356,14 @@ public class User implements FirebaseAuth.AuthStateListener {
         return isVolunteer;
     }
 
+    public boolean isVideoCreator() { return isVideoCreator; }
+
     public boolean isVolunteerOnly() {
-        return isVolunteer && !isDirector && !isAdmin;
+        return isVolunteer && !isDirector && !isAdmin && !isVideoCreator;
     }
 
     public boolean hasAnyRole() {
-        return isAdmin || isDirector || isVolunteer;
+        return isAdmin || isDirector || isVolunteer || isVideoCreator;
     }
 
     @Override
@@ -328,7 +380,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private class ChildEventAdapter implements ChildEventListener {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-            boolean notAssignedYet = !isAdmin && !isDirector && !isVolunteer;
+            boolean notAssignedYet = !isAdmin && !isDirector && !isVolunteer && !isVideoCreator;
             doRole(dataSnapshot.getKey(), true);
             fireRoleAdded(dataSnapshot.getKey());
         }
@@ -340,6 +392,8 @@ public class User implements FirebaseAuth.AuthStateListener {
                 isDirector = val;
             else if(role.equalsIgnoreCase("volunteer"))
                 isVolunteer = val;
+            else if(role.equalsIgnoreCase("video creator"))
+                isVideoCreator = val;
         }
 
         @Override
@@ -377,6 +431,15 @@ public class User implements FirebaseAuth.AuthStateListener {
         map.put(currentTeam.getTeam_name(), currentTeam);
         userRef.child("current_team").setValue(map);
         fireTeamSelected(currentTeam);
+    }
+
+    public String getCurrent_video_node_key() {
+        return current_video_node_key;
+    }
+
+    public void setCurrent_video_node_key(final String current_video_node_key) {
+        this.current_video_node_key = current_video_node_key;
+        database.getReference("/users/"+getUid()+"/current_video_node_key").setValue(current_video_node_key);
     }
 
     public void addAccountStatusEventListener(AccountStatusEvent.Listener l) {

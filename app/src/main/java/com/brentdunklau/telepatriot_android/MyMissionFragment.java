@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -41,6 +42,7 @@ public class MyMissionFragment extends BaseFragment {
     private TextView heading_mission_progress;
     private Button button_call_person1, button_call_person2, button_switch_teams;
     private String missionId, missionItemId;
+    private String readPhoneState;
 
 
     View myView;
@@ -83,9 +85,7 @@ public class MyMissionFragment extends BaseFragment {
         MissionDetail missionItem = User.getInstance().getCurrentMissionItem();
         if (missionItem != null) {
             workThis(missionItem);
-        }
-
-        else {
+        } else {
 
 
             // just start out this way by default so we don't get the ugly screen flash
@@ -118,7 +118,7 @@ public class MyMissionFragment extends BaseFragment {
                         // Get progress info from mission object (have to query for that unfortunately)
                         // TODO This is an expensive query too.  It returns all mission items for this mission because
                         // we keep mission_items under each mission
-                        FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
+                        FirebaseDatabase.getInstance().getReference("teams/" + team + "/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -127,7 +127,7 @@ public class MyMissionFragment extends BaseFragment {
                                     Mission mission = child.getValue(Mission.class);
                                     Integer total_rows_completed = mission.getTotal_rows_completed();
                                     Integer total_rows_with_phone = mission.getTotal_rows_in_spreadsheet_with_phone();
-                                    if(total_rows_completed != null && total_rows_with_phone != null) {
+                                    if (total_rows_completed != null && total_rows_with_phone != null) {
                                         int calls_remaining = total_rows_with_phone - total_rows_completed;
                                         Integer percent_complete = mission.getPercent_complete();
                                         //  have to double up the % sign to escape it ----v
@@ -138,7 +138,8 @@ public class MyMissionFragment extends BaseFragment {
                             }
 
                             @Override
-                            public void onCancelled(DatabaseError databaseError) {  }
+                            public void onCancelled(DatabaseError databaseError) {
+                            }
                         });
 
                         // set fields back to visible if they were previously set to View.GONE
@@ -234,12 +235,11 @@ public class MyMissionFragment extends BaseFragment {
     }
 
     private void prepareFor3WayCallIfNecessary(MissionDetail missionDetail, Button button) {
-        if(missionDetail.getName2() != null && missionDetail.getPhone2() != null) {
+        if (missionDetail.getName2() != null && missionDetail.getPhone2() != null) {
             // we have a 3way call scenario
-            button.setText(missionDetail.getName2()+" "+missionDetail.getPhone2());
+            button.setText(missionDetail.getName2() + " " + missionDetail.getPhone2());
             wireUp2(button, missionDetail);
-        }
-        else {
+        } else {
             // not a 3way call scenario, so hide the second phone button
             button.setVisibility(View.GONE);
         }
@@ -250,7 +250,7 @@ public class MyMissionFragment extends BaseFragment {
     public void onResume() {
         doSuper = false; // see BaseFragment
         super.onResume();
-        Log.d(TAG, "onResume: missionDetail.getActive_and_accomplished() = "+(missionDetail==null ? "null" :  missionDetail.getActive_and_accomplished()));
+        Log.d(TAG, "onResume: missionDetail.getActive_and_accomplished() = " + (missionDetail == null ? "null" : missionDetail.getActive_and_accomplished()));
         // what do we do here?
         // when does this get called?  When the user returns from a call
         //      but also when the user returns here from anywhere
@@ -258,9 +258,9 @@ public class MyMissionFragment extends BaseFragment {
         // If we are resuming on a mission that is  active_and_accomplished: true_complete,
         // then we need to send the user on to a fragment where they can enter notes on the
         // call
-        if(missionDetail == null)
+        if (missionDetail == null)
             return;
-        if(!missionDetail._isAccomplished())
+        if (!missionDetail._isAccomplished())
             return;
 
         FragmentManager fragmentManager = getFragmentManager();
@@ -333,7 +333,7 @@ public class MyMissionFragment extends BaseFragment {
         // call start and then seeing it end
 
         String team = User.getInstance().getCurrentTeamName();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
         String eventType = "is calling";
         String volunteerPhone = getVolunteerPhone();
         String supporterName = missionDetail.getName();
@@ -352,7 +352,7 @@ public class MyMissionFragment extends BaseFragment {
         intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
 
         String team = User.getInstance().getCurrentTeamName();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
         String eventType = "is calling";
         String volunteerPhone = getVolunteerPhone();
         String name2 = missionDetail.getName2();
@@ -364,14 +364,47 @@ public class MyMissionFragment extends BaseFragment {
     }
 
     private String getVolunteerPhone() {
+
         TelephonyManager mTelephonyMgr;
         mTelephonyMgr = (TelephonyManager)
                 myView.getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        String tel = mTelephonyMgr.getLine1Number();
-        return tel;
+
+
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+
+                // Should we show an explanation?
+                if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), readPhoneState)) {
+
+                    // Show an explanation to the user *asynchronously* -- don't block
+                    // this thread waiting for the user's response! After the user
+                    // sees the explanation, try again to request the permission.
+
+                } else {
+
+                    // No explanation needed, we can request the permission.
+
+                    ActivityCompat.requestPermissions((Activity) myView.getContext(),
+                            new String[]{readPhoneState},
+                            1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
+
+                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                    // app-defined int constant. The callback method gets the
+                    // result of the request.
+                }
+            }
+
+            try {
+                String tel = mTelephonyMgr.getLine1Number();
+                return tel;
+            }catch (Throwable throwable ){
+            return "phone # n/a";
+            }
+
+
     }
 
 
+    // Consider using the similar method in Util *************************
     // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
     // an app crash on the very first phone call.  Thinking that I'm requesting permission
     // too late ... ?

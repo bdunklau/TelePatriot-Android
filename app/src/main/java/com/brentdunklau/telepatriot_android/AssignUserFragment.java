@@ -3,17 +3,13 @@ package com.brentdunklau.telepatriot_android;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.SwitchCompat;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,18 +35,22 @@ import java.util.Map;
  * Created by bdunklau on 10/5/2017.
  */
 
-public class AssignUserFragment extends AdminFragment {
+public class AssignUserFragment extends AdminFragment implements FragmentContainingUser {
 
+    private SwitchCompat enabledDisabledSwitch;
     private SwitchCompat adminSwitch;
     private SwitchCompat directorSwitch;
     private SwitchCompat volunteerSwitch;
+    private SwitchCompat switch_video_creator;
     private Button okButton;
     private String uid;
-    boolean isAdmin, isDirector, isVolunteer;
+    boolean isEnabled = true;
+    boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
     Boolean has_signed_petition, has_signed_confidentiality_agreement, is_banned;
     //View myView;
     private FragmentManager fragmentManager;
     private Fragment back;
+    private UserBean usr;
 
     @Nullable
     @Override
@@ -64,18 +64,42 @@ public class AssignUserFragment extends AdminFragment {
         this.uid = uid;
     }
 
+    // per FragmentContainingUser
+    public void userSelected(UserBean user) {
+        this.uid = user.getUid();
+    }
+
+    // per FragmentContainingUser
     public void setFragmentManager(FragmentManager fragmentManager, Fragment back) {
         this.fragmentManager = fragmentManager;
         this.back = back;
     }
 
+    // per FragmentContainingUser
+    public Fragment getFragment() {
+        return this;
+    }
+
     private void setUI() {
 
+        enabledDisabledSwitch = myView.findViewById(R.id.switch_enabled_disabled);
+        enabledDisabledSwitch.setSwitchPadding(50);
         adminSwitch = myView.findViewById(R.id.switch_admin);
+        adminSwitch.setSwitchPadding(50);
         directorSwitch = myView.findViewById(R.id.switch_director);
+        directorSwitch.setSwitchPadding(50);
         volunteerSwitch = myView.findViewById(R.id.switch_volunteer);
+        volunteerSwitch.setSwitchPadding(50);
+        switch_video_creator = myView.findViewById(R.id.switch_video_creator);
+        switch_video_creator.setSwitchPadding(50);
 
-        adminSwitch.setSwitchPadding(100);
+
+        enabledDisabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                enabledDisabledChanged(b);
+            }
+        });
 
 
         adminSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -89,6 +113,13 @@ public class AssignUserFragment extends AdminFragment {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 isDirector = b;
+            }
+        });
+
+        switch_video_creator.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                isVideoCreator = b;
             }
         });
 
@@ -122,6 +153,7 @@ public class AssignUserFragment extends AdminFragment {
                 }
 
                 if(ub != null) {
+                    ub.setUid(uid);
                     updateLabel(R.id.text_name, ub.getName());
                     boolean underline = true;
                     updateLabel(R.id.text_email, ub.getEmail(), underline);
@@ -134,12 +166,16 @@ public class AssignUserFragment extends AdminFragment {
                             emailSetup(ub2, senderName);
                         }
                     });
+                    isEnabled = ub.isEnabled();
                     isAdmin = ub.isRole("Admin");
                     isDirector = ub.isRole("Director");
                     isVolunteer = ub.isRole("Volunteer");
+                    isVideoCreator = ub.isRole("Video Creator");
+                    setSwitch(isEnabled, enabledDisabledSwitch);
                     setSwitch(isAdmin, adminSwitch);
                     setSwitch(isDirector, directorSwitch);
                     setSwitch(isVolunteer, volunteerSwitch);
+                    setSwitch(isVideoCreator, switch_video_creator);
                     has_signed_petition = ub.getHas_signed_petition();
                     has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement();
                     is_banned = ub.getIs_banned();
@@ -148,6 +184,7 @@ public class AssignUserFragment extends AdminFragment {
                     setBannedStatus(is_banned);
 
                     wireUpSegmentedControlButtons(ub);
+                    usr = ub;
                 }
             }
 
@@ -166,6 +203,34 @@ public class AssignUserFragment extends AdminFragment {
         });
 
         setHasOptionsMenu(true);
+    }
+
+
+    /************************
+     NOTE that disabling someone's account does not automatically remove them from the
+     teams they're on.  That would make sense.  But the app just isn't programmed that way
+     right now.  At one time, we cleared the user's list of teams whenever the enable/disable
+     switch was moved to "disabled".  But that occurred before the user was saved.
+     And I wanted to make sure we didn't lose team membership info prior to actually saving
+     the user.  Otherwise, the admin could toggle to disabled, then back to enabled, never actually
+     changing the state of the user but losing all the team info in the process.
+     ************************/
+    private void enabledDisabledChanged(boolean enabled) {
+
+        volunteerSwitch.setEnabled(enabled);
+        directorSwitch.setEnabled(enabled);
+        adminSwitch.setEnabled(enabled);
+        switch_video_creator.setEnabled(enabled);
+
+        if(!enabled) {
+            volunteerSwitch.setChecked(enabled);
+            directorSwitch.setChecked(enabled);
+            adminSwitch.setChecked(enabled);
+            switch_video_creator.setChecked(enabled);
+        }
+
+        enabledDisabledSwitch.setText(enabled ? "Enabled" : "Disabled");
+        usr.setEnabled(enabled);
     }
 
     /***
@@ -259,35 +324,38 @@ public class AssignUserFragment extends AdminFragment {
     }
 
     public void clickOk(View view) {
+        usr.setVolunteer(isVolunteer);
+        usr.setDirector(isDirector);
+        usr.setAdmin(isAdmin);
+        usr.setVideoCreator(isVideoCreator);
+        usr.setHas_signed_petition(has_signed_petition);
+        usr.setHas_signed_confidentiality_agreement(has_signed_confidentiality_agreement);
+        usr.setIs_banned(is_banned);
+
+        usr.update();
+
         String returnToTab = "Admin";
         if(isVolunteer) {
             returnToTab = "Volunteer";
-            setRole("Volunteer");
-        } else {
-            unsetRole("Volunteer");
         }
 
         if(isDirector) {
             returnToTab = "Director";
-            setRole("Director");
-        } else {
-            unsetRole("Director");
         }
 
         if(isAdmin) {
             returnToTab = "Admin";
-            setRole("Admin");
-        } else {
-            unsetRole("Admin");
         }
 
+        /****************
         setValue(uid, "has_signed_petition", has_signed_petition);
         setValue(uid, "has_signed_confidentiality_agreement", has_signed_confidentiality_agreement);
         setValue(uid, "is_banned", is_banned);
+         ***********/
 
 
         // as long is something is set, remove the record from the no_roles node
-        if(isAdmin || isDirector || isVolunteer)
+        if(isAdmin || isDirector || isVolunteer || isVideoCreator)
             FirebaseDatabase.getInstance().getReference("no_roles/"+uid).removeValue();
 
         if(back instanceof PassInfo) {
@@ -307,18 +375,6 @@ public class AssignUserFragment extends AdminFragment {
                 .replace(R.id.content_frame, back)
                 .addToBackStack(back.getClass().getName())
                 .commit();
-    }
-
-    private void setValue(String uid, String attribute, Boolean value) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/"+attribute).setValue(value);
-    }
-
-    private void setRole(String role) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/roles/"+role).setValue("true");
-    }
-
-    private void unsetRole(String role) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/roles/"+role).removeValue();
     }
 
     private void setSwitch(final boolean value, final SwitchCompat switchCompat) {

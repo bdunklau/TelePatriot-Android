@@ -69,6 +69,7 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
         roles.put("Volunteer", User.getInstance().isVolunteer());
         roles.put("Director", User.getInstance().isDirector());
         roles.put("Admin", User.getInstance().isAdmin());
+        roles.put("Video Creator", User.getInstance().isVideoCreator());
         for(String role : roles.keySet()) {
             MenuItem item = findMenuItemForRole(role);
             if(item != null) {
@@ -111,6 +112,7 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
         rolesToMenuItems.put("Volunteer", "My Mission");
         rolesToMenuItems.put("Director", "Directors");
         rolesToMenuItems.put("Admin", "Admins");
+        rolesToMenuItems.put("Video Creator", "Video Chat");
         String title = rolesToMenuItems.get(role);
 
         Menu menu = getMenu();

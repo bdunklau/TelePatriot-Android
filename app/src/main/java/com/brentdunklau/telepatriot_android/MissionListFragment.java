@@ -130,7 +130,6 @@ public class MissionListFragment extends BaseFragment {
                                 else {
                                     fragment.setMissionId(missionId);
                                     fragment.setMission(mission);
-                                    //fragment.setFragmentManager(fragmentManager, MissionListFragment.this);
                                     try {
                                         FragmentTransaction t1 = fragmentManager.beginTransaction();
                                         t1.replace(R.id.content_frame, fragment);
