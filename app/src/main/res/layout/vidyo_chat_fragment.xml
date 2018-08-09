@@ -94,6 +94,7 @@
         android:textOn=""
         app:layout_constraintStart_toEndOf="@+id/connect_button"
         app:layout_constraintTop_toTopOf="@+id/connect_button" />
+        -->
 
     <ToggleButton
         android:id="@+id/microphone_button"
@@ -103,9 +104,8 @@
         android:background="@drawable/toggle_mic_privacy"
         android:textOff=""
         android:textOn=""
-        app:layout_constraintStart_toEndOf="@+id/camera_button"
+        app:layout_constraintStart_toEndOf="@+id/connect_button"
         app:layout_constraintTop_toTopOf="@+id/connect_button" />
-        -->
 
     <ToggleButton
         android:id="@+id/record_button"
@@ -116,7 +116,7 @@
         android:textOff=""
         android:textOn=""
         android:visibility="gone"
-        app:layout_constraintStart_toEndOf="@+id/connect_button"
+        app:layout_constraintStart_toEndOf="@+id/microphone_button"
         app:layout_constraintTop_toTopOf="@+id/connect_button" />
 
     <!-- this doesn't need to be a toggle button because the image is always the same

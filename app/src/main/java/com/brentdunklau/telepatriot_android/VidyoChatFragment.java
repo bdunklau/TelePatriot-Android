@@ -142,7 +142,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private boolean recording = false;
 
     private ToggleButton connect_button;
-    //private ToggleButton microphone_button;
+    private ToggleButton microphone_button;
     //private ToggleButton camera_button;
     private ToggleButton record_button;
     private ToggleButton publish_button;
@@ -339,8 +339,8 @@ public class VidyoChatFragment extends BaseFragment implements
         // Set the onClick listeners for the buttons
         connect_button = myView.findViewById(R.id.connect_button);
         connect_button.setOnClickListener(this); // See onClick() in this class
-//        microphone_button = myView.findViewById(R.id.microphone_button);
-//        microphone_button.setOnClickListener(this);
+        microphone_button = myView.findViewById(R.id.microphone_button);
+        microphone_button.setOnClickListener(this);
 //        camera_button = myView.findViewById(R.id.camera_button);
 //        camera_button.setOnClickListener(this);
 
@@ -486,10 +486,31 @@ public class VidyoChatFragment extends BaseFragment implements
 
                         if(Boolean.TRUE == currentVideoNode.getRecording_requested()) {
                             showSpinner(); // dismissed just below here, once currentVideoNode.getRecording_started() != null
+                            simpleOKDialog("The recording will start in 30-45 seconds.  When the spinner goes away, the recording will begin.");
                         }
 
-                        if(currentVideoNode.getRecording_started() != null)
-                            dismissSpinner();
+                        if(currentVideoNode.getRecording_started() != null && currentVideoNode.getRecording_stopped() == null) {
+                            //dismissSpinner();
+                            recordingHasStarted();
+                        }
+
+
+
+
+
+//                        if let vn = self.videoNode, let recording_requested = vn.recording_requested {
+//                            if (recording_requested) {
+//                                self.showSpinner2()
+//                            } // spinner dismissed on the next lines...
+//                        }
+//
+//                        if let vn = self.videoNode, let _ = vn.recording_started, vn.recording_stopped == nil {
+//                            self.recordingHasStarted()
+//                        }
+
+
+
+
 
                         if(noLegislator(currentVideoNode)) {
                             // use then before any legislator is chosen
@@ -513,6 +534,18 @@ public class VidyoChatFragment extends BaseFragment implements
             }
         }
     }
+
+
+    private void recordingHasStarted() {
+        if (recording) {
+            return; // means we've already been here
+        }
+        recording = true;
+        record_button.setBackgroundResource(R.drawable.recordstop);
+        publish_button.setVisibility(View.GONE);
+        dismissSpinner();
+    }
+
 
     private void inviteLinks() {
         getActivity().runOnUiThread(new Runnable() {
@@ -577,8 +610,12 @@ public class VidyoChatFragment extends BaseFragment implements
         // the YouTube video title and description using legislator name and contact info
         // Even though we only NEED this info before publishing, it makes more sense to ask for it
         // before recording starts.
+        simpleOKDialog("Choose a legislator before recording");
+    }
+
+    private void simpleOKDialog(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(myView.getContext());
-        builder.setMessage("Choose a legislator before recording")
+        builder.setMessage(message)
                 .setCancelable(false)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
@@ -1228,11 +1265,11 @@ public class VidyoChatFragment extends BaseFragment implements
 //                        camera_button.performClick();
 //                    }
 
-//                    // If microphonePrivacy is configured then mute the microphone
-//                    microphone_button.setChecked(false); // reset state
-//                    if (mMicrophonePrivacy) {
-//                        microphone_button.performClick();
-//                    }
+                    // If microphonePrivacy is configured then mute the microphone
+                    microphone_button.setChecked(false); // reset state
+                    if (mMicrophonePrivacy) {
+                        microphone_button.performClick();
+                    }
 
                     /********
                     // Set experimental options if any exist
@@ -1396,12 +1433,12 @@ public class VidyoChatFragment extends BaseFragment implements
 //                mCameraPrivacy = camera_button.isChecked();
 //                mVidyoConnector.setCameraPrivacy(mCameraPrivacy);
 //                break;
-//
-//            case R.id.microphone_button:
-//                // Toggle the microphone privacy.
-//                mMicrophonePrivacy = microphone_button.isChecked();
-//                mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
-//                break;
+
+            case R.id.microphone_button:
+                // Toggle the microphone privacy.
+                mMicrophonePrivacy = microphone_button.isChecked();
+                mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
+                break;
 
             //case R.id.toggle_debug:
                 // Toggle debugging.
@@ -1587,7 +1624,6 @@ public class VidyoChatFragment extends BaseFragment implements
             // of the parent view programmatically
             mVidyoConnector.assignViewToLocalCamera(local_camera_view, localCamera, true, false);
             mVidyoConnector.showViewAt(local_camera_view, 0, 0, local_camera_view.getWidth(), local_camera_view.getHeight());
-            mVidyoConnector.setMicrophonePrivacy(false);
         }
     }
 
