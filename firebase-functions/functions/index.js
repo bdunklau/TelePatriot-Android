@@ -254,6 +254,7 @@ const twilio = require('./twilio')
 exports.testTwilioToken = twilio.testTwilioToken
 exports.twilioCallback = twilio.twilioCallback
 exports.testCreateRoom = twilio.testCreateRoom
+exports.testListRooms = twilio.testListRooms
 
 
 

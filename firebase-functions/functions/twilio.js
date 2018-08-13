@@ -20,7 +20,7 @@ const db = admin.database();
 
 /****
 deploy everything in this file...
-firebase deploy --only functions:twilioCallback,functions:testTwilioToken,functions:testCreateRoom
+firebase deploy --only functions:twilioCallback,functions:testTwilioToken,functions:testCreateRoom,functions:testListRooms
 ****/
 
 
@@ -76,6 +76,43 @@ exports.testTwilioToken = functions.https.onRequest((req, res) => {
         res.status(200).send('Twilio token: <P/>'+token)
     })
 
+})
+
+
+exports.testListRooms = functions.https.onRequest((req, res) => {
+
+    return db.ref('api_tokens').once('value').then(snapshot => {
+
+        var room_id = req.query.room_id
+
+        const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+
+        client.video.rooms
+                    .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/ })
+                    .then(rooms => {
+                        console.log(room.sid)
+                        db.ref('templog2').set({room: room})
+                        var html = ''
+                        html += '<html><head></head><body>'
+                        html += '<table>'
+                        html += '<tr>'
+                        html +=     '<th>room.sid</th>'
+                        html +=     '<th>room.unique_name</th>'
+                        html +=     '<th>room.url</th>'
+                        html += '</tr>'
+                        _.each(rooms, function(room) {
+                            html += '<tr>'
+                            html +=     '<td>'+room.sid+'</td>'
+                            html +=     '<td>'+room.unique_name+'</td>'
+                            html +=     '<td>'+room.url+'</td>'
+                            html += '</tr>'
+                        })
+                        html += '</table>'
+                        html += '</body></html>'
+                        return res.status(200).send(html)
+                    })
+
+    })
 })
 
 
