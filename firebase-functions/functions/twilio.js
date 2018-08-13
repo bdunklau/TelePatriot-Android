@@ -86,7 +86,7 @@ exports.testListRooms = functions.https.onRequest((req, res) => {
         var room_id = req.query.room_id
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
-
+ 
         return client.video.rooms
                     .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/ },
                     function(rooms) {
