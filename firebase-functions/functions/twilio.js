@@ -88,12 +88,8 @@ exports.testListRooms = functions.https.onRequest((req, res) => {
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
 
         client.video.rooms
-                    .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/
-                        status_callback: 'https://'+req.get('host')+'/twilioCallback'
-                    })
-                    .then(rooms => {
-                        console.log(room.sid)
-                        db.ref('templog2').set({room: room})
+                    .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/ },
+                    function(rooms) {
                         var html = ''
                         html += '<html><head></head><body>'
                         html += '<table>'
