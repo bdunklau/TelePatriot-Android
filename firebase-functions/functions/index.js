@@ -250,6 +250,11 @@ const switchboard = require('./switchboard')
 exports.onConnectRequest = switchboard.onConnectRequest
 exports.onDisconnectRequest = switchboard.onDisconnectRequest
 
+const twilio = require('./twilio')
+exports.testTwilioToken = twilio.testTwilioToken
+exports.twilioCallback = twilio.twilioCallback
+exports.testCreateRoom = twilio.testCreateRoom
+
 
 
 

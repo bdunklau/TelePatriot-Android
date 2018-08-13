@@ -9,7 +9,7 @@ import android.util.AttributeSet;
 
 public class VideoFrameLayout extends FrameLayout {
 
-    private IVideoFrameListener mListener;
+//    private IVideoFrameListener mListener;
     private float mDownX;
     private float mDownY;
     private final float SCROLL_THRESHOLD = 10;

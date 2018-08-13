@@ -27,8 +27,9 @@ public class VideoNode {
     String video_title;
     String youtube_video_description;
     String youtube_video_description_unevaluated;
-
     String video_mission_description;
+
+    String room_id;
 
     Boolean recording_requested; // See google-cloud:dockerRequest - for the spinner while the recorder is starting up
     String recording_started;
@@ -68,6 +69,7 @@ public class VideoNode {
         if(key == null) {
             // get/create key by inserting a node under video/list
             key = FirebaseDatabase.getInstance().getReference("video/list").push().getKey();
+            room_id = key;
             save();
         }
         return key;
@@ -99,6 +101,7 @@ public class VideoNode {
         m.put("recording_started_ms", recording_started_ms);
         m.put("recording_stopped", recording_stopped);
         m.put("recording_stopped_ms", recording_stopped_ms);
+        m.put("room_id", room_id);
 
         m.put("leg_id", getLeg_id());
         m.put("legislator_name", getLegislator_full_name());
@@ -381,6 +384,14 @@ public class VideoNode {
 
     public void setRecording_requested(Boolean recording_requested) {
         this.recording_requested = recording_requested;
+    }
+
+    public String getRoom_id() {
+        return room_id;
+    }
+
+    public void setRoom_id(String room_id) {
+        this.room_id = room_id;
     }
 
     public boolean bothParticipantsPresent() {

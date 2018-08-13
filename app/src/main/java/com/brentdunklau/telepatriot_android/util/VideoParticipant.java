@@ -23,7 +23,9 @@ public class VideoParticipant {
     long end_date_ms;
     String role;
     boolean present = true; // because basically a participant has to be present for this object to be instantiated
-    String vidyo_token;
+    //String vidyo_token;  // don't use this anymore 8/10/18
+    String twilio_token;
+
 
     // MUST have a no-arg constructor for firebase deserialization
     public VideoParticipant() {}
@@ -55,7 +57,8 @@ public class VideoParticipant {
         m.put("end_date_ms", end_date_ms);
         m.put("role", role);
         m.put("present", present);
-        m.put("vidyo_token", vidyo_token);
+//        m.put("vidyo_token", vidyo_token); // don't use this anymore 8/10/18
+        m.put("twilio_token", twilio_token);
         return m;
     }
 
@@ -107,15 +110,24 @@ public class VideoParticipant {
         this.start_date_ms = start_date_ms;
     }
 
-    public String getVidyo_token() {
-        return vidyo_token;
+//    public String getVidyo_token() {
+//        return vidyo_token;
+//    }
+//
+//    public void setVidyo_token(String vidyo_token) {
+//        this.vidyo_token = vidyo_token;
+//    }
+
+
+    public String getTwilio_token() {
+        return twilio_token;
     }
 
-    public void setVidyo_token(String vidyo_token) {
-        this.vidyo_token = vidyo_token;
+    public void setTwilio_token(String twilio_token) {
+        this.twilio_token = twilio_token;
     }
 
     public boolean isConnected() {
-        return connect_date != null && disconnect_date == null;
+        return connect_date != null && twilio_token != null && disconnect_date == null;
     }
 }

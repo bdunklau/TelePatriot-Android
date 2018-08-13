@@ -1,33 +1,43 @@
 package com.brentdunklau.telepatriot_android;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.brentdunklau.telepatriot_android.util.CameraCapturerCompat;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.util.Util;
@@ -39,60 +49,52 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.vidyo.VidyoClient.Connector.Connector;
-import com.vidyo.VidyoClient.Connector.ConnectorPkg;
-import com.vidyo.VidyoClient.Device.Device;
-import com.vidyo.VidyoClient.Device.LocalCamera;
-import com.vidyo.VidyoClient.Device.LocalMicrophone;
-import com.vidyo.VidyoClient.Device.RemoteCamera;
-import com.vidyo.VidyoClient.Device.RemoteMicrophone;
-import com.vidyo.VidyoClient.Endpoint.LogRecord;
-import com.vidyo.VidyoClient.Endpoint.Participant;
-import com.vidyo.VidyoClient.NetworkInterface;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.twilio.video.AudioCodec;
+import com.twilio.video.CameraCapturer;
+import com.twilio.video.ConnectOptions;
+import com.twilio.video.EncodingParameters;
+import com.twilio.video.G722Codec;
+import com.twilio.video.H264Codec;
+import com.twilio.video.IsacCodec;
+import com.twilio.video.LocalAudioTrack;
+import com.twilio.video.LocalParticipant;
+import com.twilio.video.LocalVideoTrack;
+import com.twilio.video.OpusCodec;
+import com.twilio.video.PcmaCodec;
+import com.twilio.video.PcmuCodec;
+import com.twilio.video.RemoteAudioTrack;
+import com.twilio.video.RemoteAudioTrackPublication;
+import com.twilio.video.RemoteDataTrack;
+import com.twilio.video.RemoteDataTrackPublication;
+import com.twilio.video.RemoteParticipant;
+import com.twilio.video.RemoteVideoTrack;
+import com.twilio.video.RemoteVideoTrackPublication;
+import com.twilio.video.Room;
+import com.twilio.video.RoomState;
+import com.twilio.video.TwilioException;
+import com.twilio.video.Video;
+import com.twilio.video.VideoCapturer;
+import com.twilio.video.VideoCodec;
+import com.twilio.video.VideoRenderer;
+import com.twilio.video.VideoTrack;
+import com.twilio.video.VideoView;
+import com.twilio.video.Vp8Codec;
+import com.twilio.video.Vp9Codec;
+
 
 public class VidyoChatFragment extends BaseFragment implements
         View.OnClickListener
-        ,Connector.IConnect
-        ,Connector.IRegisterLogEventListener
-        ,Connector.IRegisterNetworkInterfaceEventListener
-        ,Connector.IRegisterLocalCameraEventListener
-        ,Connector.IRegisterLocalMicrophoneEventListener
-        ,Connector.IRegisterRemoteCameraEventListener
-        ,Connector.IRegisterRemoteMicrophoneEventListener
         //,IVideoFrameListener
 {
 
     private static String TAG = "VidyoChatFragment";
-
-    // Define the various states of this application.
-    enum VidyoConnectorState {
-        Connecting,
-        Connected,
-        Disconnecting,
-        Disconnected,
-        DisconnectedUnexpected,
-        Failure,
-        FailureInvalidResource
-    }
-
-    /************* not sure if we need this 7/7/18
-    // Map the application state to the status to display in the toolbar.
-    private static final Map<VidyoConnectorState, String> mStateDescription = new HashMap<VidyoConnectorState, String>() {{
-        put(VidyoConnectorState.Connecting, "Connecting...");
-        put(VidyoConnectorState.Connected, "Connected");
-        put(VidyoConnectorState.Disconnecting, "Disconnecting...");
-        put(VidyoConnectorState.Disconnected, "Disconnected");
-        put(VidyoConnectorState.DisconnectedUnexpected, "Unexpected disconnection");
-        put(VidyoConnectorState.Failure, "Connection failed");
-        put(VidyoConnectorState.FailureInvalidResource, "Invalid Resource ID");
-    }};
-     ***************/
 
     // Helps check whether app has permission to access what is declared in its manifest.
     // - Permissions from app's manifest that have a "protection level" of "dangerous".
@@ -105,29 +107,18 @@ public class VidyoChatFragment extends BaseFragment implements
     // - For simplicity, this app treats all desired permissions as part of a single group.
     private final int PERMISSIONS_REQUEST_ALL = 1988;
 
-    private VidyoConnectorState mVidyoConnectorState = VidyoConnectorState.Disconnected;
-    private boolean mVidyoClientInitialized = false;
-    private Connector mVidyoConnector = null;
-    private LocalCamera mLastSelectedCamera = null;
-    public EditText mDisplayName;
-    //public static EditText mToken;
+    private VideoView local_camera_view;
 
-    private VideoFrameLayout local_camera_view;
-
-    private VideoFrameLayout remote_camera_view;
+    private VideoView remote_camera_view;
     private boolean remoteCameraVisible;
     private TextView invite_someone_button, guest_name, revoke_invitation_button;
 
     private boolean mCameraPrivacy = false;
     private boolean mMicrophonePrivacy = false;
-    private boolean mEnableDebug = false;
-    private boolean mRefreshSettings = true;
-    private boolean mDevicesSelected = true;
     private View myView;
     private String uid;
     private Integer videoTypeKey;
-    private String room_id; // the initiator's user id
-    private String missionDescription;  // we can probably get rid of this - we have video_mission_description
+    private String room_id; // the video_node_key
     private TextView video_mission_description;
     private TextView choose_legislator;
     private TextView edit_video_title_button;
@@ -135,8 +126,6 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView edit_video_mission_description_button;
     private TextView edit_youtube_video_description_button;
     private TextView youtube_video_description;
-    private String reasons;
-    private LocalCamera localCamera;
     private VideoNode currentVideoNode;
 
     private boolean recording = false;
@@ -161,9 +150,6 @@ public class VidyoChatFragment extends BaseFragment implements
 
     private ProgressBar video_chat_spinner;
 
-//    private FragmentManager fragmentManager;
-//    private Fragment back;
-
 
     /*
      *  Operating System Events
@@ -174,25 +160,50 @@ public class VidyoChatFragment extends BaseFragment implements
     public View onCreateView (LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
         myView = inflater.inflate(R.layout.vidyo_chat_fragment,container,false);
 
-        int SDK_INT = Build.VERSION.SDK_INT;
-        if (SDK_INT > 8)
-        {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()  // What is this good for?
-                    .permitAll().build();
-            StrictMode.setThreadPolicy(policy);
 
-            //your codes here
-//            getToken(); // this doesn't do anything.  It gets a token but doesn't return it or set it
+        /*
+         * Get shared preferences to read settings
+         */
+        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        /*
+         * Enable changing the volume using the up/down keys during a conversation
+         */
+        getActivity().setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+
+        /*
+         * Needed for setting/abandoning audio focus during call
+         */
+        audioManager = (AudioManager)(getActivity().getSystemService(Context.AUDIO_SERVICE));
+        audioManager.setSpeakerphoneOn(true);
+
+        local_camera_view = myView.findViewById(R.id.local_camera_view);
+        remote_camera_view = myView.findViewById(R.id.remote_camera_view);
+
+        TypedValue tv = new TypedValue();
+        float actionBarHeight = 0.0f;
+        if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            actionBarHeight = TypedValue.complexToDimension(tv.data, getResources().getDisplayMetrics());
+        }
+        DisplayMetrics dm = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
+        float availableHeight = dm.heightPixels - actionBarHeight;
+        local_camera_view.getLayoutParams().height = (int)(availableHeight / 2);
+        local_camera_view.getLayoutParams().width = local_camera_view.getLayoutParams().height * 16 / 9;
+        remote_camera_view.getLayoutParams().height = (int)(availableHeight / 2);
+        remote_camera_view.getLayoutParams().width = remote_camera_view.getLayoutParams().height * 16 / 9;
+
+
+        /*
+         * Check camera and microphone permissions. Needed in Android M.
+         */
+        if (!checkPermissionForCameraAndMicrophone()) {
+            requestPermissionForCameraAndMicrophone();
+        } else {
+            createAudioAndVideoTracks();
         }
 
-        // We need to know if we are coming to this screen from a video invitation or if the user
-        // is initiating a video chat
-        // How would we tell?
-        // Option 1: Users have a "currentVideoNodeKey" attribute.  If we make sure this attribute is
-        //          set before the user gets here, then it won't matter if they are initiator or guest
-
         List<VideoType> videoTypes = VideoType.getTypes();
-
 
         invite_someone_button = myView.findViewById(R.id.invite_someone_button);
         invite_someone_button.setOnClickListener(new View.OnClickListener() {
@@ -272,13 +283,7 @@ public class VidyoChatFragment extends BaseFragment implements
         //TODO make dynamic mission keys
         VideoType videoType = videoTypes.get(0); // TODO how are we going to choose different video types?
         videoTypeKey = videoType.getKey();
-        missionDescription = videoType.getVideo_mission_description();
         uid =  User.getInstance().getUid();
-
-        local_camera_view = myView.findViewById(R.id.local_camera_view);
-        remote_camera_view = myView.findViewById(R.id.remote_camera_view);
-
-        local_camera_view.setMinimumWidth(local_camera_view.getHeight() * 16 / 9);
 
         video_mission_description = myView.findViewById(R.id.videoChatDescriptionText);
         video_mission_description.setText(videoType.getVideo_mission_description());
@@ -340,18 +345,12 @@ public class VidyoChatFragment extends BaseFragment implements
         connect_button = myView.findViewById(R.id.connect_button);
         connect_button.setOnClickListener(this); // See onClick() in this class
         microphone_button = myView.findViewById(R.id.microphone_button);
-        microphone_button.setOnClickListener(this);
+        microphone_button.setOnClickListener(this); // See onClick() in this class
+        microphone_button.setVisibility(View.GONE); // visibility is controlled in doConnect() and doDisconnect()
 //        camera_button = myView.findViewById(R.id.camera_button);
 //        camera_button.setOnClickListener(this);
 
         video_chat_spinner = myView.findViewById(R.id.video_chat_spinner);
-
-
-        // Set the application's UI context to this activity.
-        ConnectorPkg.setApplicationUIContext(getActivity());
-
-        // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
-        mVidyoClientInitialized = ConnectorPkg.initialize();
 
         queryCurrentVideoNode();
 
@@ -436,8 +435,909 @@ public class VidyoChatFragment extends BaseFragment implements
         }
          ********/
 
+        /*
+         * Set the initial state of the UI
+         */
+        //initializeUI();
+
         return myView;
     }
+
+
+
+
+    /*
+     * Audio and video tracks can be created with names. This feature is useful for categorizing
+     * tracks of participants. For example, if one participant publishes a video track with
+     * ScreenCapturer and CameraCapturer with the names "screen" and "camera" respectively then
+     * other participants can use RemoteVideoTrack#getName to determine which video track is
+     * produced from the other participant's screen or camera.
+     */
+    private static final String LOCAL_AUDIO_TRACK_NAME = "mic";
+    private static final String LOCAL_VIDEO_TRACK_NAME = "camera";
+
+    private CameraCapturerCompat cameraCapturerCompat;
+    private LocalAudioTrack localAudioTrack;
+    private LocalVideoTrack localVideoTrack;
+    private VideoRenderer localVideoView;
+    private boolean previousMicrophoneMute;
+    private boolean disconnectedFromOnDestroy;
+    private LocalParticipant localParticipant;
+    private String remoteParticipantIdentity;
+    private AudioManager audioManager;
+
+    /*
+     * Android shared preferences used for settings
+     */
+    private SharedPreferences preferences;
+
+    private static final String PREF_AUDIO_CODEC = "audio_codec";
+    private static final String PREF_AUDIO_CODEC_DEFAULT = OpusCodec.NAME;
+    private static final String PREF_VIDEO_CODEC = "video_codec";
+    private static final String PREF_VIDEO_CODEC_DEFAULT = Vp8Codec.NAME;
+    private static final String PREF_SENDER_MAX_AUDIO_BITRATE = "sender_max_audio_bitrate";
+    private static final String PREF_SENDER_MAX_AUDIO_BITRATE_DEFAULT = "0";
+    private static final String PREF_SENDER_MAX_VIDEO_BITRATE = "sender_max_video_bitrate";
+    private static final String PREF_SENDER_MAX_VIDEO_BITRATE_DEFAULT = "0";
+    private static final String PREF_VP8_SIMULCAST = "vp8_simulcast";
+    private static final boolean PREF_VP8_SIMULCAST_DEFAULT = false;
+    private static final int CAMERA_MIC_PERMISSION_REQUEST_CODE = 1;
+
+    /*
+     * A Room represents communication between a local participant and one or more participants.
+     */
+    private Room room;
+
+    /*
+     * AudioCodec and VideoCodec represent the preferred codec for encoding and decoding audio and
+     * video.
+     */
+    private AudioCodec audioCodec;
+    private VideoCodec videoCodec;
+
+    /*
+     * Encoding parameters represent the sender side bandwidth constraints.
+     */
+    private EncodingParameters encodingParameters;
+    private int previousAudioMode;
+
+
+    private boolean checkPermissionForCameraAndMicrophone(){
+        int resultCamera = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA);
+        int resultMic = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.RECORD_AUDIO);
+        return resultCamera == PackageManager.PERMISSION_GRANTED &&
+                resultMic == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermissionForCameraAndMicrophone(){
+        if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.CAMERA) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                        Manifest.permission.RECORD_AUDIO)) {
+            Toast.makeText(getActivity(),
+                    R.string.permissions_needed,
+                    Toast.LENGTH_LONG).show();
+        } else {
+            ActivityCompat.requestPermissions(
+                    getActivity(),
+                    new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO},
+                    CAMERA_MIC_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        Log.i(TAG, "onOptionsItemSelected(): ARE WE GOING TO HAVE AN OPTIONS MENU?");
+//        switch (item.getItemId()) {
+//            case R.id.menu_settings:
+//                startActivity(new Intent(this, SettingsActivity.class));
+//                return true;
+//            case R.id.speaker_menu_item:
+//                if (audioManager.isSpeakerphoneOn()) {
+//                    audioManager.setSpeakerphoneOn(false);
+//                    item.setIcon(ic_phonelink_ring_white_24dp);
+//                } else {
+//                    audioManager.setSpeakerphoneOn(true);
+//                    item.setIcon(ic_volume_up_white_24dp);
+//                }
+//                return true;
+//            default:
+//                return false;
+//        }
+//    }
+
+    private void createAudioAndVideoTracks() {
+        // Share your microphone
+        localAudioTrack = LocalAudioTrack.create(getActivity(), true, LOCAL_AUDIO_TRACK_NAME);
+
+        // Share your camera
+        cameraCapturerCompat = new CameraCapturerCompat(getActivity(), getAvailableCameraSource());
+        Activity a = getActivity();
+        VideoCapturer vc = cameraCapturerCompat.getVideoCapturer();
+        localVideoTrack = LocalVideoTrack.create(a,true, vc, LOCAL_VIDEO_TRACK_NAME);
+        local_camera_view.setMirror(true);
+        localVideoTrack.addRenderer(local_camera_view);
+        localVideoView = local_camera_view;
+    }
+
+    private CameraCapturer.CameraSource getAvailableCameraSource() {
+        return (CameraCapturer.isSourceAvailable(CameraCapturer.CameraSource.FRONT_CAMERA)) ?
+                (CameraCapturer.CameraSource.FRONT_CAMERA) :
+                (CameraCapturer.CameraSource.BACK_CAMERA);
+    }
+
+    /*
+     * The initial state when there is no active room.
+     */
+//    private void initializeUI() {
+//                connectActionFab.setImageDrawable(ContextCompat.getDrawable(this,
+//                        R.drawable.ic_video_call_white_24dp));
+//                connectActionFab.show();
+//                connectActionFab.setOnClickListener(connectActionClickListener());
+//                switchCameraActionFab.show();
+//                switchCameraActionFab.setOnClickListener(switchCameraClickListener());
+//                localVideoActionFab.show();
+//                localVideoActionFab.setOnClickListener(localVideoClickListener());
+//                muteActionFab.show();
+//                muteActionFab.setOnClickListener(muteClickListener());
+//    }
+
+    /*
+     * Room events listener
+     */
+    private Room.Listener roomListener() {
+        return new Room.Listener() {
+            @Override
+            public void onConnected(Room room) {
+                localParticipant = room.getLocalParticipant();
+                //videoStatusTextView.setText("Connected to " + room.getName()); // maybe change the text to say WHO we're connected to
+                //setTitle(room.getName()); // don't think we care about the room name
+
+                for (RemoteParticipant remoteParticipant : room.getRemoteParticipants()) {
+                    addRemoteParticipant(remoteParticipant);
+                    break;
+                }
+            }
+
+            @Override
+            public void onConnectFailure(Room room, TwilioException e) {
+                //videoStatusTextView.setText("Failed to connect"); // do we want to add this extra attribute to the UI?
+                configureAudio(false);
+                //initializeUI();
+            }
+
+            @Override
+            public void onDisconnected(Room room, TwilioException e) {
+                localParticipant = null;
+//                videoStatusTextView.setText("Disconnected from " + room.getName()); // do we want to add this extra attribute to the UI?
+                VidyoChatFragment.this.room = null;
+                // Only reinitialize the UI if disconnect was not called from onDestroy()
+                if (!disconnectedFromOnDestroy) {
+                    configureAudio(false);
+                    //initializeUI();
+                    //moveLocalVideoToPrimaryView();
+                }
+            }
+
+            @Override
+            public void onParticipantConnected(Room room, RemoteParticipant remoteParticipant) {
+                addRemoteParticipant(remoteParticipant);
+
+            }
+
+            @Override
+            public void onParticipantDisconnected(Room room, RemoteParticipant remoteParticipant) {
+                removeRemoteParticipant(remoteParticipant);
+            }
+
+            @Override
+            public void onRecordingStarted(Room room) {
+                /*
+                 * Indicates when media shared to a Room is being recorded. Note that
+                 * recording is only available in our Group Rooms developer preview.
+                 */
+                Log.d(TAG, "onRecordingStarted");
+            }
+
+            @Override
+            public void onRecordingStopped(Room room) {
+                /*
+                 * Indicates when media shared to a Room is no longer being recorded. Note that
+                 * recording is only available in our Group Rooms developer preview.
+                 */
+                Log.d(TAG, "onRecordingStopped");
+            }
+        };
+    }
+
+    /*
+     * Get the preferred audio codec from shared preferences
+     */
+    private AudioCodec getAudioCodecPreference(String key, String defaultValue) {
+        final String audioCodecName = preferences.getString(key, defaultValue);
+
+        switch (audioCodecName) {
+            case IsacCodec.NAME:
+                return new IsacCodec();
+            case OpusCodec.NAME:
+                return new OpusCodec();
+            case PcmaCodec.NAME:
+                return new PcmaCodec();
+            case PcmuCodec.NAME:
+                return new PcmuCodec();
+            case G722Codec.NAME:
+                return new G722Codec();
+            default:
+                return new OpusCodec();
+        }
+    }
+
+    /*
+     * Get the preferred video codec from shared preferences
+     */
+    private VideoCodec getVideoCodecPreference(String key, String defaultValue) {
+        final String videoCodecName = preferences.getString(key, defaultValue);
+
+        switch (videoCodecName) {
+            // TODO what are we going to do about these default values?
+            case Vp8Codec.NAME:
+                Log.i(TAG, "getVideoCodecPreference(): THESE DEFAULT VALUES ARE PROBABLY NOT RIGHT");
+                boolean simulcast = preferences.getBoolean(/*SettingsActivity.*/PREF_VP8_SIMULCAST,
+                        /*SettingsActivity.*/PREF_VP8_SIMULCAST_DEFAULT);
+                return new Vp8Codec(simulcast);
+            case H264Codec.NAME:
+                return new H264Codec();
+            case Vp9Codec.NAME:
+                return new Vp9Codec();
+            default:
+                return new Vp8Codec();
+        }
+    }
+
+    private EncodingParameters getEncodingParameters() {
+        // TODO what are we going to do about these default values?
+        Log.i(TAG, "getEncodingParameters(): THESE DEFAULT VALUES ARE PROBABLY NOT RIGHT");
+        final int maxAudioBitrate = Integer.parseInt(
+                preferences.getString(/*SettingsActivity.*/PREF_SENDER_MAX_AUDIO_BITRATE,
+                        /*SettingsActivity.*/PREF_SENDER_MAX_AUDIO_BITRATE_DEFAULT));
+        final int maxVideoBitrate = Integer.parseInt(
+                preferences.getString(/*SettingsActivity.*/PREF_SENDER_MAX_VIDEO_BITRATE,
+                        /*SettingsActivity.*/PREF_SENDER_MAX_VIDEO_BITRATE_DEFAULT));
+
+        return new EncodingParameters(maxAudioBitrate, maxVideoBitrate);
+    }
+
+    /*
+     * The actions performed during disconnect.
+     */
+    private void setDisconnectAction() {
+        Log.i(TAG, "setDisconnectAction(): ALL COMMENTED OUT - THIS IS WHERE THE SAMPLE PROJECT DID STUFF WITH THE BUTTONS");
+//        connectActionFab.setImageDrawable(ContextCompat.getDrawable(this,
+//                R.drawable.ic_call_end_white_24px));
+//        connectActionFab.show();
+//        connectActionFab.setOnClickListener(disconnectClickListener());
+    }
+
+    private void configureAudio(boolean enable) {
+        if (enable) {
+            previousAudioMode = audioManager.getMode();
+            // Request audio focus before making any device switch
+            requestAudioFocus();
+            /*
+             * Use MODE_IN_COMMUNICATION as the default audio mode. It is required
+             * to be in this mode when playout and/or recording starts for the best
+             * possible VoIP performance. Some devices have difficulties with
+             * speaker mode if this is not set.
+             */
+            audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+            /*
+             * Always disable microphone mute during a WebRTC call.
+             */
+            previousMicrophoneMute = audioManager.isMicrophoneMute();
+            audioManager.setMicrophoneMute(false);
+        } else {
+            audioManager.setMode(previousAudioMode);
+            audioManager.abandonAudioFocus(null);
+            audioManager.setMicrophoneMute(previousMicrophoneMute);
+        }
+    }
+
+    private void requestAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AudioAttributes playbackAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build();
+            AudioFocusRequest focusRequest =
+                    new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                            .setAudioAttributes(playbackAttributes)
+                            .setAcceptsDelayedFocusGain(true)
+                            .setOnAudioFocusChangeListener(
+                                    new AudioManager.OnAudioFocusChangeListener() {
+                                        @Override
+                                        public void onAudioFocusChange(int i) { }
+                                    })
+                            .build();
+            audioManager.requestAudioFocus(focusRequest);
+        } else {
+            audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL,
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+        }
+    }
+
+    @Override
+    public  void onResume() {
+        super.onResume();
+
+        /*
+         * Update preferred audio and video codec in case changed in settings
+         */
+        Log.i(TAG, "onResume():  ARE THESE DEFAULT CODEC VALUES OK?");
+        audioCodec = getAudioCodecPreference(/*SettingsActivity.*/PREF_AUDIO_CODEC,
+                /*SettingsActivity.*/PREF_AUDIO_CODEC_DEFAULT);
+        videoCodec = getVideoCodecPreference(/*SettingsActivity.*/PREF_VIDEO_CODEC,
+                /*SettingsActivity.*/PREF_VIDEO_CODEC_DEFAULT);
+
+        /*
+         * Get latest encoding parameters
+         */
+        final EncodingParameters newEncodingParameters = getEncodingParameters();
+
+        /*
+         * If the local video track was released when the app was put in the background, recreate.
+         */
+        if (localVideoTrack == null && checkPermissionForCameraAndMicrophone()) {
+            localVideoTrack = LocalVideoTrack.create(getActivity(),
+                    true,
+                    cameraCapturerCompat.getVideoCapturer(),
+                    LOCAL_VIDEO_TRACK_NAME);
+            localVideoTrack.addRenderer(localVideoView);
+
+            /*
+             * If connected to a Room then share the local video track.
+             */
+            if (localParticipant != null) {
+                localParticipant.publishTrack(localVideoTrack);
+
+                /*
+                 * Update encoding parameters if they have changed.
+                 */
+                if (!newEncodingParameters.equals(encodingParameters)) {
+                    localParticipant.setEncodingParameters(newEncodingParameters);
+                }
+            }
+        }
+
+        /*
+         * Update encoding parameters
+         */
+        encodingParameters = newEncodingParameters;
+    }
+
+    @Override
+    public void onPause() {
+        /*
+         * Release the local video track before going in the background. This ensures that the
+         * camera can be used by other applications while this app is in the background.
+         */
+        if (localVideoTrack != null) {
+            /*
+             * If this local video track is being shared in a Room, unpublish from room before
+             * releasing the video track. Participants will be notified that the track has been
+             * unpublished.
+             */
+            if (localParticipant != null) {
+                localParticipant.unpublishTrack(localVideoTrack);
+            }
+
+            localVideoTrack.release();
+            localVideoTrack = null;
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        /*
+         * Always disconnect from the room before leaving the Activity to
+         * ensure any memory allocated to the Room resource is freed.
+         */
+        if (room != null && room.getState() != RoomState.DISCONNECTED) {
+            room.disconnect();
+            disconnectedFromOnDestroy = true;
+        }
+
+        /*
+         * Release the local audio and video tracks ensuring any memory allocated to audio
+         * or video is freed.
+         */
+        if (localAudioTrack != null) {
+            localAudioTrack.release();
+            localAudioTrack = null;
+        }
+        if (localVideoTrack != null) {
+            localVideoTrack.release();
+            localVideoTrack = null;
+        }
+
+        super.onDestroy();
+    }
+
+    /*
+     * Called when remote participant joins the room
+     */
+    private void addRemoteParticipant(RemoteParticipant remoteParticipant) {
+        /*
+         * This app only displays video for one additional participant per Room
+         */
+//        if (remote_camera_view.getVisibility() == View.VISIBLE) {
+//            Snackbar.make(connectActionFab,
+//                    "Multiple participants are not currently support in this UI",
+//                    Snackbar.LENGTH_LONG)
+//                    .setAction("Action", null).show();
+//            return;
+//        }
+        remoteParticipantIdentity = remoteParticipant.getIdentity();
+//        videoStatusTextView.setText("RemoteParticipant "+ remoteParticipantIdentity + " joined"); // do we want to add this extra attribute to the UI?
+
+        /*
+         * Add remote participant renderer
+         */
+        if (remoteParticipant.getRemoteVideoTracks().size() > 0) {
+            RemoteVideoTrackPublication remoteVideoTrackPublication =
+                    remoteParticipant.getRemoteVideoTracks().get(0);
+
+            /*
+             * Only render video tracks that are subscribed to
+             */
+            if (remoteVideoTrackPublication.isTrackSubscribed()) {
+                addRemoteParticipantVideo(remoteVideoTrackPublication.getRemoteVideoTrack());
+            }
+        }
+
+        /*
+         * Start listening for participant events
+         */
+        remoteParticipant.setListener(remoteParticipantListener());
+    }
+
+    private RemoteParticipant.Listener remoteParticipantListener() {
+        return new RemoteParticipant.Listener() {
+            @Override
+            public void onAudioTrackPublished(RemoteParticipant remoteParticipant,
+                                              RemoteAudioTrackPublication remoteAudioTrackPublication) {
+                Log.i(TAG, String.format("onAudioTrackPublished: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteAudioTrackPublication: sid=%s, enabled=%b, " +
+                                "subscribed=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteAudioTrackPublication.getTrackSid(),
+                        remoteAudioTrackPublication.isTrackEnabled(),
+                        remoteAudioTrackPublication.isTrackSubscribed(),
+                        remoteAudioTrackPublication.getTrackName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onAudioTrackPublished");
+            }
+
+            @Override
+            public void onAudioTrackUnpublished(RemoteParticipant remoteParticipant,
+                                                RemoteAudioTrackPublication remoteAudioTrackPublication) {
+                Log.i(TAG, String.format("onAudioTrackUnpublished: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteAudioTrackPublication: sid=%s, enabled=%b, " +
+                                "subscribed=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteAudioTrackPublication.getTrackSid(),
+                        remoteAudioTrackPublication.isTrackEnabled(),
+                        remoteAudioTrackPublication.isTrackSubscribed(),
+                        remoteAudioTrackPublication.getTrackName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onAudioTrackUnpublished");
+            }
+
+            @Override
+            public void onDataTrackPublished(RemoteParticipant remoteParticipant,
+                                             RemoteDataTrackPublication remoteDataTrackPublication) {
+                Log.i(TAG, String.format("onDataTrackPublished: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteDataTrackPublication: sid=%s, enabled=%b, " +
+                                "subscribed=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteDataTrackPublication.getTrackSid(),
+                        remoteDataTrackPublication.isTrackEnabled(),
+                        remoteDataTrackPublication.isTrackSubscribed(),
+                        remoteDataTrackPublication.getTrackName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onDataTrackPublished");
+            }
+
+            @Override
+            public void onDataTrackUnpublished(RemoteParticipant remoteParticipant,
+                                               RemoteDataTrackPublication remoteDataTrackPublication) {
+                Log.i(TAG, String.format("onDataTrackUnpublished: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteDataTrackPublication: sid=%s, enabled=%b, " +
+                                "subscribed=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteDataTrackPublication.getTrackSid(),
+                        remoteDataTrackPublication.isTrackEnabled(),
+                        remoteDataTrackPublication.isTrackSubscribed(),
+                        remoteDataTrackPublication.getTrackName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onDataTrackUnpublished");
+            }
+
+            @Override
+            public void onVideoTrackPublished(RemoteParticipant remoteParticipant,
+                                              RemoteVideoTrackPublication remoteVideoTrackPublication) {
+                Log.i(TAG, String.format("onVideoTrackPublished: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteVideoTrackPublication: sid=%s, enabled=%b, " +
+                                "subscribed=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteVideoTrackPublication.getTrackSid(),
+                        remoteVideoTrackPublication.isTrackEnabled(),
+                        remoteVideoTrackPublication.isTrackSubscribed(),
+                        remoteVideoTrackPublication.getTrackName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onVideoTrackPublished");
+            }
+
+            @Override
+            public void onVideoTrackUnpublished(RemoteParticipant remoteParticipant,
+                                                RemoteVideoTrackPublication remoteVideoTrackPublication) {
+                Log.i(TAG, String.format("onVideoTrackUnpublished: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteVideoTrackPublication: sid=%s, enabled=%b, " +
+                                "subscribed=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteVideoTrackPublication.getTrackSid(),
+                        remoteVideoTrackPublication.isTrackEnabled(),
+                        remoteVideoTrackPublication.isTrackSubscribed(),
+                        remoteVideoTrackPublication.getTrackName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onVideoTrackUnpublished");
+            }
+
+            @Override
+            public void onAudioTrackSubscribed(RemoteParticipant remoteParticipant,
+                                               RemoteAudioTrackPublication remoteAudioTrackPublication,
+                                               RemoteAudioTrack remoteAudioTrack) {
+                Log.i(TAG, String.format("onAudioTrackSubscribed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteAudioTrack: enabled=%b, playbackEnabled=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteAudioTrack.isEnabled(),
+                        remoteAudioTrack.isPlaybackEnabled(),
+                        remoteAudioTrack.getName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onAudioTrackSubscribed");
+            }
+
+            @Override
+            public void onAudioTrackUnsubscribed(RemoteParticipant remoteParticipant,
+                                                 RemoteAudioTrackPublication remoteAudioTrackPublication,
+                                                 RemoteAudioTrack remoteAudioTrack) {
+                Log.i(TAG, String.format("onAudioTrackUnsubscribed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteAudioTrack: enabled=%b, playbackEnabled=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteAudioTrack.isEnabled(),
+                        remoteAudioTrack.isPlaybackEnabled(),
+                        remoteAudioTrack.getName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onAudioTrackUnsubscribed");
+            }
+
+            @Override
+            public void onAudioTrackSubscriptionFailed(RemoteParticipant remoteParticipant,
+                                                       RemoteAudioTrackPublication remoteAudioTrackPublication,
+                                                       TwilioException twilioException) {
+                Log.i(TAG, String.format("onAudioTrackSubscriptionFailed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteAudioTrackPublication: sid=%b, name=%s]" +
+                                "[TwilioException: code=%d, message=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteAudioTrackPublication.getTrackSid(),
+                        remoteAudioTrackPublication.getTrackName(),
+                        twilioException.getCode(),
+                        twilioException.getMessage()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onAudioTrackSubscriptionFailed");
+            }
+
+            @Override
+            public void onDataTrackSubscribed(RemoteParticipant remoteParticipant,
+                                              RemoteDataTrackPublication remoteDataTrackPublication,
+                                              RemoteDataTrack remoteDataTrack) {
+                Log.i(TAG, String.format("onDataTrackSubscribed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteDataTrack: enabled=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteDataTrack.isEnabled(),
+                        remoteDataTrack.getName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onDataTrackSubscribed");
+            }
+
+            @Override
+            public void onDataTrackUnsubscribed(RemoteParticipant remoteParticipant,
+                                                RemoteDataTrackPublication remoteDataTrackPublication,
+                                                RemoteDataTrack remoteDataTrack) {
+                Log.i(TAG, String.format("onDataTrackUnsubscribed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteDataTrack: enabled=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteDataTrack.isEnabled(),
+                        remoteDataTrack.getName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onDataTrackUnsubscribed");
+            }
+
+            @Override
+            public void onDataTrackSubscriptionFailed(RemoteParticipant remoteParticipant,
+                                                      RemoteDataTrackPublication remoteDataTrackPublication,
+                                                      TwilioException twilioException) {
+                Log.i(TAG, String.format("onDataTrackSubscriptionFailed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteDataTrackPublication: sid=%b, name=%s]" +
+                                "[TwilioException: code=%d, message=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteDataTrackPublication.getTrackSid(),
+                        remoteDataTrackPublication.getTrackName(),
+                        twilioException.getCode(),
+                        twilioException.getMessage()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onDataTrackSubscriptionFailed");
+            }
+
+            @Override
+            public void onVideoTrackSubscribed(RemoteParticipant remoteParticipant,
+                                               RemoteVideoTrackPublication remoteVideoTrackPublication,
+                                               RemoteVideoTrack remoteVideoTrack) {
+                Log.i(TAG, String.format("onVideoTrackSubscribed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteVideoTrack: enabled=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteVideoTrack.isEnabled(),
+                        remoteVideoTrack.getName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onVideoTrackSubscribed");
+                addRemoteParticipantVideo(remoteVideoTrack);
+            }
+
+            @Override
+            public void onVideoTrackUnsubscribed(RemoteParticipant remoteParticipant,
+                                                 RemoteVideoTrackPublication remoteVideoTrackPublication,
+                                                 RemoteVideoTrack remoteVideoTrack) {
+                Log.i(TAG, String.format("onVideoTrackUnsubscribed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteVideoTrack: enabled=%b, name=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteVideoTrack.isEnabled(),
+                        remoteVideoTrack.getName()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onVideoTrackUnsubscribed");
+                removeParticipantVideo(remoteVideoTrack);
+            }
+
+            @Override
+            public void onVideoTrackSubscriptionFailed(RemoteParticipant remoteParticipant,
+                                                       RemoteVideoTrackPublication remoteVideoTrackPublication,
+                                                       TwilioException twilioException) {
+                Log.i(TAG, String.format("onVideoTrackSubscriptionFailed: " +
+                                "[RemoteParticipant: identity=%s], " +
+                                "[RemoteVideoTrackPublication: sid=%b, name=%s]" +
+                                "[TwilioException: code=%d, message=%s]",
+                        remoteParticipant.getIdentity(),
+                        remoteVideoTrackPublication.getTrackSid(),
+                        remoteVideoTrackPublication.getTrackName(),
+                        twilioException.getCode(),
+                        twilioException.getMessage()));
+
+                // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("onVideoTrackSubscriptionFailed");
+
+                // TODO what about this?...
+//                Snackbar.make(connectActionFab,
+//                        String.format("Failed to subscribe to %s video track",
+//                                remoteParticipant.getIdentity()),
+//                        Snackbar.LENGTH_LONG)
+//                        .show();
+            }
+
+            @Override
+            public void onAudioTrackEnabled(RemoteParticipant remoteParticipant,
+                                            RemoteAudioTrackPublication remoteAudioTrackPublication) {
+
+            }
+
+            @Override
+            public void onAudioTrackDisabled(RemoteParticipant remoteParticipant,
+                                             RemoteAudioTrackPublication remoteAudioTrackPublication) {
+
+            }
+
+            @Override
+            public void onVideoTrackEnabled(RemoteParticipant remoteParticipant,
+                                            RemoteVideoTrackPublication remoteVideoTrackPublication) {
+
+            }
+
+            @Override
+            public void onVideoTrackDisabled(RemoteParticipant remoteParticipant,
+                                             RemoteVideoTrackPublication remoteVideoTrackPublication) {
+
+            }
+        };
+    }
+
+    private void removeParticipantVideo(VideoTrack videoTrack) {
+        videoTrack.removeRenderer(remote_camera_view);
+        remote_camera_view.setBackgroundColor(0xFFDDDDDD);
+    }
+
+    /*
+     * Set primary view as renderer for participant video track
+     */
+    private void addRemoteParticipantVideo(VideoTrack videoTrack) {
+        //moveLocalVideoToThumbnailView(); // we don't need to do this anymore
+        remote_camera_view.setMirror(false);
+        remote_camera_view.setBackgroundColor(0x00000000);
+        videoTrack.addRenderer(remote_camera_view);
+    }
+
+    /*
+     * Called when remote participant leaves the room
+     */
+    private void removeRemoteParticipant(RemoteParticipant remoteParticipant) {
+
+        // TODO Are we going to display these status messages?
+//                videoStatusTextView.setText("RemoteParticipant " + remoteParticipant.getIdentity() + " left.");
+        if (!remoteParticipant.getIdentity().equals(remoteParticipantIdentity)) {
+            return;
+        }
+
+        /*
+         * Remove remote participant renderer
+         */
+        if (!remoteParticipant.getRemoteVideoTracks().isEmpty()) {
+            RemoteVideoTrackPublication remoteVideoTrackPublication =
+                    remoteParticipant.getRemoteVideoTracks().get(0);
+
+            /*
+             * Remove video only if subscribed to participant track
+             */
+            if (remoteVideoTrackPublication.isTrackSubscribed()) {
+                removeParticipantVideo(remoteVideoTrackPublication.getRemoteVideoTrack());
+            }
+        }
+        // don't need this either
+//        moveLocalVideoToPrimaryView();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     private void setVideoNodeAttribute(String attribute, boolean b) {
         if(currentVideoNode == null)
@@ -475,10 +1375,10 @@ public class VidyoChatFragment extends BaseFragment implements
 
                         // the connect_button toggles its image as soon as it's clicked.  This code will just keep it in sync if a disconnect is forced from somewhere else
                         if(currentVideoNode.getParticipant(User.getInstance().getUid()).isConnected()) {
-                            connect_button.setChecked(true);
+                            //connect_button.setChecked(true);
                             doConnect();
                         } else {
-                            connect_button.setChecked(false);
+                            //connect_button.setChecked(false);
                             doDisconnect();
                         }
 
@@ -493,23 +1393,6 @@ public class VidyoChatFragment extends BaseFragment implements
                             //dismissSpinner();
                             recordingHasStarted();
                         }
-
-
-
-
-
-//                        if let vn = self.videoNode, let recording_requested = vn.recording_requested {
-//                            if (recording_requested) {
-//                                self.showSpinner2()
-//                            } // spinner dismissed on the next lines...
-//                        }
-//
-//                        if let vn = self.videoNode, let _ = vn.recording_started, vn.recording_stopped == nil {
-//                            self.recordingHasStarted()
-//                        }
-
-
-
 
 
                         if(noLegislator(currentVideoNode)) {
@@ -532,6 +1415,64 @@ public class VidyoChatFragment extends BaseFragment implements
                     }
                 });
             }
+        }
+    }
+
+
+    private void doConnect() {
+        if(currentVideoNode == null)
+            return;
+
+        VideoParticipant me = currentVideoNode.getParticipant(User.getInstance().getUid());
+        if(me == null)
+            return;
+
+        configureAudio(true);
+
+        // Get accessToken from the user's node under /video/list/{video_node_key}/video_participants/{uid}/twilio_token
+        ConnectOptions.Builder connectOptionsBuilder = new ConnectOptions.Builder(me.getTwilio_token())
+                .roomName(currentVideoNode.getRoom_id());
+
+        /*
+         * Add local audio track to connect options to share with participants.
+         */
+        if (localAudioTrack != null) {
+            connectOptionsBuilder
+                    .audioTracks(Collections.singletonList(localAudioTrack));
+        }
+
+        /*
+         * Add local video track to connect options to share with participants.
+         */
+        if (localVideoTrack != null) {
+            connectOptionsBuilder.videoTracks(Collections.singletonList(localVideoTrack));
+        }
+
+        /*
+         * Set the preferred audio and video codec for media.
+         */
+        connectOptionsBuilder.preferAudioCodecs(Collections.singletonList(audioCodec));
+        connectOptionsBuilder.preferVideoCodecs(Collections.singletonList(videoCodec));
+
+        /*
+         * Set the sender side encoding parameters.
+         */
+        connectOptionsBuilder.encodingParameters(encodingParameters);
+
+        room = Video.connect(getActivity(), connectOptionsBuilder.build(), roomListener());
+        microphone_button.setVisibility(View.VISIBLE);
+        record_button.setVisibility(View.VISIBLE);
+        setDisconnectAction();
+    }
+
+
+    private void doDisconnect() {
+        microphone_button.setVisibility(View.GONE);
+        record_button.setVisibility(View.GONE);
+        if(room != null) {
+            if(room.isRecording())
+                ; // do do we stop a recording in progress?
+            room.disconnect();
         }
     }
 
@@ -756,70 +1697,7 @@ public class VidyoChatFragment extends BaseFragment implements
     @Override
     public void onStart() {
         super.onStart();
-        // Initialize or refresh the app settings.
-        // When app is first launched, mRefreshSettings will always be true.
-        // Each successive time that onStart is called, app is coming back to foreground so check if the
-        // settings need to be refreshed again, as app may have been launched via URI.
-
-        mRefreshSettings = false;
-
-        geeez();
     }
-
-    private void geeez() {
-
-        if(!mVidyoClientInitialized) {
-            // Set the application's UI context to this activity.
-            ConnectorPkg.setApplicationUIContext(getActivity());
-
-            // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
-            mVidyoClientInitialized = ConnectorPkg.initialize();
-        }
-
-        // If Vidyo Client has been successfully initialized and the Connector has
-        // not yet been constructed, then check permissions and construct Connector.
-        if (mVidyoConnector == null) {
-            // Beginning in Android 6.0 (API level 23), users grant permissions to apps while
-            // app is running, not when they install the app. Check whether app has permission
-            // to access what is declared in its manifest.
-            if (Build.VERSION.SDK_INT > 22) {
-                List<String> permissionsNeeded = new ArrayList<>();
-                for (String permission : mPermissions) {
-                    // Check if the permission has already been granted.
-                    if (ContextCompat.checkSelfPermission(getActivity(), permission) != PackageManager.PERMISSION_GRANTED)
-                        permissionsNeeded.add(permission);
-                }
-                if (permissionsNeeded.size() > 0) {
-                    // Request any permissions which have not been granted. The result will be called back in onRequestPermissionsResult.
-                    ActivityCompat.requestPermissions(getActivity(), permissionsNeeded.toArray(new String[0]), PERMISSIONS_REQUEST_ALL);
-                } else {
-                    startVidyoConnector();
-                }
-            } else {
-                startVidyoConnector();
-            }
-        }
-
-    }
-
-//    // per FragmentContainingUser
-//    public void userSelected(UserBean guest) {
-//        // this is the person that was just invited - it's not the current user.  The current user invited this person
-//        if(currentVideoNode == null)
-//            return;
-//        VideoInvitation inv = new VideoInvitation(User.getInstance(), guest, currentVideoNode.getKey());
-//        String key = inv.save();
-//        Map updates = new HashMap();
-//        updates.put("video_invitation_key", key);
-//        updates.put("video_invitation_extended_to", guest.getName());
-//        FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey()).updateChildren(updates);
-//    }
-
-//    // per FragmentContainingUser
-//    public void setFragmentManager(FragmentManager fragmentManager, Fragment back) {
-//        this.fragmentManager = fragmentManager;
-//        this.back = back;
-//    }
 
     public Fragment getFragment() {
         return this;
@@ -836,65 +1714,9 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume");
-        setUserPresent(User.getInstance(), true);
-
-        // Set the application's UI context to this activity.
-        //ConnectorPkg.setApplicationUIContext(getActivity());
-
-        // Initialize the VidyoClient library - this should be done once in the lifetime of the application.
-        //mVidyoClientInitialized = ConnectorPkg.initialize();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause");
-        setUserPresent(User.getInstance(), false);
-    }
-
-    @Override
     public void onStop() {
         super.onStop();
         Log.d(TAG, "onStop");
-
-        if (mVidyoConnector != null) {
-            if (mVidyoConnectorState != VidyoConnectorState.Connected &&
-                    mVidyoConnectorState != VidyoConnectorState.Connecting) {
-                // Not connected/connecting to a resource.
-                // Release camera, mic, and speaker from this app while backgrounded.
-                mVidyoConnector.selectLocalCamera(null);
-                mVidyoConnector.selectLocalMicrophone(null);
-                mVidyoConnector.selectLocalSpeaker(null);
-                mDevicesSelected = false;
-            }
-            mVidyoConnector.disable(); // this is key
-            // If you don't call disable(), your app will hang on to the camera and the next time you come to
-            // this screen you'll try to open the camera again and you won't be able to.  You'll be instantiating mVidyoConnector
-            // again but you won't be able to get the camera back - hard lesson learned here.
-
-            //mVidyoConnector.setMode(Connector.ConnectorMode.VIDYO_CONNECTORMODE_Background); not sure if we need this given that we call disable() above
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy");
-
-        // Release device resources
-        mLastSelectedCamera = null;
-        mVidyoConnector.disable();
-
-        // Connector will be destructed upon garbage collection.
-        mVidyoConnector = null;
-
-        ConnectorPkg.setApplicationUIContext(null);
-
-        // Uninitialize the VidyoClient library - this should be done once in the lifetime of the application.
-        ConnectorPkg.uninitialize();
     }
 
     private String getVideoNodeKey(String vtype) {
@@ -920,137 +1742,8 @@ public class VidyoChatFragment extends BaseFragment implements
         return new VideoNode(User.getInstance(), vtype);
     }
 
-    // set the room_id by updating the database.  The realtime query will cause the fields in
-    // this class to be updated
-    public String getRoom_id() {
-        if(room_id == null)
-            room_id = User.getInstance().getCurrent_video_node_key();
-        return room_id;
-    }
 
 
-    private String getToken() {
-        if(currentVideoNode == null)
-            return "";
-        for(VideoParticipant vp : currentVideoNode.getVideo_participants().values()) {
-            if(vp.getUid().equals(User.getInstance().getUid()))
-                return vp.getVidyo_token();
-        }
-        return "";
-    }
-
-
-    /**
-     * Don't GET a token.  ASK for a token by writing to the video_participant's node and then creating
-     * a trigger function that will listen for writes to that node and generate a token and write that token
-     * to the participant's node
-     */
-//    private String getToken() {
-//        String token = "";
-//        HttpURLConnection connection = null;
-//        BufferedReader reader = null;
-//
-//        try {
-//            String uid = User.getInstance().getUid();
-//            if(uid.contains("@")){
-//                uid = uid.replaceAll("@","_");
-//            }
-//            // TODO maybe get this url from the database instead?
-//            // TODO not good to have parm named userName if the value is the user's id
-//            String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + uid;
-//            URL url = new URL(urlString);
-//
-//            connection = (HttpURLConnection) url.openConnection();
-//            connection.connect();
-//            InputStream inputStream = connection.getInputStream();
-//            reader = new BufferedReader(new InputStreamReader(inputStream));
-//
-//            StringBuffer buffer = new StringBuffer();
-//            String line = "";
-//
-//            while ((line = reader.readLine()) != null) {
-//                buffer.append(line + "/n");
-//            }
-//
-//            String bufferString = buffer.toString();
-//            JSONObject jsonObject = new JSONObject(bufferString);
-//            token = jsonObject.getString("token").trim();
-//        } catch (MalformedURLException e) {
-//            // TODO what are we supposed to do in this case?
-//        } catch (IOException e) {
-//            // TODO what are we supposed to do in this case?
-//        } catch (JSONException e) {
-//            // TODO what are we supposed to do in this case?
-//        } finally {
-//            if (connection != null) {
-//                connection.disconnect();
-//            }
-//            try {
-//                if (reader != null) {
-//                    reader.close();
-//                }
-//            }
-//            catch (IOException e) {
-//                // TODO what are we supposed to do in this case?
-//            }
-//        }
-//        return token;
-//    }
-
-
-
-    /********* get rid of this once the new version above is working
-    private void getToken_orig() {
-        pd = new ProgressDialog(getActivity());
-        pd.setMessage("Please Wait");
-        pd.show();
-
-        HttpURLConnection vmConnection = null;
-        BufferedReader reader = null;
-
-        //TODO make dynamic
-
-        try {
-            String tokenThing = User.getInstance().getUid();
-            if(tokenThing.contains("@")){
-                tokenThing = tokenThing.replaceAll("@","_");
-            }
-            String urlString = "https://us-central1-telepatriot-bd737.cloudfunctions.net/generateVidyoToken?userName=" + tokenThing;
-            URL url = new URL(urlString);
-
-            vmConnection = (HttpURLConnection) url.openConnection();
-            vmConnection.connect();
-            InputStream inputStream = vmConnection.getInputStream();
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-
-            StringBuffer buffer = new StringBuffer();
-            String line = "";
-
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line + "/n");
-            }
-
-            String bufferString = buffer.toString();
-            JSONObject jsonObject = new JSONObject(bufferString);
-            jsonTokenData = jsonObject.getString("token").trim();
-        } catch (MalformedURLException e) {
-        } catch (IOException e) {
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } finally {
-            if (vmConnection != null) {
-                vmConnection.disconnect();
-            }
-            try {
-                if (reader != null) {
-                    reader.close();
-                }
-            } catch (IOException e) {
-            }
-        }
-        pd.dismiss();
-    }
-     ***********/
 
     /****
      * See google-cloud.js:video_title()
@@ -1136,277 +1829,6 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
 
-    //protected void onNewIntent(Intent intent) {
-    //    super.onNewIntent(intent);
-
-        // Set the refreshSettings flag so the app settings are refreshed in onStart
-    //    mRefreshSettings = true;
-
-        // New intent was received so set it to use in onStart
-    //   setIntent(intent);
-    //}
-
-
-    /**************************
-    // The device interface orientation has changed
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        // Refresh the video size after it is painted
-        ViewTreeObserver viewTreeObserver = local_camera_view.getViewTreeObserver();
-        if (viewTreeObserver.isAlive()) {
-            viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    local_camera_view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                    // Width/height values of views not updated at this point so need to wait
-                    // before refreshing UI
-
-                    refreshUI();
-                }
-            });
-        }
-    }
-    *******************/
-
-    /*
-     * Private Utility Functions
-     */
-
-    // Callback containing the result of the permissions request. If permissions were not previously,
-    // obtained, wait until this is received until calling startVidyoConnector where Connector is constructed.
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-
-        // If the expected request code is received, start VidyoConnector
-        if (requestCode == PERMISSIONS_REQUEST_ALL) {
-            for (int i = 0; i < permissions.length; ++i)
-            startVidyoConnector();
-        } else {
-        }
-    }
-
-    private void logit(String s) {
-        for(int i=0; i < 20; i++)
-            System.out.println(s);
-    }
-
-    // Construct Connector and register for event listeners.
-    private void startVidyoConnector() {
-
-        // Wait until local_camera_view is drawn until getting started.
-        ViewTreeObserver viewTreeObserver = local_camera_view.getViewTreeObserver();
-        boolean isAlive = viewTreeObserver.isAlive();
-        if (isAlive) {
-            viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    local_camera_view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                    // Construct Connector
-                    try {
-
-                        // LAME - can't put a breakpoint here
-                        mVidyoConnector = new Connector(null, // null for custom layouts - IMPORTANT ! this is how you get the video to take
-                                // up the whole video frame !
-                                // BUT null means the "camera flip" button won't activate the back camera (probably doesn't matter)
-                                Connector.ConnectorViewStyle.VIDYO_CONNECTORVIEWSTYLE_Default,
-                                1,
-                                "error@VidyoClient error@VidyoConnector error", // don't know what these next 3 lines do
-                                "",
-                                0);
-
-                        // Set the client version in the toolbar
-                        String version =  mVidyoConnector.getVersion();
-                        System.out.println("startVidyoConnector():  mVidyoConnector.getVersion() = "+mVidyoConnector.getVersion());
-
-                        // Set initial position
-                        //refreshUI();
-
-                        // Register for local camera events
-                        mVidyoConnector.registerLocalCameraEventListener((Connector.IRegisterLocalCameraEventListener) VidyoChatFragment.this);
-
-                        mVidyoConnector.registerLocalMicrophoneEventListener((Connector.IRegisterLocalMicrophoneEventListener) VidyoChatFragment.this);
-
-                        // Register for remote camera events - this is the good stuff right here :)
-                        mVidyoConnector.registerRemoteCameraEventListener((Connector.IRegisterRemoteCameraEventListener) VidyoChatFragment.this);
-
-                        mVidyoConnector.registerRemoteMicrophoneEventListener((Connector.IRegisterRemoteMicrophoneEventListener) VidyoChatFragment.this);
-
-                        // Register for network interface events
-                        mVidyoConnector.registerNetworkInterfaceEventListener((Connector.IRegisterNetworkInterfaceEventListener) VidyoChatFragment.this);
-
-                        // Register for log events
-                        // You can do this, but it's going to fill up the console with crap and you'll never be able to find YOUR log output
-                        //mVidyoConnector.registerLogEventListener((Connector.IRegisterLogEventListener) VidyoChatFragment.this, "info@VidyoClient info@VidyoConnector warning");
-
-                        // Apply the app settings
-                        applySettings();
-                    }
-                    catch (Throwable e) {
-                        logit("startVidyoConnector: Throwable!  "+e);
-                    }
-                }
-
-                // Apply some of the app settings
-                public void applySettings() {
-                    // If enableDebug is configured then enable debugging
-                    if (mEnableDebug) {
-                        mVidyoConnector.enableDebug(7776, "warning info@VidyoClient info@VidyoConnector");
-                    } else {
-                        mVidyoConnector.disableDebug();
-                    }
-
-//                    // If cameraPrivacy is configured then mute the camera
-//                    camera_button.setChecked(false); // reset state
-//                    if (mCameraPrivacy) {
-//                        camera_button.performClick();
-//                    }
-
-                    // If microphonePrivacy is configured then mute the microphone
-                    microphone_button.setChecked(false); // reset state
-                    if (mMicrophonePrivacy) {
-                        microphone_button.performClick();
-                    }
-
-                    /********
-                    // Set experimental options if any exist
-                    if (mExperimentalOptions != null) {
-                        ConnectorPkg.setExperimentalOptions(mExperimentalOptions);
-                    }
-
-                    // If configured to auto-join, then simulate a click of the toggle connect button
-                    if (mAutoJoin) {
-                        connect_button.performClick();
-                    }
-                     ***********/
-                }
-            });
-        }
-    }
-
-    /****************************
-    // Refresh the UI
-    private void refreshUI() {
-        // Refresh the rendering of the video
-        System.out.println("refreshUI:  mLastSelectedCamera = "+mLastSelectedCamera);
-        mVidyoConnector.assignViewToLocalCamera(local_camera_view, mLastSelectedCamera, false, false);
-        mVidyoConnector.showViewAt(local_camera_view, 100, 0, local_camera_view.getWidth(), local_camera_view.getHeight());
-    }
-     **************/
-
-
-    // The state of the VidyoConnector vmConnection changed, reconfigure the UI.
-    // If connected, dismiss the controls layout
-    private void changeState(VidyoConnectorState state) {
-
-        mVidyoConnectorState = state;
-
-        System.out.println("getActivity() = "+getActivity());
-
-        // Execute this code on the main thread since it is updating the UI layout.
-        getActivity().runOnUiThread(new Runnable()
-            {
-                @Override
-                public void run() {
-
-                    // REGARDING ALL THE COMMENTED-OUT Toast CALLS...
-                    // I think the call in case Connected was throwing a nasty exception because we are
-                    // now connecting automatically whenever both participants (video/list/[key]/video_participants) are 'present'
-                    // The problem (I think) is that getActivity() above is not ready at the point that we
-                    // call changeState() - hence the exception.
-
-
-                    // Depending on the state, do a subset of the following:
-                    // - update the toggle connect button to either start call or end call image: connect_button
-                    // - display toolbar in case it is hidden: mToolbarLayout
-                    // - show/hide the vmConnection spinner: mConnectionSpinner
-                    // - show/hide the input form: mControlsLayout
-                    switch (mVidyoConnectorState) {
-                        case Connecting:
-                            connect_button.setChecked(true);
-                            //mConnectionSpinner.setVisibility(View.VISIBLE);
-//                            Toast.makeText(getActivity(), "connecting", Toast.LENGTH_SHORT).show();
-                            break;
-
-                        case Connected:
-                            connect_button.setChecked(true);
-                            //record_button.setVisibility(View.VISIBLE);
-                            //mConnectionSpinner.setVisibility(View.INVISIBLE);
-//                            Toast.makeText(getActivity(), "connected", Toast.LENGTH_SHORT).show();
-                            break;
-
-                        case Disconnecting:
-                            // See VideoChatVC.connectionClicked() - the 'if connected' block
-                            if(recording) {
-                                stopRecording();
-                            }
-
-                            // unrid()  // TODO create this method similar to VideoChatVC.unrid() in Swift
-
-                            // The button just switched to the callStart image.
-                            // Change the button back to the callEnd image because do not want to assume that the Disconnect
-                            // call will actually end the call. Need to wait for the callback to be received
-                            // before swapping to the callStart image.
-                            connect_button.setChecked(true);
-                            //record_button.setVisibility(View.GONE);
-//                            Toast.makeText(getActivity(), "disconnecting", Toast.LENGTH_SHORT).show();
-                            break;
-
-                        case Disconnected:
-                            //record_button.setVisibility(View.GONE);
-//                            Toast.makeText(getActivity(), "disconnected", Toast.LENGTH_SHORT).show();
-                            connect_button.setChecked(false);
-                            break;
-                        case DisconnectedUnexpected:
-                            // TODO not sure what to do about these error conditions
-                            // displaying this kind of toast isn't helpful for the user
-                            //Toast.makeText(getActivity(), "disconnect unexpected", Toast.LENGTH_SHORT).show();
-                            break;
-                        case Failure:
-                            // TODO not sure what to do about these error conditions
-                            // displaying this kind of toast isn't helpful for the user
-                            //Toast.makeText(getActivity(), "failure", Toast.LENGTH_SHORT).show();
-                            break;
-                        case FailureInvalidResource:
-                            // TODO not sure what to do about these error conditions
-                            // displaying this kind of toast isn't helpful for the user
-                            //Toast.makeText(getActivity(), "invalid resource", Toast.LENGTH_SHORT).show();
-                            connect_button.setChecked(false);
-                            //mConnectionSpinner.setVisibility(View.INVISIBLE);
-
-                            /************
-                            // If a return URL was provided as an input parameter, then return to that application
-                            if (mReturnURL != null) {
-                                // Provide a callstate of either 0 or 1, depending on whether the call was successful
-                                Intent returnApp = getActivity().getPackageManager().getLaunchIntentForPackage(mReturnURL);
-                                returnApp.putExtra("callstate", (mVidyoConnectorState == VidyoConnectorState.Disconnected) ? 1 : 0);
-                                startActivity(returnApp);
-                            }
-
-                            // If the allow-reconnect flag is set to false and a normal (non-failure) disconnect occurred,
-                            // then disable the toggle connect button, in order to prevent reconnection.
-                            if (!mAllowReconnect && (mVidyoConnectorState == VidyoConnectorState.Disconnected)) {
-                                connect_button.setEnabled(false);
-                                //mToolbarStatus.setText("Call ended");
-                            }
-
-                            if (!mHideConfig ) {
-                                // Display the controls
-                                //mControlsLayout.setVisibility(View.VISIBLE);
-                            }
-                             ************/
-                            break;
-                        // There aren't cased for recoding started and recording stopped because we already
-                        // have this method call: record_button.setOnCheckedChangeListener
-                    }
-                }
-            }
-        );
-    }
-
     /*
      * Button Event Callbacks
      */
@@ -1437,7 +1859,8 @@ public class VidyoChatFragment extends BaseFragment implements
             case R.id.microphone_button:
                 // Toggle the microphone privacy.
                 mMicrophonePrivacy = microphone_button.isChecked();
-                mVidyoConnector.setMicrophonePrivacy(mMicrophonePrivacy);
+                if(localAudioTrack != null)
+                    localAudioTrack.enable(!localAudioTrack.isEnabled());
                 break;
 
             //case R.id.toggle_debug:
@@ -1475,28 +1898,7 @@ public class VidyoChatFragment extends BaseFragment implements
         VideoEvent ve = new VideoEvent(User.getInstance(), currentVideoNode.getKey(), /*room_id*/currentVideoNode.getKey(), request_type);
         ve.save();
 
-
-
-
-
-//        This is the old way of connecting/disconnecting
-
-//        // The logic for Android is opposite from the iOS logic.  Here, connect_button.isChecked() means we just
-//        // touched the connect_button but we haven't made the vmConnection yet.  In the iOS version (VideoChatVC.connectionClicked()),
-//        // "if connected..." means we already are connected and we want to disconnect
-//        if (connectionRequested()) {
-//            doConnect();
-//        } else {
-//            // The user is either connected to a resource or is in the process of connecting to a resource;
-//            // Call VidyoConnectorDisconnect to either disconnect or abort the vmConnection attempt.
-//            changeState(VidyoConnectorState.Disconnecting);
-//            mVidyoConnector.disconnect();
-//        }
     }
-
-//    private boolean connectionRequested() {
-//        return connect_button.isChecked();
-//    }
 
     private void connectIfNotConnected() {
         //TODO if we put this auto-connect logic back in, we have to remember that we connect using "connect request" calls now.  We don't directly call doConnect()
@@ -1505,36 +1907,9 @@ public class VidyoChatFragment extends BaseFragment implements
 //        else Log.d(TAG, "already connected to Vidyo server");
     }
 
-    // modeled after Swift VideoChatVC.doConnect()
-    private void doConnect() {
-        //changeState(VidyoConnectorState.Connecting);
-        if(mVidyoConnector==null) return;
-        String token = getToken();
-
-        final boolean status = mVidyoConnector.connect(
-                "prod.vidyo.io",
-                token,
-                User.getInstance().getName(),
-                getRoom_id(),
-                this);
-
-        record_button.setVisibility(View.VISIBLE);
-        dismissSpinner();
-
-        // TODO what should we do here? Don't like the changeState() method
-        if (!status) {
-            changeState(VidyoConnectorState.Failure);
-        }
-    }
-
-    private void doDisconnect() {
-        if(mVidyoConnector!=null) mVidyoConnector.disconnect();
-        record_button.setVisibility(View.GONE);
-        dismissSpinner();
-    }
 
     private void showSpinner() {
-        video_chat_spinner.setVisibility(View.VISIBLE);
+        //video_chat_spinner.setVisibility(View.VISIBLE);
     }
 
     // See Swift VideoChatVC.startRecording()
@@ -1584,171 +1959,6 @@ public class VidyoChatFragment extends BaseFragment implements
         showSpinner();
         // See google-cloud.js:dockerRequest()
         createRecordingEvent("start publishing");
-    }
-
-    /*
-     *  Connector Events
-     */
-
-    // Handle successful vmConnection.
-    @Override
-    public void onSuccess() {
-        changeState(VidyoConnectorState.Connected);
-    }
-
-    // Handle attempted vmConnection failure.
-    @Override
-    public void onFailure(Connector.ConnectorFailReason reason) {
-        changeState(VidyoConnectorState.Failure);
-        reasons = reason.toString();
-    }
-
-    // Handle an existing session being disconnected.
-    @Override
-    public void onDisconnected(Connector.ConnectorDisconnectReason reason) {
-        if (reason == Connector.ConnectorDisconnectReason.VIDYO_CONNECTORDISCONNECTREASON_Disconnected) {
-            changeState(VidyoConnectorState.Disconnected);
-        } else {
-            changeState(VidyoConnectorState.DisconnectedUnexpected);
-        }
-    }
-
-    // Equiv in XCode is VideoChatVC.onLocalCameraAdded()
-    // Handle local camera events.
-    @Override
-    public void onLocalCameraAdded(LocalCamera localCamera) {
-        this.localCamera = localCamera;
-        if(mVidyoConnector != null) {
-            // We set displayCropped:true on Android because that gets rid any any little black borders around
-            // the video frames.  In XCode, I didn't have to do this because I was able to figure out the dimensions
-            // of the parent view programmatically
-            mVidyoConnector.assignViewToLocalCamera(local_camera_view, localCamera, true, false);
-            mVidyoConnector.showViewAt(local_camera_view, 0, 0, local_camera_view.getWidth(), local_camera_view.getHeight());
-        }
-    }
-
-    @Override
-    public void onLocalCameraRemoved(LocalCamera localCamera) {
-    }
-
-    @Override
-    public void onLocalCameraSelected(LocalCamera localCamera) {
-
-        // If a camera is selected, then update mLastSelectedCamera.
-        if (localCamera != null) {
-            mLastSelectedCamera = localCamera;
-            mLastSelectedCamera.setPreviewLabel(User.getInstance().getName());
-        }
-    }
-
-    @Override
-    public void onLocalCameraStateUpdated(LocalCamera localCamera, Device.DeviceState state) {
-    }
-
-    @Override
-    public void onLocalMicrophoneAdded(LocalMicrophone localMicrophone) {
-        System.out.println("onLocalMicrophoneAdded");
-    }
-
-    @Override
-    public void onLocalMicrophoneRemoved(LocalMicrophone localMicrophone) {
-        System.out.println("onLocalMicrophoneRemoved");
-    }
-
-    @Override
-    public void onLocalMicrophoneSelected(LocalMicrophone localMicrophone) {
-        System.out.println("onLocalMicrophoneSelected");
-
-    }
-
-    @Override
-    public void onLocalMicrophoneStateUpdated(LocalMicrophone localMicrophone, Device.DeviceState deviceState) {
-        System.out.println("onLocalMicrophoneStateUpdated");
-    }
-
-    @Override
-    public void onRemoteMicrophoneAdded(RemoteMicrophone remoteMicrophone, Participant participant) {
-
-    }
-
-    @Override
-    public void onRemoteMicrophoneRemoved(RemoteMicrophone remoteMicrophone, Participant participant) {
-
-    }
-
-    @Override
-    public void onRemoteMicrophoneStateUpdated(RemoteMicrophone remoteMicrophone, Participant participant, Device.DeviceState deviceState) {
-
-    }
-
-    // Handle a message being logged.
-    @Override
-    public void onLog(LogRecord logRecord) {
-    }
-
-    // Handle network interface events
-    @Override
-    public void onNetworkInterfaceAdded(NetworkInterface vidyoNetworkInterface) {
-    }
-
-    @Override
-    public void onNetworkInterfaceRemoved(NetworkInterface vidyoNetworkInterface) {
-    }
-
-    @Override
-    public void onNetworkInterfaceSelected(NetworkInterface vidyoNetworkInterface, NetworkInterface.NetworkInterfaceTransportType vidyoNetworkInterfaceTransportType) {
-   }
-
-    @Override
-    public void onNetworkInterfaceStateUpdated(NetworkInterface vidyoNetworkInterface, NetworkInterface.NetworkInterfaceState vidyoNetworkInterfaceState) {
-   }
-
-
-    // NOTE: See the commented-out method refreshUI() in this class - that method may bring the remote camera view back to life
-    // after the iPhone reconnects
-    // per Connector.IRegisterRemoteCameraEventListener
-    @Override
-    public void onRemoteCameraAdded(RemoteCamera remoteCamera, Participant participant) {
-        // see XCode VideoChatVC.onRemoteCameraAdded()  line 751
-        if(mVidyoConnector != null) {
-            // We set displayCropped:true on Android because that gets rid any any little black borders around
-            // the video frames.  In XCode, I didn't have to do this because I was able to figure out the dimensions
-            // of the parent view programmatically
-            remoteCameraVisible = true;
-            inviteLinks();
-            mVidyoConnector.assignViewToRemoteCamera(remote_camera_view, remoteCamera, true, false);//.assignViewToLocalCamera(local_camera_view, localCamera, true, false);
-            mVidyoConnector.showViewAt(remote_camera_view, 0, 0, remote_camera_view.getWidth(), remote_camera_view.getHeight());
-        }
-
-    }
-
-    // per Connector.IRegisterRemoteCameraEventListener
-    @Override
-    public void onRemoteCameraRemoved(RemoteCamera remoteCamera, Participant participant) {
-        System.out.println("onRemoteCameraRemoved ---------");
-        remoteCameraVisible = false;
-        inviteLinks();
-//        if(mVidyoConnector != null) {
-//            mVidyoConnector.assignViewToRemoteCamera(remote_camera_view, null, false, false);//.assignViewToLocalCamera(local_camera_view, localCamera, true, false);
-//            mVidyoConnector.showViewAt(remote_camera_view, 0, 0, 0, 0);
-//        }
-    }
-
-    // per Connector.IRegisterRemoteCameraEventListener
-    @Override
-    public void onRemoteCameraStateUpdated(RemoteCamera remoteCamera, Participant participant, Device.DeviceState deviceState) {
-        System.out.println("onRemoteCameraStateUpdated:  deviceState = "+deviceState);
-    }
-
-
-    public void doPositiveClick() {
-        // Do stuff here.
-        System.out.println("FragmentAlertDialog: Positive click!");
-    }
-
-    public void doNegativeClick() {
-        // Do stuff here.
-        System.out.println("FragmentAlertDialog: Negative click!");
     }
 
 }

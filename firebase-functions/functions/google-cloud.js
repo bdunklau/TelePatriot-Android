@@ -38,7 +38,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:setRoom_id,functions:recording_has_started,functions:whenVideoIdIsCreated,functions:youtubeVideoDescription,functions:video_title,functions:socialMediaPostsCreated
+firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:recording_has_started,functions:whenVideoIdIsCreated,functions:youtubeVideoDescription,functions:video_title,functions:socialMediaPostsCreated
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
@@ -803,17 +803,6 @@ var getVms = function(callback) {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Triggers
-
-// probably other attributes of the video node that we should set here on the server so that
-// we don't have to do that in both clients.  Something to think about TODO
-exports.setRoom_id = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
-    if(!event.data.val() && event.data.previous.val())
-        return false //ignore deleted nodes
-    if(event.data.previous.val() && event.data.previous.val().room_id)
-        return false // if room_id was already set, return early
-    return event.data.ref.child('room_id').set(event.params.video_node_key)
-})
-
 
 
 // Creates the YouTube video title using legislator info

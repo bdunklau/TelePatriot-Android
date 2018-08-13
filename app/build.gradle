@@ -12,10 +12,12 @@ android {
     }
     buildTypes {
         debug {
+            minifyEnabled false
             debuggable true
+            //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro' // build fails currently with this 8/10/18
         }
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -52,7 +54,13 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:11.0.4'
     // for image manipulation of profile pics
     implementation 'com.squareup.picasso:picasso:2.5.2'
-    implementation files('lib/android/vidyoclient.jar')
+
+    // don't need vidyo anymore
+    //implementation files('lib/android/vidyoclient.jar')
+
+    // https://www.twilio.com/docs/video/android
+    // The Video library resides on jcenter
+    implementation 'com.twilio:video-android:2.1.1'
 }
 
 

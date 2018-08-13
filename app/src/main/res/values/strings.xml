@@ -23,6 +23,7 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
 
+    <string name="permissions_needed">Camera and Microphone permissions needed. Please allow in App Settings for additional functionality.</string>
 
     <!--
     In xcode, this list is in WrapUpViewController.swift   At some point, we should probably put this

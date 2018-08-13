@@ -12,21 +12,25 @@
     <!--true value for indeterminate-->
 
 
-    <com.brentdunklau.telepatriot_android.VideoFrameLayout
+    <com.twilio.video.VideoView
         android:id="@+id/local_camera_view"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:background="@android:color/darker_gray"
         app:layout_constraintHeight_default="percent"
         app:layout_constraintHeight_percent="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_default="percent"
-        app:layout_constraintWidth_percent="0.4">
+        app:layout_constraintWidth_percent="0.4"
+        app:mirror="true"
+        app:overlaySurface="true"/>
 
-    </com.brentdunklau.telepatriot_android.VideoFrameLayout>
 
-    <com.brentdunklau.telepatriot_android.VideoFrameLayout
+
+
+
+
+    <com.twilio.video.VideoView
         android:id="@+id/remote_camera_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -36,65 +40,51 @@
         app:layout_constraintHeight_percent="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/local_camera_view"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintVertical_bias="1.0" />
 
-        <android.support.constraint.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/invite_someone_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="invite someone"
-                android:visibility="gone"
-                android:textColor="@color/colorPrimaryDark"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/invite_someone_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="32dp"
+        android:text="invite someone"
+        android:textColor="@color/colorPrimaryDark"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/remote_camera_view"
+        app:layout_constraintHorizontal_bias="0.51"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/microphone_button" />
 
-            <TextView
-                android:id="@+id/guest_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="24dp"
-                android:text="You have invited someone to participate in a video chat"
-                android:visibility="gone"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/guest_name"
+        android:layout_width="215dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="You have invited someone to participate in a video chat"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/revoke_invitation_button"
+        app:layout_constraintEnd_toEndOf="@+id/remote_camera_view"
+        app:layout_constraintStart_toStartOf="parent" />
 
-            <TextView
-                android:id="@+id/revoke_invitation_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="16dp"
-                android:text="cancel invitation"
-                android:textColor="@color/colorPrimaryDark"
-                android:visibility="gone"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/guest_name" />
-        </android.support.constraint.ConstraintLayout>
-    </com.brentdunklau.telepatriot_android.VideoFrameLayout>
+    <TextView
+        android:id="@+id/revoke_invitation_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="cancel invitation"
+        android:visibility="gone"
+        android:textColor="@color/colorPrimaryDark"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/remote_camera_view"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- works but not sure if useful - the buttons to mute the camera and mic
-    <ToggleButton
-        android:id="@+id/camera_button"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="16dp"
-        android:background="@drawable/toggle_camera_privacy"
-        android:textOff=""
-        android:textOn=""
-        app:layout_constraintStart_toEndOf="@+id/connect_button"
-        app:layout_constraintTop_toTopOf="@+id/connect_button" />
-        -->
+
 
     <ToggleButton
         android:id="@+id/microphone_button"
@@ -133,19 +123,6 @@
         android:visibility="gone"
         app:layout_constraintStart_toEndOf="@+id/record_button"
         app:layout_constraintTop_toTopOf="@+id/record_button" />
-
-    <!-- Took this out because null viewId in mVidyoConnector() keeps the camera from flipping around
-                not sure why yet 6/19/18
-            <ToggleButton
-                android:layout_width="35dp"
-                android:layout_height="35dp"
-                android:background="@drawable/camera_switch"
-                android:id="@+id/camera_switch"
-                android:layout_marginLeft="10dp"
-                android:textOff=""
-                android:textOn=""/>
-                -->
-
 
     <ToggleButton
         android:id="@+id/connect_button"
