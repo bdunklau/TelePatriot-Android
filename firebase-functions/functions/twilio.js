@@ -111,7 +111,7 @@ exports.testListRooms = functions.https.onRequest((req, res) => {
 //                        })
 //                        html += '</table>'
 //                        html += '</body></html>'
-//                        return res.status(200).send(html)
+                        return res.status(200).send('done')
                     })
 
     })
