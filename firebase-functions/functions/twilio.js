@@ -83,7 +83,7 @@ exports.testListRooms = functions.https.onRequest((req, res) => {
 
     return db.ref('api_tokens').once('value').then(snapshot => {
 
-        var room_id = req.query.room_id
+        //var room_id = req.query.room_id
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
 
