@@ -89,7 +89,7 @@ exports.testListRooms = functions.https.onRequest((req, res) => {
 
         client.video.rooms
                     .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/
-                        statusCallback: 'https://'+req.get('host')+'/twilioCallback',
+                        status_callback: 'https://'+req.get('host')+'/twilioCallback'
                     })
                     .then(rooms => {
                         console.log(room.sid)
