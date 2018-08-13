@@ -86,28 +86,29 @@ exports.testListRooms = functions.https.onRequest((req, res) => {
         var room_id = req.query.room_id
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
- 
+
         return client.video.rooms
                     .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/ },
                     function(rooms) {
-                        var html = ''
-                        html += '<html><head></head><body>'
-                        html += '<table>'
-                        html += '<tr>'
-                        html +=     '<th>room.sid</th>'
-                        html +=     '<th>room.unique_name</th>'
-                        html +=     '<th>room.url</th>'
-                        html += '</tr>'
-                        _.each(rooms, function(room) {
-                            html += '<tr>'
-                            html +=     '<td>'+room.sid+'</td>'
-                            html +=     '<td>'+room.unique_name+'</td>'
-                            html +=     '<td>'+room.url+'</td>'
-                            html += '</tr>'
-                        })
-                        html += '</table>'
-                        html += '</body></html>'
-                        return res.status(200).send(html)
+                        db.ref('templog2').set({rooms: rooms})
+//                        var html = ''
+//                        html += '<html><head></head><body>'
+//                        html += '<table>'
+//                        html += '<tr>'
+//                        html +=     '<th>room.sid</th>'
+//                        html +=     '<th>room.unique_name</th>'
+//                        html +=     '<th>room.url</th>'
+//                        html += '</tr>'
+//                        _.each(rooms, function(room) {
+//                            html += '<tr>'
+//                            html +=     '<td>'+room.sid+'</td>'
+//                            html +=     '<td>'+room.unique_name+'</td>'
+//                            html +=     '<td>'+room.url+'</td>'
+//                            html += '</tr>'
+//                        })
+//                        html += '</table>'
+//                        html += '</body></html>'
+//                        return res.status(200).send(html)
                     })
 
     })
