@@ -36,7 +36,7 @@ exports.videoEvents = functions.https.onRequest((req, res) => {
     <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-messaging.js"></script>\n\
     <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-functions.js"></script>\n\
     \n\
-    <!-- Comment out (or don\n\'t include) services that you don\n\'t want to use -->\n\
+    <!-- Comment out (or dont include) services that you dont want to use -->\n\
     <!-- <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-storage.js"></script> -->\n\
     \n\
     <script src="https://www.gstatic.com/firebasejs/5.3.1/firebase.js"></script>\n\
@@ -47,12 +47,11 @@ exports.videoEvents = functions.https.onRequest((req, res) => {
         databaseURL: "'+snapshot.val().firebase_database_url+'",\n\
         projectId: "'+snapshot.val().firebase_project_id+'",\n\
         storageBucket: "'+snapshot.val().firebase_storage_bucket+'",\n\
-        messagingSenderId: "'+snapshot.val().firebase_messaging_sender_id+'"\n\
-      };\n\
-      firebase.initializeApp(config);\n\
-    </script>\n\
-    \n\
-
+        messagingSenderId: "'+snapshot.val().firebase_messaging_sender_id+'"  };\
+      firebase.initializeApp(config);\
+    </script>\
+    \
+    \
     <form id="message-form" action="#">\n\
                     <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">\n\
                       <input class="mdl-textfield__input" type="text" id="new-post-title">\n\
@@ -66,9 +65,8 @@ exports.videoEvents = functions.https.onRequest((req, res) => {
                       Add post\n\
                     </button>\n\
                   </form>\n\
-
-
-
+    \n\
+    \n\
     \n\
 <script src="scripts/video-events-main.js"></script> \n\
 </body>\n\
