@@ -87,33 +87,41 @@ exports.testListRooms = functions.https.onRequest((req, res) => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
 
-        client.video.rooms
-                    .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/
-                        uniqueName: 'xxxxx'
-                    },
-                    function(rooms) {
-                        console.log('rooms: ', rooms)
-                        db.ref('templog2').set({rooms: rooms})
-//                        var html = ''
-//                        html += '<html><head></head><body>'
-//                        html += '<table>'
-//                        html += '<tr>'
-//                        html +=     '<th>room.sid</th>'
-//                        html +=     '<th>room.unique_name</th>'
-//                        html +=     '<th>room.url</th>'
-//                        html += '</tr>'
-//                        _.each(rooms, function(room) {
-//                            html += '<tr>'
-//                            html +=     '<td>'+room.sid+'</td>'
-//                            html +=     '<td>'+room.unique_name+'</td>'
-//                            html +=     '<td>'+room.url+'</td>'
-//                            html += '</tr>'
-//                        })
-//                        html += '</table>'
-//                        html += '</body></html>'
+        return client.video.rooms.each({status: 'completed'},
+                                      room => {
+                                        console.log(room.sid)
+                                        return res.status(200).send('should be done')
+                                      }
+                                  );
 
-                    })
-        return res.status(200).send('done')
+
+//        client.video.rooms
+//                    .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/
+//                        uniqueName: '-LJbU1tYUjtyKy2CR_0w'
+//                    },
+//                    function(rooms) {
+//                        console.log('rooms: ', rooms)
+//                        db.ref('templog2').set({rooms: rooms})
+////                        var html = ''
+////                        html += '<html><head></head><body>'
+////                        html += '<table>'
+////                        html += '<tr>'
+////                        html +=     '<th>room.sid</th>'
+////                        html +=     '<th>room.unique_name</th>'
+////                        html +=     '<th>room.url</th>'
+////                        html += '</tr>'
+////                        _.each(rooms, function(room) {
+////                            html += '<tr>'
+////                            html +=     '<td>'+room.sid+'</td>'
+////                            html +=     '<td>'+room.unique_name+'</td>'
+////                            html +=     '<td>'+room.url+'</td>'
+////                            html += '</tr>'
+////                        })
+////                        html += '</table>'
+////                        html += '</body></html>'
+//
+//                    })
+//        return res.status(200).send('done')
     })
 })
 
