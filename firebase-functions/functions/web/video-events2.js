@@ -6,6 +6,10 @@ const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const date = require('../dateformat')
 
+// can only call this once globally and we already do that in index.js
+//admin.initializeApp(functions.config().firebase);
+const db = admin.database();
+
 /****
 deploy everything in this file...
 firebase deploy --only functions:videoEvents
@@ -13,7 +17,10 @@ firebase deploy --only functions:videoEvents
 
 exports.videoEvents = functions.https.onRequest((req, res) => {
     var html = ''
-    html = '<html>\
+
+    return db.ref('api_tokens').once('value').then(snapshot => {
+
+        html = '<html>\
             <head>\
             \
             </head>\
@@ -35,12 +42,12 @@ exports.videoEvents = functions.https.onRequest((req, res) => {
             <script src="https://www.gstatic.com/firebasejs/5.3.1/firebase.js"></script>\
             <script>\
               var config = {\
-                apiKey: "------------------",\
-                authDomain: "------------------",\
-                databaseURL: "------------------",\
-                projectId: "------------------",\
-                storageBucket: "------------------",\
-                messagingSenderId: "------------------"\
+                apiKey: "'+snapshot.val().firebase_api_key+'",\
+                authDomain: "'+snapshot.val().firebase_auth_domain+'",\
+                databaseURL: "'+snapshot.val().firebase_database_url+'",\
+                projectId: "'+snapshot.val().firebase_project_id+'",\
+                storageBucket: "'+snapshot.val().firebase_storage_bucket+'",\
+                messagingSenderId: "'+snapshot.val().firebase_messaging_sender_id+'"\
               };\
               firebase.initializeApp(config);\
             </script>\
@@ -50,5 +57,7 @@ exports.videoEvents = functions.https.onRequest((req, res) => {
             \
             </body>\
             </html>'
-    return res.status(200).send(html)
+        return res.status(200).send(html)
+    })
+
 })
