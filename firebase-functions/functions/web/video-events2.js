@@ -52,7 +52,7 @@ exports.videoEvents = functions.https.onRequest((req, res) => {
               firebase.initializeApp(config);\
             </script>\
             \
-            ok then\
+            ok then 2\
             \
             \
             </body>\
