@@ -256,6 +256,9 @@ exports.twilioCallback = twilio.twilioCallback
 exports.testCreateRoom = twilio.testCreateRoom
 exports.testListRooms = twilio.testListRooms
 
+const videoEvents = require('./web/video-events')
+exports.videoEvents = videoEvents.videoEvents
+
 
 
 
