@@ -68,7 +68,39 @@ exports.videoEvents = functions.https.onRequest((req, res) => {
     \n\
     \n\
     \n\
-<script src="scripts/video-events-main.js"></script> \n\
+<script> \n\
+ \n\
+ \n\
+ \n\
+window.addEventListener('load', function() { \n\
+ \n\
+  // Saves message on form submit. \n\
+  messageForm.onsubmit = function(e) { \n\
+    e.preventDefault(); \n\
+    window.alert('ok then') \n\
+  }; \n\
+ \n\
+  // Bind menu buttons. \n\
+  recentMenuButton.onclick = function() { \n\
+    showSection(recentPostsSection, recentMenuButton); \n\
+  }; \n\
+  myPostsMenuButton.onclick = function() { \n\
+    showSection(userPostsSection, myPostsMenuButton); \n\
+  }; \n\
+  myTopPostsMenuButton.onclick = function() { \n\
+    showSection(topUserPostsSection, myTopPostsMenuButton); \n\
+  }; \n\
+  addButton.onclick = function() { \n\
+    showSection(addPost); \n\
+    messageInput.value = ''; \n\
+    titleInput.value = ''; \n\
+  }; \n\
+  recentMenuButton.onclick(); \n\
+}, false); \n\
+ \n\
+</script>
+ \n\ \n\
+ \n\
 </body>\n\
 </html>'
 
