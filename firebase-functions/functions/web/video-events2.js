@@ -20,13 +20,13 @@ exports.videoEvents = functions.https.onRequest((req, res) => {
 
     return db.ref('api_tokens').once('value').then(snapshot => {
 
-        html = '<html>\
-            <head>\
-            \
-            </head>\
-            <body>\
-            \
-            <!-- Firebase App is always required and must be first -->\
+        html = '<html>\n\
+            <head>\n\
+            \n\
+            </head>\n\
+            <body>\n\
+            \n\
+            <!-- Firebase App is always required and must be first -->\n\
             <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase-app.js"></script>\
             \
             <!-- Add additional services that you want to use -->\
