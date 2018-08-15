@@ -249,15 +249,20 @@ exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 const switchboard = require('./switchboard')
 exports.onConnectRequest = switchboard.onConnectRequest
 exports.onDisconnectRequest = switchboard.onDisconnectRequest
+exports.testViewVideoEvents = switchboard.testViewVideoEvents
+exports.onTwilioEvent = switchboard.onTwilioEvent
+
 
 const twilio = require('./twilio')
 exports.testTwilioToken = twilio.testTwilioToken
 exports.twilioCallback = twilio.twilioCallback
 exports.testCreateRoom = twilio.testCreateRoom
 exports.testListRooms = twilio.testListRooms
+exports.testRetrieveRoom = twilio.testRetrieveRoom
+exports.testCompleteRoom = twilio.testCompleteRoom
+exports.testListParticipants = twilio.testListParticipants
 
-const videoEvents = require('./web/video-events2')
-exports.videoEvents = videoEvents.videoEvents
+
 
 
 

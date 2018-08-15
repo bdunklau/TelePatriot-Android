@@ -20,47 +20,15 @@ const db = admin.database();
 
 /****
 deploy everything in this file...
-firebase deploy --only functions:twilioCallback,functions:testTwilioToken,functions:testCreateRoom,functions:testListRooms
+firebase deploy --only functions:testListParticipants,functions:testCompleteRoom,functions:testRetrieveRoom,functions:twilioCallback,functions:testTwilioToken,functions:testCreateRoom,functions:testListRooms
 ****/
 
 
 exports.twilioCallback = functions.https.onRequest((req, res) => {
 
-
     // ref:  https://www.twilio.com/docs/api/video/status-callbacks
-    var accountSid = check(req.body.AccountSid)
-    var roomName = check(req.body.RoomName)
-    var roomSid = check(req.body.RoomSid)
-    var roomStatus = check(req.body.RoomStatus)
-    var statusCallbackEvent = check(req.body.StatusCallbackEvent)
-    var timestamp = check(req.body.Timestamp)
-    var participantSid = check(req.body.ParticipantSid)
-    var participantStatus = check(req.body.ParticipantStatus)
-    var participantDuration = check(req.body.ParticipantDuration)
-    var participantIdentity = check(req.body.ParticipantIdentity)
-    var roomDuration = check(req.body.RoomDuration)
-    var trackSid = check(req.body.TrackSid)
-
-
-    console.log('twilioCallback:  got this far')
-
-
-    var twilioEvent = {body: req.body,
-                        query: req.query,
-                        accountSid: accountSid,
-                       roomName: roomName,
-                       roomSid: roomSid,
-                       roomStatus: roomStatus,
-                       statusCallbackEvent: statusCallbackEvent,
-                       timestamp: timestamp,
-                       participantSid: participantSid,
-                       participantStatus: participantStatus,
-                       participantDuration: participantDuration,
-                       participantIdentity: participantIdentity,
-                       roomDuration: roomDuration,
-                       trackSid: trackSid }
-
-    return db.ref().child('twilio_events').push().set(twilioEvent).then(snapshot => {
+    // see also switchboard.js:testViewVideoEvents()
+    return db.ref().child('video/video_events').push().set(req.body).then(snapshot => {
         return res.status(200).send('OK')
     })
 
@@ -79,6 +47,121 @@ exports.testTwilioToken = functions.https.onRequest((req, res) => {
 })
 
 
+exports.testRetrieveRoom = functions.https.onRequest((req, res) => {
+    if(!req.query.room_sid)
+        return res.status(200).send('Required:  room_sid request parameter')
+
+    var showRoom = function(room, twilio_account_sid, twilio_auth_token) {
+        return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
+
+    }
+    return retrieveRoom(req.query.room_sid, req.get('host'), showRoom)
+})
+
+
+exports.testCompleteRoom = functions.https.onRequest((req, res) => {
+    if(!req.query.room_sid)
+        return res.status(200).send('Required:  room_sid request parameter')
+
+    var showRoom = function(room, twilio_account_sid, twilio_auth_token) {
+        return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
+
+    }
+    return completeRoom(req.query.room_sid, req.get('host'), showRoom)
+})
+
+
+exports.testListParticipants = functions.https.onRequest((req, res) => {
+    if(!req.query.room_sid)
+        return res.status(200).send('Required:  room_sid request parameter')
+
+    var callback = function(participants) {
+        return res.status(200).send(participants)
+
+    }
+    return getParticipants(req.query.room_sid, req.get('host'), callback)
+})
+
+
+var getParticipants = function(room_sid, host, callback) {
+    return db.ref('api_tokens').once('value').then(snapshot => {
+
+        const client = twilio(snapshot.val().twilio_api_key, snapshot.val().twilio_secret, {accountSid: snapshot.val().twilio_account_sid})
+
+        callback(client.video.rooms(room_sid).participants)
+//        client.video.rooms(room_sid).participants
+//          .each({status: 'connected'}, (participant) => {
+//            callback(participant)
+//        });
+    })
+}
+
+
+var roomDetails = function(room, twilio_account_sid, twilio_auth_token) {
+        var html = ''
+        html += '<html><head></head><body>'
+        html += '<h3>Return to <a href="/testViewVideoEvents?limit=10">video/video_events</a></h3>'
+        html += '<table border="1" cellspacing="0" cellpadding="2">'
+        html += '<tr><td><b>sid</b></td><td>'+room.sid+'</td></tr>'
+        html += '<tr><td><b>status</b></td><td>'+room.status+'</td></tr>'
+        html += '<tr><td><b>dateCreated</b></td><td>'+room.dateCreated+'</td></tr>'
+        html += '<tr><td><b>dateUpdated</b></td><td>'+room.dateUpdated+'</td></tr>'
+        html += '<tr><td><b>accountSid</b></td><td>'+room.accountSid+'</td></tr>'
+        html += '<tr><td><b>enableTurn</b></td><td>'+room.enableTurn+'</td></tr>'
+        html += '<tr><td><b>uniqueName</b></td><td>'+room.uniqueName+'</td></tr>'
+        html += '<tr><td><b>statusCallback</b></td><td>'+room.statusCallback+'</td></tr>'
+        html += '<tr><td><b>statusCallbackMethod</b></td><td>'+room.statusCallbackMethod+'</td></tr>'
+        html += '<tr><td><b>endTime</b></td><td>'+room.endTime+'</td></tr>'
+        html += '<tr><td><b>duration</b></td><td>'+room.duration+'</td></tr>'
+        html += '<tr><td><b>type</b></td><td>'+room.type+'</td></tr>'
+        html += '<tr><td><b>maxParticipants</b></td><td>'+room.maxParticipants+'</td></tr>'
+        html += '<tr><td><b>recordParticipantsOnConnect</b></td><td>'+room.recordParticipantsOnConnect+'</td></tr>'
+        html += '<tr><td><b>videoCodecs</b></td><td>'+room.videoCodecs+'</td></tr>'
+        html += '<tr><td><b>mediaRegion</b></td><td>'+room.mediaRegion+'</td></tr>'
+        html += '<tr><td><b>url</b></td><td>'+room.url+'</td></tr>'
+        if(room.links && room.links.recordings) {
+            var url = 'https://'+twilio_account_sid+':'+twilio_auth_token+'@'+room.links.recordings.substring('https://'.length)
+            html += '<tr><td><b>recordings</b></td><td><a href="'+url+'">'+room.links.recordings+'</a></td></tr>'
+        }
+        if(room.links && room.links.participants) {
+            var url = 'https://'+twilio_account_sid+':'+twilio_auth_token+'@'+room.links.participants.substring('https://'.length)
+            html += '<tr><td><b>participants</b></td><td><a href="'+url+'">'+room.links.participants+'</a></td></tr>'
+        }
+        html += '</table></body></html>'
+        return html
+}
+
+
+var retrieveRoom = function(room_sid, host, showRoom) {
+    return db.ref('api_tokens').once('value').then(snapshot => {
+
+        const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+
+        client.video.rooms(room_sid).fetch()
+                    .then(room => {
+                        showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+                    })
+                    .done();
+    })
+}
+
+
+var completeRoom = function(room_sid, host, showRoom) {
+    return db.ref('api_tokens').once('value').then(snapshot => {
+
+        const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+
+        client.video.rooms(room_sid).update({status: 'completed'})
+                    .then(room => {
+                        showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+                    })
+                    .done();
+    })
+}
+
+
+// This works but it's not useful because each() doesn't return a promise; it relies on a callback
+// function and we can't get the full list of rooms out of the callback function
 exports.testListRooms = functions.https.onRequest((req, res) => {
 
     return db.ref('api_tokens').once('value').then(snapshot => {
@@ -132,28 +215,32 @@ exports.testCreateRoom = functions.https.onRequest((req, res) => {
     if(!req.query.room_id)
         return res.status(200).send('Required:  room_id request parameter')
 
-    return db.ref('api_tokens').once('value').then(snapshot => {
+    var showRoom = function(room, twilio_account_sid, twilio_auth_token) {
+        return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
 
-        var room_id = req.query.room_id
+    }
+    return createRoom(req.query.room_id, req.get('host'), showRoom)
+})
+
+
+var createRoom = function(room_id, host, showRoom) {
+    return db.ref('api_tokens').once('value').then(snapshot => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
 
         client.video.rooms
                     .create({
                        recordParticipantsOnConnect: true,
-                       statusCallback: 'https://'+req.get('host')+'/twilioCallback',
+                       statusCallback: 'https://'+host+'/twilioCallback',
                        type: 'group-small',
                        uniqueName: room_id
                      })
                     .then(room => {
-                        console.log(room.sid)
-                        db.ref('templog2').set({room: room})
+                        showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
                     })
                     .done();
-
-        return res.status(200).send('ok: don\'t know if we have a room or not')
     })
-})
+}
 
 
 // ref:  https://www.twilio.com/docs/iam/access-tokens#creating-tokens
