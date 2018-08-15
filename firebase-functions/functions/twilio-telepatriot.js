@@ -51,11 +51,13 @@ exports.testRetrieveRoom = functions.https.onRequest((req, res) => {
     if(!req.query.room_sid)
         return res.status(200).send('Required:  room_sid request parameter')
 
-    var showRoom = function(room, twilio_account_sid, twilio_auth_token) {
-        return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
-
+    var showRoom = function(stuff) {
+        //return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
+        return res.status(200).send(roomDetails(stuff))
     }
-    return retrieveRoom(req.query.room_sid, req.get('host'), showRoom)
+    var stuff = {room_sid: req.query.room_sid, host: req.get('host'), callback: showRoom}
+    return retrieveRoom(stuff)
+    //return retrieveRoom(req.query.room_sid, req.get('host'), showRoom)
 })
 
 
@@ -63,9 +65,9 @@ exports.testCompleteRoom = functions.https.onRequest((req, res) => {
     if(!req.query.room_sid)
         return res.status(200).send('Required:  room_sid request parameter')
 
-    var showRoom = function(room, twilio_account_sid, twilio_auth_token) {
-        return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
-
+    var showRoom = function(stuff) {
+        //return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
+        return res.status(200).send(roomDetails(stuff))
     }
     return completeRoom(req.query.room_sid, req.get('host'), showRoom)
 })
@@ -98,48 +100,67 @@ var getParticipants = function(room_sid, host, callback) {
 
 
 var roomDetails = function(room, twilio_account_sid, twilio_auth_token) {
-        var html = ''
-        html += '<html><head></head><body>'
-        html += '<h3>Return to <a href="/testViewVideoEvents?limit=10">video/video_events</a></h3>'
-        html += '<table border="1" cellspacing="0" cellpadding="2">'
-        html += '<tr><td><b>sid</b></td><td>'+room.sid+'</td></tr>'
-        html += '<tr><td><b>status</b></td><td>'+room.status+'</td></tr>'
-        html += '<tr><td><b>dateCreated</b></td><td>'+room.dateCreated+'</td></tr>'
-        html += '<tr><td><b>dateUpdated</b></td><td>'+room.dateUpdated+'</td></tr>'
-        html += '<tr><td><b>accountSid</b></td><td>'+room.accountSid+'</td></tr>'
-        html += '<tr><td><b>enableTurn</b></td><td>'+room.enableTurn+'</td></tr>'
-        html += '<tr><td><b>uniqueName</b></td><td>'+room.uniqueName+'</td></tr>'
-        html += '<tr><td><b>statusCallback</b></td><td>'+room.statusCallback+'</td></tr>'
-        html += '<tr><td><b>statusCallbackMethod</b></td><td>'+room.statusCallbackMethod+'</td></tr>'
-        html += '<tr><td><b>endTime</b></td><td>'+room.endTime+'</td></tr>'
-        html += '<tr><td><b>duration</b></td><td>'+room.duration+'</td></tr>'
-        html += '<tr><td><b>type</b></td><td>'+room.type+'</td></tr>'
-        html += '<tr><td><b>maxParticipants</b></td><td>'+room.maxParticipants+'</td></tr>'
-        html += '<tr><td><b>recordParticipantsOnConnect</b></td><td>'+room.recordParticipantsOnConnect+'</td></tr>'
-        html += '<tr><td><b>videoCodecs</b></td><td>'+room.videoCodecs+'</td></tr>'
-        html += '<tr><td><b>mediaRegion</b></td><td>'+room.mediaRegion+'</td></tr>'
-        html += '<tr><td><b>url</b></td><td>'+room.url+'</td></tr>'
-        if(room.links && room.links.recordings) {
-            var url = 'https://'+twilio_account_sid+':'+twilio_auth_token+'@'+room.links.recordings.substring('https://'.length)
-            html += '<tr><td><b>recordings</b></td><td><a href="'+url+'">'+room.links.recordings+'</a></td></tr>'
-        }
-        if(room.links && room.links.participants) {
-            var url = 'https://'+twilio_account_sid+':'+twilio_auth_token+'@'+room.links.participants.substring('https://'.length)
-            html += '<tr><td><b>participants</b></td><td><a href="'+url+'">'+room.links.participants+'</a></td></tr>'
-        }
-        html += '</table></body></html>'
-        return html
+    var room = stuff.room
+    var twilio_account_sid = stuff.twilio_account_sid
+    var twilio_auth_token = stuff.twilio_auth_token
+    var composition = stuff.composition
+
+    var html = ''
+    html += '<html><head></head><body>'
+    html += '<h3>'
+    html +=     'Return to <a href="/testViewVideoEvents?limit=10">video/video_events</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+    html +=     '<a href="/testCompose?room_sid='+room.sid+'">Compose</a>'
+    if(stuff.composition) {
+        html += ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Composition: <a href="https://video.twilio.com/v1/Compositions/'+stuff.composition.sid+'/Media?Ttl=6000">'+stuff.composition.sid+'</a>'
+    }
+    html += '</h3>'
+    html += '<table border="1" cellspacing="0" cellpadding="2">'
+    html += '<tr><td><b>sid</b></td><td>'+room.sid+'</td></tr>'
+    html += '<tr><td><b>status</b></td><td>'+room.status+'</td></tr>'
+    html += '<tr><td><b>dateCreated</b></td><td>'+room.dateCreated+'</td></tr>'
+    html += '<tr><td><b>dateUpdated</b></td><td>'+room.dateUpdated+'</td></tr>'
+    html += '<tr><td><b>accountSid</b></td><td>'+room.accountSid+'</td></tr>'
+    html += '<tr><td><b>enableTurn</b></td><td>'+room.enableTurn+'</td></tr>'
+    html += '<tr><td><b>uniqueName</b></td><td>'+room.uniqueName+'</td></tr>'
+    html += '<tr><td><b>statusCallback</b></td><td>'+room.statusCallback+'</td></tr>'
+    html += '<tr><td><b>statusCallbackMethod</b></td><td>'+room.statusCallbackMethod+'</td></tr>'
+    html += '<tr><td><b>endTime</b></td><td>'+room.endTime+'</td></tr>'
+    html += '<tr><td><b>duration</b></td><td>'+room.duration+'</td></tr>'
+    html += '<tr><td><b>type</b></td><td>'+room.type+'</td></tr>'
+    html += '<tr><td><b>maxParticipants</b></td><td>'+room.maxParticipants+'</td></tr>'
+    html += '<tr><td><b>recordParticipantsOnConnect</b></td><td>'+room.recordParticipantsOnConnect+'</td></tr>'
+    html += '<tr><td><b>videoCodecs</b></td><td>'+room.videoCodecs+'</td></tr>'
+    html += '<tr><td><b>mediaRegion</b></td><td>'+room.mediaRegion+'</td></tr>'
+    html += '<tr><td><b>url</b></td><td>'+room.url+'</td></tr>'
+    if(room.links && room.links.recordings) {
+        var url = 'https://'+twilio_account_sid+':'+twilio_auth_token+'@'+room.links.recordings.substring('https://'.length)
+        html += '<tr><td><b>recordings</b></td><td><a href="'+url+'">'+room.links.recordings+'</a></td></tr>'
+    }
+    if(room.links && room.links.participants) {
+        var url = 'https://'+twilio_account_sid+':'+twilio_auth_token+'@'+room.links.participants.substring('https://'.length)
+        html += '<tr><td><b>participants</b></td><td><a href="'+url+'">'+room.links.participants+'</a></td></tr>'
+    }
+    html += '</table></body></html>'
+    return html
 }
 
 
 var retrieveRoom = function(room_sid, host, showRoom) {
+    var room_sid = stuff.room_sid
+    var host = stuff.host
+    var showRoom = stuff.callback
+    var composition = stuff.composition // may not be present
     return db.ref('api_tokens').once('value').then(snapshot => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
 
         client.video.rooms(room_sid).fetch()
                     .then(room => {
-                        showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+                        var newstuff = {room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token}
+                        if(composition)
+                            newstuff.composition = composition
+                        showRoom(newstuff)
+                        //showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
                     })
                     .done();
     })
@@ -153,7 +174,11 @@ var completeRoom = function(room_sid, host, showRoom) {
 
         client.video.rooms(room_sid).update({status: 'completed'})
                     .then(room => {
-                        showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+                        var newstuff = {room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token}
+                        if(composition)
+                            newstuff.composition = composition
+                        showRoom(newstuff)
+                        //showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
                     })
                     .done();
     })
@@ -186,9 +211,8 @@ exports.testCreateRoom = functions.https.onRequest((req, res) => {
     if(!req.query.room_id)
         return res.status(200).send('Required:  room_id request parameter')
 
-    var showRoom = function(room, twilio_account_sid, twilio_auth_token) {
-        return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
-
+    var showRoom = function(stuff) {
+        return res.status(200).send(roomDetails(stuff))
     }
     return createRoom_private_func(req.query.room_id, req.get('host'), showRoom)
 })
@@ -218,7 +242,7 @@ var createRoom_private_func = function(room_id, host, showRoom) {
                        uniqueName: room_id
                      })
                     .then(room => {
-                        showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+                        showRoom({room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token})
                     })
                     .done();
     })
@@ -245,11 +269,15 @@ exports.testCompose = functions.https.onRequest((req, res) => {
             },
             statusCallback: 'https://'+req.get('host')+'/twilioCallback',
             format: 'mp4'
-          })
-          .then(composition =>{
-              console.log('Created Composition with SID=' + composition.sid);
-              return exports.videoEvents({limit: 25, compositionSid: composition.sid}).then(html => res.status(200).send(html))
-          });
+        })
+        .then(composition =>{
+            var showRoom = function(stuff) {
+                return res.status(200).send(roomDetails(stuff))
+            }
+            var stuff = {room_sid: req.query.room_sid, host: req.get('host'), callback: showRoom, composition: composition}
+            return retrieveRoom(stuff)
+            //return retrieveRoom(req.query.room_sid, req.get('host'), showRoom)
+        });
     })
 })
 
@@ -291,7 +319,7 @@ exports.videoEvents = function(stuff) {
         html +=     'video/video_events &nbsp;&nbsp;&nbsp;&nbsp; '
         html +=     '<a href="/testCompose?room_sid=RM722fbef9776cb52dd81e0f196f6848eb">Compose</a>'
         if(stuff.compositionSid) {
-            html += ' &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Composition: <a href="#">'+stuff.compositionSid+'</a>'
+            html += ' &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Composition: <a href="https://video.twilio.com/v1/Compositions/'+stuff.compositionSid+'/Media?Ttl=6000">'+stuff.compositionSid+'</a>'
         }
         html += '</h3>'
         html += '<table border="1" cellspacing="0" cellpadding="2">'
