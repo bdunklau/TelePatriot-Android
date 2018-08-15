@@ -119,11 +119,12 @@ exports.testCreateAnotherDocker = functions.https.onRequest((req, res) => {
 
 
 exports.testStartDocker = functions.https.onRequest((req, res) => {
-    return startDocker({vm_host: req.query.vm_host,
-                        vm_port: req.query.vm_port,
-                        docker_name: req.query.docker_name,
-                        res: res,
-                        callback: showDockers})
+    return res.status(200).send('not doing docker anymore')
+//    return startDocker({vm_host: req.query.vm_host,
+//                        vm_port: req.query.vm_port,
+//                        docker_name: req.query.docker_name,
+//                        res: res,
+//                        callback: showDockers})
 })
 
 
@@ -340,8 +341,8 @@ exports.recording_has_started = functions.https.onRequest((req, res) => {
     var updates = {}
     updates['video/list/'+req.query.video_node_key+'/recording_started'] = date.asCentralTime()
     updates['video/list/'+req.query.video_node_key+'/recording_started_ms'] = date.asMillis()
-    updates['administration/dockers/'+req.query.docker_key+'/recording_started'] = date.asCentralTime()
-    updates['administration/dockers/'+req.query.docker_key+'/recording_started_ms'] = date.asMillis()
+//    updates['administration/dockers/'+req.query.docker_key+'/recording_started'] = date.asCentralTime()
+//    updates['administration/dockers/'+req.query.docker_key+'/recording_started_ms'] = date.asMillis()
 
     return db.ref('/').update(updates).then(() => {
         return res.status(200).send('ok: google-cloud.js:recording_has_started() handled your request')
@@ -501,15 +502,15 @@ var mainStuff = function(stuff) {
 }
 
 
-var createDocker = function(stuff) {
-    var url = 'http://'+stuff.vm_host+':'+stuff.vm_port+'/create-another-docker'
-    return request(url, function(error, response, body) {
-        stuff.error = error
-        stuff.response = response
-        stuff.body = body // i.e.  {"name": "recorder8000", "port": "8000"}
-        stuff.callback(stuff)
-    })
-}
+//var createDocker = function(stuff) {
+//    var url = 'http://'+stuff.vm_host+':'+stuff.vm_port+'/create-another-docker'
+//    return request(url, function(error, response, body) {
+//        stuff.error = error
+//        stuff.response = response
+//        stuff.body = body // i.e.  {"name": "recorder8000", "port": "8000"}
+//        stuff.callback(stuff)
+//    })
+//}
 
 
 var onDockerCreation = function(stuff) {
@@ -537,38 +538,38 @@ var onDockerCreation = function(stuff) {
 }
 
 
-var startDocker = function(stuff) {
-    var url = 'http://'+stuff.vm_host+':'+stuff.vm_port+'/start-docker?docker_name='+stuff.docker_name
-    return request(url, function(error, response, body) {
-        // body/response doesn't matter because we will get the Up/Exited status by
-        // calling mainStuff()...
-
-        // write to the container's node under /administration/dockers...
-        var searchValue = stuff.vm_host+'_'+stuff.vm_port+'_'+stuff.docker_name
-        return db.ref('administration/dockers').orderByChild('vm_host_port_name').equalTo(searchValue).once('value').then(snapshot => {
-            // should only be one child
-            var docker_key
-            snapshot.forEach(function(child) {
-                var updates = {}
-                updates['running'] = true
-                updates['recording'] = false
-                updates['container_started'] = date.asCentralTime()
-                updates['container_started_ms'] = date.asMillis()
-                updates['recording_started'] = null
-                updates['recording_started_ms'] = null
-                updates['recording_stopped'] = null
-                updates['recording_stopped_ms'] = null
-                updates['container_stopped'] = null
-                updates['container_stopped_ms'] = null
-                child.ref.update(updates)
-                stuff.docker_key = child.key // <-- for the callback
-            })
-            // In some cases, callback is showDockers().  In others, it's startRecording()
-            return stuff.callback(stuff)
-        })
-    })
-
-}
+//var startDocker = function(stuff) {
+//    var url = 'http://'+stuff.vm_host+':'+stuff.vm_port+'/start-docker?docker_name='+stuff.docker_name
+//    return request(url, function(error, response, body) {
+//        // body/response doesn't matter because we will get the Up/Exited status by
+//        // calling mainStuff()...
+//
+//        // write to the container's node under /administration/dockers...
+//        var searchValue = stuff.vm_host+'_'+stuff.vm_port+'_'+stuff.docker_name
+//        return db.ref('administration/dockers').orderByChild('vm_host_port_name').equalTo(searchValue).once('value').then(snapshot => {
+//            // should only be one child
+//            var docker_key
+//            snapshot.forEach(function(child) {
+//                var updates = {}
+//                updates['running'] = true
+//                updates['recording'] = false
+//                updates['container_started'] = date.asCentralTime()
+//                updates['container_started_ms'] = date.asMillis()
+//                updates['recording_started'] = null
+//                updates['recording_started_ms'] = null
+//                updates['recording_stopped'] = null
+//                updates['recording_stopped_ms'] = null
+//                updates['container_stopped'] = null
+//                updates['container_stopped_ms'] = null
+//                child.ref.update(updates)
+//                stuff.docker_key = child.key // <-- for the callback
+//            })
+//            // In some cases, callback is showDockers().  In others, it's startRecording()
+//            return stuff.callback(stuff)
+//        })
+//    })
+//
+//}
 
 
 var handleVideoEvent = function(input) {
@@ -598,74 +599,74 @@ var handleVideoEvent = function(input) {
 }
 
 
-// See exports.testStartRecording2 and exports.dockerRequest
-var startRecording = function(stuff) {
-
-    return db.ref('video/list/'+stuff.video_node_key).once('value').then(snapshot => {
-        var room_id = snapshot.val().room_id
-
-        // make the docker container call back to us once recording has actually started...
-
-
-        return db.ref('administration/hosts').orderByChild('type')
-            .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot2 => {
-
-            var firebase_host
-            snapshot2.forEach(function(child) { firebase_host = child.val().host })
-
-            // See docker: /home/webapp/app.py
-            var callback_server = firebase_host
-            var callback_uri = 'recording_has_started'
-            var video_node_key = stuff.video_node_key
-            var docker_key = stuff.docker_key
-
-            // not https ?!
-            var recorderUrl = 'http://'+stuff.vm_host+':'+stuff.docker.port+'/record/'+room_id
-            recorderUrl += '/'+callback_server
-            recorderUrl += '/'+callback_uri
-            recorderUrl += '/'+video_node_key
-            recorderUrl += '/'+docker_key
-
-            db.ref('video/video_events').push().set({
-                date: date.asCentralTime(), date_ms: date.asMillis(),
-                event_type: 'call_docker', 'docker_url': recorderUrl
-            })
-
-            request(recorderUrl, function(error, response, body) {
-                // note: you cannot send the reponse object to the database for debugging. That will cause an error because
-                // the response object contains functions as attributes and firebase doesn't like that
-                if(!error) {
-                    var updates = {}
-                    // multi-path updates...
-                    updates['administration/dockers/'+stuff.docker_key+'/running'] = true
-                    updates['administration/dockers/'+stuff.docker_key+'/recording'] = true
-                    updates['administration/dockers/'+stuff.docker_key+'/recording_stopped'] = null
-                    updates['administration/dockers/'+stuff.docker_key+'/recording_stopped_ms'] = null
-
-                    // also need to update the video node at /video/list/[video_node_key] with...
-                    updates['video/list/'+stuff.video_node_key+'/recording_requested'] = null // makes sure the spinner doesn't come back
-                    updates['video/list/'+stuff.video_node_key+'/recording_stopped'] = null
-                    updates['video/list/'+stuff.video_node_key+'/recording_stopped_ms'] = null
-                    updates['video/list/'+stuff.video_node_key+'/vm_host'] = stuff.vm_host
-                    updates['video/list/'+stuff.video_node_key+'/vm_port'] = stuff.vm_port
-                    updates['video/list/'+stuff.video_node_key+'/docker_name'] = stuff.docker.name
-                    updates['video/list/'+stuff.video_node_key+'/docker_port'] = stuff.docker.port
-                    updates['video/list/'+stuff.video_node_key+'/docker_key'] = stuff.docker_key
-                    return db.ref('/').update(updates)
-                }
-                else {
-                    snapshot.ref.set({
-                        date: date.asCentralTime(), date_ms: date.asMillis(),
-                        error: error
-                    })
-                }
-            })
-
-        })
-
-    })
-
-}
+//// See exports.testStartRecording2 and exports.dockerRequest
+//var startRecording = function(stuff) {
+//
+//    return db.ref('video/list/'+stuff.video_node_key).once('value').then(snapshot => {
+//        var room_id = snapshot.val().room_id
+//
+//        // make the docker container call back to us once recording has actually started...
+//
+//
+//        return db.ref('administration/hosts').orderByChild('type')
+//            .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot2 => {
+//
+//            var firebase_host
+//            snapshot2.forEach(function(child) { firebase_host = child.val().host })
+//
+//            // See docker: /home/webapp/app.py
+//            var callback_server = firebase_host
+//            var callback_uri = 'recording_has_started'
+//            var video_node_key = stuff.video_node_key
+//            var docker_key = stuff.docker_key
+//
+//            // not https ?!
+//            var recorderUrl = 'http://'+stuff.vm_host+':'+stuff.docker.port+'/record/'+room_id
+//            recorderUrl += '/'+callback_server
+//            recorderUrl += '/'+callback_uri
+//            recorderUrl += '/'+video_node_key
+//            recorderUrl += '/'+docker_key
+//
+//            db.ref('video/video_events').push().set({
+//                date: date.asCentralTime(), date_ms: date.asMillis(),
+//                event_type: 'call_docker', 'docker_url': recorderUrl
+//            })
+//
+//            request(recorderUrl, function(error, response, body) {
+//                // note: you cannot send the reponse object to the database for debugging. That will cause an error because
+//                // the response object contains functions as attributes and firebase doesn't like that
+//                if(!error) {
+//                    var updates = {}
+//                    // multi-path updates...
+//                    updates['administration/dockers/'+stuff.docker_key+'/running'] = true
+//                    updates['administration/dockers/'+stuff.docker_key+'/recording'] = true
+//                    updates['administration/dockers/'+stuff.docker_key+'/recording_stopped'] = null
+//                    updates['administration/dockers/'+stuff.docker_key+'/recording_stopped_ms'] = null
+//
+//                    // also need to update the video node at /video/list/[video_node_key] with...
+//                    updates['video/list/'+stuff.video_node_key+'/recording_requested'] = null // makes sure the spinner doesn't come back
+//                    updates['video/list/'+stuff.video_node_key+'/recording_stopped'] = null
+//                    updates['video/list/'+stuff.video_node_key+'/recording_stopped_ms'] = null
+//                    updates['video/list/'+stuff.video_node_key+'/vm_host'] = stuff.vm_host
+//                    updates['video/list/'+stuff.video_node_key+'/vm_port'] = stuff.vm_port
+//                    updates['video/list/'+stuff.video_node_key+'/docker_name'] = stuff.docker.name
+//                    updates['video/list/'+stuff.video_node_key+'/docker_port'] = stuff.docker.port
+//                    updates['video/list/'+stuff.video_node_key+'/docker_key'] = stuff.docker_key
+//                    return db.ref('/').update(updates)
+//                }
+//                else {
+//                    snapshot.ref.set({
+//                        date: date.asCentralTime(), date_ms: date.asMillis(),
+//                        error: error
+//                    })
+//                }
+//            })
+//
+//        })
+//
+//    })
+//
+//}
 
 
 // We know the video_node_key.  Use it to look up docker_key (/administration/dockers/{docker_key}) on that record.
@@ -1127,8 +1128,9 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
     var type = event.data.val().request_type
 
 
-    // we don't 'request a room' - we are requesting a 'recording secretary'.  The room is just a
-    // name/string that we already know
+    // We actually have to move the participants to ANOTHER room that has recording enabled.  Rooms are either recording-enabled or they're not.
+    // So we will create a new room here and prepend the name of the room with 'record' so that twilio-telepatriot.js:createRoom()
+    // will create the room with recording enabled.
     if(type == 'start recording') {
         // first thing, write recording_requested:true to the video node so that both clients can listen for this attribute
         // why?  so that both clients can show the spinner while the recorder is starting up.
@@ -1138,83 +1140,85 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
         updates['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = null
         updates['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = null
         updates['video/list/'+event.data.val().video_node_key+'/recording_stopped_ms'] = null
-        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started'] = null
-        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started_ms'] = null
-        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped'] = null
-        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped_ms'] = null
-        db.ref('/').update(updates)
+//        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started'] = null
+//        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started_ms'] = null
+//        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped'] = null
+//        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped_ms'] = null
+        return db.ref('/').update(updates).then(() => {
 
-
-        db.ref('templog2').push().set({dockerRequest: 'OK: type = start recording', date: date.asCentralTime()})
-
-        //find the first 'virtual machine' node from /administration/hosts
-        return db.ref('administration/hosts').orderByChild('type').equalTo('virtual machine').limitToFirst(1).once('value').then(snapshot => {
-            // TODO error handling if no vm's found?  This should never be the case because we hand jam the vm into the database
-
-            var vm
-            snapshot.forEach(function(child) {
-                vm = child.val()
-            })
-
-            db.ref('templog2').push().set({check: 'check vm', vm: vm, date: date.asCentralTime()})
-
-            // then find all /administration/dockers nodes that match the vm's 'host' value (an IP address)
-            return event.data.adminRef.root.child('administration/dockers').orderByChild('vm_host').equalTo(vm.host).once('value').then(snapshot => {
-                var dockers = []
-                snapshot.forEach(function(child) {
-                    dockers.push({key: child.key, docker: child.val()})
-                })
-                db.ref('templog2').push().set({dockerRequest: 'CHECK: dockers.length = '+dockers.length, date: date.asCentralTime()})
-                var availableDockers = _.filter(dockers, function(docker) {
-                    return docker.docker.running && !docker.docker.recording
-                })
-
-                db.ref('templog2').push().set({dockerRequest: 'CHECK: availableDockers...', date: date.asCentralTime()})
-                if(availableDockers) db.ref('templog2').push().set({availableDockers: availableDockers})
-
-                if(!availableDockers || availableDockers.length == 0) {
-                    db.ref('templog2').push().set({dockerRequest: 'nothing available - looking for stopped dockers...', date: date.asCentralTime()})
-                    var stoppedDockers = _.filter(dockers, function(docker) {
-                        return !docker.docker.running
-                    })
-                    if(!stoppedDockers || stoppedDockers.length == 0) {
-                        db.ref('templog2').push().set({dockerRequest: 'hmmm... no stopped dockers either', date: date.asCentralTime()})
-                        // create a new docker instance, then start the recording
-                        return createDocker({vm_host: vm.host,
-                                             vm_port: vm.port,
-                                             video_node_key: event.data.val().video_node_key,
-                                             callback: onDockerCreation,
-                                             nextAction: startRecording})
-                    }
-                    else {
-                        var selectedDocker = stoppedDockers[0]
-                        db.ref('templog2').push().set({dockerRequest: 'OK: at least we found a stopped docker', date: date.asCentralTime()})
-                        db.ref('templog2').push().set({stoppedDocker: selectedDocker, date: date.asCentralTime()})
-                        // found a docker, it just wasn't running, so start it...
-
-                        return startDocker({vm_host: vm.host,
-                                            vm_port: vm.port,
-                                            docker_name: selectedDocker.docker.name,
-                                            // for startRecording...
-                                            docker: selectedDocker.docker,
-                                            video_node_key: event.data.val().video_node_key,
-                                            room_id: event.data.val().room_id,
-                                            //unique_file_ext: event.data.val().unique_file_ext, // get from video/list node instead
-                                            callback: startRecording })
-                    }
-                }
-                else {
-                    var selectedDocker = availableDockers[0]
-                    startRecording({vm_host: vm.host,
-                                   vm_port: vm.port,
-                                   docker: selectedDocker.docker,
-                                   docker_key: selectedDocker.key,
-                                   video_node_key: event.data.val().video_node_key,
-                                   //unique_file_ext: event.data.val().unique_file_ext, // get from video/list node instead
-                                   room_id: event.data.val().room_id})
-                }
-            })
         })
+
+
+//        db.ref('templog2').push().set({dockerRequest: 'OK: type = start recording', date: date.asCentralTime()})
+//
+//        //find the first 'virtual machine' node from /administration/hosts
+//        return db.ref('administration/hosts').orderByChild('type').equalTo('virtual machine').limitToFirst(1).once('value').then(snapshot => {
+//            // TODO error handling if no vm's found?  This should never be the case because we hand jam the vm into the database
+//
+//            var vm
+//            snapshot.forEach(function(child) {
+//                vm = child.val()
+//            })
+//
+//            db.ref('templog2').push().set({check: 'check vm', vm: vm, date: date.asCentralTime()})
+//
+//            // then find all /administration/dockers nodes that match the vm's 'host' value (an IP address)
+//            return event.data.adminRef.root.child('administration/dockers').orderByChild('vm_host').equalTo(vm.host).once('value').then(snapshot => {
+//                var dockers = []
+//                snapshot.forEach(function(child) {
+//                    dockers.push({key: child.key, docker: child.val()})
+//                })
+//                db.ref('templog2').push().set({dockerRequest: 'CHECK: dockers.length = '+dockers.length, date: date.asCentralTime()})
+//                var availableDockers = _.filter(dockers, function(docker) {
+//                    return docker.docker.running && !docker.docker.recording
+//                })
+//
+//                db.ref('templog2').push().set({dockerRequest: 'CHECK: availableDockers...', date: date.asCentralTime()})
+//                if(availableDockers) db.ref('templog2').push().set({availableDockers: availableDockers})
+//
+//                if(!availableDockers || availableDockers.length == 0) {
+//                    db.ref('templog2').push().set({dockerRequest: 'nothing available - looking for stopped dockers...', date: date.asCentralTime()})
+//                    var stoppedDockers = _.filter(dockers, function(docker) {
+//                        return !docker.docker.running
+//                    })
+//                    if(!stoppedDockers || stoppedDockers.length == 0) {
+//                        db.ref('templog2').push().set({dockerRequest: 'hmmm... no stopped dockers either', date: date.asCentralTime()})
+//                        // create a new docker instance, then start the recording
+//                        return createDocker({vm_host: vm.host,
+//                                             vm_port: vm.port,
+//                                             video_node_key: event.data.val().video_node_key,
+//                                             callback: onDockerCreation,
+//                                             nextAction: startRecording})
+//                    }
+//                    else {
+//                        var selectedDocker = stoppedDockers[0]
+//                        db.ref('templog2').push().set({dockerRequest: 'OK: at least we found a stopped docker', date: date.asCentralTime()})
+//                        db.ref('templog2').push().set({stoppedDocker: selectedDocker, date: date.asCentralTime()})
+//                        // found a docker, it just wasn't running, so start it...
+//
+//                        return startDocker({vm_host: vm.host,
+//                                            vm_port: vm.port,
+//                                            docker_name: selectedDocker.docker.name,
+//                                            // for startRecording...
+//                                            docker: selectedDocker.docker,
+//                                            video_node_key: event.data.val().video_node_key,
+//                                            room_id: event.data.val().room_id,
+//                                            //unique_file_ext: event.data.val().unique_file_ext, // get from video/list node instead
+//                                            callback: startRecording })
+//                    }
+//                }
+//                else {
+//                    var selectedDocker = availableDockers[0]
+//                    startRecording({vm_host: vm.host,
+//                                   vm_port: vm.port,
+//                                   docker: selectedDocker.docker,
+//                                   docker_key: selectedDocker.key,
+//                                   video_node_key: event.data.val().video_node_key,
+//                                   //unique_file_ext: event.data.val().unique_file_ext, // get from video/list node instead
+//                                   room_id: event.data.val().room_id})
+//                }
+//            })
+//        })
     }
     else if(type == 'stop recording') {
         // construct the url to the virtual machine to tell it to stop recording...
