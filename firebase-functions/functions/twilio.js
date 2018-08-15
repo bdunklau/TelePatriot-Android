@@ -219,11 +219,21 @@ exports.testCreateRoom = functions.https.onRequest((req, res) => {
         return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
 
     }
-    return createRoom(req.query.room_id, req.get('host'), showRoom)
+    return createRoom_private_func(req.query.room_id, req.get('host'), showRoom)
 })
 
 
-var createRoom = function(room_id, host, showRoom) {
+exports.createRoom = function(room_id, host, showRoom) {
+    var showRoom = function(room, twilio_account_sid, twilio_auth_token) {
+        // No need to really return anything.  Called from trigger switchboard.js:onConnectRequest()
+        return true
+
+    }
+    return createRoom_private_func(req.query.room_id, req.get('host'), showRoom)
+}
+
+
+var createRoom_private_func = function(room_id, host, showRoom) {
     return db.ref('api_tokens').once('value').then(snapshot => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
