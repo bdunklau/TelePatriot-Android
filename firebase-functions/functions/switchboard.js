@@ -9,7 +9,7 @@ const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const date = require('./dateformat')
-const twilio = require('./twilio')
+const twilio_telepatriot = require('./twilio-telepatriot')
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -37,7 +37,7 @@ exports.onConnectRequest = functions.database.ref('video/video_events/{key}').on
     var stuff = {name: event.data.val().name,
                 room_id: event.data.val().room_id}
 
-    return twilio.generateTwilioToken(stuff).then(token => {
+    return twilio_telepatriot.generateTwilioToken(stuff).then(token => {
         updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+event.data.val().uid+'/twilio_token'] = token
         return event.data.adminRef.root.child('/').update(updates)
     })

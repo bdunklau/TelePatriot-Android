@@ -20,7 +20,7 @@ const db = admin.database();
 
 /****
 deploy everything in this file...
-firebase deploy --only functions:testListParticipants,functions:testCompleteRoom,functions:testRetrieveRoom,functions:twilioCallback,functions:testTwilioToken,functions:testCreateRoom,functions:testListRooms
+firebase deploy --only functions:twilioCallback,functions:testTwilioToken,functions:testRetrieveRoom,functions:testCompleteRoom,functions:testListParticipants,functions:testListRooms,functions:testCreateRoom
 ****/
 
 

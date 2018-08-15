@@ -253,7 +253,7 @@ exports.testViewVideoEvents = switchboard.testViewVideoEvents
 exports.onTwilioEvent = switchboard.onTwilioEvent
 
 
-const twilio = require('./twilio')
+const twilio = require('./twilio-telepatriot')
 exports.testTwilioToken = twilio.testTwilioToken
 exports.twilioCallback = twilio.twilioCallback
 exports.testCreateRoom = twilio.testCreateRoom
