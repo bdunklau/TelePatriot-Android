@@ -99,7 +99,7 @@ var getParticipants = function(room_sid, host, callback) {
 }
 
 
-var roomDetails = function(room, twilio_account_sid, twilio_auth_token) {
+var roomDetails = function(stuff) {
     var room = stuff.room
     var twilio_account_sid = stuff.twilio_account_sid
     var twilio_auth_token = stuff.twilio_auth_token
@@ -145,7 +145,7 @@ var roomDetails = function(room, twilio_account_sid, twilio_auth_token) {
 }
 
 
-var retrieveRoom = function(room_sid, host, showRoom) {
+var retrieveRoom = function(stuff) {
     var room_sid = stuff.room_sid
     var host = stuff.host
     var showRoom = stuff.callback
