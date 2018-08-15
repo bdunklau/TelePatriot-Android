@@ -55,6 +55,23 @@ exports.onConnectRequest = functions.database.ref('video/video_events/{key}').on
 
 })
 
+
+/***************
+"start recording" = disconnect from the current twilio room (that doesn't have recording enabled) and connect
+to a room that DOES have recording enabled.
+***************/
+exports.onStartRecordingRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
+    if(!event.data.val().request_type || event.data.val().request_type != "start recording")
+        return false //ignore malformed
+
+    var disc = {uid: event.data.val().uid, name: event.data.val().name, video_node_key: event.data.val().video_node_key, room_id: event.data.val().room_id, request_type: 'disconnect request'}
+    return event.data.adminRef.root.child('video/video_events').push().set(disc).then(() => {
+
+    })
+})
+
+
+
 exports.onDisconnectRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
     if(!event.data.val().request_type) return false //ignore malformed
     if(event.data.val().request_type != 'disconnect request') return false //ignore, not a connect request

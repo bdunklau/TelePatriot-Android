@@ -1920,6 +1920,7 @@ public class VidyoChatFragment extends BaseFragment implements
             recording = true;
             showSpinner();
             record_button.setBackgroundResource(R.drawable.recordstop);
+            // See switchboard.js:onStartRecordingRequest()
             createRecordingEvent("start recording");
             publish_button.setVisibility(View.GONE);
         }
@@ -1943,7 +1944,7 @@ public class VidyoChatFragment extends BaseFragment implements
         Map recording_request = new HashMap();
         recording_request.put("request_type", request_type);
         recording_request.put("video_node_key", User.getInstance().getCurrent_video_node_key());
-        recording_request.put("room_id", User.getInstance().getCurrent_video_node_key());
+        recording_request.put("room_id", currentVideoNode.getRoom_id());
         recording_request.put("uid", User.getInstance().getUid());
         recording_request.put("date", Util.getDate_MMM_d_yyyy_hmm_am_z());
         recording_request.put("date_ms", Util.getDate_as_millis());

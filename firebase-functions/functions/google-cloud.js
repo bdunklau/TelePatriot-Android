@@ -1127,28 +1127,32 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
     }
     var type = event.data.val().request_type
 
-
     // We actually have to move the participants to ANOTHER room that has recording enabled.  Rooms are either recording-enabled or they're not.
     // So we will create a new room here and prepend the name of the room with 'record' so that twilio-telepatriot.js:createRoom()
     // will create the room with recording enabled.
-    if(type == 'start recording') {
-        // first thing, write recording_requested:true to the video node so that both clients can listen for this attribute
-        // why?  so that both clients can show the spinner while the recorder is starting up.
-        var updates = {}
-        updates['video/list/'+event.data.val().video_node_key+'/recording_requested'] = true
-        updates['video/list/'+event.data.val().video_node_key+'/recording_started'] = null
-        updates['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = null
-        updates['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = null
-        updates['video/list/'+event.data.val().video_node_key+'/recording_stopped_ms'] = null
+//    if(type == 'start recording') {
+//
+//        taking all this out.  Instead, "start recording" is going to be a "disconnect request" followed by a "connect request"
+//        on a room prepended with 'record'
+//
+//
+//        // first thing, write recording_requested:true to the video node so that both clients can listen for this attribute
+//        // why?  so that both clients can show the spinner while the recorder is starting up.
+//        var updates = {}
+//        updates['video/list/'+event.data.val().video_node_key+'/recording_requested'] = true // what makes the spinner start spinning on mobile clients
+//        updates['video/list/'+event.data.val().video_node_key+'/recording_started'] = null  // TODO Can we set these 2 to current time here now?  Now that we are recording using twilio (just creating a different room that's recording enabled?)
+//        updates['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = null
+//        updates['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = null
+//        updates['video/list/'+event.data.val().video_node_key+'/recording_stopped_ms'] = null
 //        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started'] = null
 //        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started_ms'] = null
 //        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped'] = null
 //        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped_ms'] = null
-        return db.ref('/').update(updates).then(() => {
-
-        })
-
-
+//        return db.ref('/').update(updates).then(() => {
+//
+//        })
+//
+//
 //        db.ref('templog2').push().set({dockerRequest: 'OK: type = start recording', date: date.asCentralTime()})
 //
 //        //find the first 'virtual machine' node from /administration/hosts
@@ -1219,20 +1223,21 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
 //                }
 //            })
 //        })
-    }
-    else if(type == 'stop recording') {
-        // construct the url to the virtual machine to tell it to stop recording...
-        return db.ref('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
-            var video_node = snapshot.val()
-            var args = {video_node_key: event.data.val().video_node_key,
-                        vm_host: video_node.vm_host,
-                        vm_port: video_node.vm_port,
-                        docker_name: video_node.docker_name,
-                        docker_key: video_node.docker_key}
-            return stopRecording(args)
-        })
-    }
-    else if(type == 'start publishing') {
+//    }
+//    else if(type == 'stop recording') {
+//        Taking all this out too.  "stop recording" is now the same as "disconnect request"
+//        // construct the url to the virtual machine to tell it to stop recording...
+//        return db.ref('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
+//            var video_node = snapshot.val()
+//            var args = {video_node_key: event.data.val().video_node_key,
+//                        vm_host: video_node.vm_host,
+//                        vm_port: video_node.vm_port,
+//                        docker_name: video_node.docker_name,
+//                        docker_key: video_node.docker_key}
+//            return stopRecording(args)
+//        })
+//    }
+    if(type == 'start publishing') {
 
         return event.data.adminRef.root.child('administration/hosts').orderByChild('type')
             .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot => {
