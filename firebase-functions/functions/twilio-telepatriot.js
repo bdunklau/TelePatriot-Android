@@ -176,35 +176,6 @@ exports.testListRooms = functions.https.onRequest((req, res) => {
                                         return res.status(200).send('should be done')
                                       }
                                   );
-
-
-//        client.video.rooms
-//                    .each({ /*see https://www.twilio.com/docs/video/api/rooms-resource#get-list-resource for parms*/
-//                        uniqueName: '-LJbU1tYUjtyKy2CR_0w'
-//                    },
-//                    function(rooms) {
-//                        console.log('rooms: ', rooms)
-//                        db.ref('templog2').set({rooms: rooms})
-////                        var html = ''
-////                        html += '<html><head></head><body>'
-////                        html += '<table>'
-////                        html += '<tr>'
-////                        html +=     '<th>room.sid</th>'
-////                        html +=     '<th>room.unique_name</th>'
-////                        html +=     '<th>room.url</th>'
-////                        html += '</tr>'
-////                        _.each(rooms, function(room) {
-////                            html += '<tr>'
-////                            html +=     '<td>'+room.sid+'</td>'
-////                            html +=     '<td>'+room.unique_name+'</td>'
-////                            html +=     '<td>'+room.url+'</td>'
-////                            html += '</tr>'
-////                        })
-////                        html += '</table>'
-////                        html += '</body></html>'
-//
-//                    })
-//        return res.status(200).send('done')
     })
 })
 
@@ -223,13 +194,14 @@ exports.testCreateRoom = functions.https.onRequest((req, res) => {
 })
 
 
-exports.createRoom = function(room_id, host, showRoom) {
-    var showRoom = function(room, twilio_account_sid, twilio_auth_token) {
+// called from switchboard.js:onConnectRequest()
+exports.createRoom = function(room_id, host) {
+    var callback = function(room, twilio_account_sid, twilio_auth_token) {
         // No need to really return anything.  Called from trigger switchboard.js:onConnectRequest()
         return true
 
     }
-    return createRoom_private_func(req.query.room_id, req.get('host'), showRoom)
+    return createRoom_private_func(room_id, host, callback)
 }
 
 

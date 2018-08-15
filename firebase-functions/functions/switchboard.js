@@ -38,8 +38,19 @@ exports.onConnectRequest = functions.database.ref('video/video_events/{key}').on
                 room_id: event.data.val().room_id}
 
     return twilio_telepatriot.generateTwilioToken(stuff).then(token => {
-        updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+event.data.val().uid+'/twilio_token'] = token
-        return event.data.adminRef.root.child('/').update(updates)
+        return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
+            var host
+            snapshot.forEach(function(child) { // should only be one child
+                host = child.val().host
+            })
+            return twilio_telepatriot.createRoom(event.data.val().room_id, host).then(() => {
+                updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+event.data.val().uid+'/twilio_token'] = token
+                return event.data.adminRef.root.child('/').update(updates)
+            })
+
+        })
+
+
     })
 
 })
