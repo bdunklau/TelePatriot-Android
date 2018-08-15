@@ -83,65 +83,6 @@ exports.onTwilioEvent = functions.database.ref('video/video_events/{key}').onCre
 exports.testViewVideoEvents = functions.https.onRequest((req, res) => {
     var limit = 25
     if(req.query.limit) limit = parseInt(req.query.limit)
-
-    return db.ref('video/video_events').orderByChild('date_ms').limitToLast(limit).once('value').then(snapshot => {
-        var html = ''
-        html += '<html><head></head><body>'
-        html += '<h3>video/video_events</h3>'
-        html += '<table border="1" cellspacing="0" cellpadding="2">'
-        html +=     '<tr>'
-        html +=         '<th>date</th>'
-        html +=         '<th>name</th>'
-        html +=         '<th>request_type</th>'
-        html +=         '<th>room_id</th>'
-        html +=         '<th>uid</th>'
-        html +=         '<th>video_node_key</th>'
-        html +=         '<th>AccountSid</th>'
-        html +=         '<th>RoomName</th>'
-        html +=         '<th>RoomSid</th>'
-        html +=         '<th>RoomStatus</th>'
-        html +=         '<th>StatusCallbackEvent</th>'
-        html +=         '<th>Timestamp</th>'
-        html +=         '<th>ParticipantSid</th>'
-        html +=         '<th>ParticipantStatus</th>'
-        html +=         '<th>ParticipantDuration</th>'
-        html +=         '<th>ParticipantIdentity</th>'
-        html +=         '<th>RoomDuration</th>'
-        html +=         '<th>TrackSid</th>'
-        html +=     '</tr>'
-        snapshot.forEach(function(child) {
-            html += '<tr>'
-            html +=     '<td nowrap>'+(child.val()['date'] ? child.val()['date'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['name'] ? child.val()['name'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['request_type'] ? child.val()['request_type'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['room_id'] ? child.val()['room_id'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['uid'] ? child.val()['uid'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['video_node_key'] ? child.val()['video_node_key'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['AccountSid'] ? child.val()['AccountSid'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['RoomName'] ? child.val()['RoomName'] : "")+'</td>'
-            if(child.val()['RoomSid']) {
-                html += '<td nowrap>'
-                html +=     '[<a href="/testCompleteRoom?room_sid='+child.val()['RoomSid']+'">complete</a>] '
-                html +=     '[<a href="/testListParticipants?room_sid='+child.val()['RoomSid']+'">participants</a>] '
-                html +=     '<a href="/testRetrieveRoom?room_sid='+child.val()['RoomSid']+'">'+child.val()['RoomSid']+'</a>'
-                html += '</td>'
-            }
-            else {
-                html += '<td> </td>'
-            }
-            html +=     '<td nowrap>'+(child.val()['RoomStatus'] ? child.val()['RoomStatus'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['StatusCallbackEvent'] ? child.val()['StatusCallbackEvent'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['Timestamp'] ? child.val()['Timestamp'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['ParticipantSid'] ? child.val()['ParticipantSid'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['ParticipantStatus'] ? child.val()['ParticipantStatus'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['ParticipantDuration'] ? child.val()['ParticipantDuration'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['ParticipantIdentity'] ? child.val()['ParticipantIdentity'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['RoomDuration'] ? child.val()['RoomDuration'] : "")+'</td>'
-            html +=     '<td nowrap>'+(child.val()['TrackSid'] ? child.val()['TrackSid'] : "")+'</td>'
-            html += '</tr>'
-        })
-        html += '</table>'
-        html += '</body></html>'
-        return res.status(200).send(html)
-    })
+    var stuff = {limit: limit}
+    return twilio_telepatriot.videoEvents(stuff).then(html => res.status(200).send(html))
 })
