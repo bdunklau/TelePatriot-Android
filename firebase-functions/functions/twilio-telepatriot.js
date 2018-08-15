@@ -210,26 +210,31 @@ exports.testCreateRoom = functions.https.onRequest((req, res) => {
 
     if(!req.query.room_id)
         return res.status(200).send('Required:  room_id request parameter')
+    var recordParticipantsOnConnect = req.query.room_id.startsWith('record') ? true : false
 
     var showRoom = function(stuff) {
         return res.status(200).send(roomDetails(stuff))
     }
-    return createRoom_private_func(req.query.room_id, req.get('host'), showRoom)
+    return createRoom_private_func(req.query.room_id, req.get('host'), showRoom, recordParticipantsOnConnect)
 })
 
 
 // called from switchboard.js:onConnectRequest()
 exports.createRoom = function(room_id, host) {
+    // when the user does a "connect request", the room is just the video_node_key.  So the result here is
+    // that we create a room with recording turned off.  When user hits the record button, we create ANOTHER room
+    // but this time we prepend the name of the room with 'record' so that the logic below will create a room
+    // with recording turned on.
+    var recordParticipantsOnConnect = room_id.startsWith('record') ? true : false
     var callback = function(room, twilio_account_sid, twilio_auth_token) {
         // No need to really return anything.  Called from trigger switchboard.js:onConnectRequest()
         return true
-
     }
-    return createRoom_private_func(room_id, host, callback)
+    return createRoom_private_func(room_id, host, callback, recordParticipantsOnConnect)
 }
 
 
-var createRoom_private_func = function(room_id, host, showRoom) {
+var createRoom_private_func = function(room_id, host, showRoom, recordParticipantsOnConnect) {
     return db.ref('api_tokens').once('value').then(snapshot => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
