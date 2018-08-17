@@ -17,7 +17,7 @@ const db = admin.database()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,functions:onConnectRequest,functions:onDisconnectRequest,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onParticipantDisconnected
+firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,functions:onConnectRequest,functions:onDisconnectRequest,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated
 ***/
 
 exports.onConnectRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
@@ -113,20 +113,28 @@ exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key
 exports.onDisconnectRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
     if(!event.data.val().request_type) return false //ignore malformed
     if(event.data.val().request_type != 'disconnect request') return false //ignore, not a connect request
-    return disconnect(event.params.key, event.data.val().video_node_key, event.data.val().uid, event.data.val().room_id)
+    return disconnect(event.data.adminRef, event.params.key, event.data.val().video_node_key, event.data.val().uid, event.data.val().room_id)
 })
 
-var disconnect = function(video_event_key, video_node_key, uid, room_id) {
+var disconnect = function(adminRef, video_event_key, video_node_key, uid, room_id) {
     var updates = {}
     updates['video/video_events/'+video_event_key+'/date'] = date.asCentralTime()
     updates['video/video_events/'+video_event_key+'/date_ms'] = date.asMillis()
-    updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date'] = date.asCentralTime()
-    updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date_ms'] = date.asMillis()
-    // the mobile client will detect 'disconnect_date' which causes the client to actually disconnect from the room
-    // Disconnect causes twilio to fire back with StatusCallbackEvent=participant-disconnected which gets written
-    // to video/video_events.  And we have a trigger in this file onParticipantDisconnected() that examines how many
-    // participants are left.  If none are left, that trigger 'completes' the room
-    return db.ref('/').update(updates)
+
+    // first, query for all video_participants under the video_node_key.  We will disconnect them all right here
+    return adminRef.root.child('video/list/'+video_node_key).once('value').then(snapshot => {
+        _.each(snapshot.val().video_participants, function(child) {
+            // child.key not available in this case because we're working with snapshot.val()
+            updates['video/list/'+video_node_key+'/video_participants/'+child.uid+'/disconnect_date'] = date.asCentralTime()
+            updates['video/list/'+video_node_key+'/video_participants/'+child.uid+'/disconnect_date_ms'] = date.asMillis()
+        })
+        // the mobile client will detect 'disconnect_date' which causes the client to actually disconnect from the room
+        return adminRef.root.child('/').update(updates).then(() => {
+            // now 'complete' the room...
+            twilio_telepatriot.completeRoom(snapshot.val().room_sid, function(stuff) {/*do anything?*/})
+        })
+    })
+
 }
 
 
@@ -146,6 +154,24 @@ exports.testViewVideoEvents = functions.https.onRequest((req, res) => {
     if(req.query.limit) limit = parseInt(req.query.limit)
     var stuff = {limit: limit}
     return twilio_telepatriot.videoEvents(stuff).then(html => res.status(200).send(html))
+})
+
+
+// WHENEVER A TWILIO ROOM IS CREATED, We have to associate our room_id with twilio's room_sid so that
+// when we need to 'complete' the room later, we will be able to look up the room_sid having only the room_id available
+exports.onRoomCreated = functions.database.ref('video/video_events/{key}/StatusCallbackEvent').onWrite(event => {
+    if(event.data.val() && event.data.val() == 'room-created') {
+        return event.data.adminRef.root.child('video/video_events/'+event.params.key).once('value').then(snapshot => {
+            var room_id = snapshot.val().RoomName
+            var room_sid = snapshot.val().RoomSid
+            return event.data.adminRef.root.child('video/list').orderByChild('room_id').equalTo(room_id).once('value').then(snap2 => {
+                var video_node_key
+                snap2.forEach(function(child) { video_node_key = child.key })
+                return snap2.child(video_node_key).child('room_sid').ref.set(room_sid)
+            })
+        })
+    }
+    else return false
 })
 
 

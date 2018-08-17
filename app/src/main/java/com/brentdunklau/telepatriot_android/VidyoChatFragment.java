@@ -1417,7 +1417,8 @@ public class VidyoChatFragment extends BaseFragment implements
 
     boolean connected = false;
     private void doConnect() {
-        if(connected) return;
+        if(connected)
+            return;
         if(currentVideoNode == null)
             return;
 
@@ -1468,7 +1469,8 @@ public class VidyoChatFragment extends BaseFragment implements
 
 
     private void doDisconnect() {
-        if(!connected) return;
+        if(!connected)
+            return;
         connect_button.setChecked(false);
         microphone_button.setVisibility(View.GONE);
         record_button.setVisibility(View.GONE);

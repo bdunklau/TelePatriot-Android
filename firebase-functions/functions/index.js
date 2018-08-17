@@ -254,6 +254,8 @@ exports.onTwilioEvent = switchboard.onTwilioEvent
 exports.onStartRecordingRequest = switchboard.onStartRecordingRequest
 exports.onStopRecordingRequest = switchboard.onStopRecordingRequest
 exports.onParticipantDisconnected = switchboard.onParticipantDisconnected
+exports.onRoomCreated = switchboard.onRoomCreated
+
 
 const twilio = require('./twilio-telepatriot')
 exports.testTwilioToken = twilio.testTwilioToken
