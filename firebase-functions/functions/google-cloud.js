@@ -1113,16 +1113,11 @@ WHAT DO WE EXPECT TO HAPPEN HERE?...
 exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
     // ignore deletes...
     if(!event.data.val()) {
-        db.ref('templog2').push().set({dockerRequest: 'oops: !event.data.val()', date: date.asCentralTime()})
         return false
     }
 
-    db.ref('templog2').push().set({dockerRequest: 'check: event.data.val()', date: date.asCentralTime()})
-    db.ref('templog2').push().set({event_data_val: event.data.val(), date: date.asCentralTime()})
-
     // ignore malformed...
     if(!event.data.val().request_type) {
-        db.ref('templog2').push().set({dockerRequest: 'oops: !event.data.val().request_type', date: date.asCentralTime()})
         return false
     }
     var type = event.data.val().request_type

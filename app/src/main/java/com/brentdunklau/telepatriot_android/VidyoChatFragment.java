@@ -128,8 +128,6 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView youtube_video_description;
     private VideoNode currentVideoNode;
 
-    private boolean recording = false;
-
     private ToggleButton connect_button;
     private ToggleButton microphone_button;
     //private ToggleButton camera_button;
@@ -1375,10 +1373,8 @@ public class VidyoChatFragment extends BaseFragment implements
 
                         // the connect_button toggles its image as soon as it's clicked.  This code will just keep it in sync if a disconnect is forced from somewhere else
                         if(currentVideoNode.getParticipant(User.getInstance().getUid()).isConnected()) {
-                            //connect_button.setChecked(true);
                             doConnect();
                         } else {
-                            //connect_button.setChecked(false);
                             doDisconnect();
                         }
 
@@ -1419,9 +1415,13 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
 
+    boolean connected = false;
     private void doConnect() {
+        if(connected) return;
         if(currentVideoNode == null)
             return;
+
+        getActivity().runOnUiThread(new Runnable() { public void run() {connect_button.setChecked(true);}});
 
         VideoParticipant me = currentVideoNode.getParticipant(User.getInstance().getUid());
         if(me == null)
@@ -1460,6 +1460,7 @@ public class VidyoChatFragment extends BaseFragment implements
         connectOptionsBuilder.encodingParameters(encodingParameters);
 
         room = Video.connect(getActivity(), connectOptionsBuilder.build(), roomListener());
+        connected = true;
         microphone_button.setVisibility(View.VISIBLE);
         record_button.setVisibility(View.VISIBLE);
         setDisconnectAction();
@@ -1467,12 +1468,15 @@ public class VidyoChatFragment extends BaseFragment implements
 
 
     private void doDisconnect() {
+        if(!connected) return;
+        connect_button.setChecked(false);
         microphone_button.setVisibility(View.GONE);
         record_button.setVisibility(View.GONE);
         if(room != null) {
             if(room.isRecording())
                 ; // do do we stop a recording in progress?
             room.disconnect();
+            connected = false;
         }
     }
 
@@ -1895,7 +1899,7 @@ public class VidyoChatFragment extends BaseFragment implements
         if(vp.isConnected()) {
             request_type = "disconnect request";
         }
-        VideoEvent ve = new VideoEvent(User.getInstance(), currentVideoNode.getKey(), /*room_id*/currentVideoNode.getKey(), request_type);
+        VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), request_type);
         ve.save();
 
     }
@@ -1912,8 +1916,13 @@ public class VidyoChatFragment extends BaseFragment implements
         //video_chat_spinner.setVisibility(View.VISIBLE);
     }
 
+
+    private boolean recording = false;
+
     // See Swift VideoChatVC.startRecording()
     private void startRecording() {
+        if(recording) return;
+
         if(currentVideoNode.getLeg_id() == null)
             chooseLegislatorFirst();
         else {
@@ -1921,16 +1930,24 @@ public class VidyoChatFragment extends BaseFragment implements
             showSpinner();
             record_button.setBackgroundResource(R.drawable.recordstop);
             // See switchboard.js:onStartRecordingRequest()
-            createRecordingEvent("start recording");
+            for(VideoParticipant vp : currentVideoNode.getVideo_participants().values()) {
+                VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), "start recording");
+                ve.save();
+            }
             publish_button.setVisibility(View.GONE);
         }
     }
 
     // See Swift VideoChatVC.stopRecording()
     private void stopRecording() {
+        if(!recording) return;
+
         recording = false;
         record_button.setBackgroundResource(R.drawable.record);
-        createRecordingEvent("stop recording");
+        for(VideoParticipant vp : currentVideoNode.getVideo_participants().values()) {
+            VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), "stop recording");
+            ve.save();
+        }
         publish_button.setVisibility(View.VISIBLE);
     }
 
@@ -1939,27 +1956,34 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
     // See Swift VideoChatVC.createRecordingEvent()
-    private void createRecordingEvent(String request_type) {
-        // write at least this much to /video/video_events
-        Map recording_request = new HashMap();
-        recording_request.put("request_type", request_type);
-        recording_request.put("video_node_key", User.getInstance().getCurrent_video_node_key());
-        recording_request.put("room_id", currentVideoNode.getRoom_id());
-        recording_request.put("uid", User.getInstance().getUid());
-        recording_request.put("date", Util.getDate_MMM_d_yyyy_hmm_am_z());
-        recording_request.put("date_ms", Util.getDate_as_millis());
-        // might also want to capture who made the request and when
+//    private void createRecordingEvent(String request_type, String uid) {
+//        // write at least this much to /video/video_events
+//        Map recording_request = new HashMap();
+//        recording_request.put("request_type", request_type);
+//        recording_request.put("video_node_key", User.getInstance().getCurrent_video_node_key());
+//        recording_request.put("room_id", currentVideoNode.getRoom_id());
+//        recording_request.put("uid", uid);
+//        recording_request.put("date", Util.getDate_MMM_d_yyyy_hmm_am_z());
+//        recording_request.put("date_ms", Util.getDate_as_millis());
+//        // might also want to capture who made the request and when
+//
+//        // There's a trigger function: exports.dockerRequest that listens for writes to this node
+//        // and selects a docker instance that can serve as "recording secretary" for the call
+//        FirebaseDatabase.getInstance().getReference("video/video_events").push().setValue(recording_request);
+//    }
 
-        // There's a trigger function: exports.dockerRequest that listens for writes to this node
-        // and selects a docker instance that can serve as "recording secretary" for the call
-        FirebaseDatabase.getInstance().getReference("video/video_events").push().setValue(recording_request);
-    }
+
+    // See Swift VideoChatVC.createRecordingEvent()
+//    private void createRecordingEvent(String request_type) {
+//        createRecordingEvent(request_type, User.getInstance().getUid());
+//    }
 
 
     private void publishClicked() {
         showSpinner();
         // See google-cloud.js:dockerRequest()
-        createRecordingEvent("start publishing");
+        VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), "start publishing");
+        ve.save();
     }
 
 }

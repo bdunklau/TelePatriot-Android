@@ -8,6 +8,7 @@ const date = require('./dateformat')
 const AccessToken = require('twilio').jwt.AccessToken
 const VideoGrant = AccessToken.VideoGrant
 const twilio = require('twilio')
+const request = require('request')
 
 var style = "font-family:Arial;font-size:12px"
 var tableheading = style + ';background-color:#ededed'
@@ -69,7 +70,7 @@ exports.testCompleteRoom = functions.https.onRequest((req, res) => {
         //return res.status(200).send(roomDetails(room, twilio_account_sid, twilio_auth_token))
         return res.status(200).send(roomDetails(stuff))
     }
-    return completeRoom(req.query.room_sid, req.get('host'), showRoom)
+    return exports.completeRoom(req.query.room_sid, showRoom)
 })
 
 
@@ -77,24 +78,24 @@ exports.testListParticipants = functions.https.onRequest((req, res) => {
     if(!req.query.room_sid)
         return res.status(200).send('Required:  room_sid request parameter')
 
-    var callback = function(participants) {
-        return res.status(200).send(participants)
-
+    var callback = function(totals) {
+        return res.status(200).send('total: '+totals.total+'<P/>connected: '+totals.connected)
     }
-    return getParticipants(req.query.room_sid, req.get('host'), callback)
+    return exports.getParticipants(req.query.room_sid, callback)
 })
 
 
-var getParticipants = function(room_sid, host, callback) {
+exports.getParticipants = function(room_sid, callback) {
     return db.ref('api_tokens').once('value').then(snapshot => {
 
-        const client = twilio(snapshot.val().twilio_api_key, snapshot.val().twilio_secret, {accountSid: snapshot.val().twilio_account_sid})
+        var url = 'https://'+snapshot.val().twilio_account_sid+':'+snapshot.val().twilio_auth_token+'@video.twilio.com/v1/Rooms/'+room_sid+'/Participants'
+        return request(url, function(error, response, body) {
+            var participants = body.participants
+            var total = participants ? participants.length : 0
+            var connected = _.filter(participants, {status: 'connected'}).length
+            callback({total: total, connected: connected})
+        })
 
-        callback(client.video.rooms(room_sid).participants)
-//        client.video.rooms(room_sid).participants
-//          .each({status: 'connected'}, (participant) => {
-//            callback(participant)
-//        });
     })
 }
 
@@ -167,17 +168,18 @@ var retrieveRoom = function(stuff) {
 }
 
 
-var completeRoom = function(room_sid, host, showRoom) {
+exports.completeRoom = function(room_sid, callback) {
+
+    db.ref('templog2').push().set({func: 'completeRoom', room_sid: room_sid, next: 'look for log from client.video.rooms.update()...'})
     return db.ref('api_tokens').once('value').then(snapshot => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
 
         client.video.rooms(room_sid).update({status: 'completed'})
                     .then(room => {
-                        var newstuff = {room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token}
-                        if(composition)
-                            newstuff.composition = composition
-                        showRoom(newstuff)
+                        db.ref('templog2').push().set({func: 'completeRoom', room_sid: room_sid, event: 'this room should be \'completed\''})
+                        var stuff = {room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token}
+                        callback(stuff)
                         //showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
                     })
                     .done();
@@ -239,17 +241,23 @@ var createRoom_private_func = function(room_id, host, showRoom, recordParticipan
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
 
-        client.video.rooms
-                    .create({
-                       recordParticipantsOnConnect: true,
-                       statusCallback: 'https://'+host+'/twilioCallback',
-                       type: 'group-small',
-                       uniqueName: room_id
-                     })
-                    .then(room => {
-                        showRoom({room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token})
-                    })
-                    .done();
+        db.ref('templog2').set({recordParticipantsOnConnect: recordParticipantsOnConnect})
+
+        var roomParms = {statusCallback: 'https://'+host+'/twilioCallback',
+                        uniqueName: room_id}
+
+        if(recordParticipantsOnConnect) {
+            roomParms.type = 'group-small'
+            roomParms.recordParticipantsOnConnect = true
+        }
+        else {
+            roomParms.type = 'peer-to-peer'
+        }
+
+        client.video.rooms.create(roomParms).then(room => {
+            showRoom({room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token})
+        })
+        .done();
     })
 }
 
@@ -366,9 +374,9 @@ exports.videoEvents = function(stuff) {
             html +=     '<td nowrap>'+(child.val()['RoomName'] ? child.val()['RoomName'] : "")+'</td>'
             if(child.val()['RoomSid']) {
                 html += '<td nowrap>'
-                html +=     '[<a href="/testCompleteRoom?room_sid='+child.val()['RoomSid']+'">complete</a>] '
-                html +=     '[<a href="/testListParticipants?room_sid='+child.val()['RoomSid']+'">participants</a>] '
-                html +=     '<a href="/testRetrieveRoom?room_sid='+child.val()['RoomSid']+'">'+child.val()['RoomSid']+'</a>'
+                html +=     '[<a href="/testCompleteRoom?room_sid='+child.val()['RoomSid']+'" target="complete">complete</a>] '
+                html +=     '[<a href="/testListParticipants?room_sid='+child.val()['RoomSid']+'" target="participants">participants</a>] '
+                html +=     '<a href="/testRetrieveRoom?room_sid='+child.val()['RoomSid']+'" target="RoomSid">'+child.val()['RoomSid']+'</a>'
                 html += '</td>'
             }
             else {

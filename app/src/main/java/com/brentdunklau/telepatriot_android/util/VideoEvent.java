@@ -7,13 +7,14 @@ import java.util.Map;
 
 public class VideoEvent {
 
-    User user;
+    String uid, name;
     String video_node_key;
     String room_id;
     String request_type;
 
-    public VideoEvent(User user, String video_node_key, String room_id, String request_type) {
-        this.user = user;
+    public VideoEvent(String uid, String name, String video_node_key, String room_id, String request_type) {
+        this.uid = uid;
+        this.name = name;
         this.video_node_key = video_node_key;
         this.room_id = room_id;
         this.request_type = request_type;
@@ -25,8 +26,8 @@ public class VideoEvent {
 
     private Map dictionary() {
         Map m = new HashMap();
-        m.put("uid", user.getUid());
-        m.put("name", user.getName());
+        m.put("uid", uid);
+        m.put("name", name);
         m.put("video_node_key", video_node_key);
         m.put("room_id", room_id);
         m.put("request_type", request_type);

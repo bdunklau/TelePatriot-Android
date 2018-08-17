@@ -251,7 +251,9 @@ exports.onConnectRequest = switchboard.onConnectRequest
 exports.onDisconnectRequest = switchboard.onDisconnectRequest
 exports.testViewVideoEvents = switchboard.testViewVideoEvents
 exports.onTwilioEvent = switchboard.onTwilioEvent
-
+exports.onStartRecordingRequest = switchboard.onStartRecordingRequest
+exports.onStopRecordingRequest = switchboard.onStopRecordingRequest
+exports.onParticipantDisconnected = switchboard.onParticipantDisconnected
 
 const twilio = require('./twilio-telepatriot')
 exports.testTwilioToken = twilio.testTwilioToken
@@ -261,6 +263,7 @@ exports.testListRooms = twilio.testListRooms
 exports.testRetrieveRoom = twilio.testRetrieveRoom
 exports.testCompleteRoom = twilio.testCompleteRoom
 exports.testListParticipants = twilio.testListParticipants
+exports.testCompose = twilio.testCompose
 
 
 
