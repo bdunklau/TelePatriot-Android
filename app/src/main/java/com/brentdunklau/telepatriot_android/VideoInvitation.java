@@ -255,7 +255,7 @@ public class VideoInvitation {
     public void accept() {
         Map values = new HashMap();
         if(User.getInstance().getCurrent_video_node_key() != null) {
-            values.put("video/list/"+User.getInstance().getCurrent_video_node_key()+"/video_participants/present", false);
+            values.put("video/list/"+User.getInstance().getCurrent_video_node_key()+"/video_participants/"+User.getInstance().getUid()+"/present", false);
         }
 
         User.getInstance().setCurrent_video_node_key(video_node_key);

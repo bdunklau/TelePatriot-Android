@@ -159,7 +159,7 @@ function getAuthorizedClient() {
 
 
 // trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
-exports.readSpreadsheet = functions.database.ref(`teams/{teamname}/missions/{missionId}`).onWrite(
+exports.readSpreadsheet = functions.database.ref('teams/{teamname}/missions/{missionId}').onWrite(
   event => {
 
     // Only edit data when it is first created.
@@ -223,7 +223,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
             console.log('readPromise: looking for mission description: check client = ', client)
             sheets.spreadsheets.values.get(request, (err, response) => {
                 if (err) {
-                    console.log(`The API returned an error: ${err}`);
+                    console.log('The API returned an error: '+err);
                     return reject();
                 }
 
@@ -240,7 +240,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                     console.log('readPromise: looking for mission Script: check client = ', client)
                     sheets.spreadsheets.values.get(request, (err, response) => {
                         if (err) {
-                            console.log(`The API returned an error: ${err}`);
+                            console.log('The API returned an error: '+err);
                             return reject();
                         }
 
@@ -255,7 +255,7 @@ function readPromise(dbref, adminRef, missionStuff, requestWithoutAuth) {
                             // another inner callback, this time to read each row of people
                             sheets.spreadsheets.values.get(request, (err, response) => {
                                   if (err) {
-                                      console.log(`The API returned an error: ${err}`);
+                                      console.log('The API returned an error: '+err);
                                       return reject();
                                   }
 

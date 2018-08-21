@@ -14,10 +14,8 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -26,7 +24,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
@@ -39,7 +36,6 @@ import android.widget.ToggleButton;
 
 import com.brentdunklau.telepatriot_android.util.CameraCapturerCompat;
 import com.brentdunklau.telepatriot_android.util.User;
-import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.util.Util;
 import com.brentdunklau.telepatriot_android.util.VideoEvent;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
@@ -50,7 +46,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -356,12 +351,7 @@ public class VidyoChatFragment extends BaseFragment implements
         record_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (recording) {
-                    stopRecording();
-                }
-                else {
-                    startRecording();
-                }
+                recordClicked();
             }
         });
 
@@ -400,38 +390,6 @@ public class VidyoChatFragment extends BaseFragment implements
                 setVideoNodeAttribute("post_to_twitter", b);
             }
         });
-
-
-//        record_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//            @Override
-//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//
-//
-//                int SDK_INT = Build.VERSION.SDK_INT;
-//                if (SDK_INT < 9) {
-//                    Toast.makeText(getActivity(), "Android Update Required", Toast.LENGTH_LONG).show();
-//                }
-//
-//                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-//                        .permitAll().build();
-//                StrictMode.setThreadPolicy(policy);
-//
-//                if (isChecked) {
-//                    startRecording();
-//                } else {
-//                    stopRecording();
-//                }
-//
-//            }
-//        });
-
-        /*******
-        if(room_id != null) {
-            connect_button.setChecked(true);
-            _mVidyoConnector();
-            connectionClicked();
-        }
-         ********/
 
         /*
          * Set the initial state of the UI
@@ -1378,17 +1336,22 @@ public class VidyoChatFragment extends BaseFragment implements
                             doDisconnect();
                         }
 
+                        if(currentVideoNode.recordingHasStarted()) recordingHasStarted();
+                        else if(currentVideoNode.recordingHasStopped()) recordingHasStopped();
+                        else recordingHasNotStarted();
+
+//                        if(currentVideoNode.isRecording_completed()) {
+//                            publish_button.setVisibility(View.VISIBLE);
+//                        } else {
+//                            publish_button.setVisibility(View.GONE);
+//                        }
+
                         inviteLinks();
 
-                        if(Boolean.TRUE == currentVideoNode.getRecording_requested()) {
-                            showSpinner(); // dismissed just below here, once currentVideoNode.getRecording_started() != null
-                            simpleOKDialog("The recording will start in 30-45 seconds.  When the spinner goes away, the recording will begin.");
-                        }
-
-                        if(currentVideoNode.getRecording_started() != null && currentVideoNode.getRecording_stopped() == null) {
-                            //dismissSpinner();
-                            recordingHasStarted();
-                        }
+//                        if(Boolean.TRUE == currentVideoNode.getRecording_requested()) {
+//                            showSpinner(); // dismissed just below here, once currentVideoNode.getRecording_started() != null
+//                            simpleOKDialog("The recording will start in 30-45 seconds.  When the spinner goes away, the recording will begin.");
+//                        }
 
 
                         if(noLegislator(currentVideoNode)) {
@@ -1415,9 +1378,9 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
 
-    boolean connected = false;
+    //boolean connected = false;
     private void doConnect() {
-        if(connected)
+        if(room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING))
             return;
         if(currentVideoNode == null)
             return;
@@ -1461,7 +1424,6 @@ public class VidyoChatFragment extends BaseFragment implements
         connectOptionsBuilder.encodingParameters(encodingParameters);
 
         room = Video.connect(getActivity(), connectOptionsBuilder.build(), roomListener());
-        connected = true;
         microphone_button.setVisibility(View.VISIBLE);
         record_button.setVisibility(View.VISIBLE);
         setDisconnectAction();
@@ -1469,29 +1431,26 @@ public class VidyoChatFragment extends BaseFragment implements
 
 
     private void doDisconnect() {
-        if(!connected)
-            return;
         connect_button.setChecked(false);
         microphone_button.setVisibility(View.GONE);
         record_button.setVisibility(View.GONE);
-        if(room != null) {
+        if(room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING)) {
             if(room.isRecording())
-                ; // do do we stop a recording in progress?
+                ; // how do we stop a recording in progress?
             room.disconnect();
-            connected = false;
         }
     }
 
 
-    private void recordingHasStarted() {
-        if (recording) {
-            return; // means we've already been here
-        }
-        recording = true;
-        record_button.setBackgroundResource(R.drawable.recordstop);
-        publish_button.setVisibility(View.GONE);
-        dismissSpinner();
-    }
+//    private void recordingHasStarted() {
+//        if (recording) {
+//            return; // means we've already been here
+//        }
+//        recording = true;
+//        record_button.setBackgroundResource(R.drawable.recordstop);
+//        publish_button.setVisibility(View.GONE);
+//        dismissSpinner();
+//    }
 
 
     private void inviteLinks() {
@@ -1890,7 +1849,7 @@ public class VidyoChatFragment extends BaseFragment implements
     // If not in a call, attempt to connect to the backend service.
     // If in a call, disconnect.
     // See in Swift: VideoChatVC.connectionClicked()
-    public void connectionClicked() {
+    private void connectionClicked() {
         if(currentVideoNode == null)
             return;
         VideoParticipant vp = currentVideoNode.getParticipant(User.getInstance().getUid());
@@ -1902,9 +1861,80 @@ public class VidyoChatFragment extends BaseFragment implements
             request_type = "disconnect request";
         }
         VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), request_type);
+        if(currentVideoNode.getRoom_sid() != null)
+            ve.setRoomSid(currentVideoNode.getRoom_sid()); // prevents js exception on the server by not trying to create a room that we know exists
+                                                            // see switchboard.js:connect()
         ve.save();
 
     }
+
+    private void recordClicked() {
+        if(currentVideoNode == null)
+            return;
+        if(currentVideoNode.getLeg_id() == null)
+            chooseLegislatorFirst();
+        else {
+            String request_type = "start recording";
+            if (currentVideoNode.recordingHasStarted())
+                request_type = "stop recording";
+            VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), request_type);
+            ve.save();
+        }
+
+//        if (recording) {
+//            stopRecording();
+//        }
+//        else {
+//            startRecording();
+//        }
+    }
+
+    private void recordingHasNotStarted() {
+        publish_button.setVisibility(View.GONE);
+    }
+
+    private void recordingHasStarted() {
+        publish_button.setVisibility(View.GONE);
+    }
+
+    private void recordingHasStopped() {
+        publish_button.setVisibility(View.VISIBLE);
+    }
+
+
+//    private boolean recording = false;
+//
+//    // See Swift VideoChatVC.startRecording()
+//    private void startRecording() {
+//        if(recording) return;
+//
+//        if(currentVideoNode.getLeg_id() == null)
+//            chooseLegislatorFirst();
+//        else {
+//            recording = true;
+//            showSpinner();
+//            record_button.setBackgroundResource(R.drawable.recordstop);
+//            // See switchboard.js:onStartRecordingRequest()
+//            for(VideoParticipant vp : currentVideoNode.getVideo_participants().values()) {
+//                VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), "start recording");
+//                ve.save();
+//            }
+//            publish_button.setVisibility(View.GONE);
+//        }
+//    }
+//
+//    // See Swift VideoChatVC.stopRecording()
+//    private void stopRecording() {
+//        if(!recording) return;
+//
+//        recording = false;
+//        record_button.setBackgroundResource(R.drawable.record);
+//        for(VideoParticipant vp : currentVideoNode.getVideo_participants().values()) {
+//            VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), "stop recording");
+//            ve.save();
+//        }
+//        publish_button.setVisibility(View.VISIBLE);
+//    }
 
     private void connectIfNotConnected() {
         //TODO if we put this auto-connect logic back in, we have to remember that we connect using "connect request" calls now.  We don't directly call doConnect()
@@ -1916,41 +1946,6 @@ public class VidyoChatFragment extends BaseFragment implements
 
     private void showSpinner() {
         //video_chat_spinner.setVisibility(View.VISIBLE);
-    }
-
-
-    private boolean recording = false;
-
-    // See Swift VideoChatVC.startRecording()
-    private void startRecording() {
-        if(recording) return;
-
-        if(currentVideoNode.getLeg_id() == null)
-            chooseLegislatorFirst();
-        else {
-            recording = true;
-            showSpinner();
-            record_button.setBackgroundResource(R.drawable.recordstop);
-            // See switchboard.js:onStartRecordingRequest()
-            for(VideoParticipant vp : currentVideoNode.getVideo_participants().values()) {
-                VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), "start recording");
-                ve.save();
-            }
-            publish_button.setVisibility(View.GONE);
-        }
-    }
-
-    // See Swift VideoChatVC.stopRecording()
-    private void stopRecording() {
-        if(!recording) return;
-
-        recording = false;
-        record_button.setBackgroundResource(R.drawable.record);
-        for(VideoParticipant vp : currentVideoNode.getVideo_participants().values()) {
-            VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), "stop recording");
-            ve.save();
-        }
-        publish_button.setVisibility(View.VISIBLE);
     }
 
     private void dismissSpinner() {

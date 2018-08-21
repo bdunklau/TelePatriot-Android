@@ -10,6 +10,9 @@ public class VideoEvent {
     String uid, name;
     String video_node_key;
     String room_id;
+    String RoomSid; // use same name as twilio
+    String video_invitation_key;
+    String video_invitation_extended_to;
     String request_type;
 
     public VideoEvent(String uid, String name, String video_node_key, String room_id, String request_type) {
@@ -30,7 +33,18 @@ public class VideoEvent {
         m.put("name", name);
         m.put("video_node_key", video_node_key);
         m.put("room_id", room_id);
+        m.put("RoomSid", RoomSid);
+        m.put("video_invitation_key", video_invitation_key);
+        m.put("video_invitation_extended_to", video_invitation_extended_to);
         m.put("request_type", request_type);
         return m;
+    }
+
+    public String getRoomSid() {
+        return RoomSid;
+    }
+
+    public void setRoomSid(String roomSid) {
+        this.RoomSid = roomSid;
     }
 }

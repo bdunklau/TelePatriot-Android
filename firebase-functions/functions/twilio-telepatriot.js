@@ -25,12 +25,137 @@ firebase deploy --only functions:twilioCallback,functions:testTwilioToken,functi
 ****/
 
 
+// This http function is also called from the google vm we have in the ComputeEngine
+// SSH in to the vm and vi ~/nodejs/index.js.  Then look at the app.get('/publish')
 exports.twilioCallback = functions.https.onRequest((req, res) => {
 
     // ref:  https://www.twilio.com/docs/api/video/status-callbacks
     // see also switchboard.js:testViewVideoEvents()
-    return db.ref().child('video/video_events').push().set(req.body).then(snapshot => {
-        return res.status(200).send('OK')
+    return db.ref('video/video_events').push().set(req.body).then(snapshot => {
+        // this sucks: twilio does not pass RoomName on 'composition-progress' events. But it does on 'recording-xxxxx' events
+        if(req.body.RoomName && req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'recording-started') {
+            // once we start recording, write the RoomSid to video/list/{video_node_key}/room_sid_record so that we can query
+            // on this attribute during 'composition-progress' and 'composition-available' callbacks (below)
+            var video_node_key = req.body.RoomName.substring('record'.length)
+            return db.ref('video/list/'+video_node_key+'/room_sid_record').set(req.body.RoomSid).then(() => {
+                return res.status(200).send('OK')
+            })
+        }
+        else if(req.body.RoomName && req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'recording-completed') {
+            // write recording_completed to the video node.  This attribute is how we know when to display the publish_button
+            return db.ref('video/list').orderByChild('room_sid_record').equalTo(req.body.RoomSid).once('value').then(snap2 => {
+                var video_node_key
+                snap2.forEach(function(child) { video_node_key = child.key })
+                return snap2.child(video_node_key+'/recording_completed').ref.set(true)
+            })
+        }
+        else if(req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'room-ended') {
+            // when a room is completed/finished, update the video node...
+            var video_node_key = req.body.RoomName
+            if(video_node_key.startsWith('record')) video_node_key = video_node_key.substring('record'.length)
+            var updates = {}
+            updates['room_sid'] = null // but leave room_sid_record alone
+            return db.ref('video/list/'+video_node_key).update(updates)
+        }
+        else if(req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'composition-progress') {
+
+            // look up video_node_key using RoomSid, then update the following attributes on the video node
+            return db.ref('video/list').orderByChild('room_sid_record').equalTo(req.body.RoomSid).once('value').then(snap2 => {
+                // will only ever return a 1-element list
+                var video_node_key
+                snap2.forEach(function(child) { video_node_key = child.key })
+
+                db.ref('templog2').push().set({composition_PercentageDone: req.body.PercentageDone,
+                                            composition_SecondsRemaining: req.body.SecondsRemaining,
+                                            video_node_key: video_node_key,
+                                            date: date.asCentralTime(), date_ms: date.asMillis(),
+                                            room_sid: req.body.RoomSid})
+
+                var updates = {}
+                updates['video/list/'+video_node_key+'/composition_PercentageDone'] = req.body.PercentageDone
+                updates['video/list/'+video_node_key+'/composition_SecondsRemaining'] = req.body.SecondsRemaining
+
+                return db.ref('/').update(updates).then(() => {
+                    return res.status(200).send('OK')
+                })
+            })
+        }
+        // This is when the composition media file has been completed and it's ready to view/download
+        else if(req.body.RoomSid && req.query.StatusCallbackEvent && req.body.StatusCallbackEvent == 'composition-available') {
+            // WARNING: I've seen this event NOT get called - so we need a plan B.  Can't just rely on this callback
+
+            return db.ref('api_tokens').once('value').then(snapshot => {
+
+                // call the virtual machine and give it all the information it needs to download the media file from twilio
+                return db.ref('administration/hosts').once('value').then(snap2 => {
+                    var host
+                    var port
+                    var firebaseServer // we'll just make another else-if block to handle callbacks from the vm
+                    snap2.forEach(function(child) {
+                        if(child.val().type == 'virtual machine') {
+                            host = child.val().host
+                            port = child.val().port
+                        }
+                        else if(child.val().type == 'firebase functions') {
+                            firebaseServer = child.val().host
+                        }
+                    })
+
+                    // need this query to get the video_node_key, the Youtube video title and youtube video description
+                    return db.ref('video/list').orderByChild('room_sid_record').equalTo(req.body.RoomSid).once('value').then(snap3 => {
+                        var title
+                        var video_description
+                        var video_node_key
+                        var uid
+                        snap3.forEach(function(child) {
+                            video_node_key = child.key
+                            title = child.val().video_title
+                            video_description = child.val().youtube_video_description
+                            // use the 2nd participant if there is one
+                            uid = child.val().video_participants[child.val().video_participants.length - 1].uid
+                        })
+
+                        // This is where we call the virtual machine instance and pass the compositionUrl
+                        //Example:  https://4t3kjht4hj4th3th:bv898c7bv9c7vb9@video.twilio.com/v1/Compositions/CJ1e51ff27bfe904376c9040b4cb45b2c4/Media?Ttl=6000
+                        // send the url as a collection of request parameters...
+                        var parms = ['twilio_account_sid='+snapshot.val().twilio_account_sid,
+                                    'twilio_auth_token='+snapshot.val().twilio_auth_token,
+                                    'domain=video.twilio.com',
+                                    'CompositionUri='+req.body.CompositionUri+'/Media',
+                                    'CompositionSid='+req.body.CompositionSid,
+                                    'Ttl=6000',
+                                    'firebaseServer='+firebaseServer,
+                                    'firebaseUri=/twilioCallback',
+                                    'video_title='+title,
+                                    'youtube_video_description='+video_description,
+                                    'keywords=Convention+of+States+Project',
+                                    'privacyStatus=unlisted',
+                                    'video_node_key='+video_node_key,
+                                    'uid='+uid
+
+                        ]
+                        var parmList = parms.join('&')
+
+
+                        // go see ~/nodejs/index.js and the app.get('/publish') route
+                        var vmUrl = 'https://'+host+':'+port+'/publish?'+parmList
+
+                        // call the vm and send enough information as request parameters that the vm instance can
+                        // construct a url to call back to us
+                        request(vmUrl, function (error, response, body) {
+                            if(error) {
+                                console.log('error: ', error)
+                                return
+                            }
+                            // what comes back ?
+    //                        var something = JSON.parse(body).officials
+    //                        stuff.ref.root.update(updates)
+                        })
+                    })
+                })
+            })
+        }
+        else return res.status(200).send('OK')
     })
 
 })
@@ -169,8 +294,9 @@ var retrieveRoom = function(stuff) {
 
 
 exports.completeRoom = function(room_sid, callback) {
+    if(!room_sid)
+        return false
 
-    db.ref('templog2').push().set({func: 'completeRoom', room_sid: room_sid, next: 'look for log from client.video.rooms.update()...'})
     return db.ref('api_tokens').once('value').then(snapshot => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
@@ -254,10 +380,10 @@ var createRoom_private_func = function(room_id, host, showRoom, recordParticipan
             roomParms.type = 'peer-to-peer'
         }
 
-        client.video.rooms.create(roomParms).then(room => {
+        return client.video.rooms.create(roomParms).then(room => {
             showRoom({room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token})
         })
-        .done();
+        //.done();
     })
 }
 

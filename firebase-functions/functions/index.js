@@ -255,6 +255,7 @@ exports.onStartRecordingRequest = switchboard.onStartRecordingRequest
 exports.onStopRecordingRequest = switchboard.onStopRecordingRequest
 exports.onParticipantDisconnected = switchboard.onParticipantDisconnected
 exports.onRoomCreated = switchboard.onRoomCreated
+exports.onRevokeInvitation = switchboard.onRevokeInvitation
 
 
 const twilio = require('./twilio-telepatriot')

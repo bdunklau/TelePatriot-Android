@@ -37,12 +37,20 @@ public class VideoNode {
     long recording_started_ms;
     String recording_stopped;
     long recording_stopped_ms;
+    boolean recording_completed = false;
 
     // The "What do you want to do with your video" fields...
     // all true by default and the user can set them to false in the VidyoChatFragment if he doesn't like them
     private boolean email_to_legislator = true;
     private boolean post_to_facebook = true;
     private boolean post_to_twitter = true;
+
+    // These attributes are sent back to us from twilio.  Twilio calls twilioCallback() in twilio-telepatriot.js
+    // see video/video_events and /testViewVideoEvents
+    private Integer composition_PercentageDone;
+    private Integer composition_SecondsRemaining;
+    private String composition_MediaUri;
+    private String composition_CompositionSid;
 
     String leg_id, legislator_chamber, legislator_cos_position, legislator_district, legislator_email,
             legislator_facebook, legislator_facebook_id, legislator_first_name, legislator_full_name,
@@ -102,8 +110,9 @@ public class VideoNode {
         m.put("recording_started_ms", recording_started_ms);
         m.put("recording_stopped", recording_stopped);
         m.put("recording_stopped_ms", recording_stopped_ms);
+        m.put("recording_completed", recording_completed);
         m.put("room_id", room_id);
-        m.put("room_sid", room_sid);
+        m.put("RoomSid", room_sid);
 
         m.put("leg_id", getLeg_id());
         m.put("legislator_name", getLegislator_full_name());
@@ -121,6 +130,11 @@ public class VideoNode {
         m.put("email_to_legislator", email_to_legislator);
         m.put("post_to_facebook", post_to_facebook);
         m.put("post_to_twitter", post_to_twitter);
+
+        m.put("composition_PercentageDone", composition_PercentageDone);
+        m.put("composition_SecondsRemaining", composition_SecondsRemaining);
+        m.put("composition_MediaUri", composition_MediaUri);
+        m.put("composition_CompositionSid", composition_CompositionSid);
 
         m.put("video_invitation_key", video_invitation_key);
         m.put("video_invitation_extended_to", video_invitation_extended_to);
@@ -364,6 +378,14 @@ public class VideoNode {
         this.recording_stopped_ms = recording_stopped_ms;
     }
 
+    public boolean isRecording_completed() {
+        return recording_completed;
+    }
+
+    public void setRecording_completed(boolean recording_completed) {
+        this.recording_completed = recording_completed;
+    }
+
     public String getVideo_invitation_key() {
         return video_invitation_key;
     }
@@ -402,6 +424,50 @@ public class VideoNode {
 
     public void setRoom_sid(String room_sid) {
         this.room_sid = room_sid;
+    }
+
+    public Integer getComposition_PercentageDone() {
+        return composition_PercentageDone;
+    }
+
+    public void setComposition_PercentageDone(Integer composition_PercentageDone) {
+        this.composition_PercentageDone = composition_PercentageDone;
+    }
+
+    public Integer getComposition_SecondsRemaining() {
+        return composition_SecondsRemaining;
+    }
+
+    public void setComposition_SecondsRemaining(Integer composition_SecondsRemaining) {
+        this.composition_SecondsRemaining = composition_SecondsRemaining;
+    }
+
+    public String getComposition_MediaUri() {
+        return composition_MediaUri;
+    }
+
+    public void setComposition_MediaUri(String composition_MediaUri) {
+        this.composition_MediaUri = composition_MediaUri;
+    }
+
+    public String getComposition_CompositionSid() {
+        return composition_CompositionSid;
+    }
+
+    public void setComposition_CompositionSid(String composition_CompositionSid) {
+        this.composition_CompositionSid = composition_CompositionSid;
+    }
+
+    public boolean recordingHasNotStarted() {
+        return recording_started == null;
+    }
+
+    public boolean recordingHasStarted() {
+        return recording_started != null && recording_stopped == null;
+    }
+
+    public boolean recordingHasStopped() {
+        return recording_started != null && recording_stopped != null;
     }
 
     public boolean bothParticipantsPresent() {
