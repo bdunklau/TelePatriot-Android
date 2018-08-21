@@ -49,14 +49,15 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                 return snap2.child(video_node_key+'/recording_completed').ref.set(true)
             })
         }
-        else if(req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'room-ended') {
-            // when a room is completed/finished, update the video node...
-            var video_node_key = req.body.RoomName
-            if(video_node_key.startsWith('record')) video_node_key = video_node_key.substring('record'.length)
-            var updates = {}
-            updates['room_sid'] = null // but leave room_sid_record alone
-            return db.ref('video/list/'+video_node_key).update(updates)
-        }
+        // Null out the room_sid?  Not sure about that anymore 8/21/18
+//        else if(req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'room-ended') {
+//            // when a room is completed/finished, update the video node...
+//            var video_node_key = req.body.RoomName
+//            if(video_node_key.startsWith('record')) video_node_key = video_node_key.substring('record'.length)
+//            var updates = {}
+//            updates['room_sid'] = null // but leave room_sid_record alone
+//            return db.ref('video/list/'+video_node_key).update(updates)
+//        }
         else if(req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'composition-progress') {
 
             // look up video_node_key using RoomSid, then update the following attributes on the video node
