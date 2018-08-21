@@ -97,7 +97,7 @@ exports.onStartRecordingRequest = functions.database.ref('video/video_events/{ke
         // on the 2nd "participant-disconnected" event, create the "record-Lackweljjfdlsj" room
 
 
-        return adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
+        return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
             var host
             snapshot.forEach(function(child) {host = child.val().host})
             twilio_telepatriot.completeRoom(event.data.val().RoomSid,      //  COMPLETE THE CURRENT ROOM....

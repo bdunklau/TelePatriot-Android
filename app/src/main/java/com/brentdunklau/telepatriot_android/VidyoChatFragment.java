@@ -1400,30 +1400,30 @@ public class VidyoChatFragment extends BaseFragment implements
         boolean doINeedToDisconnect = connected && shouldBeDisconnected;
         boolean doINeedToSwitchRooms = shouldBeConnected && connectedToTheWrongRoom;
 
-        Log.i(TAG, "------------------------------------------------------------");
-        Log.i(TAG, "RoomId IS: "+currentRoomId+"   -- CHANGING TO: "+currentVideoNode.getRoom_id());
-        Log.i(TAG, "    connected: "+connected);
-        Log.i(TAG, "    shouldBeConnected: "+shouldBeConnected);
-        Log.i(TAG, "    shouldBeDisconnected: "+shouldBeDisconnected);
-        Log.i(TAG, "    connectedToTheWrongRoom: "+connectedToTheWrongRoom);
-        Log.i(TAG, "    doINeedToConnect: "+doINeedToConnect);
-        Log.i(TAG, "    doINeedToDisconnect: "+doINeedToDisconnect);
-        Log.i(TAG, "    doINeedToSwitchRooms: "+doINeedToSwitchRooms);
+        System.out.println(TAG+ "]  ------------------------------------------------------------");
+        System.out.println(TAG+ "]  RoomId IS: "+currentRoomId+"   -- CHANGING TO: "+currentVideoNode.getRoom_id());
+        System.out.println(TAG+ "]      connected: "+connected);
+        System.out.println(TAG+ "]      shouldBeConnected: "+shouldBeConnected);
+        System.out.println(TAG+ "]      shouldBeDisconnected: "+shouldBeDisconnected);
+        System.out.println(TAG+ "]      connectedToTheWrongRoom: "+connectedToTheWrongRoom);
+        System.out.println(TAG+ "]      doINeedToConnect: "+doINeedToConnect);
+        System.out.println(TAG+ "]      doINeedToDisconnect: "+doINeedToDisconnect);
+        System.out.println(TAG+ "]      doINeedToSwitchRooms: "+doINeedToSwitchRooms);
 
         if(doINeedToConnect) {
-            Log.i(TAG, "connecting...");
+            System.out.println(TAG+ "]  connecting...");
             doConnect();
             currentRoomId = currentVideoNode.getRoom_id();
         }
         else if(doINeedToDisconnect) {
-            Log.i(TAG, "disconnecting...");
+            System.out.println(TAG+ "]  disconnecting...");
             doDisconnect();
             currentRoomId = currentVideoNode.getRoom_id();
         }
         else if(doINeedToSwitchRooms) {
-            Log.i(TAG, "disconnecting...");
+            System.out.println(TAG+ "]  disconnecting...");
             doDisconnect();
-            Log.i(TAG, "connecting...");
+            System.out.println(TAG+ "]  connecting...");
             doConnect();
             currentRoomId = currentVideoNode.getRoom_id();
         }
