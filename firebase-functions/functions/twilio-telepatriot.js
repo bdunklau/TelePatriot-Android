@@ -306,7 +306,6 @@ exports.completeRoom = function(room_sid, callback) {
                         db.ref('templog2').push().set({func: 'completeRoom', room_sid: room_sid, event: 'this room should be \'completed\''})
                         var stuff = {room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token}
                         callback(stuff)
-                        //showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
                     })
                     .done();
     })
@@ -358,11 +357,21 @@ exports.createRoom = function(room_id, host) {
         // No need to really return anything.  Called from trigger switchboard.js:onConnectRequest()
         return true
     }
+    return exports.createRoom2(room_id, host, callback)
+}
+
+
+exports.createRoom2 = function(room_id, host, callback) {
+    // when the user does a "connect request", the room is just the video_node_key.  So the result here is
+    // that we create a room with recording turned off.  When user hits the record button, we create ANOTHER room
+    // but this time we prepend the name of the room with 'record' so that the logic below will create a room
+    // with recording turned on.
+    var recordParticipantsOnConnect = room_id.startsWith('record') ? true : false
     return createRoom_private_func(room_id, host, callback, recordParticipantsOnConnect)
 }
 
 
-var createRoom_private_func = function(room_id, host, showRoom, recordParticipantsOnConnect) {
+var createRoom_private_func = function(room_id, host, callback, recordParticipantsOnConnect) {
     return db.ref('api_tokens').once('value').then(snapshot => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
@@ -381,7 +390,7 @@ var createRoom_private_func = function(room_id, host, showRoom, recordParticipan
         }
 
         return client.video.rooms.create(roomParms).then(room => {
-            showRoom({room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token})
+            callback({room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token})
         })
         //.done();
     })

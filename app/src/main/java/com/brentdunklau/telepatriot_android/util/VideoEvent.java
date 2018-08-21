@@ -15,12 +15,17 @@ public class VideoEvent {
     String video_invitation_extended_to;
     String request_type;
 
-    public VideoEvent(String uid, String name, String video_node_key, String room_id, String request_type) {
+    public VideoEvent(String uid, String name, String video_node_key, String room_id, String request_type, String RoomSid) {
         this.uid = uid;
         this.name = name;
         this.video_node_key = video_node_key;
         this.room_id = room_id;
         this.request_type = request_type;
+        this.RoomSid = RoomSid;
+    }
+
+    public VideoEvent(String uid, String name, String video_node_key, String room_id, String request_type) {
+        this(uid, name, video_node_key, room_id, request_type, null);
     }
 
     public void save() {

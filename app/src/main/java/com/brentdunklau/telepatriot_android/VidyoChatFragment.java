@@ -113,7 +113,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private View myView;
     private String uid;
     private Integer videoTypeKey;
-    private String room_id; // the video_node_key
+    //private String room_id; // the video_node_key
     private TextView video_mission_description;
     private TextView choose_legislator;
     private TextView edit_video_title_button;
@@ -1329,12 +1329,13 @@ public class VidyoChatFragment extends BaseFragment implements
                         post_to_facebook.setChecked(currentVideoNode.isPost_to_facebook());
                         post_to_twitter.setChecked(currentVideoNode.isPost_to_twitter());
 
-                        // the connect_button toggles its image as soon as it's clicked.  This code will just keep it in sync if a disconnect is forced from somewhere else
-                        if(currentVideoNode.getParticipant(User.getInstance().getUid()).isConnected()) {
-                            doConnect();
-                        } else {
-                            doDisconnect();
-                        }
+//                        // the connect_button toggles its image as soon as it's clicked.  This code will just keep it in sync if a disconnect is forced from somewhere else
+//                        if(currentVideoNode.getParticipant(User.getInstance().getUid()).isConnected()) {
+//                            doConnect();
+//                        } else {
+//                            doDisconnect();
+//                        }
+                        figureOutConnectivity();
 
                         if(currentVideoNode.recordingHasStarted()) recordingHasStarted();
                         else if(currentVideoNode.recordingHasStopped()) recordingHasStopped();
@@ -1378,13 +1379,58 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
 
-    //boolean connected = false;
-    private void doConnect() {
-        if(room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING))
-            return;
-        if(currentVideoNode == null)
-            return;
+    /**
+     * Are we connected? Are we disconnected?  Should we be connected?  Should we be disconnected?
+     * Should we disconnect from one room and connect to another room?
+     * Do I need to connect?  Yes, if I'm not connected to the right room
+     * Do I need to disconnect?
+     */
+    private String currentRoomId; // won't this get nulled if I move off the screen and come back?
+    private void figureOutConnectivity() {
+        // Are we connected?
+        boolean connected = room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING);
+        // Should we be connected?
+        boolean shouldBeConnected = currentVideoNode.getParticipant(User.getInstance().getUid()).isConnected();
+        // Should we be disconnected?
+        boolean shouldBeDisconnected = !shouldBeConnected;
+        // Am I connected to the wrong room?
+        boolean connectedToTheWrongRoom = connected && !currentVideoNode.getRoom_id().equals(currentRoomId);
+        // Do I need to connect?
+        boolean doINeedToConnect = !connected && shouldBeConnected;
+        boolean doINeedToDisconnect = connected && shouldBeDisconnected;
+        boolean doINeedToSwitchRooms = shouldBeConnected && connectedToTheWrongRoom;
 
+        Log.i(TAG, "------------------------------------------------------------");
+        Log.i(TAG, "RoomId IS: "+currentRoomId+"   -- CHANGING TO: "+currentVideoNode.getRoom_id());
+        Log.i(TAG, "    connected: "+connected);
+        Log.i(TAG, "    shouldBeConnected: "+shouldBeConnected);
+        Log.i(TAG, "    shouldBeDisconnected: "+shouldBeDisconnected);
+        Log.i(TAG, "    connectedToTheWrongRoom: "+connectedToTheWrongRoom);
+        Log.i(TAG, "    doINeedToConnect: "+doINeedToConnect);
+        Log.i(TAG, "    doINeedToDisconnect: "+doINeedToDisconnect);
+        Log.i(TAG, "    doINeedToSwitchRooms: "+doINeedToSwitchRooms);
+
+        if(doINeedToConnect) {
+            Log.i(TAG, "connecting...");
+            doConnect();
+            currentRoomId = currentVideoNode.getRoom_id();
+        }
+        else if(doINeedToDisconnect) {
+            Log.i(TAG, "disconnecting...");
+            doDisconnect();
+            currentRoomId = currentVideoNode.getRoom_id();
+        }
+        else if(doINeedToSwitchRooms) {
+            Log.i(TAG, "disconnecting...");
+            doDisconnect();
+            Log.i(TAG, "connecting...");
+            doConnect();
+            currentRoomId = currentVideoNode.getRoom_id();
+        }
+    }
+
+
+    private void doConnect() {
         getActivity().runOnUiThread(new Runnable() { public void run() {connect_button.setChecked(true);}});
 
         VideoParticipant me = currentVideoNode.getParticipant(User.getInstance().getUid());
@@ -1434,11 +1480,11 @@ public class VidyoChatFragment extends BaseFragment implements
         connect_button.setChecked(false);
         microphone_button.setVisibility(View.GONE);
         record_button.setVisibility(View.GONE);
-        if(room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING)) {
+//        if(room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING)) {
             if(room.isRecording())
                 ; // how do we stop a recording in progress?
             room.disconnect();
-        }
+//        }
     }
 
 
@@ -1877,16 +1923,9 @@ public class VidyoChatFragment extends BaseFragment implements
             String request_type = "start recording";
             if (currentVideoNode.recordingHasStarted())
                 request_type = "stop recording";
-            VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), request_type);
+            VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), request_type, currentVideoNode.getRoom_sid());
             ve.save();
         }
-
-//        if (recording) {
-//            stopRecording();
-//        }
-//        else {
-//            startRecording();
-//        }
     }
 
     private void recordingHasNotStarted() {
