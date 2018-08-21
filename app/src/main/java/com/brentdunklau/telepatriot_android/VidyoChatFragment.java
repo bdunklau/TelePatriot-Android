@@ -1470,6 +1470,7 @@ public class VidyoChatFragment extends BaseFragment implements
         connectOptionsBuilder.encodingParameters(encodingParameters);
 
         room = Video.connect(getActivity(), connectOptionsBuilder.build(), roomListener());
+        System.out.println(TAG+ "]  connected to:  "+currentVideoNode.getRoom_id());
         microphone_button.setVisibility(View.VISIBLE);
         record_button.setVisibility(View.VISIBLE);
         setDisconnectAction();

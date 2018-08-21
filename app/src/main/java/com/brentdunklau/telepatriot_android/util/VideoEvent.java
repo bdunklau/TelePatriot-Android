@@ -38,7 +38,8 @@ public class VideoEvent {
         m.put("name", name);
         m.put("video_node_key", video_node_key);
         m.put("room_id", room_id);
-        m.put("RoomSid", RoomSid);
+        if(RoomSid != null)
+            m.put("RoomSid", RoomSid);
         m.put("video_invitation_key", video_invitation_key);
         m.put("video_invitation_extended_to", video_invitation_extended_to);
         m.put("request_type", request_type);
