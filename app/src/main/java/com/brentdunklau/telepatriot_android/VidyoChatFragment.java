@@ -1387,6 +1387,15 @@ public class VidyoChatFragment extends BaseFragment implements
      */
     private String currentRoomId; // won't this get nulled if I move off the screen and come back?
     private void figureOutConnectivity() {
+        // Do I have a token?  -geez
+        boolean doIHaveToken = false;
+        if(currentVideoNode.getRoom_id().startsWith("record"))
+            doIHaveToken = currentVideoNode.getParticipant(User.getInstance().getUid()).getTwilio_token_record() != null;
+        else
+            doIHaveToken = currentVideoNode.getParticipant(User.getInstance().getUid()).getTwilio_token() != null;
+
+        boolean iAmAbleToConect = doIHaveToken;
+
         // Are we connected?
         boolean connected = room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING);
         // Should we be connected?
@@ -1397,8 +1406,11 @@ public class VidyoChatFragment extends BaseFragment implements
         boolean connectedToTheWrongRoom = connected && !currentVideoNode.getRoom_id().equals(currentRoomId);
         // Do I need to connect?
         boolean doINeedToConnect = !connected && shouldBeConnected;
+        boolean iAmAboutToConnect = iAmAbleToConect && doINeedToConnect;
         boolean doINeedToDisconnect = connected && shouldBeDisconnected;
+        boolean iAmAboutToDisconnect = doINeedToDisconnect;
         boolean doINeedToSwitchRooms = shouldBeConnected && connectedToTheWrongRoom;
+        boolean iAmAboutToSwitchRooms = iAmAbleToConect && doINeedToSwitchRooms;
 
         System.out.println(TAG+ "]  ------------------------------------------------------------");
         System.out.println(TAG+ "]  RoomId IS: "+currentRoomId+"   -- CHANGING TO: "+currentVideoNode.getRoom_id());
@@ -1406,21 +1418,25 @@ public class VidyoChatFragment extends BaseFragment implements
         System.out.println(TAG+ "]      shouldBeConnected: "+shouldBeConnected);
         System.out.println(TAG+ "]      shouldBeDisconnected: "+shouldBeDisconnected);
         System.out.println(TAG+ "]      connectedToTheWrongRoom: "+connectedToTheWrongRoom);
+        System.out.println(TAG+ "]      iAmAbleToConect: "+iAmAbleToConect);
         System.out.println(TAG+ "]      doINeedToConnect: "+doINeedToConnect);
+        System.out.println(TAG+ "]      iAmAboutToConnect: "+iAmAboutToConnect);
         System.out.println(TAG+ "]      doINeedToDisconnect: "+doINeedToDisconnect);
+        System.out.println(TAG+ "]      iAmAboutToDisconnect: "+iAmAboutToDisconnect);
         System.out.println(TAG+ "]      doINeedToSwitchRooms: "+doINeedToSwitchRooms);
+        System.out.println(TAG+ "]      iAmAboutToSwitchRooms: "+iAmAboutToSwitchRooms);
 
-        if(doINeedToConnect) {
+        if(iAmAboutToConnect) {
             System.out.println(TAG+ "]  connecting...");
             doConnect();
             currentRoomId = currentVideoNode.getRoom_id();
         }
-        else if(doINeedToDisconnect) {
+        else if(iAmAboutToDisconnect) {
             System.out.println(TAG+ "]  disconnecting...");
             doDisconnect();
             currentRoomId = currentVideoNode.getRoom_id();
         }
-        else if(doINeedToSwitchRooms) {
+        else if(iAmAboutToSwitchRooms) {
             System.out.println(TAG+ "]  disconnecting...");
             doDisconnect();
             System.out.println(TAG+ "]  connecting...");
