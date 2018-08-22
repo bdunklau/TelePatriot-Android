@@ -1439,8 +1439,10 @@ public class VidyoChatFragment extends BaseFragment implements
 
         configureAudio(true);
 
+        String token = currentVideoNode.getRoom_id().startsWith("record") ? me.getTwilio_token_record() : me.getTwilio_token();
+
         // Get accessToken from the user's node under /video/list/{video_node_key}/video_participants/{uid}/twilio_token
-        ConnectOptions.Builder connectOptionsBuilder = new ConnectOptions.Builder(me.getTwilio_token())
+        ConnectOptions.Builder connectOptionsBuilder = new ConnectOptions.Builder(token)
                 .roomName(currentVideoNode.getRoom_id());
 
         /*
@@ -1470,7 +1472,7 @@ public class VidyoChatFragment extends BaseFragment implements
         connectOptionsBuilder.encodingParameters(encodingParameters);
 
         room = Video.connect(getActivity(), connectOptionsBuilder.build(), roomListener());
-        System.out.println(TAG+ "]  connected to:  "+currentVideoNode.getRoom_id());
+        System.out.println(TAG+ "]  connected to:  "+room.getName()+" (currentVideoNode.getRoom_id() = "+currentVideoNode.getRoom_id()+")");
         microphone_button.setVisibility(View.VISIBLE);
         record_button.setVisibility(View.VISIBLE);
         setDisconnectAction();
@@ -1485,6 +1487,7 @@ public class VidyoChatFragment extends BaseFragment implements
             if(room.isRecording())
                 ; // how do we stop a recording in progress?
             room.disconnect();
+            System.out.println(TAG+ "]  disconnected from:  "+room.getName()+" (currentVideoNode.getRoom_id() = "+currentVideoNode.getRoom_id()+")");
 //        }
     }
 

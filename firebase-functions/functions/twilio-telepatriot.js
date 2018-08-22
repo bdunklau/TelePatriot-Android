@@ -49,7 +49,10 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                 return snap2.child(video_node_key+'/recording_completed').ref.set(true)
             })
         }
-        // Null out the room_sid?  Not sure about that anymore 8/21/18
+        // Null out the room_sid on the video node to denote that there is no active twilio video room at the moment
+        // room_sid is set in onRoomCreated()
+        // But we'll have room-ended events when we transition between recordable and non-recordable rooms
+        // Is there a chance that we'll null out the wrong room_sid value ?
 //        else if(req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'room-ended') {
 //            // when a room is completed/finished, update the video node...
 //            var video_node_key = req.body.RoomName

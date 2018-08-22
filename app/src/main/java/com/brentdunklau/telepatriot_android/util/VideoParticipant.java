@@ -24,7 +24,8 @@ public class VideoParticipant {
     String role;
     boolean present = true; // because basically a participant has to be present for this object to be instantiated
     //String vidyo_token;  // don't use this anymore 8/10/18
-    String twilio_token;
+    String twilio_token;        // for non-recordable rooms
+    String twilio_token_record; // for recordable rooms
 
 
     // MUST have a no-arg constructor for firebase deserialization
@@ -59,6 +60,7 @@ public class VideoParticipant {
         m.put("present", present);
 //        m.put("vidyo_token", vidyo_token); // don't use this anymore 8/10/18
         m.put("twilio_token", twilio_token);
+        m.put("twilio_token_record", twilio_token_record);
         return m;
     }
 
@@ -125,6 +127,14 @@ public class VideoParticipant {
 
     public void setTwilio_token(String twilio_token) {
         this.twilio_token = twilio_token;
+    }
+
+    public String getTwilio_token_record() {
+        return twilio_token_record;
+    }
+
+    public void setTwilio_token_record(String twilio_token_record) {
+        this.twilio_token_record = twilio_token_record;
     }
 
     public boolean isConnected() {
