@@ -61,7 +61,11 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
 //            updates['room_sid'] = null // but leave room_sid_record alone
 //            return db.ref('video/list/'+video_node_key).update(updates)
 //        }
-        else if(req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'composition-progress') {
+        else if(req.body.RoomSid
+                && req.body.PercentageDone
+                && req.body.SecondsRemaining
+                && req.body.StatusCallbackEvent
+                && req.body.StatusCallbackEvent == 'composition-progress') {
 
             // look up video_node_key using RoomSid, then update the following attributes on the video node
             return db.ref('video/list').orderByChild('room_sid_record').equalTo(req.body.RoomSid).once('value').then(snap2 => {
@@ -69,15 +73,9 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                 var video_node_key
                 snap2.forEach(function(child) { video_node_key = child.key })
 
-                db.ref('templog2').push().set({composition_PercentageDone: req.body.PercentageDone,
-                                            composition_SecondsRemaining: req.body.SecondsRemaining,
-                                            video_node_key: video_node_key,
-                                            date: date.asCentralTime(), date_ms: date.asMillis(),
-                                            room_sid: req.body.RoomSid})
-
                 var updates = {}
-                updates['video/list/'+video_node_key+'/composition_PercentageDone'] = req.body.PercentageDone
-                updates['video/list/'+video_node_key+'/composition_SecondsRemaining'] = req.body.SecondsRemaining
+                updates['video/list/'+video_node_key+'/composition_PercentageDone'] = parseInt(req.body.PercentageDone)
+                updates['video/list/'+video_node_key+'/composition_SecondsRemaining'] = parseInt(req.body.SecondsRemaining)
 
                 return db.ref('/').update(updates).then(() => {
                     return res.status(200).send('OK')
@@ -85,8 +83,10 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
             })
         }
         // This is when the composition media file has been completed and it's ready to view/download
-        else if(req.body.RoomSid && req.query.StatusCallbackEvent && req.body.StatusCallbackEvent == 'composition-available') {
+        else if(req.body.RoomSid && req.body.StatusCallbackEvent && req.body.StatusCallbackEvent == 'composition-available') {
             // WARNING: I've seen this event NOT get called - so we need a plan B.  Can't just rely on this callback
+
+            // "clean up" PercentageDone and SecondsRemaining values...
 
             return db.ref('api_tokens').once('value').then(snapshot => {
 
@@ -115,46 +115,104 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                             video_node_key = child.key
                             title = child.val().video_title
                             video_description = child.val().youtube_video_description
-                            // use the 2nd participant if there is one
-                            uid = child.val().video_participants[child.val().video_participants.length - 1].uid
+                            // take the participant with the highest value of start_date_ms
+                            console.log('CHECK child.val().video_participants: ', child.val().video_participants)
+                            var uids = Object.keys(child.val().video_participants)
+                            console.log('CHECK uids: ', uids)
+                            var max_date = 0
+                            for(var i=0; i < uids.length; i++) {
+                                var participant = child.val().video_participants[uids[i]]
+                                console.log('CHECK child.val().video_participants['+uids[i]+']: ', participant)
+                                console.log('CHECK child.val().video_participants['+uids[i]+'].start_date_ms: ', participant.start_date_ms)
+                                if(max_date < participant.start_date_ms) {
+                                    max_date = participant.start_date_ms
+                                    uid = participant.uid
+                                }
+                            }
+
+                            // clean up and timestamp
+                            child.ref.update({composition_PercentageDone: 100,
+                                              composition_SecondsRemaining: 0,
+                                              publishing_completed: true,
+                                              publishing_stopped: date.asCentralTime(),
+                                              publishing_stopped_ms: date.asMillis()})
                         })
 
                         // This is where we call the virtual machine instance and pass the compositionUrl
                         //Example:  https://4t3kjht4hj4th3th:bv898c7bv9c7vb9@video.twilio.com/v1/Compositions/CJ1e51ff27bfe904376c9040b4cb45b2c4/Media?Ttl=6000
                         // send the url as a collection of request parameters...
-                        var parms = ['twilio_account_sid='+snapshot.val().twilio_account_sid,
-                                    'twilio_auth_token='+snapshot.val().twilio_auth_token,
-                                    'domain=video.twilio.com',
-                                    'CompositionUri='+req.body.CompositionUri+'/Media',
-                                    'CompositionSid='+req.body.CompositionSid,
-                                    'Ttl=6000',
-                                    'firebaseServer='+firebaseServer,
-                                    'firebaseUri=/twilioCallback',
-                                    'video_title='+title,
-                                    'youtube_video_description='+video_description,
-                                    'keywords=Convention+of+States+Project',
-                                    'privacyStatus=unlisted',
-                                    'video_node_key='+video_node_key,
-                                    'uid='+uid
+//                        var parms = ['twilio_account_sid='+snapshot.val().twilio_account_sid,
+//                                    'twilio_auth_token='+snapshot.val().twilio_auth_token,
+//                                    'domain=video.twilio.com',
+//                                    'CompositionUri='+req.body.CompositionUri+'/Media',
+//                                    'CompositionSid='+req.body.CompositionSid,
+//                                    'Ttl=6000',
+//                                    'firebaseServer='+firebaseServer,
+//                                    'firebaseUri=/twilioCallback',
+//                                    'video_title='+title,
+//                                    'youtube_video_description='+video_description,
+//                                    'keywords=Convention+of+States+Project',
+//                                    'privacyStatus=unlisted',
+//                                    'video_node_key='+video_node_key,
+//                                    'uid='+uid
+//
+//                        ]
+//                        var parmList = parms.join('&')
 
-                        ]
-                        var parmList = parms.join('&')
+                        var formData = {
+                           twilio_account_sid: snapshot.val().twilio_account_sid,
+                           twilio_auth_token: snapshot.val().twilio_auth_token,
+                           domain: 'video.twilio.com',
+                           CompositionUri: req.body.CompositionUri+'/Media',
+                           CompositionSid: req.body.CompositionSid,
+                           Ttl: 6000,
+                           firebaseServer: firebaseServer,
+                           firebaseUri: '/twilioCallback',
+                           video_title: title,
+                           youtube_video_description: video_description,
+                           keywords: 'Convention of States Project',
+                           privacyStatus: 'unlisted',
+                           video_node_key: video_node_key,
+                           uid: uid
+                        };
 
 
                         // go see ~/nodejs/index.js and the app.get('/publish') route
-                        var vmUrl = 'https://'+host+':'+port+'/publish?'+parmList
-
-                        // call the vm and send enough information as request parameters that the vm instance can
-                        // construct a url to call back to us
-                        request(vmUrl, function (error, response, body) {
-                            if(error) {
-                                console.log('error: ', error)
-                                return
+                        var vmUrl = 'http://'+host+':'+port+'/publish'
+                        request.post(
+                          {
+                            url: vmUrl,
+                            form: formData
+                          },
+                          function (err, httpResponse, body) {
+                            console.log(err, body);
+                            if(err) {
+                                db.ref('templog2').set({date: date.asCentralTime(),
+                                                        error: err,
+                                                        formData: formData,
+                                                        url: vmUrl})
                             }
-                            // what comes back ?
-    //                        var something = JSON.parse(body).officials
-    //                        stuff.ref.root.update(updates)
-                        })
+                          }
+                        );
+
+
+//                        // go see ~/nodejs/index.js and the app.get('/publish') route
+//                        var vmUrl = 'https://'+host+':'+port+'/publish?'+parmList
+//
+//                        // call the vm and send enough information as request parameters that the vm instance can
+//                        // construct a url to call back to us
+//                        request(vmUrl, function (error, response, body) {
+//                            if(error) {
+//                                console.log('error: ', error)
+//                                db.ref('templog2').set({date: date.asCentralTime(),
+//                                                        error: error,
+//                                                        url: vmUrl})
+//                                return
+//                            }
+//                            // what comes back ?
+//    //                        var something = JSON.parse(body).officials
+//    //                        stuff.ref.root.update(updates)
+//                        })
                     })
                 })
             })
@@ -278,7 +336,7 @@ var roomDetails = function(stuff) {
 var retrieveRoom = function(stuff) {
     var room_sid = stuff.room_sid
     var host = stuff.host
-    var showRoom = stuff.callback
+    var callback = stuff.callback
     var composition = stuff.composition // may not be present
     return db.ref('api_tokens').once('value').then(snapshot => {
 
@@ -289,8 +347,7 @@ var retrieveRoom = function(stuff) {
                         var newstuff = {room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token}
                         if(composition)
                             newstuff.composition = composition
-                        showRoom(newstuff)
-                        //showRoom(room, snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
+                        callback(newstuff)
                     })
                     .done();
     })
@@ -402,6 +459,51 @@ var createRoom_private_func = function(room_id, host, callback, recordParticipan
 
 
 exports.testCompose = functions.https.onRequest((req, res) => {
+
+    var showRoom = function(stuff) {
+        return res.status(200).send(roomDetails(stuff))
+    }
+
+    return compose({
+        room_sid: req.query.room_sid,
+        host: req.get('host'),
+        callback: showRoom
+    })
+//    return db.ref('api_tokens').once('value').then(snapshot => {
+//
+//        // Used when generating any kind of tokens
+//        const twilioAccountSid = snapshot.val().twilio_account_sid
+//        const twilioApiKey = snapshot.val().twilio_api_key
+//        const twilioApiSecret = snapshot.val().twilio_secret
+//
+//        const client = twilio(snapshot.val().twilio_api_key, snapshot.val().twilio_secret, {accountSid: snapshot.val().twilio_account_sid})
+//
+//        client.video.compositions.create({
+//            roomSid: req.query.room_sid,
+//            audioSources: '*',
+//            videoLayout: {
+//              grid : {
+//                video_sources: ['*']
+//              }
+//            },
+//            statusCallback: 'https://'+req.get('host')+'/twilioCallback',
+//            format: 'mp4'
+//        })
+//        .then(composition => {
+//            var showRoom = function(stuff) {
+//                return res.status(200).send(roomDetails(stuff))
+//            }
+//            var stuff = {room_sid: req.query.room_sid, host: req.get('host'), callback: showRoom, composition: composition}
+//            return retrieveRoom(stuff)
+//            //return retrieveRoom(req.query.room_sid, req.get('host'), showRoom)
+//        });
+//    })
+})
+
+
+// exported for use by switchboard.js: onPublishRequested()
+exports.compose = function(input) {
+
     return db.ref('api_tokens').once('value').then(snapshot => {
 
         // Used when generating any kind of tokens
@@ -412,26 +514,26 @@ exports.testCompose = functions.https.onRequest((req, res) => {
         const client = twilio(snapshot.val().twilio_api_key, snapshot.val().twilio_secret, {accountSid: snapshot.val().twilio_account_sid})
 
         client.video.compositions.create({
-            roomSid: req.query.room_sid,
+            roomSid: input.room_sid,
             audioSources: '*',
             videoLayout: {
               grid : {
                 video_sources: ['*']
               }
             },
-            statusCallback: 'https://'+req.get('host')+'/twilioCallback',
+            statusCallback: 'https://'+input.host+'/twilioCallback',
             format: 'mp4'
         })
-        .then(composition =>{
-            var showRoom = function(stuff) {
-                return res.status(200).send(roomDetails(stuff))
-            }
-            var stuff = {room_sid: req.query.room_sid, host: req.get('host'), callback: showRoom, composition: composition}
-            return retrieveRoom(stuff)
-            //return retrieveRoom(req.query.room_sid, req.get('host'), showRoom)
+        .then(composition => {
+            //var stuff = {room_sid: input.room_sid, host: input.host, callback: input.callback, composition: composition}
+            //return retrieveRoom(stuff) // this was fine for testing, but I don't want to do this on a twilioCallback
+
+            // Not sure what we need to pass back to switchboard.js:onPublishRequested()...
+            callback({})
         });
     })
-})
+
+}
 
 
 // ref:  https://www.twilio.com/docs/iam/access-tokens#creating-tokens

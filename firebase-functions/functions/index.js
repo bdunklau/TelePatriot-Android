@@ -257,6 +257,8 @@ exports.onParticipantDisconnected = switchboard.onParticipantDisconnected
 exports.onRoomCreated = switchboard.onRoomCreated
 exports.onRevokeInvitation = switchboard.onRevokeInvitation
 exports.onRoomIdChange = switchboard.onRoomIdChange
+exports.onTokenRequested = switchboard.onTokenRequested
+exports.onPublishRequested = switchboard.onPublishRequested
 
 
 const twilio = require('./twilio-telepatriot')

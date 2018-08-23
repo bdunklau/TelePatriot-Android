@@ -9,23 +9,23 @@ import java.util.Map;
 
 public class VideoParticipant {
 
-    String uid;
-    String name;
-    String email;
-    String start_date;
-    long start_date_ms;
-    String phone;
-    String connect_date;
-    long connect_date_ms;
-    String disconnect_date;
-    long disconnect_date_ms;
-    String end_date;
-    long end_date_ms;
-    String role;
-    boolean present = true; // because basically a participant has to be present for this object to be instantiated
+    private String uid;
+    private String name;
+    private String email;
+    private String phone;
+    private String start_date;
+    private long start_date_ms;
+    private String connect_date;
+    private long connect_date_ms;
+    private String disconnect_date;
+    private long disconnect_date_ms;
+    private String end_date;
+    private long end_date_ms;
+    private String role;
+    private boolean present = true; // because basically a participant has to be present for this object to be instantiated
     //String vidyo_token;  // don't use this anymore 8/10/18
-    String twilio_token;        // for non-recordable rooms
-    String twilio_token_record; // for recordable rooms
+    private String twilio_token;        // for non-recordable rooms
+    private String twilio_token_record; // for recordable rooms
 
 
     // MUST have a no-arg constructor for firebase deserialization
@@ -121,6 +121,70 @@ public class VideoParticipant {
 //    }
 
 
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getConnect_date() {
+        return connect_date;
+    }
+
+    public void setConnect_date(String connect_date) {
+        this.connect_date = connect_date;
+    }
+
+    public long getConnect_date_ms() {
+        return connect_date_ms;
+    }
+
+    public void setConnect_date_ms(long connect_date_ms) {
+        this.connect_date_ms = connect_date_ms;
+    }
+
+    public String getDisconnect_date() {
+        return disconnect_date;
+    }
+
+    public void setDisconnect_date(String disconnect_date) {
+        this.disconnect_date = disconnect_date;
+    }
+
+    public long getDisconnect_date_ms() {
+        return disconnect_date_ms;
+    }
+
+    public void setDisconnect_date_ms(long disconnect_date_ms) {
+        this.disconnect_date_ms = disconnect_date_ms;
+    }
+
+    public String getEnd_date() {
+        return end_date;
+    }
+
+    public void setEnd_date(String end_date) {
+        this.end_date = end_date;
+    }
+
+    public long getEnd_date_ms() {
+        return end_date_ms;
+    }
+
+    public void setEnd_date_ms(long end_date_ms) {
+        this.end_date_ms = end_date_ms;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public String getTwilio_token() {
         return twilio_token;
     }
@@ -138,6 +202,6 @@ public class VideoParticipant {
     }
 
     public boolean isConnected() {
-        return connect_date != null && twilio_token != null && disconnect_date == null;
+        return connect_date != null && (twilio_token != null || twilio_token_record != null) && disconnect_date == null;
     }
 }

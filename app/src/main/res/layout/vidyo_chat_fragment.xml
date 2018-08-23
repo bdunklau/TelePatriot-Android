@@ -12,6 +12,19 @@
     <!--true value for indeterminate-->
 
 
+    <TextView
+        android:id="@+id/recording_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:text="Recording..."
+        android:textColor="#ff0000"
+        app:layout_constraintEnd_toStartOf="@+id/instructionsScrollView"
+        app:layout_constraintStart_toStartOf="@+id/local_camera_view"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.twilio.video.VideoView
         android:id="@+id/local_camera_view"
         android:layout_width="wrap_content"

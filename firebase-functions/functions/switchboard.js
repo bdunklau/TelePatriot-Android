@@ -17,7 +17,7 @@ const db = admin.database()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,functions:onConnectRequest,functions:onDisconnectRequest,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange
+firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,functions:onConnectRequest,functions:onDisconnectRequest,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
 ***/
 
 exports.onConnectRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
@@ -30,39 +30,40 @@ exports.onConnectRequest = functions.database.ref('video/video_events/{key}').on
 })
 
 var connect = function(video_event_key, video_node_key, uid, name, room_id, RoomSid) {
-    var updates = {}
-    updates['video/video_events/'+video_event_key+'/date'] = date.asCentralTime()
-    updates['video/video_events/'+video_event_key+'/date_ms'] = date.asMillis()
-    updates['video/list/'+video_node_key+'/video_participants/'+uid+'/connect_date'] = date.asCentralTime()
-    updates['video/list/'+video_node_key+'/video_participants/'+uid+'/connect_date_ms'] = date.asMillis()
-    updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date'] = null
-    updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date_ms'] = null
 
+    // we need to make sure the token is set first - and then set the connect_date/_ms attributes
     var token_attr = room_id.startsWith('record') ? 'twilio_token_record' : 'twilio_token'
     var stuff = {name: name,
                 room_id: room_id}
 
     return twilio_telepatriot.generateTwilioToken(stuff).then(token => {
-        return db.ref('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
-            var host
-            snapshot.forEach(function(child) { // should only be one child
-                host = child.val().host
-            })
+        var tokenUpdate = {}
+        tokenUpdate['video/list/'+video_node_key+'/video_participants/'+uid+'/'+token_attr] = token
+        return db.ref('/').update(tokenUpdate).then(() => {
+            // now that the token is correct, we can set the connect_date attributes...
+            var updates = {}
+            updates['video/video_events/'+video_event_key+'/date'] = date.asCentralTime()
+            updates['video/video_events/'+video_event_key+'/date_ms'] = date.asMillis()
+            updates['video/list/'+video_node_key+'/video_participants/'+uid+'/connect_date'] = date.asCentralTime()
+            updates['video/list/'+video_node_key+'/video_participants/'+uid+'/connect_date_ms'] = date.asMillis()
+            updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date'] = null
+            updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date_ms'] = null
 
             if(!RoomSid) {
-                return twilio_telepatriot.createRoom(room_id, host).then(() => {
-                    // needed by doConnect in VidyoChatFragment and VideoChatVC
-                    updates['video/list/'+video_node_key+'/video_participants/'+uid+'/'+token_attr] = token
-                    return db.ref('/').update(updates)
+                return db.ref('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
+                   var host
+                   snapshot.forEach(function(child) { host = child.val().host })
+
+                   return twilio_telepatriot.createRoom(room_id, host).then(() => {
+                       // needed by doConnect in VidyoChatFragment and VideoChatVC
+                       return db.ref('/').update(updates)
+                   })
+
                 })
             }
             else {
-                // room already exists. don't try to create again - that throws a js exception
-                // needed by doConnect in VidyoChatFragment and VideoChatVC
-                updates['video/list/'+video_node_key+'/video_participants/'+uid+'/'+token_attr] = token
                 return db.ref('/').update(updates)
             }
-
         })
     })
 
@@ -207,6 +208,30 @@ exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key
 })
 
 
+exports.onPublishRequested = functions.database.ref('video/video_events/{key}').onCreate(event => {
+    if(event.data.val().request_type && event.data.val().request_type == "start publishing") {
+        // timestamp the entry...
+        event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
+        return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
+            var host
+            snapshot.forEach(function(child) { host = child.val().host })
+
+            var callback = function(stuff) { /*
+                Not sure what to do here if anything
+                See twilio-telepatriot.js:testCompose() and compose()
+            */ }
+
+            return twilio_telepatriot.compose({
+                room_sid: event.data.val().RoomSid, // In the VideoNode class, this is actuall room_sid_record
+                host: host,
+                callback: callback
+            })
+        })
+    }
+    else return false
+})
+
+
 exports.onRevokeInvitation = functions.database.ref('video/video_events/{key}').onCreate(event => {
     if(event.data.val().request_type && event.data.val().request_type == "revoke invitation") {
         var updates = {}
@@ -233,6 +258,8 @@ var disconnect = function(adminRef, video_event_key, video_node_key, uid, room_i
     var updates = {}
     updates['video/video_events/'+video_event_key+'/date'] = date.asCentralTime()
     updates['video/video_events/'+video_event_key+'/date_ms'] = date.asMillis()
+    //    clear out the room_sid on disconnect because room_sid represents an active twilio room
+    updates['video/list/'+video_node_key+'/room_sid'] = null
 
     // first, query for all video_participants under the video_node_key.  We will disconnect them all right here
     return adminRef.root.child('video/list/'+video_node_key).once('value').then(snapshot => {
@@ -305,18 +332,43 @@ exports.onRoomIdChange = functions.database.ref('video/list/{key}/room_id').onWr
             var attr = event.data.val().startsWith('record') ? 'twilio_token_record' : 'twilio_token'
             var updates = {}
             snapshot.forEach(function(child) {
-                var stuff = {name: child.val().name, room_id: event.data.val()}
 
-                twilio_telepatriot.generateTwilioToken(stuff).then(token => {
-                    var updates = {}
-                    // needed by doConnect in VidyoChatFragment and VideoChatVC
-                    updates['video/list/'+event.params.key+'/video_participants/'+child.val().uid+'/'+attr] = token
-                    db.ref('/').update(updates)
-                })
+                // we put this attribute on each participant because this is really the only way to generate
+                // several twilio tokens.  This attribute causes another trigger to fire - onTokenRequested (below)
+                child.ref.update({token_requested: {token_name: attr, room_id: event.data.val(), name: child.val().name}})
+
+//                var stuff = {name: child.val().name, room_id: event.data.val()}
+//
+//                twilio_telepatriot.generateTwilioToken(stuff).then(token => {
+//                    var updates = {}
+//                    // needed by doConnect in VidyoChatFragment and VideoChatVC
+//                    /****
+//                    YOU CAN'T HAVE A CALLBACK INSIDE A LOOP !!!!!!!!!
+//                    ****/
+//                    updates['video/list/'+event.params.key+'/video_participants/'+child.val().uid+'/'+attr] = token
+//                    db.ref('/').update(updates)
+//                })
             })
 
         })
     }
     else
         return false
+})
+
+
+// triggered by onRoomIdChange()
+exports.onTokenRequested = functions.database.ref('video/list/{key}/video_participants/{uid}/token_requested').onCreate(event => {
+
+    var stuff = {room_id: event.data.val().room_id,
+                 name: event.data.val().name}
+
+    return twilio_telepatriot.generateTwilioToken(stuff).then(token => {
+        var updates = {}
+        // needed by doConnect in VidyoChatFragment and VideoChatVC
+        updates['video/list/'+event.params.key+'/video_participants/'+event.params.uid+'/'+event.data.val().token_name] = token
+        // erase the request now that it's been fulfilled
+        updates['video/list/'+event.params.key+'/video_participants/'+event.params.uid+'/token_requested'] = null
+        return db.ref('/').update(updates)
+    })
 })

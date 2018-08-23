@@ -123,6 +123,7 @@ public class VidyoChatFragment extends BaseFragment implements
     private TextView youtube_video_description;
     private VideoNode currentVideoNode;
 
+    private TextView recording_indicator; // the red "Recording..." label
     private ToggleButton connect_button;
     private ToggleButton microphone_button;
     //private ToggleButton camera_button;
@@ -1399,7 +1400,8 @@ public class VidyoChatFragment extends BaseFragment implements
         // Are we connected?
         boolean connected = room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING);
         // Should we be connected?
-        boolean shouldBeConnected = currentVideoNode.getParticipant(User.getInstance().getUid()).isConnected();
+        VideoParticipant me = currentVideoNode.getParticipant(User.getInstance().getUid());
+        boolean shouldBeConnected = me.isConnected();
         // Should we be disconnected?
         boolean shouldBeDisconnected = !shouldBeConnected;
         // Am I connected to the wrong room?
@@ -1916,11 +1918,15 @@ public class VidyoChatFragment extends BaseFragment implements
     // If in a call, disconnect.
     // See in Swift: VideoChatVC.connectionClicked()
     private void connectionClicked() {
-        if(currentVideoNode == null)
+        if(currentVideoNode == null) {
+            simpleOKDialog("Video chat is currently disabled");
             return;
+        }
         VideoParticipant vp = currentVideoNode.getParticipant(User.getInstance().getUid());
-        if(vp == null)
+        if(vp == null) {
+            simpleOKDialog("Video chat is currently disabled");
             return;
+        }
         showSpinner(); // dismissed in doConnect() and doDisconnect()
         String request_type = "connect request";
         if(vp.isConnected()) {
@@ -1935,11 +1941,16 @@ public class VidyoChatFragment extends BaseFragment implements
     }
 
     private void recordClicked() {
-        if(currentVideoNode == null)
+        if(currentVideoNode == null) {
+            simpleOKDialog("Recording is currently disabled");
             return;
-        if(currentVideoNode.getLeg_id() == null)
+        }
+        if(currentVideoNode.getLeg_id() == null) {
             chooseLegislatorFirst();
+            return;
+        }
         else {
+            simpleOKDialog("Recording will start as soon as you see \"Recording...\" across the top");
             String request_type = "start recording";
             if (currentVideoNode.recordingHasStarted())
                 request_type = "stop recording";
@@ -2036,9 +2047,21 @@ public class VidyoChatFragment extends BaseFragment implements
 
 
     private void publishClicked() {
+        if(currentVideoNode == null) {
+            simpleOKDialog("No video to publish at this time");
+            return;
+        }
         showSpinner();
+        simpleOKDialog("Publishing has started. You will get an email when your video is ready.  May take up to 10 mins.");
         // See google-cloud.js:dockerRequest()
-        VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(), currentVideoNode.getRoom_id(), "start publishing");
+        String room_sid_record = currentVideoNode.getRoom_sid_record();
+        VideoEvent ve = new VideoEvent(User.getInstance().getUid(),
+                                        User.getInstance().getName(),
+                                        currentVideoNode.getKey(),
+                                        currentVideoNode.getRoom_id(),
+                                       "start publishing",
+                                        room_sid_record);
+
         ve.save();
     }
 

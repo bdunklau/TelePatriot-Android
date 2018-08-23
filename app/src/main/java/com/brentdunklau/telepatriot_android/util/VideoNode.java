@@ -30,7 +30,8 @@ public class VideoNode {
     String video_mission_description;
 
     String room_id;
-    String room_sid; // the twilio RoomSid
+    String room_sid;        // the twilio RoomSid
+    String room_sid_record; // the twilio RoomSid of the recorded room
 
     Boolean recording_requested; // See google-cloud:dockerRequest - for the spinner while the recorder is starting up
     String recording_started;
@@ -426,6 +427,14 @@ public class VideoNode {
         this.room_sid = room_sid;
     }
 
+    public String getRoom_sid_record() {
+        return room_sid_record;
+    }
+
+    public void setRoom_sid_record(String room_sid_record) {
+        this.room_sid_record = room_sid_record;
+    }
+
     public Integer getComposition_PercentageDone() {
         return composition_PercentageDone;
     }
@@ -467,7 +476,8 @@ public class VideoNode {
     }
 
     public boolean recordingHasStopped() {
-        return recording_started != null && recording_stopped != null;
+        boolean hasStopped = recording_started != null && recording_stopped != null;
+        return hasStopped;
     }
 
     public boolean bothParticipantsPresent() {

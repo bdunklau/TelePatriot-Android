@@ -38,7 +38,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:dockers,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:dockerRequest,functions:recording_has_started,functions:whenVideoIdIsCreated,functions:youtubeVideoDescription,functions:video_title,functions:socialMediaPostsCreated
+firebase deploy --only functions:cloud,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:recording_has_started,functions:whenVideoIdIsCreated,functions:youtubeVideoDescription,functions:video_title,functions:socialMediaPostsCreated
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
@@ -48,9 +48,9 @@ exports.cloud = functions.https.onRequest((req, res) => {
 })
 
 
-exports.dockers = functions.https.onRequest((req, res) => {
-    return showDockers({vm_host: req.query.vm_host, vm_port: req.query.vm_port, res: res})
-})
+//exports.dockers = functions.https.onRequest((req, res) => {
+//    return showDockers({vm_host: req.query.vm_host, vm_port: req.query.vm_port, res: res})
+//})
 
 
 exports.testCreateVideoNode = functions.https.onRequest((req, res) => {
@@ -1111,20 +1111,20 @@ start the recording
 WHAT DO WE EXPECT TO HAPPEN HERE?...
 *************************************************************/
 exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
-    // ignore deletes...
-    if(!event.data.val()) {
-        return false
-    }
-
-    // ignore malformed...
-    if(!event.data.val().request_type) {
-        return false
-    }
-    var type = event.data.val().request_type
-
-    // We actually have to move the participants to ANOTHER room that has recording enabled.  Rooms are either recording-enabled or they're not.
-    // So we will create a new room here and prepend the name of the room with 'record' so that twilio-telepatriot.js:createRoom()
-    // will create the room with recording enabled.
+//    // ignore deletes...
+//    if(!event.data.val()) {
+//        return false
+//    }
+//
+//    // ignore malformed...
+//    if(!event.data.val().request_type) {
+//        return false
+//    }
+//    var type = event.data.val().request_type
+//
+//    // We actually have to move the participants to ANOTHER room that has recording enabled.  Rooms are either recording-enabled or they're not.
+//    // So we will create a new room here and prepend the name of the room with 'record' so that twilio-telepatriot.js:createRoom()
+//    // will create the room with recording enabled.
 //    if(type == 'start recording') {
 //
 //        taking all this out.  Instead, "start recording" is going to be a "disconnect request" followed by a "connect request"
@@ -1232,47 +1232,48 @@ exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCre
 //            return stopRecording(args)
 //        })
 //    }
-    if(type == 'start publishing') {
-
-        return event.data.adminRef.root.child('administration/hosts').orderByChild('type')
-            .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot => {
-
-            var firebase_host
-            snapshot.forEach(function(child) { firebase_host = child.val().host })
-
-            return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
-
-                snapshot.ref.update({publishing_started: date.asCentralTime(), publishing_started_ms: date.asMillis()})
-
-                var vm_host = snapshot.val().vm_host
-                var vm_port = snapshot.val().vm_port
-                var title = snapshot.val().video_title
-                var description = snapshot.val().youtube_video_description
-                var docker_name = snapshot.val().docker_name
-                var uid = event.data.val().uid
-                var callbackurl = 'https://'+firebase_host+'/video_processing_callback?video_node_key='+event.data.val().video_node_key // assume port 80
-
-                // See ~/nodejs/index.js on the virtual machines
-                var vmUrl = 'http://'+vm_host+':'+vm_port+'/publish?title='+title
-                    +'&description='+description+'&docker_name='+docker_name+'&uid='+uid+'&callbackurl='+callbackurl
-
-                return request(vmUrl, function(error, response, body) {
-                    // response doesn't matter because we have passed a callback url that will be called
-                    // when the uploading begins and ends.
-                    if(error) {
-                        event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/publishing_error')
-                            .set({date: date.asCentralTime(), date_ms: date.asMillis(), error: error, vm_url: vmUrl})
-                    }
-                })
-
-            })
-
-        })
-
-    }
-
-    // ignore all others...
-    else return false
+//    if(type == 'start publishing') {
+//
+//        return event.data.adminRef.root.child('administration/hosts').orderByChild('type')
+//            .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot => {
+//
+//            var firebase_host
+//            snapshot.forEach(function(child) { firebase_host = child.val().host })
+//
+//            return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
+//
+//                snapshot.ref.update({publishing_started: date.asCentralTime(), publishing_started_ms: date.asMillis()})
+//
+//                var vm_host = snapshot.val().vm_host
+//                var vm_port = snapshot.val().vm_port
+//                var title = snapshot.val().video_title
+//                var description = snapshot.val().youtube_video_description
+//                var docker_name = snapshot.val().docker_name
+//                var uid = event.data.val().uid
+//                var callbackurl = 'https://'+firebase_host+'/video_processing_callback?video_node_key='+event.data.val().video_node_key // assume port 80
+//
+//                // See ~/nodejs/index.js on the virtual machines
+//                var vmUrl = 'http://'+vm_host+':'+vm_port+'/publish?title='+title
+//                    +'&description='+description+'&docker_name='+docker_name+'&uid='+uid+'&callbackurl='+callbackurl
+//
+//                return request(vmUrl, function(error, response, body) {
+//                    // response doesn't matter because we have passed a callback url that will be called
+//                    // when the uploading begins and ends.
+//                    if(error) {
+//                        event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/publishing_error')
+//                            .set({date: date.asCentralTime(), date_ms: date.asMillis(), error: error, vm_url: vmUrl})
+//                    }
+//                })
+//
+//            })
+//
+//        })
+//
+//    }
+//
+//    // ignore all others...
+//    else
+    return false
 })
 
 

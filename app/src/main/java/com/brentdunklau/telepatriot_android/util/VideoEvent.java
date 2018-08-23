@@ -7,13 +7,14 @@ import java.util.Map;
 
 public class VideoEvent {
 
-    String uid, name;
-    String video_node_key;
-    String room_id;
-    String RoomSid; // use same name as twilio
-    String video_invitation_key;
-    String video_invitation_extended_to;
-    String request_type;
+    private String uid;
+    private String name;
+    private String video_node_key;
+    private String room_id;
+    private String RoomSid; // use same name as twilio
+    private String video_invitation_key;
+    private String video_invitation_extended_to;
+    private String request_type;
 
     public VideoEvent(String uid, String name, String video_node_key, String room_id, String request_type, String RoomSid) {
         this.uid = uid;

@@ -17,30 +17,30 @@ import java.util.Map;
 public class VideoInvitation {
 
     // The attributes have to be named the same as the database attributes under /video/invitations
-    String guest_id;
-    String guest_name;
-    String guest_email;
-    String guest_photo_url;
+    private String guest_id;
+    private String guest_name;
+    private String guest_email;
+    private String guest_photo_url;
 
-    String initiator_id;
-    String initiator_name;
-    String initiator_email;
-    String initiator_photo_url;
+    private String initiator_id;
+    private String initiator_name;
+    private String initiator_email;
+    private String initiator_photo_url;
 
-    String invitation_create_date;
-    long invitation_create_date_ms;
+    private String invitation_create_date;
+    private long invitation_create_date_ms;
 
-    String room_id;
+    private String room_id;
 
-    String initiator_enter_room_date;
-    long initiator_enter_room_date_ms;
+    private String initiator_enter_room_date;
+    private long initiator_enter_room_date_ms;
 
-    String guest_enter_room_date;
-    long guest_enter_room_date_ms;
+    private String guest_enter_room_date;
+    private long guest_enter_room_date_ms;
 
-    String video_node_key;
+    private String video_node_key;
 
-    String key; // the key/primary key of the video/invitations node
+    private String key; // the key/primary key of the video/invitations node
 
 
     public VideoInvitation() {}
