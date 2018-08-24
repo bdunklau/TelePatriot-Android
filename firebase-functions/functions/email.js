@@ -149,7 +149,7 @@ exports.chooseEmailType2 = functions.https.onRequest((req, res) => {
             var pageData = {formParams: formParams, response: snapshot.val().message}
 
             return renderPage2(pageData).then(html => {
-                return res.status(200).send(renderPage2(html))
+                return res.status(200).send(html)
             })
         })
     })
