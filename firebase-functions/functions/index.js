@@ -117,6 +117,7 @@ exports.renderEmail2 = email.renderEmail2
 exports.saveEmail = email.saveEmail
 exports.saveEmail2 = email.saveEmail2
 exports.sendEmail = email.sendEmail
+exports.sendEmail2 = email.sendEmail2
 exports.chooseEmailType = email.chooseEmailType
 exports.chooseEmailType2 = email.chooseEmailType2
 exports.onReadyToSendEmails = email.onReadyToSendEmails

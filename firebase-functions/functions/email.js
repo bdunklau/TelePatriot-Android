@@ -24,7 +24,7 @@ const db = admin.database();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:email,functions:email2,functions:chooseEmailType,functions:chooseEmailType2,functions:renderEmail,functions:renderEmail2,functions:saveEmail,functions:saveEmail2,functions:sendEmail,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
+firebase deploy --only functions:email,functions:email2,functions:chooseEmailType,functions:chooseEmailType2,functions:renderEmail,functions:renderEmail2,functions:saveEmail,functions:saveEmail2,functions:sendEmail,functions:sendEmail2,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
 ***/
 
 
@@ -336,7 +336,7 @@ var emailForm2 = function(parms) {
 
     html += '<tr>'
     html += '<td>'
-    html += '<input type="submit" value="preview" formaction="/renderEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="sendEmail">'
+    html += '<input type="submit" value="preview" formaction="/renderEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="/sendEmail2">'
     html += '</td>'
     html += '</tr>'
 
@@ -661,7 +661,7 @@ exports.saveEmail2 = functions.https.onRequest((req, res) => {
 })
 
 
-
+// TODO replace with sendEmail2 at some point
 exports.sendEmail = functions.https.onRequest((req, res) => {
 
     var formParams = {title: req.body.title,
@@ -714,9 +714,63 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
             return res.status(200).send(renderPage(pageData))
         });
     })
+})
 
 
+exports.sendEmail2 = functions.https.onRequest((req, res) => {
 
+    var formParams = {title: req.body.title,
+                    host: req.body.host,
+                    port: req.body.port,
+                    user: req.body.user,
+                    //pass: req.body.pass,
+                    to: req.body.to,
+                    from: req.body.from,
+                    cc: req.body.cc,
+                    subject: req.body.subject,
+                    message: req.body.message,
+                    emailType: req.body.emailType}
+
+
+    return db.ref('administration/email_types/'+req.body.emailType+'/pass').once('value').then(snapshot => {
+        var pass = snapshot.val()
+
+        var smtpTransport = nodemailer.createTransport({
+          host: formParams.host,
+                  port: formParams.port,
+                  secure: true, // true for 465, false for other ports
+          auth: {
+            user: formParams.user, pass: pass
+          }
+        })
+
+        // setup e-mail data with unicode symbols
+        var mailOptions = {
+            from: formParams.from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
+            to: formParams.to, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
+            cc: formParams.cc,
+            subject: formParams.subject, // Subject line
+            text: "plain text: "+formParams.message, // plaintext body
+            html: formParams.message // html body
+        }
+
+        // send mail with defined transport object
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.message);
+            }
+
+            // if you don't want to use this transport object anymore, uncomment following line
+            smtpTransport.close(); // shut down the connection pool, no more messages
+
+            var pageData = {formParams: formParams, response: 'OK: email sent<P/>May take up to 5 mins for email to be received'}
+            return renderPage2(pageData).then(html => {
+                return res.status(200).send(html)
+            })
+        });
+    })
 })
 
 
