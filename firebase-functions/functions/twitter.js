@@ -13,7 +13,7 @@ const db = admin.database();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:twitter,functions:testTweet,functions:handleTweetRequest,functions:callback_from_twitter
+firebase deploy --only functions:twitter,functions:testTweet,functions:handleTweetRequest,functions:callback_from_twitter,functions:onTwitterPostId
 ***/
 
 exports.twitter = functions.https.onRequest((req, res) => {
@@ -50,6 +50,19 @@ exports.testTweet = functions.https.onRequest((req, res) => {
         return render({req: req, res: res,
                        twitter_access_token: req.body.twitter_access_token,
                        twitter_access_token_secret: req.body.twitter_access_token_secret})
+    })
+})
+
+
+// just doing onCreate to try to make the logic simpler
+// facebook.js has a corresponding trigger: onFacebookPostId()
+exports.onTwitterPostId = functions.database.ref('video/list/{video_node_key}/twitter_post_id').onCreate(event => {
+    // now see if we're supposed to post to FB also, and if we are, do we have the FB post id yet?...
+    return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
+        var readyToSendEmails = (snapshot.val().post_to_facebook && snapshot.val().facebook_post_id) || !snapshot.val().post_to_facebook
+        if(readyToSendEmails)
+            return snapshot.ref.child("ready_to_send_emails").set(true) // which fires yet another trigger: onReadyToSendEmails()
+        else return false
     })
 })
 

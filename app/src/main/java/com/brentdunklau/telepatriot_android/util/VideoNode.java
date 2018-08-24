@@ -50,8 +50,11 @@ public class VideoNode {
     // see video/video_events and /testViewVideoEvents
     private Integer composition_PercentageDone;
     private Integer composition_SecondsRemaining;
+    private String CompositionSid;
+    private String CompositionUri;
+    private Long composition_Size;
     private String composition_MediaUri;
-    private String composition_CompositionSid;
+
 
     String leg_id, legislator_chamber, legislator_cos_position, legislator_district, legislator_email,
             legislator_facebook, legislator_facebook_id, legislator_first_name, legislator_full_name,
@@ -135,7 +138,9 @@ public class VideoNode {
         m.put("composition_PercentageDone", composition_PercentageDone);
         m.put("composition_SecondsRemaining", composition_SecondsRemaining);
         m.put("composition_MediaUri", composition_MediaUri);
-        m.put("composition_CompositionSid", composition_CompositionSid);
+        m.put("CompositionSid", CompositionSid);
+        m.put("CompositionUri", CompositionUri);
+        m.put("composition_Size", composition_Size);
 
         m.put("video_invitation_key", video_invitation_key);
         m.put("video_invitation_extended_to", video_invitation_extended_to);
@@ -459,12 +464,28 @@ public class VideoNode {
         this.composition_MediaUri = composition_MediaUri;
     }
 
-    public String getComposition_CompositionSid() {
-        return composition_CompositionSid;
+    public String getCompositionSid() {
+        return CompositionSid;
     }
 
-    public void setComposition_CompositionSid(String composition_CompositionSid) {
-        this.composition_CompositionSid = composition_CompositionSid;
+    public void setCompositionSid(String compositionSid) {
+        CompositionSid = compositionSid;
+    }
+
+    public String getCompositionUri() {
+        return CompositionUri;
+    }
+
+    public void setCompositionUri(String compositionUri) {
+        CompositionUri = compositionUri;
+    }
+
+    public Long getComposition_Size() {
+        return composition_Size;
+    }
+
+    public void setComposition_Size(Long composition_Size) {
+        this.composition_Size = composition_Size;
     }
 
     public boolean recordingHasNotStarted() {

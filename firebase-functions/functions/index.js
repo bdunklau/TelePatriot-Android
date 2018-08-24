@@ -111,10 +111,15 @@ exports.updateUser = userList.updateUser
 
 const email = require('./email')
 exports.email = email.email
+exports.email2 = email.email2
 exports.renderEmail = email.renderEmail
 exports.saveEmail = email.saveEmail
 exports.sendEmail = email.sendEmail
 exports.chooseEmailType = email.chooseEmailType
+exports.chooseEmailType2 = email.chooseEmailType2
+exports.onReadyToSendEmails = email.onReadyToSendEmails
+exports.testOnReadyToSendEmails = email.testOnReadyToSendEmails
+
 
 const legislators = require('./legislators')
 exports.downloadFromOpenStates = legislators.downloadFromOpenStates
@@ -188,6 +193,7 @@ exports.twitter = twitter.twitter
 exports.testTweet = twitter.testTweet
 exports.callback_from_twitter = twitter.callback_from_twitter
 exports.handleTweetRequest = twitter.handleTweetRequest
+exports.onTwitterPostId = twitter.onTwitterPostId
 //exports.deleteTweet = twitter.deleteTweet  // not supported, don't think
 
 const facebook = require('./facebook')
@@ -195,6 +201,8 @@ exports.facebook = facebook.facebook
 exports.testPostFacebook = facebook.testPostFacebook
 exports.handleFacebookRequest = facebook.handleFacebookRequest
 exports.triggerComment = facebook.triggerComment
+exports.onFacebookPostId = facebook.onFacebookPostId
+
 const videoManager = require('./video')
 exports.video = videoManager.video
 //exports.newStorageItem = videoManager.newStorageItem

@@ -116,54 +116,34 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                             title = child.val().video_title
                             video_description = child.val().youtube_video_description
                             // take the participant with the highest value of start_date_ms
-                            console.log('CHECK child.val().video_participants: ', child.val().video_participants)
                             var uids = Object.keys(child.val().video_participants)
-                            console.log('CHECK uids: ', uids)
                             var max_date = 0
                             for(var i=0; i < uids.length; i++) {
                                 var participant = child.val().video_participants[uids[i]]
-                                console.log('CHECK child.val().video_participants['+uids[i]+']: ', participant)
-                                console.log('CHECK child.val().video_participants['+uids[i]+'].start_date_ms: ', participant.start_date_ms)
                                 if(max_date < participant.start_date_ms) {
                                     max_date = participant.start_date_ms
                                     uid = participant.uid
                                 }
                             }
 
-                            // clean up and timestamp
+                            // capture the details on the composition.  If we need to re-upload, having
+                            // this info means we won't have to re-compose the file
                             child.ref.update({composition_PercentageDone: 100,
                                               composition_SecondsRemaining: 0,
+                                              CompositionSid: req.body.CompositionSid,
+                                              CompositionUri: req.body.CompositionUri,
+                                              composition_Size: parseInt(req.body.Size), // Number.MAX_SAFE_INTEGER = 9007199254740992  so we're safe
+                                              composition_MediaUri: req.body.MediaUri,
                                               publishing_completed: true,
                                               publishing_stopped: date.asCentralTime(),
                                               publishing_stopped_ms: date.asMillis()})
                         })
 
-                        // This is where we call the virtual machine instance and pass the compositionUrl
-                        //Example:  https://4t3kjht4hj4th3th:bv898c7bv9c7vb9@video.twilio.com/v1/Compositions/CJ1e51ff27bfe904376c9040b4cb45b2c4/Media?Ttl=6000
-                        // send the url as a collection of request parameters...
-//                        var parms = ['twilio_account_sid='+snapshot.val().twilio_account_sid,
-//                                    'twilio_auth_token='+snapshot.val().twilio_auth_token,
-//                                    'domain=video.twilio.com',
-//                                    'CompositionUri='+req.body.CompositionUri+'/Media',
-//                                    'CompositionSid='+req.body.CompositionSid,
-//                                    'Ttl=6000',
-//                                    'firebaseServer='+firebaseServer,
-//                                    'firebaseUri=/twilioCallback',
-//                                    'video_title='+title,
-//                                    'youtube_video_description='+video_description,
-//                                    'keywords=Convention+of+States+Project',
-//                                    'privacyStatus=unlisted',
-//                                    'video_node_key='+video_node_key,
-//                                    'uid='+uid
-//
-//                        ]
-//                        var parmList = parms.join('&')
-
                         var formData = {
                            twilio_account_sid: snapshot.val().twilio_account_sid,
                            twilio_auth_token: snapshot.val().twilio_auth_token,
                            domain: 'video.twilio.com',
-                           CompositionUri: req.body.CompositionUri+'/Media',
+                           MediaUri: req.body.CompositionUri+'/Media',
                            CompositionSid: req.body.CompositionSid,
                            Ttl: 6000,
                            firebaseServer: firebaseServer,
@@ -176,43 +156,8 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                            uid: uid
                         };
 
+                        exports.publish({host: host, port: port, formData: formData})
 
-                        // go see ~/nodejs/index.js and the app.get('/publish') route
-                        var vmUrl = 'http://'+host+':'+port+'/publish'
-                        request.post(
-                          {
-                            url: vmUrl,
-                            form: formData
-                          },
-                          function (err, httpResponse, body) {
-                            console.log(err, body);
-                            if(err) {
-                                db.ref('templog2').set({date: date.asCentralTime(),
-                                                        error: err,
-                                                        formData: formData,
-                                                        url: vmUrl})
-                            }
-                          }
-                        );
-
-
-//                        // go see ~/nodejs/index.js and the app.get('/publish') route
-//                        var vmUrl = 'https://'+host+':'+port+'/publish?'+parmList
-//
-//                        // call the vm and send enough information as request parameters that the vm instance can
-//                        // construct a url to call back to us
-//                        request(vmUrl, function (error, response, body) {
-//                            if(error) {
-//                                console.log('error: ', error)
-//                                db.ref('templog2').set({date: date.asCentralTime(),
-//                                                        error: error,
-//                                                        url: vmUrl})
-//                                return
-//                            }
-//                            // what comes back ?
-//    //                        var something = JSON.parse(body).officials
-//    //                        stuff.ref.root.update(updates)
-//                        })
                     })
                 })
             })
@@ -221,6 +166,33 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
     })
 
 })
+
+
+// called from above and also from switchboard.js
+exports.publish = function(input) {
+    var host = input.host
+    var port = input.port
+    var formData = input.formData
+
+
+    // go see ~/nodejs/index.js and the app.get('/publish') route
+    var vmUrl = 'http://'+host+':'+port+'/publish'
+    request.post(
+        {
+            url: vmUrl,
+            form: formData
+        },
+        function (err, httpResponse, body) {
+            console.log(err, body);
+            if(err) {
+                db.ref('templog2').set({date: date.asCentralTime(),
+                                        error: err,
+                                        formData: formData,
+                                        url: vmUrl})
+            }
+        }
+    );
+}
 
 
 exports.testTwilioToken = functions.https.onRequest((req, res) => {
@@ -522,6 +494,7 @@ exports.compose = function(input) {
               }
             },
             statusCallback: 'https://'+input.host+'/twilioCallback',
+            resolution: '1280x720',
             format: 'mp4'
         })
         .then(composition => {

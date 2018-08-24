@@ -118,6 +118,20 @@ exports.onStartRecordingRequest = functions.database.ref('video/video_events/{ke
                                     up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = null
                                     up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = null
                                 })
+                                up2['video/list/'+event.data.val().video_node_key+'/CompositionSid'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/CompositionUri'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/composition_PercentageDone'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/composition_SecondsRemaining'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/composition_Size'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/composition_MediaUri'] = null
+
+                                up2['video/list/'+event.data.val().video_node_key+'/publishing_completed'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/publishing_started'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/publishing_started_ms'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/publishing_stopped'] = null
+                                up2['video/list/'+event.data.val().video_node_key+'/publishing_stopped_ms'] = null
+
+                                up2['video/list/'+event.data.val().video_node_key+'/recording_completed'] = null // see also twilio-telepatriot.js:twilioCallback()
                                 up2['video/list/'+event.data.val().video_node_key+'/recording_started'] = date.asCentralTime()
                                 up2['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = date.asMillis()
                                 up2['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = null
@@ -125,7 +139,6 @@ exports.onStartRecordingRequest = functions.database.ref('video/video_events/{ke
 
                                 // this attribute in particular gets picked up by the clients in their figureOutConnectivity() method
                                 up2['video/list/'+event.data.val().video_node_key+'/room_id'] = newroom_id
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_completed'] = null // see also twilio-telepatriot.js:twilioCallback()
                                 return event.data.adminRef.root.child('/').update(up2)
 
                             })
@@ -208,25 +221,123 @@ exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key
 })
 
 
+// TODO soon we'll decouple the composition from the publishing because we now capture the details of the composed media file
+// in twilio-telepatriot.js:twilioCallback "composition-available" block
+// TODO make VideoEvent pass in composition_MediaUri if it's available
 exports.onPublishRequested = functions.database.ref('video/video_events/{key}').onCreate(event => {
     if(event.data.val().request_type && event.data.val().request_type == "start publishing") {
-        // timestamp the entry...
-        event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
-        return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
-            var host
-            snapshot.forEach(function(child) { host = child.val().host })
 
-            var callback = function(stuff) { /*
-                Not sure what to do here if anything
-                See twilio-telepatriot.js:testCompose() and compose()
-            */ }
+        event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()}) // housekeeping: timestamp the event
+        return event.data.adminRef.root.child('administration/hosts').once('value').then(snapshot => {
+            var vmHost
+            var vmPort
+            var firebaseServer
 
-            return twilio_telepatriot.compose({
-                room_sid: event.data.val().RoomSid, // In the VideoNode class, this is actuall room_sid_record
-                host: host,
-                callback: callback
+            snapshot.forEach(function(child) {
+                if(child.val().type == 'virtual machine') {
+                    vmHost = child.val().host
+                    vmPort = child.val().port
+                } else if(child.val().type == 'firebase functions') {
+                    firebaseServer = child.val().host
+                }
             })
+
+            // means the composed file has already been created
+            if(event.data.val().MediaUri) {
+                console.log('PUBLISHING A MEDIA FILE THAT HAS ALREADY BEEN COMPOSED :)')
+                return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snap4 => {
+
+                    return event.data.adminRef.root.child('api_tokens').once('value').then(snap2 => {
+                        var formData = {
+                           twilio_account_sid: snap2.val().twilio_account_sid,
+                           twilio_auth_token: snap2.val().twilio_auth_token,
+                           domain: 'video.twilio.com',
+                           MediaUri: event.data.val().MediaUri,
+                           CompositionSid: snap4.val().CompositionSid,
+                           Ttl: 6000,
+                           firebaseServer: firebaseServer,
+                           firebaseUri: '/twilioCallback',
+                           video_title: snap4.val().video_title,
+                           youtube_video_description: snap4.val().youtube_video_description,
+                           keywords: 'Convention of States Project',
+                           privacyStatus: 'unlisted',
+                           video_node_key: event.data.val().video_node_key,
+                           uid: event.data.val().uid
+                        };
+
+                        twilio_telepatriot.publish({host: vmHost, port: vmPort, formData: formData})
+                    })
+                })
+            }
+            // means we have to compose the file first and then publish
+            else {
+
+                var callback = function(stuff) { /*
+                    Not sure what to do here if anything
+                    See twilio-telepatriot.js:testCompose() and compose()
+                */ }
+
+                return twilio_telepatriot.compose({
+                    room_sid: event.data.val().RoomSid, // In the VideoNode class, this is actuall room_sid_record
+                    host: firebaseServer,
+                    callback: callback
+                })
+
+            }
+
         })
+
+
+
+
+
+
+
+
+
+
+//        // see if we already generate the composed media file...
+//        if(event.data.val().MediaUri) {
+//
+//            var formData = {
+//               twilio_account_sid: snapshot.val().twilio_account_sid,
+//               twilio_auth_token: snapshot.val().twilio_auth_token,
+//               domain: 'video.twilio.com',
+//               MediaUri: req.body.CompositionUri+'/Media',
+//               CompositionSid: req.body.CompositionSid,
+//               Ttl: 6000,
+//               firebaseServer: firebaseServer,
+//               firebaseUri: '/twilioCallback',
+//               video_title: title,
+//               youtube_video_description: video_description,
+//               keywords: 'Convention of States Project',
+//               privacyStatus: 'unlisted',
+//               video_node_key: video_node_key,
+//               uid: uid
+//            };
+//
+//            twilio_telepatriot.publish({host: host, port: port, formData: formData})
+//
+//        }
+//        else {
+//
+//            event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()}) // housekeeping: timestamp the event
+//            return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
+//                var host
+//                snapshot.forEach(function(child) { host = child.val().host })
+//
+//                var callback = function(stuff) { /*
+//                    Not sure what to do here if anything
+//                    See twilio-telepatriot.js:testCompose() and compose()
+//                */ }
+//
+//                return twilio_telepatriot.compose({
+//                    room_sid: event.data.val().RoomSid, // In the VideoNode class, this is actuall room_sid_record
+//                    host: host,
+//                    callback: callback
+//                })
+//            })
+//        }
     }
     else return false
 })
