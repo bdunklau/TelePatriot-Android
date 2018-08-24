@@ -114,6 +114,7 @@ exports.email = email.email
 exports.email2 = email.email2
 exports.renderEmail = email.renderEmail
 exports.saveEmail = email.saveEmail
+exports.saveEmail2 = email.saveEmail2
 exports.sendEmail = email.sendEmail
 exports.chooseEmailType = email.chooseEmailType
 exports.chooseEmailType2 = email.chooseEmailType2

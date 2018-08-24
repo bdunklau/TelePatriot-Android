@@ -24,7 +24,7 @@ const db = admin.database();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:email,functions:email2,functions:chooseEmailType,functions:chooseEmailType2,functions:renderEmail,functions:saveEmail,functions:sendEmail,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
+firebase deploy --only functions:email,functions:email2,functions:chooseEmailType,functions:chooseEmailType2,functions:renderEmail,functions:saveEmail,functions:saveEmail2,functions:sendEmail,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
 ***/
 
 
@@ -600,7 +600,7 @@ exports.saveEmail = functions.https.onRequest((req, res) => {
 
     // NOTICE the update() call instead of set() - update() is how you do multi-path updates
     // You won't replace every other node under welcome_email if you use update()
-    return db.ref(`administration/${req.body.emailType}`).update(formParams).then(() => {
+    return db.ref('administration/'+req.body.emailType).update(formParams).then(() => {
 
         var pageData = {formParams: formParams, response: 'OK: email stuff saved'}
         return res.status(200).send(renderPage(pageData))
@@ -625,7 +625,7 @@ exports.saveEmail2 = functions.https.onRequest((req, res) => {
 
     // NOTICE the update() call instead of set() - update() is how you do multi-path updates
     // You won't replace every other node under welcome_email if you use update()
-    return db.ref(`administration/${req.body.emailType}`).update(formParams).then(() => {
+    return db.ref('administration/email_types/'+req.body.emailType).update(formParams).then(() => {
 
         var pageData = {formParams: formParams, response: 'OK: email stuff saved'}
 
