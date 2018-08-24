@@ -192,7 +192,7 @@ var renderPage2 = function(pageData) {
         html += h
         html += '</td></tr>' // only need one column on this row for the "choose email type" dropdown
         html += '<tr>'
-        html +=     '<td valign="top"><form method="post" action="send">'+ emailForm(formParams)+ '</form></td>'
+        html +=     '<td valign="top"><form method="post" action="send">'+ emailForm2(formParams)+ '</form></td>'
         html +=     '<td valign="top">'+ responseSection(pageData.response)+ '</td>'
         html += '</tr>'
         html += '</table>'
@@ -208,6 +208,8 @@ var responseSection = function(response) {
     return html
 }
 
+
+// TODO replace with emailForm2 at some point
 var emailForm = function(parms) {
     var html = ''
 
@@ -265,6 +267,76 @@ var emailForm = function(parms) {
     html += '<tr>'
     html += '<td>'
     html += '<input type="submit" value="preview" formaction="/renderEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="sendEmail">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<textarea rows="40" cols="80" name="message" placeholder="put your email here\n\ntry html format">'+parms.message+'</textarea>'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '</table>'
+    return html
+}
+
+var emailForm2 = function(parms) {
+    var html = ''
+
+    html += '<table>'
+    html += '<tr>'
+    html += '<td>'
+    html += '<h2>'+parms.title+'</h2>'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="text" size="75" name="host" value="'+parms.host+'" placeholder="host">'
+    html += '<input type="text" name="emailType" value="'+parms.emailType+'">'
+    html += '<input type="text" name="title" value="'+parms.title+'">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="text" size="75" name="port" value="'+parms.port+'" placeholder="port">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="text" size="75" name="user" value="'+parms.user+'" placeholder="email user">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="text" size="75" name="to" value="'+parms.to+'" placeholder="email address">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="text" size="75" name="from" value="'+parms.from+'" placeholder="email address">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="text" size="75" name="cc" value="'+parms.cc+'" placeholder="cc email address">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="text" size="75" name="subject" value="'+parms.subject+'" placeholder="Subject">'
+    html += '</td>'
+    html += '</tr>'
+
+    html += '<tr>'
+    html += '<td>'
+    html += '<input type="submit" value="preview" formaction="/renderEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="sendEmail">'
     html += '</td>'
     html += '</tr>'
 
@@ -511,7 +583,7 @@ exports.renderEmail = functions.https.onRequest((req, res) => {
 })
 
 
-
+// TODO replace with saveEmail2 at some point
 exports.saveEmail = functions.https.onRequest((req, res) => {
 
     var formParams = {title: req.body.title,
@@ -532,6 +604,34 @@ exports.saveEmail = functions.https.onRequest((req, res) => {
 
         var pageData = {formParams: formParams, response: 'OK: email stuff saved'}
         return res.status(200).send(renderPage(pageData))
+    })
+})
+
+
+
+exports.saveEmail2 = functions.https.onRequest((req, res) => {
+
+    var formParams = {title: req.body.title,
+                    host: req.body.host,
+                    port: req.body.port,
+                    user: req.body.user,
+                    //pass: req.body.pass,
+                    to: req.body.to,
+                    from: req.body.from,
+                    cc: req.body.cc,
+                    subject: req.body.subject,
+                    message: req.body.message,
+                    emailType: req.body.emailType}
+
+    // NOTICE the update() call instead of set() - update() is how you do multi-path updates
+    // You won't replace every other node under welcome_email if you use update()
+    return db.ref(`administration/${req.body.emailType}`).update(formParams).then(() => {
+
+        var pageData = {formParams: formParams, response: 'OK: email stuff saved'}
+
+        return renderPage2(pageData).then(html => {
+            return res.status(200).send(html)
+        })
     })
 })
 
