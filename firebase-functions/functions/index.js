@@ -113,6 +113,7 @@ const email = require('./email')
 exports.email = email.email
 exports.email2 = email.email2
 exports.renderEmail = email.renderEmail
+exports.renderEmail2 = email.renderEmail2
 exports.saveEmail = email.saveEmail
 exports.saveEmail2 = email.saveEmail2
 exports.sendEmail = email.sendEmail

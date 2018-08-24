@@ -24,7 +24,7 @@ const db = admin.database();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:email,functions:email2,functions:chooseEmailType,functions:chooseEmailType2,functions:renderEmail,functions:saveEmail,functions:saveEmail2,functions:sendEmail,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
+firebase deploy --only functions:email,functions:email2,functions:chooseEmailType,functions:chooseEmailType2,functions:renderEmail,functions:renderEmail2,functions:saveEmail,functions:saveEmail2,functions:sendEmail,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
 ***/
 
 
@@ -336,7 +336,7 @@ var emailForm2 = function(parms) {
 
     html += '<tr>'
     html += '<td>'
-    html += '<input type="submit" value="preview" formaction="/renderEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="sendEmail">'
+    html += '<input type="submit" value="preview" formaction="/renderEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="sendEmail">'
     html += '</td>'
     html += '</tr>'
 
@@ -561,6 +561,7 @@ var getConstituent = function(participants) {
 }
 
 
+// TODO replace this with renderEmail2 at some point
 exports.renderEmail = functions.https.onRequest((req, res) => {
     var message = req.body.message
 
@@ -580,6 +581,30 @@ exports.renderEmail = functions.https.onRequest((req, res) => {
     var pageData = {formParams: formParams, response: message}
 
     return res.status(200).send(renderPage(pageData))
+})
+
+
+exports.renderEmail2 = functions.https.onRequest((req, res) => {
+    var message = req.body.message
+
+
+    var formParams = {title: req.body.title,
+                    host: req.body.host,
+                    port: req.body.port,
+                    user: req.body.user,
+                    //pass: req.body.pass,
+                    to: req.body.to,
+                    from: req.body.from,
+                    cc: req.body.cc,
+                    subject: req.body.subject,
+                    message: req.body.message,
+                    emailType: req.body.emailType}
+
+    var pageData = {formParams: formParams, response: message}
+
+    return renderPage2(pageData).then(html => {
+        return res.status(200).send(html)
+    })
 })
 
 
