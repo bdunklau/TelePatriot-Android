@@ -39,6 +39,7 @@ public class VideoInvitation {
     private long guest_enter_room_date_ms;
 
     private String video_node_key;
+    private VideoNode videoNode;
 
     private String key; // the key/primary key of the video/invitations node
 
@@ -61,8 +62,9 @@ public class VideoInvitation {
         this.video_node_key = video_node_key;
     }
 
-    // convenience constructor for delete()
+    // convenience constructor for delete() and also for getInitiator_name()
     public VideoInvitation(VideoNode videoNode) {
+        this.videoNode = videoNode;
         this.video_node_key = videoNode.getKey();
         this.key = videoNode.getVideo_invitation_key();
         this.guest_id = this.key.substring(this.key.indexOf("guest")+"guest".length());
@@ -145,6 +147,14 @@ public class VideoInvitation {
     }
 
     public String getInitiator_name() {
+        if(initiator_name != null)
+            return initiator_name;
+        else if (videoNode != null) {
+            for(VideoParticipant vp : videoNode.getVideo_participants().values()) {
+                if(vp.getUid().equals(initiator_id))
+                    initiator_name = vp.getName();
+            }
+        }
         return initiator_name;
     }
 

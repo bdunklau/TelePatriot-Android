@@ -38,7 +38,7 @@ const compute = new Compute();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:cloud,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:recording_has_started,functions:whenVideoIdIsCreated,functions:youtubeVideoDescription,functions:video_title,functions:socialMediaPostsCreated
+firebase deploy --only functions:onLegislatorChosen,functions:onParticipantAdded,functions:onParticipantRemoved,functions:cloud,functions:testCreateVideoNode,functions:testCreateAnotherDocker,functions:testStartDocker,functions:testStartRecording,functions:testStartRecording2,functions:testStopRecording,functions:testStopRecording2,functions:testPublish,functions:testStopDocker,functions:testStopAndRemoveDocker,functions:removeRecording,functions:listRecordings,functions:listImages,functions:recording_has_started,functions:whenVideoIdIsCreated,functions:socialMediaPostsCreated
 ***/
 
 exports.cloud = functions.https.onRequest((req, res) => {
@@ -808,52 +808,52 @@ var getVms = function(callback) {
 
 // Creates the YouTube video title using legislator info
 // and video type.
-exports.video_title = functions.database.ref('video/list/{videoKey}').onWrite(event => {
-    if(!event.data.exists())
-        return false //return early if node was deleted
-    if(!event.data.val().youtube_video_description_unevaluated)
-        return false // this has to exist, otherwise quit
-    if(event.data.val().video_title && event.data.previous.val().video_title && event.data.val().video_title == event.data.previous.val().video_title)
-        return false // the video title didn't change
-    if(!event.data.val().leg_id)
-        return false // don't have a legislator chosen yet, so no point in trying to construct video title
-
-    var legislatorDidntChange = event.data.val().leg_id && event.data.previous.val().leg_id && event.data.val().leg_id == event.data.previous.val().leg_id
-
-    var currentCount = !event.data.val().video_participants ? 0 : event.data.val().video_participants.length
-    var prevCount =  !event.data.previous.val().video_participants ? 0 : event.data.previous.val().video_participants.length
-
-    var participantAdded = currentCount > prevCount
-    var personChanged = participantAdded
-    /***** You can debug the conditional that makes us return early below by uncommenting this block, then manually changing
-    the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...    ****/
-//    event.data.adminRef.root.child('templog').set({legislatorDidntChange: legislatorDidntChange,
-//                personChanged: personChanged,
-//                differentPerson: differentPerson, participantsAdded: participantsAdded})
-
-
-    // If the only thing that changed was the video description itself, return early.  Don't overwrite the
-    // user's manual edit of the video description field
-    if(legislatorDidntChange && !personChanged)
-        return false
-
-    // construct the video title...
-    var constituent = getConstituent(event.data.val().video_participants)
-    var from = ' from '+constituent.name
-
-    var to = ''
-    if(event.data.val())
-    // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
-    var rep = event.data.val().legislator_chamber == 'lower' ? 'Rep' : 'Sen'
-    var ch = event.data.val().legislator_chamber == 'lower' ? 'HD' : 'SD'
-    var video_title = event.data.val().video_type+from+' to '+rep+' '+event.data.val().legislator_first_name+' '+event.data.val().legislator_last_name+' ('+event.data.val().legislator_state_abbrev.toUpperCase()+' '+ch+' '+event.data.val().legislator_district+')'
-
-    // multi-path update even if in this case, it's only one path
-    var updates = {}
-    updates['video/list/'+event.params.videoKey+'/video_title'] = video_title
-
-    return event.data.adminRef.root.child('/').update(updates)
-})
+//exports.video_title = functions.database.ref('video/list/{videoKey}').onWrite(event => {
+//    if(!event.data.exists())
+//        return false //return early if node was deleted
+//    if(!event.data.val().youtube_video_description_unevaluated)
+//        return false // this has to exist, otherwise quit
+//    if(event.data.val().video_title && event.data.previous.val().video_title && event.data.val().video_title == event.data.previous.val().video_title)
+//        return false // the video title didn't change
+//    if(!event.data.val().leg_id)
+//        return false // don't have a legislator chosen yet, so no point in trying to construct video title
+//
+//    var legislatorDidntChange = event.data.val().leg_id && event.data.previous.val().leg_id && event.data.val().leg_id == event.data.previous.val().leg_id
+//
+//    var currentCount = !event.data.val().video_participants ? 0 : event.data.val().video_participants.length
+//    var prevCount =  !event.data.previous.val().video_participants ? 0 : event.data.previous.val().video_participants.length
+//
+//    var participantAdded = currentCount > prevCount
+//    var personChanged = participantAdded
+//    /***** You can debug the conditional that makes us return early below by uncommenting this block, then manually changing
+//    the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...    ****/
+////    event.data.adminRef.root.child('templog').set({legislatorDidntChange: legislatorDidntChange,
+////                personChanged: personChanged,
+////                differentPerson: differentPerson, participantsAdded: participantsAdded})
+//
+//
+//    // If the only thing that changed was the video description itself, return early.  Don't overwrite the
+//    // user's manual edit of the video description field
+//    if(legislatorDidntChange && !personChanged)
+//        return false
+//
+//    // construct the video title...
+//    var constituent = getConstituent(event.data.val().video_participants)
+//    var from = ' from '+constituent.name
+//
+//    var to = ''
+//    if(event.data.val())
+//    // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
+//    var rep = event.data.val().legislator_chamber == 'lower' ? 'Rep' : 'Sen'
+//    var ch = event.data.val().legislator_chamber == 'lower' ? 'HD' : 'SD'
+//    var video_title = event.data.val().video_type+from+' to '+rep+' '+event.data.val().legislator_first_name+' '+event.data.val().legislator_last_name+' ('+event.data.val().legislator_state_abbrev.toUpperCase()+' '+ch+' '+event.data.val().legislator_district+')'
+//
+//    // multi-path update even if in this case, it's only one path
+//    var updates = {}
+//    updates['video/list/'+event.params.videoKey+'/video_title'] = video_title
+//
+//    return event.data.adminRef.root.child('/').update(updates)
+//})
 
 
 // Assume that whoever was added last is the constituent.  "Added last" means whoever has the
@@ -874,89 +874,364 @@ var getConstituent = function(participants) {
 
 
 
-// Creates the YouTube video description using legislator info (name, email, phone, etc)
-// and video type.
-exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}').onWrite(event => {
-    if(!event.data.exists())
-        return false //return early if node was deleted
-    if(!event.data.val().youtube_video_description_unevaluated)
-        return false // this has to exist, otherwise quit
-    if(!event.data.val().leg_id)
-        return false // don't have a legislator chosen yet, so no point in trying to construct video description
-
-    var descriptionAlreadyEvaluated = event.data.val().youtube_video_description && event.data.val().youtube_video_description_unevaluated
-        && event.data.val().youtube_video_description != event.data.val().youtube_video_description_unevaluated
-
-    var legislatorDidntChange = event.data.val().leg_id && event.data.previous.val().leg_id && event.data.val().leg_id == event.data.previous.val().leg_id
-
-    var currentCount = !event.data.val().video_participants ? 0 : event.data.val().video_participants.length
-    var prevCount =  !event.data.previous.val().video_participants ? 0 : event.data.previous.val().video_participants.length
-
-    var participantsAdded = currentCount > prevCount
-    var personChanged = participantsAdded
-
-    var youtubeVideoDescriptionChanged = event.data.val().youtube_video_description && event.data.previous.val().youtube_video_description
-                                && event.data.val().youtube_video_description != event.data.previous.val().youtube_video_description
-
-    /***** You can debug the conditional that makes us return early below by uncommenting this block, then manually changing
-    the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...    ****/
-//    event.data.adminRef.root.child('templog').set({descriptionAlreadyEvaluated: descriptionAlreadyEvaluated, legislatorDidntChange: legislatorDidntChange,
-//                personChanged: personChanged, youtubeVideoDescriptionChanged: youtubeVideoDescriptionChanged,
-//                differentPerson: differentPerson, participantsAdded: participantsAdded})
 
 
-    // If the only thing that changed was the video description itself, return early.  Don't overwrite the
-    // user's manual edit of the video description field
-    if(descriptionAlreadyEvaluated && legislatorDidntChange && !personChanged && youtubeVideoDescriptionChanged)
-        return false
+var getVideoNode = function(video_node_key) {
+    return db.ref('video/list/'+video_node_key).once('value').then(snapshot => {
+        return snapshot.val()
+    })
+}
 
-    // BUT if we add a participant, we should re-evaluate the description because the second person is assumed
-    // to be the constituent.  But if there's only one person on the call, we assume THAT person is the constituent
-    // We may end up blowing away user changes.  We'll see...
 
-    var description = event.data.val().youtube_video_description_unevaluated
-    var ch = event.data.val().legislator_chamber && event.data.val().legislator_chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
-    var rep = event.data.val().legislator_chamber && event.data.val().legislator_chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
-    var constituent
-    if(!event.data.val().video_participants) {
-        constituent = 'constituent_name'
-    }
-    else {
-        constituent = getConstituent(event.data.val().video_participants).name
-    }
+var evaluate_youtube_video_description = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var description = videoNode.youtube_video_description_unevaluated
+    var ch = videoNode.legislator_chamber && videoNode.legislator_chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
+    var rep = videoNode.legislator_chamber && videoNode.legislator_chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
+    var constituent = getConstituent(videoNode.video_participants).name
 
     var replace = [
         {"this": "constituent_name", "withThat": constituent},
         {"this": "legislator_chamber_abbrev", "withThat": ch},
-        {"this": "legislator_district", "withThat": event.data.val().legislator_district},
-        {"this": "legislator_email", "withThat": event.data.val().legislator_email},
-        // TODO would be better to just not include fb and tw handles if they're not know - othwerwise you get http://www.faceboo.com/undefined  that looks crappy
-        {"this": "legislator_facebook", "withThat": event.data.val().legislator_facebook},
-        {"this": "legislator_facebook_id", "withThat": event.data.val().legislator_facebook_id},
-        {"this": "legislator_twitter", "withThat": event.data.val().legislator_twitter},
+        {"this": "legislator_district", "withThat": videoNode.legislator_district},
+        {"this": "legislator_email", "withThat": videoNode.legislator_email},
+        // TODO would be better to just not include fb and tw handles if they're not known - othwerwise you get http://www.faceboo.com/undefined  that looks crappy
+        {"this": "legislator_facebook", "withThat": videoNode.legislator_facebook},
+        {"this": "legislator_facebook_id", "withThat": videoNode.legislator_facebook_id},
+        {"this": "legislator_twitter", "withThat": videoNode.legislator_twitter},
         {"this": "legislator_rep_type", "withThat": rep},
-        {"this": "legislator_full_name", "withThat": event.data.val().legislator_full_name},
-        {"this": "legislator_phone", "withThat": event.data.val().legislator_phone}
+        {"this": "legislator_full_name", "withThat": videoNode.legislator_full_name},
+        {"this": "legislator_phone", "withThat": videoNode.legislator_phone}
     ]
 
     // "internal confusion" about whether I should be using _abbrev or not  LOL
-    if(event.data.val().legislator_state_abbrev) {
-        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state_abbrev.toUpperCase()})
+    if(videoNode.legislator_state_abbrev) {
+        replace.push({"this": "legislator_state_abbrev_upper", "withThat": videoNode.legislator_state_abbrev.toUpperCase()})
     }
-    else if(event.data.val().legislator_state) {
-        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state.toUpperCase()})
+    else if(videoNode.legislator_state) {
+        replace.push({"this": "legislator_state_abbrev_upper", "withThat": videoNode.legislator_state.toUpperCase()})
     }
 
     _.each(replace, function(rep) {
         description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
     })
+    return description
+}
 
-    // multi-path update even if in this case, it's only one path
-    var updates = {}
-    updates['video/list/'+event.params.videoKey+'/youtube_video_description'] = description
+var evaluate_video_title = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
 
-    return event.data.adminRef.root.child('/').update(updates)
+    // construct the video title...
+    var constituent = getConstituent(videoNode.video_participants)
+    var from = ' from '+constituent.name
+
+    var to = ''
+    // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
+    var rep = videoNode.legislator_chamber == 'lower' ? 'Rep' : 'Sen'
+    var ch = videoNode.legislator_chamber == 'lower' ? 'HD' : 'SD'
+    var video_title = videoNode.video_type+from+' to '+rep+' '+videoNode.legislator_first_name+' '+videoNode.legislator_last_name+' ('+videoNode.legislator_state_abbrev.toUpperCase()+' '+ch+' '+videoNode.legislator_district+')'
+    return video_title
+}
+
+
+var evaluate_email_to_legislator_body = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var constituent = getConstituent(videoNode.video_participants)
+
+    var replace = [
+        {"this": "constituent_name", "withThat": constituent.name},
+
+        {"this": "constituent_address", "withThat": ""},  // not there yet 8/24/18
+        {"this": "constituent_city", "withThat": ""},     // not there yet 8/24/18
+        {"this": "constituent_state", "withThat": ""},    // not there yet 8/24/18
+        {"this": "constituent_zip", "withThat": ""},      // not there yet 8/24/18
+        {"this": "constituent_phone", "withThat": ""},    // not there yet 8/24/18
+        {"this": "constituent_email", "withThat": constituent.email},
+
+        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
+        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
+        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name},
+        {"this": "request_based_on_cos_position", "withThat": ""}, // not there yet 8/24/18
+
+        {"this": "video_url", "withThat": videoNode.video_url},
+        {"this": "facebook_post", "withThat": 'https://www.facebook.com/'+videoNode.facebook_post_id},
+        {"this": "tweet", "withThat": 'https://www.twitter.com/'+videoNode.twitter_post_id}
+    ]
+
+    var email_to_legislator_body = videoNode.email_to_legislator_body_unevaluated
+    _.each(replace, function(rep) {
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+
+    // conditionally include the text in the email between post_to_facebook:begin and post_to_facebook:end
+    if(videoNode.post_to_facebook && videoNode.facebook_post_id) {
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_facebook:begin',"g"), '')
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_facebook:end',"g"), '')
+    }
+    else {
+        var p1 = email_to_legislator_body.substring(0, email_to_legislator_body.indexOf('post_to_facebook:begin'))
+        var p2 = email_to_legislator_body.substring(email_to_legislator_body.indexOf('post_to_facebook:end') + 'post_to_facebook:end'.length)
+        email_to_legislator_body = p1 + p2
+    }
+
+    // conditionally include the text in the email between post_to_twitter:begin and post_to_twitter:end
+    if(videoNode.post_to_twitter && videoNode.twitter_post_id) {
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_twitter:begin',"g"), '')
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_twitter:end',"g"), '')
+    }
+    else {
+        var p1 = email_to_legislator_body.substring(0, email_to_legislator_body.indexOf('post_to_twitter:begin'))
+        var p2 = email_to_legislator_body.substring(email_to_legislator_body.indexOf('post_to_twitter:end') + 'post_to_twitter:end'.length)
+        email_to_legislator_body = p1 + p2
+    }
+    return email_to_legislator_body
+}
+
+
+var evaluate_email_to_legislator_subject = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var constituent = getConstituent(videoNode.video_participants)
+
+    var replace = [
+        {"this": "constituent_name", "withThat": constituent.name},
+        {"this": "video_type", "withThat": videoNode.video_type}
+    ]
+
+    var email_to_legislator_subject = videoNode.email_to_legislator_subject_unevaluated
+    _.each(replace, function(rep) {
+        email_to_legislator_subject = _.replace(email_to_legislator_subject, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+    return email_to_legislator_subject
+}
+
+
+var evaluate_email_to_participant_body = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var constituent = getConstituent(videoNode.video_participants)
+
+    var replace = [
+        {"this": "constituent_name", "withThat": constituent.name},
+        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
+        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
+        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name},
+        {"this": "legislator_phone", "withThat": videoNode.legislator_phone},
+        {"this": "video_url", "withThat": videoNode.video_url},
+        {"this": "facebook_post", "withThat": 'https://www.facebook.com/'+videoNode.facebook_post_id},
+        {"this": "tweet", "withThat": 'https://www.twitter.com/'+videoNode.twitter_post_id}
+    ]
+
+    var email_to_participant_body = videoNode.email_to_participant_body_unevaluated
+    _.each(replace, function(rep) {
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+
+    // conditionally include the text in the email between post_to_facebook:begin and post_to_facebook:end
+    if(videoNode.post_to_facebook && videoNode.facebook_post_id) {
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_facebook:begin',"g"), '')
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_facebook:end',"g"), '')
+    }
+    else {
+        var p1 = email_to_participant_body.substring(0, email_to_participant_body.indexOf('post_to_facebook:begin'))
+        var p2 = email_to_participant_body.substring(email_to_participant_body.indexOf('post_to_facebook:end') + 'post_to_facebook:end'.length)
+        email_to_participant_body = p1 + p2
+    }
+
+    // conditionally include the text in the email between post_to_twitter:begin and post_to_twitter:end
+    if(videoNode.post_to_twitter && videoNode.twitter_post_id) {
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_twitter:begin',"g"), '')
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_twitter:end',"g"), '')
+    }
+    else {
+        var p1 = email_to_participant_body.substring(0, email_to_participant_body.indexOf('post_to_twitter:begin'))
+        var p2 = email_to_participant_body.substring(email_to_participant_body.indexOf('post_to_twitter:end') + 'post_to_twitter:end'.length)
+        email_to_participant_body = p1 + p2
+    }
+    return email_to_participant_body
+}
+
+
+var evaluate_email_to_participant_subject = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var replace = [
+        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
+        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
+        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name}
+    ]
+
+    var email_to_participant_subject = videoNode.email_to_participant_subject_unevaluated
+    _.each(replace, function(rep) {
+        email_to_participant_subject = _.replace(email_to_participant_subject, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+    return email_to_participant_subject
+}
+
+
+exports.evaluate_video_and_email = function(video_node_key) {
+    return getVideoNode(video_node_key).then(videoNode => {
+        if(!videoNode.video_participants || videoNode.video_participants.length == 0)
+            return false
+
+        var updates = {}
+        updates['video/list/'+video_node_key+'/email_to_legislator_body'] = evaluate_email_to_legislator_body(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_legislator_subject'] = evaluate_email_to_legislator_subject(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_participant_body'] = evaluate_email_to_participant_body(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_participant_subject'] = evaluate_email_to_participant_subject(videoNode)
+        updates['video/list/'+video_node_key+'/youtube_video_description'] = evaluate_youtube_video_description(videoNode)
+        updates['video/list/'+video_node_key+'/video_title'] = evaluate_video_title(videoNode)
+        return db.ref('/').update(updates)
+    })
+}
+
+
+/************
+when leg_id changes, re-evaluate the node's:
+    email_to_legislator_body
+    email_to_legislator_subject
+    email_to_participant_body
+    email_to_participant_subject
+    youtube_video_description
+    video_title
+
+Get rid of: exports.video_title, exports.youtubeVideoDescription
+**********/
+exports.onLegislatorChosen = functions.database.ref('video/list/{video_node_key}/leg_id').onWrite(event => {
+    // leg_id should never go from non-null back to null
+    return exports.evaluate_video_and_email(event.params.video_node_key)
 })
+
+
+
+/************
+when a participant is added, re-evaluate the node's:
+    email_to_legislator_body
+    email_to_legislator_subject
+    email_to_participant_body
+    email_to_participant_subject
+    youtube_video_description
+    video_title
+We have to re-evaluate these attributes because the constituent is changing and constituent info
+is in these attributes.  The constituent is always the person added most recently
+
+Get rid of: exports.video_title, exports.youtubeVideoDescription
+**********/
+exports.onParticipantAdded = functions.database.ref('video/list/{key}/video_participants').onCreate(event => {
+    return exports.evaluate_video_and_email(event.params.video_node_key)
+})
+
+
+/************
+when a participant is removed, re-evaluate the node's:
+    email_to_legislator_body
+    email_to_legislator_subject
+    email_to_participant_body
+    email_to_participant_subject
+    youtube_video_description
+    video_title
+We have to re-evaluate these attributes because the constituent is changing and constituent info
+is in these attributes.  The constituent is always the person added most recently
+
+Get rid of: exports.video_title, exports.youtubeVideoDescription
+**********/
+exports.onParticipantRemoved = functions.database.ref('video/list/{key}/video_participants').onDelete(event => {
+    return exports.evaluate_video_and_email(event.params.video_node_key)
+})
+
+
+
+
+
+
+
+
+// TODO this is going to go away and be replaced by onLegislatorChosen, onParticipantAdded and onParticipantRemoved
+// Creates the YouTube video description using legislator info (name, email, phone, etc)
+// and video type.
+//exports.youtubeVideoDescription = functions.database.ref('video/list/{videoKey}').onWrite(event => {
+//    if(!event.data.exists())
+//        return false //return early if node was deleted
+//    if(!event.data.val().youtube_video_description_unevaluated)
+//        return false // this has to exist, otherwise quit
+//    if(!event.data.val().leg_id)
+//        return false // don't have a legislator chosen yet, so no point in trying to construct video description
+//
+//    var descriptionAlreadyEvaluated = event.data.val().youtube_video_description && event.data.val().youtube_video_description_unevaluated
+//        && event.data.val().youtube_video_description != event.data.val().youtube_video_description_unevaluated
+//
+//    var legislatorDidntChange = event.data.val().leg_id && event.data.previous.val().leg_id && event.data.val().leg_id == event.data.previous.val().leg_id
+//
+//    var currentCount = !event.data.val().video_participants ? 0 : event.data.val().video_participants.length
+//    var prevCount =  !event.data.previous.val().video_participants ? 0 : event.data.previous.val().video_participants.length
+//
+//    var participantsAdded = currentCount > prevCount
+//    var personChanged = participantsAdded
+//
+//    var youtubeVideoDescriptionChanged = event.data.val().youtube_video_description && event.data.previous.val().youtube_video_description
+//                                && event.data.val().youtube_video_description != event.data.previous.val().youtube_video_description
+//
+//    /***** You can debug the conditional that makes us return early below by uncommenting this block, then manually changing
+//    the youtube video description through the app.  After saving the change, view /templog in the database and examine these attributes...    ****/
+////    event.data.adminRef.root.child('templog').set({descriptionAlreadyEvaluated: descriptionAlreadyEvaluated, legislatorDidntChange: legislatorDidntChange,
+////                personChanged: personChanged, youtubeVideoDescriptionChanged: youtubeVideoDescriptionChanged,
+////                differentPerson: differentPerson, participantsAdded: participantsAdded})
+//
+//
+//    // If the only thing that changed was the video description itself, return early.  Don't overwrite the
+//    // user's manual edit of the video description field
+//    if(descriptionAlreadyEvaluated && legislatorDidntChange && !personChanged && youtubeVideoDescriptionChanged)
+//        return false
+//
+//    // BUT if we add a participant, we should re-evaluate the description because the second person is assumed
+//    // to be the constituent.  But if there's only one person on the call, we assume THAT person is the constituent
+//    // We may end up blowing away user changes.  We'll see...
+//
+//    var description = event.data.val().youtube_video_description_unevaluated
+//    var ch = event.data.val().legislator_chamber && event.data.val().legislator_chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
+//    var rep = event.data.val().legislator_chamber && event.data.val().legislator_chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
+//    var constituent
+//    if(!event.data.val().video_participants) {
+//        constituent = 'constituent_name'
+//    }
+//    else {
+//        constituent = getConstituent(event.data.val().video_participants).name
+//    }
+//
+//    var replace = [
+//        {"this": "constituent_name", "withThat": constituent},
+//        {"this": "legislator_chamber_abbrev", "withThat": ch},
+//        {"this": "legislator_district", "withThat": event.data.val().legislator_district},
+//        {"this": "legislator_email", "withThat": event.data.val().legislator_email},
+//        // TODO would be better to just not include fb and tw handles if they're not known - othwerwise you get http://www.faceboo.com/undefined  that looks crappy
+//        {"this": "legislator_facebook", "withThat": event.data.val().legislator_facebook},
+//        {"this": "legislator_facebook_id", "withThat": event.data.val().legislator_facebook_id},
+//        {"this": "legislator_twitter", "withThat": event.data.val().legislator_twitter},
+//        {"this": "legislator_rep_type", "withThat": rep},
+//        {"this": "legislator_full_name", "withThat": event.data.val().legislator_full_name},
+//        {"this": "legislator_phone", "withThat": event.data.val().legislator_phone}
+//    ]
+//
+//    // "internal confusion" about whether I should be using _abbrev or not  LOL
+//    if(event.data.val().legislator_state_abbrev) {
+//        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state_abbrev.toUpperCase()})
+//    }
+//    else if(event.data.val().legislator_state) {
+//        replace.push({"this": "legislator_state_abbrev_upper", "withThat": event.data.val().legislator_state.toUpperCase()})
+//    }
+//
+//    _.each(replace, function(rep) {
+//        description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
+//    })
+//
+//    // multi-path update even if in this case, it's only one path
+//    var updates = {}
+//    updates['video/list/'+event.params.videoKey+'/youtube_video_description'] = description
+//
+//    return event.data.adminRef.root.child('/').update(updates)
+//})
 
 
 // youtube-subscribe.js:video_processing_callback() writes the newly minted video_id to
@@ -1075,7 +1350,7 @@ exports.socialMediaPostsCreated = functions.database.ref('video/list/{video_node
         // send congratulatory email to participants as soon as social media posts are ready
         email.sendCongratulatoryEmailRegardingVideo(event.data.val())
     }
-
+    return true
 })
 
 

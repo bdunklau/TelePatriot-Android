@@ -21,7 +21,14 @@ import java.util.List;
 
 public class VideoType {
 
-    private String type, video_mission_description, youtube_video_description;
+    private String email_to_legislator_body;
+    private String email_to_legislator_subject;
+    private String email_to_participant_body;
+    private String email_to_participant_subject;
+    private String type;
+    private String video_mission_description;
+    private String youtube_video_description;
+
     private Integer key;
     private static List<VideoType> types;
 
@@ -29,12 +36,18 @@ public class VideoType {
         query();
     }
 
-    public VideoType(DataSnapshot dataSnapshot) {
-        video_mission_description = dataSnapshot.child("video_mission_description").getValue().toString().trim();
-        youtube_video_description = dataSnapshot.child("youtube_video_description").getValue().toString().trim();
-        type = dataSnapshot.child("type").getValue().toString().trim();
-        key = Integer.parseInt(dataSnapshot.getKey());
+    // needed for firebase deserialization
+    public VideoType() {
     }
+
+    // we don't instantiate other classes this way.  We do like this:  SomeObject obj = dataSnapshot.getValue(SomeObject.class)
+    // and we use no-arg constructors
+//    public VideoType(DataSnapshot dataSnapshot) {
+//        video_mission_description = dataSnapshot.child("video_mission_description").getValue().toString().trim();
+//        youtube_video_description = dataSnapshot.child("youtube_video_description").getValue().toString().trim();
+//        type = dataSnapshot.child("type").getValue().toString().trim();
+//        key = Integer.parseInt(dataSnapshot.getKey());
+//    }
 
     public static List<VideoType> getTypes() {
         if(types == null) {
@@ -58,7 +71,8 @@ public class VideoType {
         ref.child("video").child("types").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                VideoType videoType = new VideoType(dataSnapshot);
+//                VideoType videoType = new VideoType(dataSnapshot); // this isn't right, is it?
+                VideoType videoType = dataSnapshot.getValue(VideoType.class);
                 types.add(videoType);
             }
 
@@ -82,6 +96,38 @@ public class VideoType {
 
             }
         });
+    }
+
+    public String getEmail_to_legislator_body() {
+        return email_to_legislator_body;
+    }
+
+    public void setEmail_to_legislator_body(String email_to_legislator_body) {
+        this.email_to_legislator_body = email_to_legislator_body;
+    }
+
+    public String getEmail_to_legislator_subject() {
+        return email_to_legislator_subject;
+    }
+
+    public void setEmail_to_legislator_subject(String email_to_legislator_subject) {
+        this.email_to_legislator_subject = email_to_legislator_subject;
+    }
+
+    public String getEmail_to_participant_body() {
+        return email_to_participant_body;
+    }
+
+    public void setEmail_to_participant_body(String email_to_participant_body) {
+        this.email_to_participant_body = email_to_participant_body;
+    }
+
+    public String getEmail_to_participant_subject() {
+        return email_to_participant_subject;
+    }
+
+    public void setEmail_to_participant_subject(String email_to_participant_subject) {
+        this.email_to_participant_subject = email_to_participant_subject;
     }
 
     public String getType() {

@@ -13,32 +13,44 @@ import java.util.Map;
 
 public class VideoNode {
 
-    String key;
-    String node_create_date;
-    long node_create_date_ms;
+    private String key;
+    private String node_create_date;
+    private long node_create_date_ms;
 
     // keyed by the user's id so that we can update a participant's node easily later on
     // like when their "present" status changes between true and false (when they enter and leave
     // the VidyoChatFragment)
-    Map<String, VideoParticipant> video_participants = new HashMap<String, VideoParticipant>();
+    private Map<String, VideoParticipant> video_participants = new HashMap<String, VideoParticipant>();
 
-    String video_type;
-    String video_id;
-    String video_title;
-    String youtube_video_description;
-    String youtube_video_description_unevaluated;
-    String video_mission_description;
+    private String video_type;
+    private String video_id;
+    private String video_title;
+    private String youtube_video_description;
+    private String youtube_video_description_unevaluated; // need this so you can re-evaluate when legislator or constituent changes
+    private String video_mission_description;
 
-    String room_id;
-    String room_sid;        // the twilio RoomSid
-    String room_sid_record; // the twilio RoomSid of the recorded room
+    // these are the evaluated values corresponding to the fields in VideoType
+    // In VideoType, these fields have values containing placeholders like (constituent name)
+    // and (legislator)
+    private String email_to_legislator_body;
+    private String email_to_legislator_body_unevaluated;
+    private String email_to_legislator_subject;
+    private String email_to_legislator_subject_unevaluated;
+    private String email_to_participant_body;
+    private String email_to_participant_body_unevaluated;
+    private String email_to_participant_subject;
+    private String email_to_participant_subject_unevaluated;
 
-    Boolean recording_requested; // See google-cloud:dockerRequest - for the spinner while the recorder is starting up
-    String recording_started;
-    long recording_started_ms;
-    String recording_stopped;
-    long recording_stopped_ms;
-    boolean recording_completed = false;
+    private String room_id;
+    private String room_sid;        // the twilio RoomSid
+    private String room_sid_record; // the twilio RoomSid of the recorded room
+
+    private Boolean recording_requested; // See google-cloud:dockerRequest - for the spinner while the recorder is starting up
+    private String recording_started;
+    private long recording_started_ms;
+    private String recording_stopped;
+    private long recording_stopped_ms;
+    private boolean recording_completed = false;
 
     // The "What do you want to do with your video" fields...
     // all true by default and the user can set them to false in the VidyoChatFragment if he doesn't like them
@@ -69,6 +81,14 @@ public class VideoNode {
 
     public VideoNode(User user, VideoType t) {
 
+        email_to_legislator_body = t.getEmail_to_legislator_body();
+        email_to_legislator_body_unevaluated = t.getEmail_to_legislator_body();
+        email_to_legislator_subject = t.getEmail_to_legislator_subject();
+        email_to_legislator_subject_unevaluated = t.getEmail_to_legislator_subject();
+        email_to_participant_body = t.getEmail_to_participant_body();
+        email_to_participant_body_unevaluated = t.getEmail_to_participant_body();
+        email_to_participant_subject = t.getEmail_to_participant_subject();
+        email_to_participant_subject_unevaluated = t.getEmail_to_participant_subject();
         node_create_date = Util.getDate_Day_MMM_d_hmmss_am_z_yyyy();
         node_create_date_ms = Util.getDate_as_millis();
         video_participants.put(user.getUid(), new VideoParticipant(user));
@@ -110,6 +130,16 @@ public class VideoNode {
         m.put("youtube_video_description", youtube_video_description);
         m.put("youtube_video_description_unevaluated", youtube_video_description_unevaluated);
         m.put("video_mission_description", video_mission_description);
+
+        m.put("email_to_legislator_body", email_to_legislator_body);
+        m.put("email_to_legislator_body_unevaluated", email_to_legislator_body_unevaluated);
+        m.put("email_to_legislator_subject", email_to_legislator_subject);
+        m.put("email_to_legislator_subject_unevaluated", email_to_legislator_subject_unevaluated);
+        m.put("email_to_participant_body", email_to_participant_body);
+        m.put("email_to_participant_body_unevaluated", email_to_participant_body_unevaluated);
+        m.put("email_to_participant_subject", email_to_participant_subject);
+        m.put("email_to_participant_subject_unevaluated", email_to_participant_subject_unevaluated);
+
         m.put("recording_started", recording_started);
         m.put("recording_started_ms", recording_started_ms);
         m.put("recording_stopped", recording_stopped);
@@ -206,6 +236,70 @@ public class VideoNode {
 
     public void setYoutube_video_description_unevaluated(String youtube_video_description_unevaluated) {
         this.youtube_video_description_unevaluated = youtube_video_description_unevaluated;
+    }
+
+    public String getEmail_to_legislator_body() {
+        return email_to_legislator_body;
+    }
+
+    public void setEmail_to_legislator_body(String email_to_legislator_body) {
+        this.email_to_legislator_body = email_to_legislator_body;
+    }
+
+    public String getEmail_to_legislator_subject() {
+        return email_to_legislator_subject;
+    }
+
+    public void setEmail_to_legislator_subject(String email_to_legislator_subject) {
+        this.email_to_legislator_subject = email_to_legislator_subject;
+    }
+
+    public String getEmail_to_participant_body() {
+        return email_to_participant_body;
+    }
+
+    public void setEmail_to_participant_body(String email_to_participant_body) {
+        this.email_to_participant_body = email_to_participant_body;
+    }
+
+    public String getEmail_to_participant_subject() {
+        return email_to_participant_subject;
+    }
+
+    public void setEmail_to_participant_subject(String email_to_participant_subject) {
+        this.email_to_participant_subject = email_to_participant_subject;
+    }
+
+    public String getEmail_to_legislator_body_unevaluated() {
+        return email_to_legislator_body_unevaluated;
+    }
+
+    public void setEmail_to_legislator_body_unevaluated(String email_to_legislator_body_unevaluated) {
+        this.email_to_legislator_body_unevaluated = email_to_legislator_body_unevaluated;
+    }
+
+    public String getEmail_to_legislator_subject_unevaluated() {
+        return email_to_legislator_subject_unevaluated;
+    }
+
+    public void setEmail_to_legislator_subject_unevaluated(String email_to_legislator_subject_unevaluated) {
+        this.email_to_legislator_subject_unevaluated = email_to_legislator_subject_unevaluated;
+    }
+
+    public String getEmail_to_participant_body_unevaluated() {
+        return email_to_participant_body_unevaluated;
+    }
+
+    public void setEmail_to_participant_body_unevaluated(String email_to_participant_body_unevaluated) {
+        this.email_to_participant_body_unevaluated = email_to_participant_body_unevaluated;
+    }
+
+    public String getEmail_to_participant_subject_unevaluated() {
+        return email_to_participant_subject_unevaluated;
+    }
+
+    public void setEmail_to_participant_subject_unevaluated(String email_to_participant_subject_unevaluated) {
+        this.email_to_participant_subject_unevaluated = email_to_participant_subject_unevaluated;
     }
 
     public String getLeg_id() {

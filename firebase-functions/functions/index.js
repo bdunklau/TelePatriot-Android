@@ -241,6 +241,10 @@ exports.monitor_video_processing = googleCloud.monitor_video_processing
 exports.whenVideoIdIsCreated = googleCloud.whenVideoIdIsCreated
 exports.video_title = googleCloud.video_title
 exports.youtubeVideoDescription = googleCloud.youtubeVideoDescription
+exports.socialMediaPostsCreated = googleCloud.socialMediaPostsCreated
+exports.onLegislatorChosen = googleCloud.onLegislatorChosen
+exports.onParticipantAdded = googleCloud.onParticipantAdded
+exports.onParticipantRemoved = googleCloud.onParticipantRemoved
 
 
 const googleAuth = require('./google-auth')
@@ -281,6 +285,15 @@ exports.testRetrieveRoom = twilio.testRetrieveRoom
 exports.testCompleteRoom = twilio.testCompleteRoom
 exports.testListParticipants = twilio.testListParticipants
 exports.testCompose = twilio.testCompose
+
+const videoList = require('./video-list')
+exports.videoListMain = videoList.videoListMain
+exports.testSelectVideoNode = videoList.testSelectVideoNode
+exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
+exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
+
+
+
 
 
 

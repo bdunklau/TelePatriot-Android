@@ -106,7 +106,10 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
                 // The email to the legislator is addressed to him.  Whereas the other one is a congratulatory email to
                 // the participants
                 // SEE google-cloud:socialMediaPostsCreated()
-                event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/facebook_post_id').set(res.id)
+                return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/facebook_post_id').set(res.id)
+            }
+            else {
+                console.log("WHY ARE WE GETTING TO THIS BLOCK ?????")
             }
         });
     })

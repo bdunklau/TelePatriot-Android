@@ -72,15 +72,18 @@
     <TextView
         android:id="@+id/guest_name"
         android:layout_width="215dp"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:text="You have invited someone to participate in a video chat"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/revoke_invitation_button"
-        app:layout_constraintEnd_toEndOf="@+id/remote_camera_view"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/instructionsScrollView"
+        app:layout_constraintStart_toStartOf="@+id/remote_camera_view"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.75" />
 
     <TextView
         android:id="@+id/revoke_invitation_button"

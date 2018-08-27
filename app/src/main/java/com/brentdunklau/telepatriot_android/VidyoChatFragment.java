@@ -1542,28 +1542,28 @@ public class VidyoChatFragment extends BaseFragment
                     revoke_invitation_button.setVisibility(View.GONE);
                 }
                 else if(currentVideoNode.getVideo_invitation_key()!=null) {
-                    invite_someone_button.setVisibility(View.GONE);
+                    invite_someone_button.setText(""); //invite_someone_button.setVisibility(View.GONE);
                     // weird side effect of accepting someone's invitation: When you join someone's video node,
                     // the guest_name label will say you have invited yourself.  Not true, but that's how it will read
                     // So compare current user with the name the invitation was extended to and don't show the
                     // guest_name label
-                    if(User.getInstance().getName().equals(currentVideoNode.getVideo_invitation_extended_to())) {
-                        guest_name.setVisibility(View.GONE);
+                    guest_name.setVisibility(View.VISIBLE);
+                    if(!User.getInstance().getName().equals(currentVideoNode.getVideo_invitation_extended_to())) {
+                        guest_name.setText("You have invited "+currentVideoNode.getVideo_invitation_extended_to()+" to participate in a video chat");
+                        revoke_invitation_button.setVisibility(View.VISIBLE);
                     }
                     else {
-                        guest_name.setVisibility(View.VISIBLE);
+                        String initiator = new VideoInvitation(currentVideoNode).getInitiator_name();
+                        guest_name.setText(initiator+" has invited you to participate in a video chat.  Click the green phone button to connect with "+initiator);
+                        //revoke_invitation_button.setVisibility(View.GONE);
                     }
-                    revoke_invitation_button.setVisibility(View.VISIBLE);
                 }
                 else {
                     // means the remote camera is not visible and there's no invitation extended yet
                     invite_someone_button.setVisibility(View.VISIBLE);
+                    invite_someone_button.setText("invite someone");
                     guest_name.setVisibility(View.GONE);
                     revoke_invitation_button.setVisibility(View.GONE);
-                }
-
-                if(guest_name.getVisibility() == View.VISIBLE) {
-                    guest_name.setText("You have invited "+currentVideoNode.getVideo_invitation_extended_to()+" to participate in a video chat");
                 }
             }
         });

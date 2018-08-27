@@ -70,7 +70,7 @@ exports.onTwitterPostId = functions.database.ref('video/list/{video_node_key}/tw
 // This is the function that actually does the tweeting
 exports.handleTweetRequest = functions.database.ref('tweet_requests/{key}').onWrite(event => {
     if(!event.data.val() && event.data.previous.val()) return false // ignore deleted rows
-    return tweet({tweet_request: event.data.val()})
+    return tweet({tweet_request: event.data.val(), video_node_key: event.data.val().video_node_key})
 })
 
 
@@ -106,7 +106,7 @@ var tweet = function(stuff) {
                                 data.date_ms = date.asMillis()
                                 db.ref('tweets').push().set(data) // don't believe we use this for anything other than auditing (8/5/18)
 
-                                if(event.data.val().video_node_key) { // may not exist in testing classes
+                                if(stuff.video_node_key) { // may not exist in testing classes
                                     // There's a trigger (not created yet) that listens for writes to this node and also to
                                     // facebook_post_id.  The trigger then examines the values of post_to_facebook, post_to_twitter and
                                     // email_to_legislator to figure out if the emails are ready to go out and if they are,
@@ -117,7 +117,7 @@ var tweet = function(stuff) {
                                     // The email to the legislator is addressed to him.  Whereas the other one is a congratulatory email to
                                     // the participants
                                     // SEE google-cloud:socialMediaPostsCreated()
-                                    event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/twitter_post_id').set(data.id_str)
+                                    db.ref('/').root.child('video/list/'+stuff.video_node_key+'/twitter_post_id').set(data.id_str)
                                 }
 
                             }
