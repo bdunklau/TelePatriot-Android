@@ -3,7 +3,6 @@ const admin = require('firebase-admin')
 admin.initializeApp(functions.config().firebase)
 
 const onmessage = require('./onMessage')
-const createModule = require('./userCreated')
 const deleteModule = require('./userDeleted')
 const notifications = require('./notifications')
 const roles = require('./roles')
@@ -12,8 +11,6 @@ const sheetsDemo = require('./sheets/demo-google-sheet-write')
 const sheetReader = require('./sheets/import-sheet')
 
 exports.messagestuff = onmessage.pushMessages
-exports.approveUserAccount = createModule.approveUserAccount
-exports.userCreated = createModule.createUserAccount
 exports.userDeleted = deleteModule.deleteUserAccount
 exports.notifyUserCreated = notifications.notifyUserCreated
 exports.roleAssigned = roles.roleAssigned
@@ -32,6 +29,12 @@ exports.testReadSpreadsheet = sheetReader.testReadSpreadsheet
 exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
+
+const createModule = require('./userCreated')
+// TODO fix index.js  This function should not be exported as userCreated.
+// TODO keep the names in index.js identical to what they are here
+exports.approveUserAccount = createModule.approveUserAccount
+exports.userCreated = createModule.createUserAccount
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
@@ -292,11 +295,10 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
-
-
-
-
-
+const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
+exports.checkLegal = checkVolunteerStatus.checkLegal
+exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
+exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 
 
 

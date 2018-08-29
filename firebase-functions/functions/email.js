@@ -418,7 +418,7 @@ exports.onReadyToSendEmails = functions.database.ref('video/list/{video_node_key
 
 var anotherEmailMethod = function(input) {
 
-    return db.ref('administration/email_connection_parms').once('value').then(snapshot => {
+    return db.ref('administration/email_config').once('value').then(snapshot => {
         var smtpTransport = nodemailer.createTransport({
             host: snapshot.val().host,
                   port: snapshot.val().port,
