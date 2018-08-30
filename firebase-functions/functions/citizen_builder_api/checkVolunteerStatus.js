@@ -56,13 +56,19 @@ exports.checkVolunteerStatus = function(email, allowed, notAllowed) {
     })
 }
 
-exports.checkLegal = functions.database.ref('cb_api_events/{key}').onCreate(event => {
+exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
     if(event.data.val().event_type != 'check legal')
         return false
 
     var f = function(valid) {
-        db.ref('cb_api_events').push().set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email,
-                                        event_type: 'check legal response', valid: valid})
+        db.ref('cb_api_events/all-events').push().set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email,
+                                        event_type: 'check-legal-response', valid: valid})
+        // for users from the Limbo screens.  There is a "Done" button on that page that they can click that
+        // causes this event to get called.  The limbo screens monitor /cb_api_events/check-legal-responses
+        // in order to tell the client whether they have in fact satisfied all the legal requirements now
+        db.ref('cb_api_events/check-legal-responses/'+event.data.val().uid)
+            .push()
+            .set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email, valid: valid, date_ms: date.asMillis()})
     }
 
     // now check legal status...
@@ -70,15 +76,15 @@ exports.checkLegal = functions.database.ref('cb_api_events/{key}').onCreate(even
         f(true)
     }
     var notAllowed = function() {
-        f(false)
+        f(false) // test: change this to true to simulate anyone passing legal
     }
     exports.checkVolunteerStatus(event.data.val().email, allowed, notAllowed)
     return true
 })
 
 // update the petition, conf agreement and banned flags on the user record...
-exports.onResponseFromLegal = functions.database.ref('cb_api_events/{key}').onCreate(event => {
-    if(event.data.val().event_type != 'check legal response')
+exports.onResponseFromLegal = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
+    if(event.data.val().event_type != 'check-legal-response')
         return false
     var updates = {}
     if(event.data.val().valid) {
@@ -120,6 +126,6 @@ exports.grantAccess = function(updates, uid, name, email) {
 }
 
 // just housekeeping - always timestamp the event
-exports.timestampCbApiEvent = functions.database.ref('cb_api_events/{key}').onCreate(event => {
+exports.timestampCbApiEvent = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
     return event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
 })
