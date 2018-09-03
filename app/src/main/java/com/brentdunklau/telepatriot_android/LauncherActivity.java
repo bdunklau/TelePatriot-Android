@@ -22,7 +22,9 @@ import java.util.Arrays;
  * Created by bdunklau on 10/12/2017.
  */
 
-public class LauncherActivity extends BaseActivity implements AccountStatusEvent.Listener {
+public class LauncherActivity extends BaseActivity
+//        implements AccountStatusEvent.Listener
+{
 
     private static final int RC_SIGN_IN = 1;
     private Button button_get_started;
@@ -88,16 +90,23 @@ public class LauncherActivity extends BaseActivity implements AccountStatusEvent
                 // call.  We are asking for permission too late.
                 checkPhoneCallPermission();
 
-                if(User.getInstance().hasAnyRole()) {
-                    startActivity(new Intent(this, MainActivity.class));
-                }
-                else {
-                    // We only do this if the user is brand new and doesn't have any roles yet.
-                    // When the user is brand new, we send them to the LimboActivity screen
-                    // where they just have to sit and wait for an admin to let them in.
-                    // Look at fired(AccountStatusEvent evt) below...
-                    User.getInstance().addAccountStatusEventListener(this);
-                }
+
+                // TODO experimenting...
+                // what if we just add the account status event listener here and let IT dictate
+                // whether we go to MainActivity or LimboActivity ...?
+                //User.getInstance().addAccountStatusEventListener(this);
+
+
+//                if(User.getInstance().hasAnyRole()) {
+//                    startActivity(new Intent(this, MainActivity.class));
+//                }
+//                else {
+//                    // We only do this if the user is brand new and doesn't have any roles yet.
+//                    // When the user is brand new, we send them to the LimboActivity screen
+//                    // where they just have to sit and wait for an admin to let them in.
+//                    // Look at fired(AccountStatusEvent evt) below...
+//                    User.getInstance().addAccountStatusEventListener(this);
+//                }
 
             } else {
                 // user not authenticated
@@ -110,12 +119,29 @@ public class LauncherActivity extends BaseActivity implements AccountStatusEvent
     // per AccountStatusEvent.Listener
     // This is what gets called by virtue of this call
     //    above: User.getInstance().addAccountStatusEventListener(this);
-    @Override
-    public void fired(AccountStatusEvent evt) {
-        if(evt instanceof AccountStatusEvent.NoRoles)
-            startActivity(new Intent(this, LimboActivity.class));
-    }
+//    @Override
+//    public void fired(AccountStatusEvent evt) {
+//        // Having or not having roles is not what determines if the user is sent to the limbo screen anymore...
+////        if(evt instanceof AccountStatusEvent.NoRoles)
+////            startActivity(new Intent(this, LimboActivity.class));
+//
+//        // Now what determines where a person goes is whether they are "allowed" or not...
+//        if(evt instanceof AccountStatusEvent.AccountDisabled) {
+//            gotoScreen(DisabledActivity.class);
+//        }
+//        else if(evt instanceof AccountStatusEvent.NotAllowed)
+//            gotoScreen(LimboActivity.class);
+//        else if(evt instanceof AccountStatusEvent.Allowed)
+//            gotoScreen(MainActivity.class);
+//        else if(evt instanceof AccountStatusEvent.AccountEnabled)
+//            gotoScreen(MainActivity.class);
+//
+//        // TODO add clauses for enabled and disabled
+//    }
 
+    private void gotoScreen(Class c) {
+        startActivity(new Intent(this, c));
+    }
 
     // https://developer.android.com/training/permissions/requesting.html
     private void checkPhoneCallPermission() {

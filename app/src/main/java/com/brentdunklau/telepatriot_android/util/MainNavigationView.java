@@ -107,12 +107,14 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
 
     }
 
+    // See also MainActivity.onNavigationItemSelected()
     private MenuItem findMenuItemForRole(String role) {
         Map<String, String> rolesToMenuItems = new HashMap<String, String>();
         rolesToMenuItems.put("Volunteer", "My Mission");
         rolesToMenuItems.put("Director", "Directors");
         rolesToMenuItems.put("Admin", "Admins");
         rolesToMenuItems.put("Video Creator", "Video Chat");
+        rolesToMenuItems.put("Video Creator", "Video Offers");
         String title = rolesToMenuItems.get(role);
 
         Menu menu = getMenu();

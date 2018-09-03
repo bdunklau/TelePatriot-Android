@@ -33,6 +33,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".DisabledActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".LimboActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait">
@@ -48,6 +56,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.CALL_PRIVILEGED" />
                 <action android:name="android.intent.action.CALL" />
+                <action android:name="android.intent.action.ACTION_SEND" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ShowMeHowActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
 

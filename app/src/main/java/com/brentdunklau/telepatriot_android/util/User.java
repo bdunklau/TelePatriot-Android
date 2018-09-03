@@ -37,6 +37,14 @@ public class User implements FirebaseAuth.AuthStateListener {
     private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
     private String current_video_node_key;
+    private String phone;
+    private String residential_address_line1;
+    private String residential_address_line2;
+    private String residential_address_city;
+    private String residential_address_state_abbrev;
+    private String residential_address_zip;
+    private String state_upper_district;
+    private String state_lower_district;
 
     private Team currentTeam;
     //private List<Team> teams = new ArrayList<Team>();
@@ -77,23 +85,23 @@ public class User implements FirebaseAuth.AuthStateListener {
         childEventListener = new ChildEventAdapter();
         final String name = getName();
 
-        database.getReference("/no_roles/"+getUid()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // if dataSnapshot is null, then the user has been assigned to a role
-                // if not null, then we need to send the user to LimboActivity
-                Object o = dataSnapshot.getValue();
-                if(o != null ) {
-                    // send to LimboActivity
-                    fireNoRolesEvent();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+//        database.getReference("/no_roles/"+getUid()).addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                // if dataSnapshot is null, then the user has been assigned to a role
+//                // if not null, then we need to send the user to LimboActivity
+//                Object o = dataSnapshot.getValue();
+//                if(o != null ) {
+//                    // send to LimboActivity
+//                    fireNoRolesEvent();
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
 
         userRef = database.getReference("/users/"+getUid());
         // redundant because we're getting roles and topics below also
@@ -106,8 +114,10 @@ public class User implements FirebaseAuth.AuthStateListener {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 UserBean ub = dataSnapshot.getValue(UserBean.class);
-                if(ub != null)
+                if(ub != null) {
                     User.this.recruiter_id = ub.getRecruiter_id();
+                    redirectIfNotAllowed(ub);
+                }
             }
 
             @Override
@@ -192,6 +202,28 @@ public class User implements FirebaseAuth.AuthStateListener {
             @Override
             public void onCancelled(DatabaseError databaseError) { }
         });
+
+    }
+
+    private void redirectIfNotAllowed(UserBean ub) {
+        boolean isAllowed = Boolean.TRUE == ub.getHas_signed_petition()
+                && Boolean.TRUE == ub.getHas_signed_confidentiality_agreement()
+                && Boolean.FALSE == ub.getIs_banned();
+        boolean notAllowed = !isAllowed;
+        boolean isEnabled = "enabled".equalsIgnoreCase(ub.getAccount_disposition());
+        boolean isDisabled = !isEnabled;
+
+
+        if(isDisabled) {
+            fireAccountDisabled();
+        }
+        else if(notAllowed) {
+            fireNotAllowed();
+        }
+        else if(isEnabled) {
+            fireAccountEnabled();
+        }
+        else fireAllowed();
 
     }
 
@@ -362,9 +394,9 @@ public class User implements FirebaseAuth.AuthStateListener {
         return isVolunteer && !isDirector && !isAdmin && !isVideoCreator;
     }
 
-    public boolean hasAnyRole() {
-        return isAdmin || isDirector || isVolunteer || isVideoCreator;
-    }
+//    public boolean hasAnyRole() {
+//        return isAdmin || isDirector || isVolunteer || isVideoCreator;
+//    }
 
     @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
@@ -422,6 +454,70 @@ public class User implements FirebaseAuth.AuthStateListener {
         return currentTeam;
     }
 
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getResidential_address_line1() {
+        return residential_address_line1;
+    }
+
+    public void setResidential_address_line1(String residential_address_line1) {
+        this.residential_address_line1 = residential_address_line1;
+    }
+
+    public String getResidential_address_line2() {
+        return residential_address_line2;
+    }
+
+    public void setResidential_address_line2(String residential_address_line2) {
+        this.residential_address_line2 = residential_address_line2;
+    }
+
+    public String getResidential_address_city() {
+        return residential_address_city;
+    }
+
+    public void setResidential_address_city(String residential_address_city) {
+        this.residential_address_city = residential_address_city;
+    }
+
+    public String getResidential_address_state_abbrev() {
+        return residential_address_state_abbrev;
+    }
+
+    public void setResidential_address_state_abbrev(String residential_address_state_abbrev) {
+        this.residential_address_state_abbrev = residential_address_state_abbrev;
+    }
+
+    public String getResidential_address_zip() {
+        return residential_address_zip;
+    }
+
+    public void setResidential_address_zip(String residential_address_zip) {
+        this.residential_address_zip = residential_address_zip;
+    }
+
+    public String getState_upper_district() {
+        return state_upper_district;
+    }
+
+    public void setState_upper_district(String state_upper_district) {
+        this.state_upper_district = state_upper_district;
+    }
+
+    public String getState_lower_district() {
+        return state_lower_district;
+    }
+
+    public void setState_lower_district(String state_lower_district) {
+        this.state_lower_district = state_lower_district;
+    }
+
     public String getCurrentTeamName() {
         return currentTeam != null ? currentTeam.getTeam_name() : "No Team Selected";
     }
@@ -442,20 +538,61 @@ public class User implements FirebaseAuth.AuthStateListener {
         database.getReference("/users/"+getUid()+"/current_video_node_key").setValue(current_video_node_key);
     }
 
-    public void addAccountStatusEventListener(AccountStatusEvent.Listener l) {
+    public synchronized void addAccountStatusEventListener(AccountStatusEvent.Listener l) {
         if(!accountStatusEventListeners.contains(l))
             accountStatusEventListeners.add(l);
     }
 
+    public synchronized void removeAccountStatusEventListener(AccountStatusEvent.Listener l) {
+        accountStatusEventListeners.remove(l);
+    }
+
+    // means the user is allowed in to the app (has signed legal, not banned, not disabled)
+    private void fireAllowed() {
+        AccountStatusEvent.Allowed evt = new AccountStatusEvent.Allowed();
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
+        }
+    }
+
+    // means the user is not allowed in to the app (hasn't signed legal or is banned)
+    // They should be sent to LimboActivity
+    private void fireNotAllowed() {
+        AccountStatusEvent.NotAllowed evt = new AccountStatusEvent.NotAllowed();
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
+        }
+    }
+
+    // means the user's account is enabled.  Enabled doesn't mean too much.  It's "disabled"
+    // that you really want to pay attention to
+    private void fireAccountEnabled() {
+        AccountStatusEvent.AccountEnabled evt = new AccountStatusEvent.AccountEnabled();
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
+        }
+    }
+
+    // disabled results commonly from people leaving COS.  Their accounts are banned but we need
+    // a way of preventing access
+    private void fireAccountDisabled() {
+        AccountStatusEvent.AccountDisabled evt = new AccountStatusEvent.AccountDisabled();
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
+        }
+    }
+
+    // TODO get rid of this.  We are moving away from /no_roles in favor of actually checking
+    // TODO with CB to determine if they have signed both the petition and the CA
     // fired when the user is recorded under the /no_roles node
     // When this happens, the user is sent to the LimboActivity screen
     // assuming he hasn't been deactivated
-    private void fireNoRolesEvent() {
-        AccountStatusEvent.NoRoles nr = new AccountStatusEvent.NoRoles();
-        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
-            l.fired(nr);
-        }
-    }
+//    private void fireNoRolesEvent() {
+//        AccountStatusEvent.NoRoles nr = new AccountStatusEvent.NoRoles();
+//        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+//            l.fired(nr);
+//        }
+//    }
 
     private void fireRoleAdded(String role) {
         AccountStatusEvent.RoleAdded nr = new AccountStatusEvent.RoleAdded(role);

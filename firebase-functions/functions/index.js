@@ -300,5 +300,11 @@ exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
 exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 
+const videoOffers = require('./video-offers')
+exports.onVideoOffer = videoOffers.onVideoOffer
 
+const geocode = require('./geocode')
+exports.geocodeMain = geocode.geocodeMain
+exports.testLookupLatLong = geocode.testLookupLatLong
+exports.testLookupDistrict = geocode.testLookupDistrict
 

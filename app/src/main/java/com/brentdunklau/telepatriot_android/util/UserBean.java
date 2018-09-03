@@ -34,8 +34,9 @@ public class UserBean {
     private String residential_address_city;
     private String residential_address_state_abbrev;
     private String residential_address_zip;
-    private String legislative_house_district;
-    private String legislative_senate_district;
+    private String state_lower_district;
+    private String state_upper_district;
+    private String phone;
     private Double current_latitude;
     private Double current_longitude;
 
@@ -87,6 +88,14 @@ public class UserBean {
 
     public void setCreated(String created) {
         this.created = created;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getPhone() {
+        return phone;
     }
 
     public void setReviewed_by(String reviewed_by) {
@@ -266,20 +275,20 @@ public class UserBean {
         this.residential_address_zip = residential_address_zip;
     }
 
-    public String getLegislative_house_district() {
-        return legislative_house_district;
+    public String getState_lower_district() {
+        return state_lower_district;
     }
 
-    public void setLegislative_house_district(String legislative_house_district) {
-        this.legislative_house_district = legislative_house_district;
+    public void setState_lower_district(String state_lower_district) {
+        this.state_lower_district = state_lower_district;
     }
 
-    public String getLegislative_senate_district() {
-        return legislative_senate_district;
+    public String getState_upper_district() {
+        return state_upper_district;
     }
 
-    public void setLegislative_senate_district(String legislative_senate_district) {
-        this.legislative_senate_district = legislative_senate_district;
+    public void setState_upper_district(String state_upper_district) {
+        this.state_upper_district = state_upper_district;
     }
 
     public Double getCurrent_latitude() {
@@ -322,8 +331,8 @@ public class UserBean {
         m.put("residential_address_city", residential_address_city);
         m.put("residential_address_state_abbrev", residential_address_state_abbrev);
         m.put("residential_address_zip", residential_address_zip);
-        m.put("legislative_house_district", legislative_house_district);
-        m.put("legislative_senate_district", legislative_senate_district);
+        m.put("state_lower_district", state_lower_district);
+        m.put("state_upper_district", state_upper_district);
         m.put("current_latitude", current_latitude);
         m.put("current_longitude", current_longitude);
         m.put("has_signed_confidentiality_agreement", has_signed_confidentiality_agreement);

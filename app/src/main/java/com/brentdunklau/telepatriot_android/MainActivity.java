@@ -245,6 +245,8 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
+
+    // See MainNavigationView.findMenuItemForRole()
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -266,10 +268,16 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_admin_layout) {
             Fragment fragment = new AdminFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-        } else if (id == R.id.vidyo_chat){
+        }
+        else if (id == R.id.vidyo_chat){
             Fragment fragment = new VidyoChatFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-        } else if (id == R.id.video_invitations) {
+        }
+        else if (id == R.id.video_offers){
+            Fragment fragment = new VideoOffersFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
+        else if (id == R.id.video_invitations) {
             Fragment fragment = new VideoInvitationsFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
@@ -380,8 +388,18 @@ public class MainActivity extends AppCompatActivity
     // per AccountStatusEvent.Listener
     @Override
     public void fired(AccountStatusEvent evt) {
-        if(evt instanceof AccountStatusEvent.NoRoles)
+//        if(evt instanceof AccountStatusEvent.NoRoles) {
+//            startActivity(new Intent(this, LimboActivity.class));
+//            User.getInstance().removeAccountStatusEventListener(this);
+//        }
+        if(evt instanceof AccountStatusEvent.AccountDisabled) {
+            startActivity(new Intent(this, DisabledActivity.class));
+            User.getInstance().removeAccountStatusEventListener(this);
+        }
+        else if(evt instanceof AccountStatusEvent.NotAllowed) {
             startActivity(new Intent(this, LimboActivity.class));
+            User.getInstance().removeAccountStatusEventListener(this);
+        }
     }
 
 }

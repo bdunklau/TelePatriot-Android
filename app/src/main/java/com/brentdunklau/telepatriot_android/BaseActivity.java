@@ -48,85 +48,6 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
-/*
-    // https://stackoverflow.com/a/41931325
-    protected BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            showAlertDialog(intent.getExtras().getString("uid"),
-                    intent.getExtras().getString("title"),
-                    intent.getExtras().getString("message"));
-        }
-    };
-    */
-
-/*
-    protected void showAlertDialog(final String uid, String dataTitle, String dataMessage) {
-        if(uid == null || dataTitle == null || dataMessage == null)
-            return;
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Message");
-        builder.setMessage(dataTitle + "\n" + dataMessage);
-        // We COULD send the Admin right to AssignUserActivity for the new person that needs
-        // to be assigned, but there IS the possibility of clash between admins
-        // So for now, we'll send Admins to UnassignedUsersActivity because there, we display
-        // a note next to each new person if an Admin is already reviewing their account
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                Intent it = new Intent(BaseActivity.this, UnassignedUsersActivity.class);
-                //it.putExtra("uid", uid); // only needed if we send Admins to AssignUserActivity
-                startActivity(it);
-            }
-        });
-        builder.show();
-    }
-    */
-
-
-/*
-    // https://stackoverflow.com/a/41931325
-    @Override
-    protected void onStart() {
-        super.onStart();
-        LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
-                new IntentFilter("NewUser")
-        );
-    }
-
-    // https://stackoverflow.com/a/41931325
-    @Override
-    protected void onStop() {
-        super.onStop();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-    }
-    */
-
-
-/*
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            case(R.id.chat_help):
-                return true;
-            case(R.id.sign_out_menu):
-                signOut();
-                return true;
-            case(R.id.volunteer_view_menu):
-                //gotoScreen(VolunteerActivity.class);
-                return true;
-            case(R.id.director_view_menu):
-                gotoScreen(DirectorActivity.class);
-                return true;
-            case(R.id.admin_view_menu):
-                gotoScreen(AdminActivity.class);
-                return true;
-            default: return super.onOptionsItemSelected(item);
-        }
-    }
-    */
-
-
     private void gotoScreen(Class activity) {
         Intent it = new Intent(this, activity);
         startActivity(it);
@@ -203,27 +124,4 @@ public class BaseActivity extends AppCompatActivity {
         Log.d(cname, "resume");
     }
 
-
-    /*********
-     * Not swiping to change perspectives anymore, but this code, together with SlideIt and
-     * SwipeAdapter provide an example of how to do swiping
-     *
-    public void rightToLeft() {
-        Class onTheRight = onTheRight();
-        if(onTheRight != null) {
-            Intent it = new Intent(this, onTheRight());
-            startActivity(it);
-            overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
-        }
-    }
-
-    public void leftToRight() {
-        Class onTheLeft = onTheLeft();
-        if(onTheLeft != null) {
-            Intent it = new Intent(this, onTheLeft());
-            startActivity(it);
-            overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left);
-        }
-    }
-     **************/
 }

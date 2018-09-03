@@ -1594,20 +1594,7 @@ public class VidyoChatFragment extends BaseFragment
         // the YouTube video title and description using legislator name and contact info
         // Even though we only NEED this info before publishing, it makes more sense to ask for it
         // before recording starts.
-        simpleOKDialog("Choose a legislator before recording");
-    }
-
-    private void simpleOKDialog(String message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(myView.getContext());
-        builder.setMessage(message)
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        //do things
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
+        Util.simpleOKDialog(myView.getContext(), "Choose a legislator before recording");
     }
 
     /**
@@ -1915,6 +1902,10 @@ public class VidyoChatFragment extends BaseFragment
 //                break;
 //        }
 //    }
+
+    private void simpleOKDialog(String message) {
+        Util.simpleOKDialog(myView.getContext(), message);
+    }
 
     // The Connect button was pressed.
     // If not in a call, attempt to connect to the backend service.

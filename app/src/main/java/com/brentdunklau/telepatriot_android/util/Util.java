@@ -2,9 +2,12 @@ package com.brentdunklau.telepatriot_android.util;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.view.View;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -71,6 +74,43 @@ public class Util {
                 // result of the request.
             }
         }
+    }
+
+
+    public static void simpleOKDialog(Context ctx, String message) {
+        DialogInterface.OnClickListener l = new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                //do things
+            }
+        };
+        simpleOKDialog(ctx, message, l);
+    }
+
+
+    public static void simpleOKDialog(Context ctx, String message, DialogInterface.OnClickListener l) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        builder.setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton("OK", l);
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+
+    public static void simpleOKCancelDialog(Context ctx, String title, String message, DialogInterface.OnClickListener l) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        builder.setMessage(message)
+                .setTitle(title)
+                .setCancelable(true)
+                .setPositiveButton("OK", l)
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // User cancelled the dialog
+                    // nothing to do here - the dialog closes by default
+                }
+            });
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 
 }
