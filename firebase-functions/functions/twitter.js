@@ -59,7 +59,9 @@ exports.testTweet = functions.https.onRequest((req, res) => {
 exports.onTwitterPostId = functions.database.ref('video/list/{video_node_key}/twitter_post_id').onCreate(event => {
     // now see if we're supposed to post to FB also, and if we are, do we have the FB post id yet?...
     return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
-        var readyToSendEmails = (snapshot.val().post_to_facebook && snapshot.val().facebook_post_id) || !snapshot.val().post_to_facebook
+        var fbPostExists = snapshot.val().facebook_post_id
+        var fbPostNotRequired = !snapshot.val().post_to_facebook
+        var readyToSendEmails = fbPostExists || fbPostNotRequired
         if(readyToSendEmails)
             return snapshot.ref.child("ready_to_send_emails").set(true) // which fires yet another trigger: onReadyToSendEmails()
         else return false
@@ -95,8 +97,6 @@ var tweet = function(stuff) {
                                 var text = 'no text (that is bad)'
                                 if(stuff.tweet_request.text)
                                     text = stuff.tweet_request.text
-                                db.ref('templog2').set({error: error, text: text, event_data_val: stuff.tweet_request,
-                                                    date: date.asCentralTime(), date_ms: date.asMillis()})
                             } else {
                                 // data contains the data sent by twitter
                                 // don't try to log/debug the response object.  It contains a function

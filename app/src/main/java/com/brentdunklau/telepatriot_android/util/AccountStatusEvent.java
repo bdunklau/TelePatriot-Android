@@ -104,4 +104,16 @@ public class AccountStatusEvent {
         }
     }
 
+    public static class VideoInvitationExtended extends AccountStatusEvent {
+        public VideoInvitationExtended() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "video invitation extended");
+        }
+    }
+
+    public static class VideoInvitationRevoked extends AccountStatusEvent {
+        public VideoInvitationRevoked() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "video invitation revoked");
+        }
+    }
+
 }

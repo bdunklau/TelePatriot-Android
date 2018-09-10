@@ -49,12 +49,12 @@ exports.testSaveVideoType = functions.https.onRequest((req, res) => {
     updates['video_mission_description'] = req.body.video_mission_description
     updates['youtube_video_description'] = req.body.youtube_video_description
     updates['email_to_legislator_subject'] = req.body.email_to_legislator_subject
-    updates['email_to_legislator'] = req.body.email_to_legislator
-    updates['email_to_participants_subject'] = req.body.email_to_participants_subject
-    updates['email_to_participants'] = req.body.email_to_participants
+    updates['email_to_legislator_body'] = req.body.email_to_legislator_body
+    updates['email_to_participant_subject'] = req.body.email_to_participant_subject
+    updates['email_to_participant_body'] = req.body.email_to_participant_body
 
     return db.ref('video/types/'+req.body.video_type_key).update(updates).then(() => {
-        return xxxx(req, res)
+        return xxxx({req: req, res: res})
     })
 })
 
@@ -109,15 +109,15 @@ var getType = function(type) {
     html += '<b>Subject<b/><br/>'
     html += '<input type="text" name="email_to_legislator_subject" size="100" value="'+type.val().email_to_legislator_subject+'"><P/>'
     html += '<b>Message<b/><br/>'
-    html += '<textarea name="email_to_legislator" rows="10" cols="100">'+type.val().email_to_legislator+'</textarea><P/>'
+    html += '<textarea name="email_to_legislator_body" rows="10" cols="100">'+type.val().email_to_legislator_body+'</textarea><P/>'
     html += '<input type="submit" value="preview" formaction="/testPreviewLegislatorEmail"> '
     html += '<input type="submit" value="send" formaction="/testSendLegislatorEmail"><P/>'
 
     html += '<b>Email to Participants<b/><br/>'
     html += '<b>Subject<b/><br/>'
-    html += '<input type="text" name="email_to_participants_subject" size="100" value="'+type.val().email_to_participants_subject+'"><P/>'
+    html += '<input type="text" name="email_to_participant_subject" size="100" value="'+type.val().email_to_participant_subject+'"><P/>'
     html += '<b>Message<b/><br/>'
-    html += '<textarea name="email_to_participants" rows="10" cols="100">'+type.val().email_to_participants+'</textarea><P/>'
+    html += '<textarea name="email_to_participant_body" rows="10" cols="100">'+type.val().email_to_participant_body+'</textarea><P/>'
     html += '<input type="submit" value="save" />'
     html += '</form>'
     return html
@@ -136,7 +136,7 @@ exports.testSendLegislatorEmail = functions.https.onRequest((req, res) => {
 exports.testPreviewLegislatorEmail = functions.https.onRequest((req, res) => {
     return db.ref('video/types/'+req.body.video_type_key).once('value').then(snapshot => {
         var subject = snapshot.val().email_to_legislator_subject
-        var message = snapshot.val().email_to_legislator
+        var message = snapshot.val().email_to_legislator_body
         var to = "bdunklau@yahoo.com"
         var cc = "telepatriot@cosaction.com"
         var emailInfo = email.createLegislatorEmailRegardingVideo(subject, message, to, cc)

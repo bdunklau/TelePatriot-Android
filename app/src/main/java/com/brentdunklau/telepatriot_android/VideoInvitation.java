@@ -1,10 +1,15 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.content.Intent;
+import android.support.annotation.NonNull;
+
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.UserBean;
 import com.brentdunklau.telepatriot_android.util.Util;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
 import com.brentdunklau.telepatriot_android.util.VideoParticipant;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
@@ -259,30 +264,54 @@ public class VideoInvitation {
         updates.put("video/list/"+video_node_key+"/video_participants/"+guest_id, null);
         updates.put("video/invitations/"+key, null);
         updates.put("users/"+guest_id+"/current_video_node_key", null);
+        updates.put("users/"+guest_id+"/video_invitation_from", null);
+        updates.put("users/"+guest_id+"/video_invitation_from_name", null);
         FirebaseDatabase.getInstance().getReference().updateChildren(updates);
     }
 
+    // needs:  video_node_key, User.getInstance(), room_id
     public void accept() {
+//        Map values = new HashMap();
+//
+//        User.getInstance().setCurrent_video_node_key(video_node_key);
+//
+//        VideoParticipant videoParticipant = new VideoParticipant(User.getInstance());
+//        for(Object key : videoParticipant.map().keySet()) {
+//            String absPath = "video/list/"+video_node_key+"/video_participants/"+User.getInstance().getUid()+"/"+key;
+//            Object value = videoParticipant.map().get(key);
+//            values.put(absPath, value);
+//        }
+//
+//        // setting 'present' to true here because we are about to go to the Video Chat screen
+//        // Sure, we also set present=true onResume() and onStart() but ... anyway
+//        values.put("video/list/"+video_node_key+"/video_participants/"+User.getInstance().getUid()+"/present", true);
+//        values.put("video/list/"+video_node_key+"/room_id", getRoom_id());
+//        FirebaseDatabase.getInstance().getReference("/").updateChildren(values);
+
+        OnCompleteListener onComplete = new OnCompleteListener() {
+            @Override
+            public void onComplete(@NonNull Task task) { /* no op */ }
+        };
+        accept(video_node_key, User.getInstance(), getRoom_id(), onComplete);
+    }
+
+    public static void accept(String video_node_key, User user, String room_id, OnCompleteListener onComplete) {
         Map values = new HashMap();
-        if(User.getInstance().getCurrent_video_node_key() != null) {
-            values.put("video/list/"+User.getInstance().getCurrent_video_node_key()+"/video_participants/"+User.getInstance().getUid()+"/present", false);
-        }
 
-        User.getInstance().setCurrent_video_node_key(video_node_key);
+        user.setCurrent_video_node_key(video_node_key);
 
-        VideoParticipant videoParticipant = new VideoParticipant(User.getInstance());
+        VideoParticipant videoParticipant = new VideoParticipant(user);
         for(Object key : videoParticipant.map().keySet()) {
-            String absPath = "video/list/"+getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/"+key;
+            String absPath = "video/list/"+video_node_key+"/video_participants/"+user.getUid()+"/"+key;
             Object value = videoParticipant.map().get(key);
             values.put(absPath, value);
         }
 
         // setting 'present' to true here because we are about to go to the Video Chat screen
         // Sure, we also set present=true onResume() and onStart() but ... anyway
-        values.put("video/list/"+getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/present", true);
-        values.put("video/list/"+getVideo_node_key()+"/video_participants/"+User.getInstance().getUid()+"/vidyo_token_requested", true);
-        values.put("video/list/"+getVideo_node_key()+"/room_id", getRoom_id());
-        FirebaseDatabase.getInstance().getReference("/").updateChildren(values);
+        values.put("video/list/"+video_node_key+"/video_participants/"+user.getUid()+"/present", true);
+        values.put("video/list/"+video_node_key+"/room_id", room_id);
+        FirebaseDatabase.getInstance().getReference("/").updateChildren(values).addOnCompleteListener(onComplete);
     }
 
     public void decline() {

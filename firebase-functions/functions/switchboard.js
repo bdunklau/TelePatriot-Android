@@ -97,6 +97,7 @@ exports.onStartRecordingRequest = functions.database.ref('video/video_events/{ke
                 updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = date.asCentralTime()
                 updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = date.asMillis()
             })
+            // clear out any info from a
             return event.data.adminRef.root.child('/').update(updates).then(() => {
                 return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
                     var host
@@ -227,7 +228,14 @@ exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key
 exports.onPublishRequested = functions.database.ref('video/video_events/{key}').onCreate(event => {
     if(event.data.val().request_type && event.data.val().request_type == "start publishing") {
 
-        event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()}) // housekeeping: timestamp the event
+        // housekeeping: timestamp the event and clear out "ready_to_send_emails" because onReadyToSendEmails()
+        // only fires when ready_to_send_emails is created
+        var upd = {}
+        upd['video/video_events/date'] = date.asCentralTime()
+        upd['video/video_events/date_ms'] = date.asMillis()
+        upd['video/list/'+event.data.val().video_node_key+'/ready_to_send_emails'] = null
+        event.data.adminRef.root.child('/').update(upd)
+
         return event.data.adminRef.root.child('administration/hosts').once('value').then(snapshot => {
             var vmHost
             var vmPort

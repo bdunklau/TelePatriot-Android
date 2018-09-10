@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by bdunklau on 6/21/18.
+ * Add participants by calling VideoInvitation.accept()
  */
 
 public class VideoParticipant {
@@ -58,7 +58,6 @@ public class VideoParticipant {
         m.put("end_date_ms", end_date_ms);
         m.put("role", role);
         m.put("present", present);
-//        m.put("vidyo_token", vidyo_token); // don't use this anymore 8/10/18
         m.put("twilio_token", twilio_token);
         m.put("twilio_token_record", twilio_token_record);
         return m;
@@ -111,14 +110,6 @@ public class VideoParticipant {
     public void setStart_date_ms(long start_date_ms) {
         this.start_date_ms = start_date_ms;
     }
-
-//    public String getVidyo_token() {
-//        return vidyo_token;
-//    }
-//
-//    public void setVidyo_token(String vidyo_token) {
-//        this.vidyo_token = vidyo_token;
-//    }
 
 
     public String getPhone() {

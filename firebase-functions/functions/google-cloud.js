@@ -875,219 +875,6 @@ var getConstituent = function(participants) {
 
 
 
-
-var getVideoNode = function(video_node_key) {
-    return db.ref('video/list/'+video_node_key).once('value').then(snapshot => {
-        return snapshot.val()
-    })
-}
-
-
-var evaluate_youtube_video_description = function(videoNode) {
-    // evaluate_video_and_email() makes sure that participants exist before calling this method
-
-    var description = videoNode.youtube_video_description_unevaluated
-    var ch = videoNode.legislator_chamber && videoNode.legislator_chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
-    var rep = videoNode.legislator_chamber && videoNode.legislator_chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
-    var constituent = getConstituent(videoNode.video_participants).name
-
-    var replace = [
-        {"this": "constituent_name", "withThat": constituent},
-        {"this": "legislator_chamber_abbrev", "withThat": ch},
-        {"this": "legislator_district", "withThat": videoNode.legislator_district},
-        {"this": "legislator_email", "withThat": videoNode.legislator_email},
-        // TODO would be better to just not include fb and tw handles if they're not known - othwerwise you get http://www.faceboo.com/undefined  that looks crappy
-        {"this": "legislator_facebook", "withThat": videoNode.legislator_facebook},
-        {"this": "legislator_facebook_id", "withThat": videoNode.legislator_facebook_id},
-        {"this": "legislator_twitter", "withThat": videoNode.legislator_twitter},
-        {"this": "legislator_rep_type", "withThat": rep},
-        {"this": "legislator_full_name", "withThat": videoNode.legislator_full_name},
-        {"this": "legislator_phone", "withThat": videoNode.legislator_phone}
-    ]
-
-    // "internal confusion" about whether I should be using _abbrev or not  LOL
-    if(videoNode.legislator_state_abbrev) {
-        replace.push({"this": "legislator_state_abbrev_upper", "withThat": videoNode.legislator_state_abbrev.toUpperCase()})
-    }
-    else if(videoNode.legislator_state) {
-        replace.push({"this": "legislator_state_abbrev_upper", "withThat": videoNode.legislator_state.toUpperCase()})
-    }
-
-    _.each(replace, function(rep) {
-        description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
-    })
-    return description
-}
-
-var evaluate_video_title = function(videoNode) {
-    // evaluate_video_and_email() makes sure that participants exist before calling this method
-
-    // construct the video title...
-    var constituent = getConstituent(videoNode.video_participants)
-    var from = ' from '+constituent.name
-
-    var to = ''
-    // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
-    var rep = videoNode.legislator_chamber == 'lower' ? 'Rep' : 'Sen'
-    var ch = videoNode.legislator_chamber == 'lower' ? 'HD' : 'SD'
-    var video_title = videoNode.video_type+from+' to '+rep+' '+videoNode.legislator_first_name+' '+videoNode.legislator_last_name+' ('+videoNode.legislator_state_abbrev.toUpperCase()+' '+ch+' '+videoNode.legislator_district+')'
-    return video_title
-}
-
-
-var evaluate_email_to_legislator_body = function(videoNode) {
-    // evaluate_video_and_email() makes sure that participants exist before calling this method
-
-    var constituent = getConstituent(videoNode.video_participants)
-
-    var replace = [
-        {"this": "constituent_name", "withThat": constituent.name},
-
-        {"this": "constituent_address", "withThat": ""},  // not there yet 8/24/18
-        {"this": "constituent_city", "withThat": ""},     // not there yet 8/24/18
-        {"this": "constituent_state", "withThat": ""},    // not there yet 8/24/18
-        {"this": "constituent_zip", "withThat": ""},      // not there yet 8/24/18
-        {"this": "constituent_phone", "withThat": ""},    // not there yet 8/24/18
-        {"this": "constituent_email", "withThat": constituent.email},
-
-        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
-        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
-        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name},
-        {"this": "request_based_on_cos_position", "withThat": ""}, // not there yet 8/24/18
-
-        {"this": "video_url", "withThat": videoNode.video_url},
-        {"this": "facebook_post", "withThat": 'https://www.facebook.com/'+videoNode.facebook_post_id},
-        {"this": "tweet", "withThat": 'https://www.twitter.com/'+videoNode.twitter_post_id}
-    ]
-
-    var email_to_legislator_body = videoNode.email_to_legislator_body_unevaluated
-    _.each(replace, function(rep) {
-        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp(rep['this'],"g"), rep['withThat'])
-    })
-
-    // conditionally include the text in the email between post_to_facebook:begin and post_to_facebook:end
-    if(videoNode.post_to_facebook && videoNode.facebook_post_id) {
-        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_facebook:begin',"g"), '')
-        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_facebook:end',"g"), '')
-    }
-    else {
-        var p1 = email_to_legislator_body.substring(0, email_to_legislator_body.indexOf('post_to_facebook:begin'))
-        var p2 = email_to_legislator_body.substring(email_to_legislator_body.indexOf('post_to_facebook:end') + 'post_to_facebook:end'.length)
-        email_to_legislator_body = p1 + p2
-    }
-
-    // conditionally include the text in the email between post_to_twitter:begin and post_to_twitter:end
-    if(videoNode.post_to_twitter && videoNode.twitter_post_id) {
-        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_twitter:begin',"g"), '')
-        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_twitter:end',"g"), '')
-    }
-    else {
-        var p1 = email_to_legislator_body.substring(0, email_to_legislator_body.indexOf('post_to_twitter:begin'))
-        var p2 = email_to_legislator_body.substring(email_to_legislator_body.indexOf('post_to_twitter:end') + 'post_to_twitter:end'.length)
-        email_to_legislator_body = p1 + p2
-    }
-    return email_to_legislator_body
-}
-
-
-var evaluate_email_to_legislator_subject = function(videoNode) {
-    // evaluate_video_and_email() makes sure that participants exist before calling this method
-
-    var constituent = getConstituent(videoNode.video_participants)
-
-    var replace = [
-        {"this": "constituent_name", "withThat": constituent.name},
-        {"this": "video_type", "withThat": videoNode.video_type}
-    ]
-
-    var email_to_legislator_subject = videoNode.email_to_legislator_subject_unevaluated
-    _.each(replace, function(rep) {
-        email_to_legislator_subject = _.replace(email_to_legislator_subject, new RegExp(rep['this'],"g"), rep['withThat'])
-    })
-    return email_to_legislator_subject
-}
-
-
-var evaluate_email_to_participant_body = function(videoNode) {
-    // evaluate_video_and_email() makes sure that participants exist before calling this method
-
-    var constituent = getConstituent(videoNode.video_participants)
-
-    var replace = [
-        {"this": "constituent_name", "withThat": constituent.name},
-        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
-        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
-        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name},
-        {"this": "legislator_phone", "withThat": videoNode.legislator_phone},
-        {"this": "video_url", "withThat": videoNode.video_url},
-        {"this": "facebook_post", "withThat": 'https://www.facebook.com/'+videoNode.facebook_post_id},
-        {"this": "tweet", "withThat": 'https://www.twitter.com/'+videoNode.twitter_post_id}
-    ]
-
-    var email_to_participant_body = videoNode.email_to_participant_body_unevaluated
-    _.each(replace, function(rep) {
-        email_to_participant_body = _.replace(email_to_participant_body, new RegExp(rep['this'],"g"), rep['withThat'])
-    })
-
-    // conditionally include the text in the email between post_to_facebook:begin and post_to_facebook:end
-    if(videoNode.post_to_facebook && videoNode.facebook_post_id) {
-        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_facebook:begin',"g"), '')
-        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_facebook:end',"g"), '')
-    }
-    else {
-        var p1 = email_to_participant_body.substring(0, email_to_participant_body.indexOf('post_to_facebook:begin'))
-        var p2 = email_to_participant_body.substring(email_to_participant_body.indexOf('post_to_facebook:end') + 'post_to_facebook:end'.length)
-        email_to_participant_body = p1 + p2
-    }
-
-    // conditionally include the text in the email between post_to_twitter:begin and post_to_twitter:end
-    if(videoNode.post_to_twitter && videoNode.twitter_post_id) {
-        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_twitter:begin',"g"), '')
-        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_twitter:end',"g"), '')
-    }
-    else {
-        var p1 = email_to_participant_body.substring(0, email_to_participant_body.indexOf('post_to_twitter:begin'))
-        var p2 = email_to_participant_body.substring(email_to_participant_body.indexOf('post_to_twitter:end') + 'post_to_twitter:end'.length)
-        email_to_participant_body = p1 + p2
-    }
-    return email_to_participant_body
-}
-
-
-var evaluate_email_to_participant_subject = function(videoNode) {
-    // evaluate_video_and_email() makes sure that participants exist before calling this method
-
-    var replace = [
-        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
-        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
-        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name}
-    ]
-
-    var email_to_participant_subject = videoNode.email_to_participant_subject_unevaluated
-    _.each(replace, function(rep) {
-        email_to_participant_subject = _.replace(email_to_participant_subject, new RegExp(rep['this'],"g"), rep['withThat'])
-    })
-    return email_to_participant_subject
-}
-
-
-exports.evaluate_video_and_email = function(video_node_key) {
-    return getVideoNode(video_node_key).then(videoNode => {
-        if(!videoNode.video_participants || videoNode.video_participants.length == 0)
-            return false
-
-        var updates = {}
-        updates['video/list/'+video_node_key+'/email_to_legislator_body'] = evaluate_email_to_legislator_body(videoNode)
-        updates['video/list/'+video_node_key+'/email_to_legislator_subject'] = evaluate_email_to_legislator_subject(videoNode)
-        updates['video/list/'+video_node_key+'/email_to_participant_body'] = evaluate_email_to_participant_body(videoNode)
-        updates['video/list/'+video_node_key+'/email_to_participant_subject'] = evaluate_email_to_participant_subject(videoNode)
-        updates['video/list/'+video_node_key+'/youtube_video_description'] = evaluate_youtube_video_description(videoNode)
-        updates['video/list/'+video_node_key+'/video_title'] = evaluate_video_title(videoNode)
-        return db.ref('/').update(updates)
-    })
-}
-
-
 /************
 when leg_id changes, re-evaluate the node's:
     email_to_legislator_body
@@ -1101,7 +888,7 @@ Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
 exports.onLegislatorChosen = functions.database.ref('video/list/{video_node_key}/leg_id').onWrite(event => {
     // leg_id should never go from non-null back to null
-    return exports.evaluate_video_and_email(event.params.video_node_key)
+    return email.evaluate_video_and_email(event.params.video_node_key)
 })
 
 
@@ -1120,7 +907,7 @@ is in these attributes.  The constituent is always the person added most recentl
 Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
 exports.onParticipantAdded = functions.database.ref('video/list/{key}/video_participants').onCreate(event => {
-    return exports.evaluate_video_and_email(event.params.video_node_key)
+    return email.evaluate_video_and_email(event.params.video_node_key)
 })
 
 
@@ -1138,7 +925,7 @@ is in these attributes.  The constituent is always the person added most recentl
 Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
 exports.onParticipantRemoved = functions.database.ref('video/list/{key}/video_participants').onDelete(event => {
-    return exports.evaluate_video_and_email(event.params.video_node_key)
+    return email.evaluate_video_and_email(event.params.video_node_key)
 })
 
 
@@ -1289,7 +1076,19 @@ exports.whenVideoIdIsCreated = functions.database.ref('video/list/{video_node_ke
     // They will be either be true or false
 
     var video_url = 'https://www.youtube.com/watch?v='+event.data.val().video_id
-    return event.data.ref.child('video_url').set(video_url).then(() => {
+    var updates = {}
+    updates['video/list/'+event.params.video_node_key+'/video_url'] = video_url
+    var dontPostToFB = !event.data.val().post_to_facebook
+    var dontPostToTwitter = !event.data.val().post_to_twitter
+
+    if(dontPostToFB && dontPostToTwitter) {
+//        If this is true, then this write will trigger onReadyToSendEmails()
+//        onReadyToSendEmails() is what actually sends then emails to the legislator and the participants
+        updates['video/list/'+event.params.video_node_key+'/ready_to_send_emails'] = true
+    }
+
+    return event.data.adminRef.root.child('/').update(updates).then(() => {
+
         // construct the email that gets sent to the participants
 
         if(event.data.val().post_to_facebook) {
@@ -1386,168 +1185,6 @@ start the recording
 WHAT DO WE EXPECT TO HAPPEN HERE?...
 *************************************************************/
 exports.dockerRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
-//    // ignore deletes...
-//    if(!event.data.val()) {
-//        return false
-//    }
-//
-//    // ignore malformed...
-//    if(!event.data.val().request_type) {
-//        return false
-//    }
-//    var type = event.data.val().request_type
-//
-//    // We actually have to move the participants to ANOTHER room that has recording enabled.  Rooms are either recording-enabled or they're not.
-//    // So we will create a new room here and prepend the name of the room with 'record' so that twilio-telepatriot.js:createRoom()
-//    // will create the room with recording enabled.
-//    if(type == 'start recording') {
-//
-//        taking all this out.  Instead, "start recording" is going to be a "disconnect request" followed by a "connect request"
-//        on a room prepended with 'record'
-//
-//
-//        // first thing, write recording_requested:true to the video node so that both clients can listen for this attribute
-//        // why?  so that both clients can show the spinner while the recorder is starting up.
-//        var updates = {}
-//        updates['video/list/'+event.data.val().video_node_key+'/recording_requested'] = true // what makes the spinner start spinning on mobile clients
-//        updates['video/list/'+event.data.val().video_node_key+'/recording_started'] = null  // TODO Can we set these 2 to current time here now?  Now that we are recording using twilio (just creating a different room that's recording enabled?)
-//        updates['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = null
-//        updates['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = null
-//        updates['video/list/'+event.data.val().video_node_key+'/recording_stopped_ms'] = null
-//        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started'] = null
-//        updates['administration/dockers/'+event.data.val().docker_key+'/recording_started_ms'] = null
-//        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped'] = null
-//        updates['administration/dockers/'+event.data.val().docker_key+'/recording_stopped_ms'] = null
-//        return db.ref('/').update(updates).then(() => {
-//
-//        })
-//
-//
-//        db.ref('templog2').push().set({dockerRequest: 'OK: type = start recording', date: date.asCentralTime()})
-//
-//        //find the first 'virtual machine' node from /administration/hosts
-//        return db.ref('administration/hosts').orderByChild('type').equalTo('virtual machine').limitToFirst(1).once('value').then(snapshot => {
-//            // TODO error handling if no vm's found?  This should never be the case because we hand jam the vm into the database
-//
-//            var vm
-//            snapshot.forEach(function(child) {
-//                vm = child.val()
-//            })
-//
-//            db.ref('templog2').push().set({check: 'check vm', vm: vm, date: date.asCentralTime()})
-//
-//            // then find all /administration/dockers nodes that match the vm's 'host' value (an IP address)
-//            return event.data.adminRef.root.child('administration/dockers').orderByChild('vm_host').equalTo(vm.host).once('value').then(snapshot => {
-//                var dockers = []
-//                snapshot.forEach(function(child) {
-//                    dockers.push({key: child.key, docker: child.val()})
-//                })
-//                db.ref('templog2').push().set({dockerRequest: 'CHECK: dockers.length = '+dockers.length, date: date.asCentralTime()})
-//                var availableDockers = _.filter(dockers, function(docker) {
-//                    return docker.docker.running && !docker.docker.recording
-//                })
-//
-//                db.ref('templog2').push().set({dockerRequest: 'CHECK: availableDockers...', date: date.asCentralTime()})
-//                if(availableDockers) db.ref('templog2').push().set({availableDockers: availableDockers})
-//
-//                if(!availableDockers || availableDockers.length == 0) {
-//                    db.ref('templog2').push().set({dockerRequest: 'nothing available - looking for stopped dockers...', date: date.asCentralTime()})
-//                    var stoppedDockers = _.filter(dockers, function(docker) {
-//                        return !docker.docker.running
-//                    })
-//                    if(!stoppedDockers || stoppedDockers.length == 0) {
-//                        db.ref('templog2').push().set({dockerRequest: 'hmmm... no stopped dockers either', date: date.asCentralTime()})
-//                        // create a new docker instance, then start the recording
-//                        return createDocker({vm_host: vm.host,
-//                                             vm_port: vm.port,
-//                                             video_node_key: event.data.val().video_node_key,
-//                                             callback: onDockerCreation,
-//                                             nextAction: startRecording})
-//                    }
-//                    else {
-//                        var selectedDocker = stoppedDockers[0]
-//                        db.ref('templog2').push().set({dockerRequest: 'OK: at least we found a stopped docker', date: date.asCentralTime()})
-//                        db.ref('templog2').push().set({stoppedDocker: selectedDocker, date: date.asCentralTime()})
-//                        // found a docker, it just wasn't running, so start it...
-//
-//                        return startDocker({vm_host: vm.host,
-//                                            vm_port: vm.port,
-//                                            docker_name: selectedDocker.docker.name,
-//                                            // for startRecording...
-//                                            docker: selectedDocker.docker,
-//                                            video_node_key: event.data.val().video_node_key,
-//                                            room_id: event.data.val().room_id,
-//                                            //unique_file_ext: event.data.val().unique_file_ext, // get from video/list node instead
-//                                            callback: startRecording })
-//                    }
-//                }
-//                else {
-//                    var selectedDocker = availableDockers[0]
-//                    startRecording({vm_host: vm.host,
-//                                   vm_port: vm.port,
-//                                   docker: selectedDocker.docker,
-//                                   docker_key: selectedDocker.key,
-//                                   video_node_key: event.data.val().video_node_key,
-//                                   //unique_file_ext: event.data.val().unique_file_ext, // get from video/list node instead
-//                                   room_id: event.data.val().room_id})
-//                }
-//            })
-//        })
-//    }
-//    else if(type == 'stop recording') {
-//        Taking all this out too.  "stop recording" is now the same as "disconnect request"
-//        // construct the url to the virtual machine to tell it to stop recording...
-//        return db.ref('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
-//            var video_node = snapshot.val()
-//            var args = {video_node_key: event.data.val().video_node_key,
-//                        vm_host: video_node.vm_host,
-//                        vm_port: video_node.vm_port,
-//                        docker_name: video_node.docker_name,
-//                        docker_key: video_node.docker_key}
-//            return stopRecording(args)
-//        })
-//    }
-//    if(type == 'start publishing') {
-//
-//        return event.data.adminRef.root.child('administration/hosts').orderByChild('type')
-//            .equalTo('firebase functions').limitToFirst(1).once('value').then(snapshot => {
-//
-//            var firebase_host
-//            snapshot.forEach(function(child) { firebase_host = child.val().host })
-//
-//            return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
-//
-//                snapshot.ref.update({publishing_started: date.asCentralTime(), publishing_started_ms: date.asMillis()})
-//
-//                var vm_host = snapshot.val().vm_host
-//                var vm_port = snapshot.val().vm_port
-//                var title = snapshot.val().video_title
-//                var description = snapshot.val().youtube_video_description
-//                var docker_name = snapshot.val().docker_name
-//                var uid = event.data.val().uid
-//                var callbackurl = 'https://'+firebase_host+'/video_processing_callback?video_node_key='+event.data.val().video_node_key // assume port 80
-//
-//                // See ~/nodejs/index.js on the virtual machines
-//                var vmUrl = 'http://'+vm_host+':'+vm_port+'/publish?title='+title
-//                    +'&description='+description+'&docker_name='+docker_name+'&uid='+uid+'&callbackurl='+callbackurl
-//
-//                return request(vmUrl, function(error, response, body) {
-//                    // response doesn't matter because we have passed a callback url that will be called
-//                    // when the uploading begins and ends.
-//                    if(error) {
-//                        event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/publishing_error')
-//                            .set({date: date.asCentralTime(), date_ms: date.asMillis(), error: error, vm_url: vmUrl})
-//                    }
-//                })
-//
-//            })
-//
-//        })
-//
-//    }
-//
-//    // ignore all others...
-//    else
     return false
 })
 

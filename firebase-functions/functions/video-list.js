@@ -9,7 +9,7 @@ const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const date = require('./dateformat')
-const googleCloud = require('./google-cloud')
+const email = require('./email')
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -53,7 +53,7 @@ exports.testSaveEmailTemplates = functions.https.onRequest((req, res) => {
 // re-evaluates the _unevaluate attributes in the database.  This method does NOT look at what's entered in
 // the text fields and text areas.  Save first, then re-evaluate.
 exports.testReevaluateEmailAttributes = functions.https.onRequest((req, res) => {
-    return googleCloud.evaluate_video_and_email(req.body.video_node_key).then(() => {
+    return email.evaluate_video_and_email(req.body.video_node_key).then(() => {
 
         return showPage({video_node_key: req.body.video_node_key}).then(html => {
             return res.status(200).send(html)

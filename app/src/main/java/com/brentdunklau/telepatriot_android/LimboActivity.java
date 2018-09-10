@@ -1,16 +1,26 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.IdRes;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.CBAPIEvent;
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.VideoNode;
+import com.brentdunklau.telepatriot_android.util.VideoParticipant;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -29,7 +39,8 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
     private TextView welcome_heading;
     private TextView limboExplanation;
     private TextView access_limited_description;
-    private Button show_me_how_button;
+    private Button show_me_how_button;      // hidden when a video invitation has been extended to this person
+    private Button video_invitation_button; // only visible when a video invitation has been extended to this person
     private TextView full_access_description;
     private TextView legal_requirement_1_heading;
     private TextView legal_requirement_1;
@@ -41,9 +52,15 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
     private TextView when_finished;
     private Button done_button;
 
+    private static final String ACCESS_LIMITED_DESCRIPTION = "You currently have Limited Access to TelePatriot.  With Limited Access, you can " +
+            "record video messages of support for the Convention of States and this app will automatically upload them to YouTube," +
+            "Facebook and Twitter.  Click SHOW ME HOW to find out how.";
+
+    private static final String YOUVE_BEEN_INVITED_MESSAGE = " has invited you to participate in a video call.  Click \"VIDEO CALL - YOU'RE INVITED!\" to join ";
+
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_limbo);
 
@@ -51,6 +68,7 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
         limboExplanation = findViewById(R.id.limboExplanation);
         access_limited_description = findViewById(R.id.access_limited_description);
         show_me_how_button = findViewById(R.id.show_me_how_button);
+        video_invitation_button = findViewById(R.id.video_invitation_button);
         full_access_description = findViewById(R.id.full_access_description);
 
 //        You do have limited access to TelePatriot even before meeting the legal requirements described below.
@@ -103,7 +121,36 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
             }
         });
 
+        video_invitation_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startVideoChat();
+            }
+        });
+
         User.getInstance().addAccountStatusEventListener(this);
+        // This ---^ misses the first events from User.  This affects the cases of
+        // VideoInvitationExtended and VideoInvitationRevoked, so check the User attributes
+        // that may have fired these events...
+        if(User.getInstance().getVideo_invitation_from() != null)
+            fired(new AccountStatusEvent.VideoInvitationExtended());
+        else
+            fired(new AccountStatusEvent.VideoInvitationRevoked());
+    }
+
+    /**
+     * Called from the video_invitation_button
+     * Adds the user as a participant on the video node, then sends the user to the VideoChatActivity
+     */
+    private void startVideoChat() {
+        OnCompleteListener onComplete = new OnCompleteListener() {
+            @Override
+            public void onComplete(@NonNull Task task) {
+                startActivity(new Intent(LimboActivity.this, VideoChatActivity.class));
+            }
+        };
+        String room_id = User.getInstance().getCurrent_video_node_key(); // generally always true?
+        VideoInvitation.accept(User.getInstance().getCurrent_video_node_key(), User.getInstance(), room_id, onComplete);
     }
 
     @Override
@@ -185,6 +232,16 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
         }
         else if(evt instanceof AccountStatusEvent.AccountDisabled) {
             startActivity(new Intent(this, DisabledActivity.class));
+        }
+        else if(evt instanceof AccountStatusEvent.VideoInvitationExtended) {
+            show_me_how_button.setVisibility(View.INVISIBLE);
+            video_invitation_button.setVisibility(View.VISIBLE);
+            access_limited_description.setText(User.getInstance().getVideo_invitation_from_name()+YOUVE_BEEN_INVITED_MESSAGE+User.getInstance().getVideo_invitation_from_name());
+        }
+        else if(evt instanceof AccountStatusEvent.VideoInvitationRevoked) {
+            show_me_how_button.setVisibility(View.VISIBLE);
+            video_invitation_button.setVisibility(View.INVISIBLE);
+            access_limited_description.setText(ACCESS_LIMITED_DESCRIPTION);
         }
     }
 }

@@ -45,6 +45,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     private String residential_address_zip;
     private String state_upper_district;
     private String state_lower_district;
+    private String video_invitation_from; // uid of someone that invited this person to a video chat
+    private String video_invitation_from_name; // name of someone that invited this person to a video chat
 
     private Team currentTeam;
     //private List<Team> teams = new ArrayList<Team>();
@@ -115,8 +117,16 @@ public class User implements FirebaseAuth.AuthStateListener {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 UserBean ub = dataSnapshot.getValue(UserBean.class);
                 if(ub != null) {
-                    User.this.recruiter_id = ub.getRecruiter_id();
                     redirectIfNotAllowed(ub);
+                    User.this.recruiter_id = ub.getRecruiter_id();
+                    if(ub.getVideo_invitation_from()!=null && User.this.video_invitation_from == null) {
+                        fireVideoInvitationExtended();
+                    }
+                    if(ub.getVideo_invitation_from()==null && User.this.video_invitation_from != null) {
+                        fireVideoInvitationRevoked();
+                    }
+                    User.this.video_invitation_from = ub.getVideo_invitation_from();
+                    User.this.video_invitation_from_name = ub.getVideo_invitation_from_name();
                 }
             }
 
@@ -518,6 +528,22 @@ public class User implements FirebaseAuth.AuthStateListener {
         this.state_lower_district = state_lower_district;
     }
 
+    public String getVideo_invitation_from() {
+        return video_invitation_from;
+    }
+
+    public void setVideo_invitation_from(String video_invitation_from) {
+        this.video_invitation_from = video_invitation_from;
+    }
+
+    public String getVideo_invitation_from_name() {
+        return video_invitation_from_name;
+    }
+
+    public void setVideo_invitation_from_name(String video_invitation_from_name) {
+        this.video_invitation_from_name = video_invitation_from_name;
+    }
+
     public String getCurrentTeamName() {
         return currentTeam != null ? currentTeam.getTeam_name() : "No Team Selected";
     }
@@ -610,6 +636,20 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     private void fireTeamSelected(Team team) {
         AccountStatusEvent.TeamSelected evt = new AccountStatusEvent.TeamSelected(team.getTeam_name());
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
+        }
+    }
+
+    private void fireVideoInvitationExtended() {
+        AccountStatusEvent.VideoInvitationExtended evt = new AccountStatusEvent.VideoInvitationExtended();
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
+        }
+    }
+
+    private void fireVideoInvitationRevoked() {
+        AccountStatusEvent.VideoInvitationRevoked evt = new AccountStatusEvent.VideoInvitationRevoked();
         for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
             l.fired(evt);
         }

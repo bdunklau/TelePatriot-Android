@@ -102,9 +102,18 @@ public class SearchUsersDlg extends Dialog {
                                         VideoInvitation inv = new VideoInvitation(User.getInstance(), guest, currentVideoNode.getKey());
                                         String key = inv.save();
                                         Map updates = new HashMap();
-                                        updates.put("video_invitation_key", key);
-                                        updates.put("video_invitation_extended_to", guest.getName());
-                                        FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey()).updateChildren(updates);
+//                                        updates.put("video_invitation_key", key);
+//                                        updates.put("video_invitation_extended_to", guest.getName());
+//                                        FirebaseDatabase.getInstance().getReference("video/list/"+currentVideoNode.getKey()).updateChildren(updates);
+
+                                        updates.put("video/list/"+currentVideoNode.getKey()+"/video_invitation_key", key);
+                                        updates.put("video/list/"+currentVideoNode.getKey()+"/video_invitation_extended_to", guest.getName());
+                                        updates.put("users/"+uid+"/video_invitation_from", User.getInstance().getUid());
+                                        updates.put("users/"+uid+"/video_invitation_from_name", User.getInstance().getName());
+                                        updates.put("users/"+uid+"/current_video_node_key", User.getInstance().getCurrent_video_node_key());
+                                        FirebaseDatabase.getInstance().getReference("/").updateChildren(updates);
+
+
                                         SearchUsersDlg.this.dismiss();
                                     }
 

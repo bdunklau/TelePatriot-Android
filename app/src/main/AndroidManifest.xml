@@ -68,6 +68,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".VideoChatActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">

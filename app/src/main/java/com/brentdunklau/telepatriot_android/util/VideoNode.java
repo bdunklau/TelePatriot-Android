@@ -22,13 +22,6 @@ public class VideoNode {
     // the VidyoChatFragment)
     private Map<String, VideoParticipant> video_participants = new HashMap<String, VideoParticipant>();
 
-    private String video_type;
-    private String video_id;
-    private String video_title;
-    private String youtube_video_description;
-    private String youtube_video_description_unevaluated; // need this so you can re-evaluate when legislator or constituent changes
-    private String video_mission_description;
-
     // these are the evaluated values corresponding to the fields in VideoType
     // In VideoType, these fields have values containing placeholders like (constituent name)
     // and (legislator)
@@ -36,11 +29,15 @@ public class VideoNode {
     private String email_to_legislator_body_unevaluated;
     private String email_to_legislator_subject;
     private String email_to_legislator_subject_unevaluated;
+    private String email_to_legislator_send_date;
+    private Long email_to_legislator_send_date_ms;
     private String email_to_participant_body;
     private String email_to_participant_body_unevaluated;
     private String email_to_participant_subject;
     private String email_to_participant_subject_unevaluated;
-
+    private String email_to_participant_send_date;
+    private Long email_to_participant_send_date_ms;
+    private String facebook_post_id;
     private String room_id;
     private String room_sid;        // the twilio RoomSid
     private String room_sid_record; // the twilio RoomSid of the recorded room
@@ -57,6 +54,13 @@ public class VideoNode {
     private boolean email_to_legislator = true;
     private boolean post_to_facebook = true;
     private boolean post_to_twitter = true;
+    private String twitter_post_id;
+    private String video_type;
+    private String video_id;
+    private String video_title;
+    private String youtube_video_description;
+    private String youtube_video_description_unevaluated; // need this so you can re-evaluate when legislator or constituent changes
+    private String video_mission_description;
 
     // These attributes are sent back to us from twilio.  Twilio calls twilioCallback() in twilio-telepatriot.js
     // see video/video_events and /testViewVideoEvents
@@ -113,11 +117,7 @@ public class VideoNode {
         FirebaseDatabase.getInstance().getReference("video/list/"+key).setValue(map());
     }
 
-    public void addParticipant(User user) {
-        VideoParticipant vp = new VideoParticipant(user);
-        int idx = video_participants.size();
-        FirebaseDatabase.getInstance().getReference("video/list/"+key+"/video_participants/"+idx).setValue(vp.map());
-    }
+    // VideoInvitation.accept() is how you add a participant
 
     private Map map() {
         Map m = new HashMap();
@@ -139,6 +139,12 @@ public class VideoNode {
         m.put("email_to_participant_body_unevaluated", email_to_participant_body_unevaluated);
         m.put("email_to_participant_subject", email_to_participant_subject);
         m.put("email_to_participant_subject_unevaluated", email_to_participant_subject_unevaluated);
+        m.put("email_to_legislator_send_date", email_to_legislator_send_date);
+        m.put("email_to_legislator_send_date_ms", email_to_legislator_send_date_ms);
+        m.put("email_to_participant_send_date", email_to_participant_send_date);
+        m.put("email_to_participant_send_date_ms", email_to_participant_send_date_ms);
+        m.put("facebook_post_id", facebook_post_id);
+        m.put("twitter_post_id", twitter_post_id);
 
         m.put("recording_started", recording_started);
         m.put("recording_started_ms", recording_started_ms);
@@ -300,6 +306,38 @@ public class VideoNode {
 
     public void setEmail_to_participant_subject_unevaluated(String email_to_participant_subject_unevaluated) {
         this.email_to_participant_subject_unevaluated = email_to_participant_subject_unevaluated;
+    }
+
+    public String getEmail_to_legislator_send_date() {
+        return email_to_legislator_send_date;
+    }
+
+    public void setEmail_to_legislator_send_date(String email_to_legislator_send_date) {
+        this.email_to_legislator_send_date = email_to_legislator_send_date;
+    }
+
+    public Long getEmail_to_legislator_send_date_ms() {
+        return email_to_legislator_send_date_ms;
+    }
+
+    public void setEmail_to_legislator_send_date_ms(Long email_to_legislator_send_date_ms) {
+        this.email_to_legislator_send_date_ms = email_to_legislator_send_date_ms;
+    }
+
+    public String getEmail_to_participant_send_date() {
+        return email_to_participant_send_date;
+    }
+
+    public void setEmail_to_participant_send_date(String email_to_participant_send_date) {
+        this.email_to_participant_send_date = email_to_participant_send_date;
+    }
+
+    public Long getEmail_to_participant_send_date_ms() {
+        return email_to_participant_send_date_ms;
+    }
+
+    public void setEmail_to_participant_send_date_ms(Long email_to_participant_send_date_ms) {
+        this.email_to_participant_send_date_ms = email_to_participant_send_date_ms;
     }
 
     public String getLeg_id() {
@@ -486,6 +524,22 @@ public class VideoNode {
         this.recording_completed = recording_completed;
     }
 
+    public String getFacebook_post_id() {
+        return facebook_post_id;
+    }
+
+    public void setFacebook_post_id(String facebook_post_id) {
+        this.facebook_post_id = facebook_post_id;
+    }
+
+    public String getTwitter_post_id() {
+        return twitter_post_id;
+    }
+
+    public void setTwitter_post_id(String twitter_post_id) {
+        this.twitter_post_id = twitter_post_id;
+    }
+
     public String getVideo_invitation_key() {
         return video_invitation_key;
     }
@@ -580,6 +634,14 @@ public class VideoNode {
 
     public void setComposition_Size(Long composition_Size) {
         this.composition_Size = composition_Size;
+    }
+
+    public String getVideo_id() {
+        return video_id;
+    }
+
+    public void setVideo_id(String video_id) {
+        this.video_id = video_id;
     }
 
     public boolean recordingHasNotStarted() {

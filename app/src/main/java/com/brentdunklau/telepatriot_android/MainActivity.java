@@ -71,18 +71,6 @@ public class MainActivity extends AppCompatActivity
         User.getInstance().addAccountStatusEventListener(this);
 
 
-/*
-        Holdover from back when everything was an activity.  This is how we were closing down the
-        app.  If we don't end up needing this soon (10/12/17), then just delete it.
-
-        // https://stackoverflow.com/a/14002030
-        if (getIntent().getBooleanExtra("EXIT", false)) {
-            finish();
-        }
-        */
-
-
-
         /**
          * KINDA NEAT - not sure how to use this right now.  But it's a little pink bubble/button
          with an email envelope image in it.
@@ -136,9 +124,6 @@ public class MainActivity extends AppCompatActivity
                     Context ctx = getApplicationContext();
                     Picasso.with(ctx).setLoggingEnabled(true);
                     Picasso.with(MainActivity.this).load(photoUrl).fit().into(image_profile_pic);
-
-      // dev:  OK      https://scontent.xx.fbcdn.net/v/t1.0-1/p100x100/15439743_10153884236291370_5482786558312089303_n.jpg?oh=6ed5db40855629a3253f222e3c69e914&oe=5AD064B1
-      // prod: NOT OK  https://scontent.xx.fbcdn.net/v/t1.0-1/p100x100/15439743_10153884236291370_5482786558312089303_n.jpg?oh=447d44d77c8f56f6eb619a21f8ee83ae&oe=5A814AB1
 
                 } catch(Throwable t) {
                     String msg = t.getMessage();
@@ -287,10 +272,6 @@ public class MainActivity extends AppCompatActivity
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
          *****/
-        /******
-        else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
-            doChat();
-        } *****/
         else if (id == R.id.nav_signout) {
             signOut();
         }

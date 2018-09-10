@@ -396,21 +396,51 @@ exports.testOnReadyToSendEmails = functions.https.onRequest((req, res) => {
 
 // facebook.js:onFacebookPostId and twitter.js:onTwitterPostId both trigger this function
 exports.onReadyToSendEmails = functions.database.ref('video/list/{video_node_key}/ready_to_send_emails').onCreate(event => {
-    if(event.data.val() && event.data.val() == true) {
-        // TODO the text of the email needs to be kept on the video node
-        return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
 
-            // send one email to legislator and cc the two participants and I guess telepatriot@cosaction.com also
-            var legemail = emailToLegislator(snapshot.val())
-            return anotherEmailMethod(legemail)
+
+    if(event.data.val()) {
+        // We need to evaluate the 2 emails and the youtube video title and description one last time
+        // before the emails go out...
+        return exports.evaluate_video_and_email(event.params.video_node_key).then(() => {
+
+            return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
+                if(snapshot.val().email_to_legislator) {
+                    // send one email to legislator and cc the two participants and I guess telepatriot@cosaction.com also
+                    var legemail = emailToLegislator(snapshot.val())
+
+                    return anotherEmailMethod(legemail).then(videoNode /*same as legemail.videoNode*/ => {
+                        var upd = {}
+                        upd['email_to_legislator_send_date'] = date.asCentralTime() // this is what turns
+                                                               // the little gray checkmark to green in video chat screen
+                                                               // for the "emailed legislator" status
+                        upd['email_to_legislator_send_date_ms'] = date.asMillis()
+                        return snapshot.ref.update(upd).then(() => {
+                            return {videoNode: snapshot.val() /*aka videoNode*/, snapshot_ref: snapshot.ref}
+                        })
+                    })
+                }
+                else {
+                    // user chose to not email the legislator
+                    return {videoNode: snapshot.val() /*aka videoNode*/, snapshot_ref: snapshot.ref}
+                }
+            })
+            .then(stuff => {
+                var videoNode = stuff.videoNode
+                var snapshot_ref = stuff.snapshot_ref
+                // send another email to the two participants and cc telepatriot@cosaction.com
+                var suppemail = emailToSupporter(videoNode)
+                return anotherEmailMethod(suppemail).then(vn /*same as suppemail.videoNode*/ => {
+                    var upd = {}
+                    upd['email_to_participant_send_date'] = date.asCentralTime() // this is what turns
+                                                           // the little gray checkmark to green in video chat screen
+                                                           // for the "you've got mail" status
+                    upd['email_to_participant_send_date_ms'] = date.asMillis()
+                    return snapshot_ref.update(upd)
+                })
+
+            })
         })
-        .then(videoNode => {
 
-            // send another email to the two participants and cc telepatriot@cosaction.com
-            var suppemail = emailToSupporter(videoNode)
-            return anotherEmailMethod(suppemail)
-
-        })
     }
     else return false
 })
@@ -462,79 +492,17 @@ var anotherEmailMethod = function(input) {
 
 
 var emailToSupporter = function(videoNode) {
-
-    var constituent = getConstituent(videoNode.video_participants)
-    var subject = 'Your Rockin\' Awesome Video to '+legislator(videoNode)
-    var message = '<html><head></head><body>'
-    message = constituent.name+' - You just made a Rockin\' Aweseome video to '+legislator(videoNode)+'!\n\n'
-    message += 'Your video is also posted on social media.  Go check it out and share it with your friends!\n\n'
-
-    message += '<b>Watch on YouTube</b>\n'
-    message += '<a href="'+videoNode.video_url+'">'+videoNode.video_url+'</a>\n\n'
-
-    if(videoNode.post_to_facebook) {
-        message += '<b>Watch on Facebook</b>\n'
-        message += '<a href="https://www.facebook.com/'+videoNode.facebook_post_id+'">'+videoNode.facebook_post_id+'</a>\n\n'
-    }
-
-    if(videoNode.post_to_twitter) {
-        message += '<b>Watch on Twitter</b>\n'
-        message += '<a href="https://www.facebook.com/'+videoNode.twitter_post_id+'">'+videoNode.twitter_post_id+'</a>\n\n'
-    }
-
-    message += '<b>Next Steps</b>\n'
-    message += 'You\'re <i>blazing a trail</i> for Liberty.  And you\'re probably wondering - what next?\n\n'
-    message += 'Consider calling '+legislator(videoNode)+' at '+videoNode.legislator_phone
-    message += ' and schedule a meeting so you can talk about the Convention of States in person.\n\n'
-
-    message += 'Get Plugged in...\n'
-    message += 'Like and follow the <a href="https://www.facebook.com/TelePatriot/">TelePatriot</a> page on Facebook'
-    message += 'Follow us on twitter <a href="https://twitter.com/realTelePatriot">@realTelePatriot</a>\n'
-    message += 'And share these posts with your friends and family.\n\n'
-
-    message += 'Thanks for being a True TelePatriot !'
-    message += '</body></html>'
-
     var pemails = []
     _.forOwn(videoNode.video_participants, function(p, key) { pemails.push(p.email) })
+    var message = videoNode.email_to_participant_body
+    var subject = videoNode.email_to_participant_subject
     return {videoNode: videoNode, emailAddr: pemails.join(','), message: message, subject: subject, participants: videoNode.video_participants}
 }
 
 
 var emailToLegislator = function(videoNode) {
-
-    var constituent = getConstituent(videoNode.video_participants)
-    //  (video type) from a constituent, (constituent name) Re: Convention of States
-    var subject = videoNode.video_type+' from a constituent, '+constituent.name+' Re: Convention of States'
-    var message = '<html><head></head><body>'
-    message += legislator(videoNode)+', \n\n'
-    message += 'My name is '+constituent.name+' and I am a constituent of yours.  '
-    message += 'I would like you to support the Convention of States resolution and I would like you urge your colleagues '
-    message += 'to support it also.\n\n'
-    message += 'I am sending you a '+videoNode.video_type+' so that you can see my face and hear my voice. \n\n '
-
-    message += '<b>Watch on YouTube</b>\n'
-    message += 'You can watch this '+videoNode.video_type+' on YouTube\n'
-    message += '<a href="'+videoNode.video_url+'">'+videoNode.video_url+'</a>\n\n'
-
-    if(videoNode.post_to_facebook) {
-        message += '<b>Watch on Facebook</b>\n'
-        message += 'I have also shared this video Facebook\n'
-        message += '<a href="https://www.facebook.com/'+videoNode.facebook_post_id+'">'+videoNode.facebook_post_id+'</a>\n\n'
-    }
-
-    if(videoNode.post_to_twitter) {
-        message += '<b>Watch on Twitter</b>\n'
-        message += 'I have also shared this video Twitter\n'
-        message += '<a href="https://www.facebook.com/'+videoNode.twitter_post_id+'">'+videoNode.twitter_post_id+'</a>\n\n'
-    }
-
-    message += 'The Convention of States movement is something I feel strongly about.  '
-    message += 'And I will be mobilizing support for it among voters our district.\n\n'
-
-    // TODO would be good to have their address also
-    message += 'Sincerely,\n'+constituent.name+'\n'+constituent.email
-    message += '</body></html>'
+    var message = videoNode.email_to_legislator_body
+    var subject = videoNode.email_to_legislator_subject
     return {videoNode: videoNode, emailAddr: videoNode.legislator_email, message: message, subject: subject, participants: videoNode.video_participants}
 }
 
@@ -543,6 +511,222 @@ var legislator = function(videoNode) {
     var rep = videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'
     return rep+' '+videoNode.legislator_first_name+' '+videoNode.legislator_last_name
 }
+
+
+
+var evaluate_youtube_video_description = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var description = videoNode.youtube_video_description_unevaluated
+    var ch = videoNode.legislator_chamber && videoNode.legislator_chamber.toLowerCase()=='lower' ? 'HD' : 'SD'
+    var rep = videoNode.legislator_chamber && videoNode.legislator_chamber.toLowerCase()=='lower' ? 'Rep' : 'Sen'
+    var constituent = getConstituent(videoNode.video_participants).name
+
+    var replace = [
+        {"this": "constituent_name", "withThat": constituent},
+        {"this": "legislator_chamber_abbrev", "withThat": ch},
+        {"this": "legislator_district", "withThat": videoNode.legislator_district},
+        {"this": "legislator_email", "withThat": videoNode.legislator_email},
+        // TODO would be better to just not include fb and tw handles if they're not known - othwerwise you get http://www.faceboo.com/undefined  that looks crappy
+        {"this": "legislator_facebook", "withThat": videoNode.legislator_facebook},
+        {"this": "legislator_facebook_id", "withThat": videoNode.legislator_facebook_id},
+        {"this": "legislator_twitter", "withThat": videoNode.legislator_twitter},
+        {"this": "legislator_rep_type", "withThat": rep},
+        {"this": "legislator_full_name", "withThat": videoNode.legislator_full_name},
+        {"this": "legislator_phone", "withThat": videoNode.legislator_phone}
+    ]
+
+    // "internal confusion" about whether I should be using _abbrev or not  LOL
+    if(videoNode.legislator_state_abbrev) {
+        replace.push({"this": "legislator_state_abbrev_upper", "withThat": videoNode.legislator_state_abbrev.toUpperCase()})
+    }
+    else if(videoNode.legislator_state) {
+        replace.push({"this": "legislator_state_abbrev_upper", "withThat": videoNode.legislator_state.toUpperCase()})
+    }
+
+    _.each(replace, function(rep) {
+        description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+    return description
+}
+
+var evaluate_video_title = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    // construct the video title...
+    var constituent = getConstituent(videoNode.video_participants)
+    var from = ' from '+constituent.name
+
+    var to = ''
+    // Example: "Video Petition from Brent Dunklau to Rep Justin Holland (TX HD 33)"
+    var rep = videoNode.legislator_chamber == 'lower' ? 'Rep' : 'Sen'
+    var ch = videoNode.legislator_chamber == 'lower' ? 'HD' : 'SD'
+    var video_title = videoNode.video_type+from+' to '+rep+' '+videoNode.legislator_first_name+' '+videoNode.legislator_last_name
+    if(videoNode.legislator_state_abbrev)
+        video_title += ' ('+videoNode.legislator_state_abbrev.toUpperCase()+' '+ch+' '+videoNode.legislator_district+')'
+    return video_title
+}
+
+
+var evaluate_email_to_legislator_body = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var constituent = getConstituent(videoNode.video_participants)
+
+    var replace = [
+        {"this": "constituent_name", "withThat": constituent.name},
+
+        {"this": "constituent_address", "withThat": ""},  // not there yet 8/24/18
+        {"this": "constituent_city", "withThat": ""},     // not there yet 8/24/18
+        {"this": "constituent_state", "withThat": ""},    // not there yet 8/24/18
+        {"this": "constituent_zip", "withThat": ""},      // not there yet 8/24/18
+        {"this": "constituent_phone", "withThat": ""},    // not there yet 8/24/18
+        {"this": "constituent_email", "withThat": constituent.email},
+
+        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
+        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
+        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name},
+        {"this": "request_based_on_cos_position", "withThat": ""}, // not there yet 8/24/18
+
+        {"this": "video_url", "withThat": videoNode.video_url},
+        {"this": "facebook_post", "withThat": 'https://www.facebook.com/'+videoNode.facebook_post_id},
+        {"this": "tweet", "withThat": 'https://www.twitter.com/realTelePatriot/status/'+videoNode.twitter_post_id}
+    ]
+
+    var email_to_legislator_body = videoNode.email_to_legislator_body_unevaluated
+    _.each(replace, function(rep) {
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+
+    // conditionally include the text in the email between post_to_facebook:begin and post_to_facebook:end
+    if(videoNode.post_to_facebook && videoNode.facebook_post_id) {
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_facebook:begin',"g"), '')
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_facebook:end',"g"), '')
+    }
+    else {
+        var p1 = email_to_legislator_body.substring(0, email_to_legislator_body.indexOf('post_to_facebook:begin'))
+        var p2 = email_to_legislator_body.substring(email_to_legislator_body.indexOf('post_to_facebook:end') + 'post_to_facebook:end'.length)
+        email_to_legislator_body = p1 + p2
+    }
+
+    // conditionally include the text in the email between post_to_twitter:begin and post_to_twitter:end
+    if(videoNode.post_to_twitter && videoNode.twitter_post_id) {
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_twitter:begin',"g"), '')
+        email_to_legislator_body = _.replace(email_to_legislator_body, new RegExp('post_to_twitter:end',"g"), '')
+    }
+    else {
+        var p1 = email_to_legislator_body.substring(0, email_to_legislator_body.indexOf('post_to_twitter:begin'))
+        var p2 = email_to_legislator_body.substring(email_to_legislator_body.indexOf('post_to_twitter:end') + 'post_to_twitter:end'.length)
+        email_to_legislator_body = p1 + p2
+    }
+    return email_to_legislator_body
+}
+
+
+var evaluate_email_to_legislator_subject = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var constituent = getConstituent(videoNode.video_participants)
+
+    var replace = [
+        {"this": "constituent_name", "withThat": constituent.name},
+        {"this": "video_type", "withThat": videoNode.video_type}
+    ]
+
+    var email_to_legislator_subject = videoNode.email_to_legislator_subject_unevaluated
+    _.each(replace, function(rep) {
+        email_to_legislator_subject = _.replace(email_to_legislator_subject, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+    return email_to_legislator_subject
+}
+
+
+var evaluate_email_to_participant_body = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var constituent = getConstituent(videoNode.video_participants)
+
+    var replace = [
+        {"this": "constituent_name", "withThat": constituent.name},
+        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
+        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
+        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name},
+        {"this": "legislator_phone", "withThat": videoNode.legislator_phone},
+        {"this": "video_url", "withThat": videoNode.video_url},
+        {"this": "facebook_post", "withThat": 'https://www.facebook.com/'+videoNode.facebook_post_id},
+        {"this": "tweet", "withThat": 'https://www.twitter.com/realTelePatriot/status/'+videoNode.twitter_post_id}
+    ]
+
+    var email_to_participant_body = videoNode.email_to_participant_body_unevaluated
+    _.each(replace, function(rep) {
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+
+    // conditionally include the text in the email between post_to_facebook:begin and post_to_facebook:end
+    if(videoNode.post_to_facebook && videoNode.facebook_post_id) {
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_facebook:begin',"g"), '')
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_facebook:end',"g"), '')
+    }
+    else {
+        var p1 = email_to_participant_body.substring(0, email_to_participant_body.indexOf('post_to_facebook:begin'))
+        var p2 = email_to_participant_body.substring(email_to_participant_body.indexOf('post_to_facebook:end') + 'post_to_facebook:end'.length)
+        email_to_participant_body = p1 + p2
+    }
+
+    // conditionally include the text in the email between post_to_twitter:begin and post_to_twitter:end
+    if(videoNode.post_to_twitter && videoNode.twitter_post_id) {
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_twitter:begin',"g"), '')
+        email_to_participant_body = _.replace(email_to_participant_body, new RegExp('post_to_twitter:end',"g"), '')
+    }
+    else {
+        var p1 = email_to_participant_body.substring(0, email_to_participant_body.indexOf('post_to_twitter:begin'))
+        var p2 = email_to_participant_body.substring(email_to_participant_body.indexOf('post_to_twitter:end') + 'post_to_twitter:end'.length)
+        email_to_participant_body = p1 + p2
+    }
+    return email_to_participant_body
+}
+
+
+var evaluate_email_to_participant_subject = function(videoNode) {
+    // evaluate_video_and_email() makes sure that participants exist before calling this method
+
+    var replace = [
+        {"this": "legislator_title", "withThat": videoNode.legislator_chamber == 'lower' ? 'Representative' : 'Senator'},
+        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
+        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name}
+    ]
+
+    var email_to_participant_subject = videoNode.email_to_participant_subject_unevaluated
+    _.each(replace, function(rep) {
+        email_to_participant_subject = _.replace(email_to_participant_subject, new RegExp(rep['this'],"g"), rep['withThat'])
+    })
+    return email_to_participant_subject
+}
+
+
+var getVideoNode = function(video_node_key) {
+    return db.ref('video/list/'+video_node_key).once('value').then(snapshot => {
+        return snapshot.val()
+    })
+}
+
+
+exports.evaluate_video_and_email = function(video_node_key) {
+    return getVideoNode(video_node_key).then(videoNode => {
+        if(!videoNode || !videoNode.video_participants || videoNode.video_participants.length == 0)
+            return false
+
+        var updates = {}
+        updates['video/list/'+video_node_key+'/email_to_legislator_body'] = evaluate_email_to_legislator_body(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_legislator_subject'] = evaluate_email_to_legislator_subject(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_participant_body'] = evaluate_email_to_participant_body(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_participant_subject'] = evaluate_email_to_participant_subject(videoNode)
+        updates['video/list/'+video_node_key+'/youtube_video_description'] = evaluate_youtube_video_description(videoNode)
+        updates['video/list/'+video_node_key+'/video_title'] = evaluate_video_title(videoNode)
+        return db.ref('/').update(updates)
+    })
+}
+
 
 
 var getConstituent = function(participants) {

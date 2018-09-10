@@ -157,7 +157,9 @@ exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/po
 exports.onFacebookPostId = functions.database.ref('video/list/{video_node_key}/facebook_post_id').onCreate(event => {
     // now see if we're supposed to tweet also, and if we are, do we have the tweet post id_str yet?...
     return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
-        var readyToSendEmails = (snapshot.val().post_to_twitter && snapshot.val().twitter_post_id) || !snapshot.val().post_to_twitter
+        var tweetExists = snapshot.val().twitter_post_id
+        var tweetNotRequired = !snapshot.val().post_to_twitter
+        var readyToSendEmails = tweetExists || tweetNotRequired
         if(readyToSendEmails)
             return snapshot.ref.child("ready_to_send_emails").set(true) // which fires yet another trigger: onReadyToSendEmails()
         else return false

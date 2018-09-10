@@ -9,21 +9,6 @@
     android:orientation="vertical"
     android:weightSum="3">
 
-    <!--true value for indeterminate-->
-
-
-    <TextView
-        android:id="@+id/recording_indicator"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
-        android:text="Recording..."
-        android:textColor="#ff0000"
-        app:layout_constraintEnd_toStartOf="@+id/instructionsScrollView"
-        app:layout_constraintStart_toStartOf="@+id/local_camera_view"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <com.twilio.video.VideoView
         android:id="@+id/local_camera_view"
@@ -36,12 +21,21 @@
         app:layout_constraintWidth_default="percent"
         app:layout_constraintWidth_percent="0.4"
         app:mirror="true"
-        app:overlaySurface="true"/>
+        app:overlaySurface="true" />
 
 
-
-
-
+    <TextView
+        android:id="@+id/record_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:text="Recording..."
+        android:textColor="#ff0000"
+        app:layout_constraintEnd_toStartOf="@+id/instructionsScrollView"
+        app:layout_constraintStart_toStartOf="@+id/local_camera_view"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.twilio.video.VideoView
         android:id="@+id/remote_camera_view"
@@ -93,12 +87,11 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:text="cancel invitation"
-        android:visibility="gone"
         android:textColor="@color/colorPrimaryDark"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/remote_camera_view"
         app:layout_constraintStart_toStartOf="parent" />
-
 
 
     <ToggleButton
@@ -156,7 +149,7 @@
         android:id="@+id/instructionsScrollView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="0dp"
         android:background="#ffffff"
         android:fillViewport="true"
         app:layout_constraintEnd_toEndOf="parent"
@@ -439,17 +432,130 @@
                 android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
+                android:layout_marginBottom="298dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:showText="false"
                 android:text="Post to Twitter"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/post_to_facebook"
                 app:switchMinWidth="50dp"
                 app:theme="@style/SwitchStyleGreen" />
+
+            <TextView
+                android:id="@+id/video_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="32dp"
+                android:text="Video Status"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/post_to_twitter" />
+
+            <ImageView
+                android:id="@+id/youtube_status"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/video_status"
+                app:srcCompat="@drawable/gray_checkmark" />
+
+            <TextView
+                android:id="@+id/posted_to_youtube"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Posted to YouTube"
+                app:layout_constraintBottom_toBottomOf="@+id/youtube_status"
+                app:layout_constraintStart_toEndOf="@+id/youtube_status"
+                app:layout_constraintTop_toTopOf="@+id/youtube_status" />
+
+            <ImageView
+                android:id="@+id/facebook_status"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/youtube_status"
+                app:srcCompat="@drawable/gray_checkmark" />
+
+            <TextView
+                android:id="@+id/posted_to_facebook"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Posted to Facebook"
+                app:layout_constraintBottom_toBottomOf="@+id/facebook_status"
+                app:layout_constraintStart_toEndOf="@+id/facebook_status"
+                app:layout_constraintTop_toTopOf="@+id/facebook_status" />
+
+            <ImageView
+                android:id="@+id/twitter_status"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/facebook_status"
+                app:srcCompat="@drawable/gray_checkmark" />
+
+            <TextView
+                android:id="@+id/posted_to_twitter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Posted to Twitter"
+                app:layout_constraintBottom_toBottomOf="@+id/twitter_status"
+                app:layout_constraintStart_toEndOf="@+id/twitter_status"
+                app:layout_constraintTop_toTopOf="@+id/twitter_status" />
+
+            <ImageView
+                android:id="@+id/emailed_to_legislator_status"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/twitter_status"
+                app:srcCompat="@drawable/gray_checkmark" />
+
+            <TextView
+                android:id="@+id/emailed_to_legislator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Emailed to Legislator"
+                app:layout_constraintBottom_toBottomOf="@+id/emailed_to_legislator_status"
+                app:layout_constraintStart_toEndOf="@+id/emailed_to_legislator_status"
+                app:layout_constraintTop_toTopOf="@+id/emailed_to_legislator_status" />
+
+            <ImageView
+                android:id="@+id/emailed_to_participant_status"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/emailed_to_legislator_status"
+                app:srcCompat="@drawable/gray_checkmark" />
+
+            <TextView
+                android:id="@+id/emailed_to_participant"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="You've got Mail!"
+                app:layout_constraintBottom_toBottomOf="@+id/emailed_to_participant_status"
+                app:layout_constraintStart_toEndOf="@+id/emailed_to_participant_status"
+                app:layout_constraintTop_toTopOf="@+id/emailed_to_participant_status" />
 
         </android.support.constraint.ConstraintLayout>
 

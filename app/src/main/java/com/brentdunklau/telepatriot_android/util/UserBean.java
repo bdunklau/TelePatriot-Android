@@ -36,6 +36,8 @@ public class UserBean {
     private String residential_address_zip;
     private String state_lower_district;
     private String state_upper_district;
+    private String video_invitation_from; // uid of someone that invited this person to a video chat
+    private String video_invitation_from_name; // name of someone that invited this person to a video chat
     private String phone;
     private Double current_latitude;
     private Double current_longitude;
@@ -291,6 +293,22 @@ public class UserBean {
         this.state_upper_district = state_upper_district;
     }
 
+    public String getVideo_invitation_from() {
+        return video_invitation_from;
+    }
+
+    public void setVideo_invitation_from(String video_invitation_from) {
+        this.video_invitation_from = video_invitation_from;
+    }
+
+    public String getVideo_invitation_from_name() {
+        return video_invitation_from_name;
+    }
+
+    public void setVideo_invitation_from_name(String video_invitation_from_name) {
+        this.video_invitation_from_name = video_invitation_from_name;
+    }
+
     public Double getCurrent_latitude() {
         return current_latitude;
     }
@@ -333,6 +351,8 @@ public class UserBean {
         m.put("residential_address_zip", residential_address_zip);
         m.put("state_lower_district", state_lower_district);
         m.put("state_upper_district", state_upper_district);
+        m.put("video_invitation_from", video_invitation_from);
+        m.put("video_invitation_from_name", video_invitation_from_name);
         m.put("current_latitude", current_latitude);
         m.put("current_longitude", current_longitude);
         m.put("has_signed_confidentiality_agreement", has_signed_confidentiality_agreement);
