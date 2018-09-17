@@ -239,7 +239,6 @@ public class Legislator {
     public void setFull_name(String full_name) {
         this.full_name = full_name;
         this.legislator_full_name = full_name;
-        this.legislator_name = full_name;
     }
 
     public String getId() {

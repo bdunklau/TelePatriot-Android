@@ -9,10 +9,8 @@
     tools:context="com.brentdunklau.telepatriot_android.VideoChatActivity">
 
 
-    <FrameLayout android:id="@+id/content_frame"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#ddffffff"></FrameLayout>
+
+    <include layout="@layout/content_main" />
 
 
 </android.support.constraint.ConstraintLayout>

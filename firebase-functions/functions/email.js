@@ -532,8 +532,14 @@ var evaluate_youtube_video_description = function(videoNode) {
         {"this": "legislator_facebook_id", "withThat": videoNode.legislator_facebook_id},
         {"this": "legislator_twitter", "withThat": videoNode.legislator_twitter},
         {"this": "legislator_rep_type", "withThat": rep},
-        {"this": "legislator_full_name", "withThat": videoNode.legislator_full_name},
-        {"this": "legislator_phone", "withThat": videoNode.legislator_phone}
+        {"this": "legislator_first_name", "withThat": videoNode.legislator_first_name},
+        {"this": "legislator_last_name", "withThat": videoNode.legislator_last_name},
+        {"this": "legislator_phone", "withThat": videoNode.legislator_phone},
+        // rather than display links like  https://www.facebook.com/undefined...
+        {"this": "https://www.facebook.com/undefined", "withThat": ""},
+        {"this": "https://www.twitter.com/undefined", "withThat": ""},
+        {"this": "Phone: undefined", "withThat": "Phone:"},
+        {"this": "Email: undefined", "withThat": "Email:"}
     ]
 
     // "internal confusion" about whether I should be using _abbrev or not  LOL
@@ -547,6 +553,15 @@ var evaluate_youtube_video_description = function(videoNode) {
     _.each(replace, function(rep) {
         description = _.replace(description, new RegExp(rep['this'],"g"), rep['withThat'])
     })
+
+    if(!videoNode.legislator_facebook || videoNode.legislator_facebook == '' || !videoNode.legislator_facebook_id || videoNode.legislator_facebook_id == '') {
+        description = _.replace(description, new RegExp('Facebook: https://www.facebook.com/',"g"), 'Facebook:')
+    }
+
+    if(!videoNode.legislator_twitter || videoNode.legislator_twitter == '') {
+        description = _.replace(description, new RegExp('Twitter: https://www.twitter.com/',"g"), 'Twitter:')
+    }
+
     return description
 }
 

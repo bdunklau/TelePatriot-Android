@@ -76,7 +76,7 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
         f(true)
     }
     var notAllowed = function() {
-        f(false) // test: change this to true to simulate anyone passing legal
+        f(false) // change this to true to simulate anyone passing legal
     }
     exports.checkVolunteerStatus(event.data.val().email, allowed, notAllowed)
     return true

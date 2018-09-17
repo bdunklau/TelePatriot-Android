@@ -49,17 +49,28 @@ var connect = function(video_event_key, video_node_key, uid, name, room_id, Room
             updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date'] = null
             updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date_ms'] = null
 
-            if(!RoomSid) {
-                return db.ref('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
-                   var host
-                   snapshot.forEach(function(child) { host = child.val().host })
+//            We see errors that say we are trying to create a room that already exists.  I think it's because the RoomSid (or room_sid)
+//             value is written to the video node too late in some cases.  So the second person trying to connect goes through
+//             the same code path as the first person who created the room.  To fix this (hopefully), we will set an interim value
+//             for room_sid until twilio responds with the actual value...
+            var needToCreateRoom = !RoomSid
 
-                   return twilio_telepatriot.createRoom(room_id, host).then(() => {
-                       // needed by doConnect in VidyoChatFragment and VideoChatVC
-                       return db.ref('/').update(updates)
-                   })
+            if(needToCreateRoom) {
+                return db.ref('video/list/'+video_node_key+'/room_sid').set('creating the room_sid now...') // see also exports.onRoomCreated()
+                .then(() => {
 
+                    return db.ref('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
+                       var host
+                       snapshot.forEach(function(child) { host = child.val().host })
+
+                       return twilio_telepatriot.createRoom(room_id, host).then(() => {
+                           // needed by doConnect in VidyoChatFragment and VideoChatVC
+                           return db.ref('/').update(updates)
+                       })
+
+                    })
                 })
+
             }
             else {
                 return db.ref('/').update(updates)
@@ -295,57 +306,6 @@ exports.onPublishRequested = functions.database.ref('video/video_events/{key}').
 
         })
 
-
-
-
-
-
-
-
-
-
-//        // see if we already generate the composed media file...
-//        if(event.data.val().MediaUri) {
-//
-//            var formData = {
-//               twilio_account_sid: snapshot.val().twilio_account_sid,
-//               twilio_auth_token: snapshot.val().twilio_auth_token,
-//               domain: 'video.twilio.com',
-//               MediaUri: req.body.CompositionUri+'/Media',
-//               CompositionSid: req.body.CompositionSid,
-//               Ttl: 6000,
-//               firebaseServer: firebaseServer,
-//               firebaseUri: '/twilioCallback',
-//               video_title: title,
-//               youtube_video_description: video_description,
-//               keywords: 'Convention of States Project',
-//               privacyStatus: 'unlisted',
-//               video_node_key: video_node_key,
-//               uid: uid
-//            };
-//
-//            twilio_telepatriot.publish({host: host, port: port, formData: formData})
-//
-//        }
-//        else {
-//
-//            event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()}) // housekeeping: timestamp the event
-//            return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
-//                var host
-//                snapshot.forEach(function(child) { host = child.val().host })
-//
-//                var callback = function(stuff) { /*
-//                    Not sure what to do here if anything
-//                    See twilio-telepatriot.js:testCompose() and compose()
-//                */ }
-//
-//                return twilio_telepatriot.compose({
-//                    room_sid: event.data.val().RoomSid, // In the VideoNode class, this is actuall room_sid_record
-//                    host: host,
-//                    callback: callback
-//                })
-//            })
-//        }
     }
     else return false
 })

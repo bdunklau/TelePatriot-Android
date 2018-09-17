@@ -71,6 +71,7 @@ exports.updateTeamListUnderUsers = teams.updateTeamListUnderUsers
 exports.viewMissionReport = teams.viewMissionReport
 
 
+// prod deploy: 9/12/18
 const dbadmin = require('./dbadmin')
 exports.addAttributeToChildren = dbadmin.addAttributeToChildren
 exports.archive = dbadmin.archive
@@ -112,6 +113,7 @@ exports.downloadUsers = userList.downloadUsers
 exports.manageUsers = userList.manageUsers
 exports.updateUser = userList.updateUser
 
+// prod deploy: 9/12/18
 const email = require('./email')
 exports.email = email.email
 exports.email2 = email.email2
@@ -127,6 +129,7 @@ exports.onReadyToSendEmails = email.onReadyToSendEmails
 exports.testOnReadyToSendEmails = email.testOnReadyToSendEmails
 
 
+// prod deploy: 9/12/18
 const legislators = require('./legislators')
 exports.downloadFromOpenStates = legislators.downloadFromOpenStates
 exports.loadStates = legislators.loadStates
@@ -148,6 +151,7 @@ exports.testUpdateSocialMedia = legislators.testUpdateSocialMedia
 exports.overwriteBadWithGoodData = legislators.overwriteBadWithGoodData
 
 
+// prod deploy: 9/12/18
 const civic = require('./google-civic')
 exports.civic = civic.civic
 exports.loadDivisions = civic.loadDivisions
@@ -160,12 +164,14 @@ exports.unloadOfficials = civic.unloadOfficials
 exports.unloadDivisions = civic.unloadDivisions
 exports.onOfficialUrl = civic.onOfficialUrl
 
+// prod deploy: 9/12/18
 const districtMapper = require('./map-districts')
 exports.districtMapper = districtMapper.districtMapper
 exports.mapOpenStatesToGoogleCivic = districtMapper.mapOpenStatesToGoogleCivic
 exports.mapGoogleCivicToOpenStates = districtMapper.mapGoogleCivicToOpenStates
 exports.checkGoogleCivicDivision = districtMapper.checkGoogleCivicDivision
 
+// prod deploy: 9/12/18
 const officialMapper = require('./map-officials')
 exports.officialMapper = officialMapper.officialMapper
 exports.osToCivicOfficials = officialMapper.osToCivicOfficials
@@ -189,11 +195,13 @@ exports.testDeletePlaylist = youtube_playlists.testDeletePlaylist
 exports.testEditPlaylist = youtube_playlists.testEditPlaylist
 exports.handlePlaylistRequest = youtube_playlists.handlePlaylistRequest
 
+// prod deploy: 9/12/18
 const youtube_subscribe = require('./youtube-subscribe')
 exports.video_processing_callback = youtube_subscribe.video_processing_callback
 exports.video_processing_complete = youtube_subscribe.video_processing_complete
 
 
+// prod deploy: 9/12/18
 const twitter = require('./twitter')
 exports.twitter = twitter.twitter
 exports.testTweet = twitter.testTweet
@@ -202,6 +210,7 @@ exports.handleTweetRequest = twitter.handleTweetRequest
 exports.onTwitterPostId = twitter.onTwitterPostId
 //exports.deleteTweet = twitter.deleteTweet  // not supported, don't think
 
+// prod deploy: 9/12/18
 const facebook = require('./facebook')
 exports.facebook = facebook.facebook
 exports.testPostFacebook = facebook.testPostFacebook
@@ -220,6 +229,7 @@ exports.publishVideo = videoManager.publishVideo
 exports.youtubewebhook1 = videoManager.youtubewebhook1
 exports.getAdditionalYouTubeInfo = videoManager.getAdditionalYouTubeInfo
 
+// prod deploy: 9/12/18
 const googleCloud = require('./google-cloud')
 exports.cloud = googleCloud.cloud
 exports.listImages = googleCloud.listImages
@@ -258,12 +268,14 @@ exports.dbg = debug.dbg
 exports.dbgKeys = debug.dbgKeys
 exports.dbgKeyValues = debug.dbgKeyValues
 
+// prod deploy: 9/12/18
 const videoTypes = require('./video-types')
 exports.listVideoTypes = videoTypes.listVideoTypes
 exports.testSaveVideoType = videoTypes.testSaveVideoType
 exports.testSendLegislatorEmail = videoTypes.testSendLegislatorEmail
 exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
+// prod deploy: 9/12/18
 const switchboard = require('./switchboard')
 exports.onConnectRequest = switchboard.onConnectRequest
 exports.onDisconnectRequest = switchboard.onDisconnectRequest
@@ -279,6 +291,7 @@ exports.onTokenRequested = switchboard.onTokenRequested
 exports.onPublishRequested = switchboard.onPublishRequested
 
 
+// prod deploy: 9/12/18
 const twilio = require('./twilio-telepatriot')
 exports.testTwilioToken = twilio.testTwilioToken
 exports.twilioCallback = twilio.twilioCallback
@@ -289,20 +302,24 @@ exports.testCompleteRoom = twilio.testCompleteRoom
 exports.testListParticipants = twilio.testListParticipants
 exports.testCompose = twilio.testCompose
 
+// prod deploy: 9/12/18
 const videoList = require('./video-list')
 exports.videoListMain = videoList.videoListMain
 exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
+// prod deploy: 9/12/18
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
 exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 
+// prod deploy: 9/12/18
 const videoOffers = require('./video-offers')
 exports.onVideoOffer = videoOffers.onVideoOffer
 
+// prod deploy: 9/12/18
 const geocode = require('./geocode')
 exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong

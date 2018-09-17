@@ -1243,8 +1243,14 @@ public class VidyoChatFragment extends BaseFragment
                         currentVideoNode = vnode;
                         currentVideoNode.setKey(videoNodeKey);
                         video_mission_description.setText(currentVideoNode.getVideo_mission_description());
-                        video_title.setText(currentVideoNode.getVideo_title());
-                        youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
+                        if(currentVideoNode.getLeg_id() != null && !currentVideoNode.getLeg_id().equals("")) {
+                            video_title.setText(currentVideoNode.getVideo_title());
+                            youtube_video_description.setText(currentVideoNode.getYoutube_video_description());
+                        }
+                        else {
+                            video_title.setText("(Choose a legislator first)");
+                            youtube_video_description.setText("(Choose a legislator first)");
+                        }
 
                         setLegislatorFields(currentVideoNode);
 
@@ -1342,6 +1348,15 @@ public class VidyoChatFragment extends BaseFragment
 
     private boolean notifiedOfEnd = false;
     private void boomNotify() {
+        if (User.getInstance().isAllowed()) {
+            boomNotify1();
+        }
+        else {
+            boomNotify2();
+        }
+    }
+
+    private void boomNotify1() {
         if(currentVideoNode == null) return;
         boolean videoLifecycleComplete = currentVideoNode.getEmail_to_participant_send_date() != null;
         if(videoLifecycleComplete && !notifiedOfEnd) {
@@ -1371,6 +1386,36 @@ public class VidyoChatFragment extends BaseFragment
         }
     }
 
+    // for users that aren't allowed in to the app yet.  We don't give them an option to do anything
+    // after the video has been published. They can hit ok and that sends them back to the limbo screen
+    private void boomNotify2() {
+        if(currentVideoNode == null) return;
+        boolean videoLifecycleComplete = currentVideoNode.getEmail_to_participant_send_date() != null;
+        if(videoLifecycleComplete && !notifiedOfEnd) {
+
+            notifiedOfEnd = true;
+
+            DialogInterface.OnClickListener close = new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    Map updates = new HashMap();
+                    updates.put("users/"+User.getInstance().getUid()+"/current_video_node_key", null);
+                    updates.put("users/"+User.getInstance().getUid()+"/video_invitation_from", null);
+                    updates.put("users/"+User.getInstance().getUid()+"/video_invitation_from_name", null);
+                    FirebaseDatabase.getInstance().getReference("/").updateChildren(updates);
+                    getActivity().finishAffinity();
+                }
+            };
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(myView.getContext());
+            builder.setTitle("BOOM! You Did It!")
+                    .setMessage("Mission Accomplished - Your video has been published.  Check your email.")
+                    .setCancelable(false)
+                    .setPositiveButton("OK", close);
+            AlertDialog alert = builder.create();
+            alert.show();
+        }
+    }
+
     private void makeAnotherVideo() {
         // Should create another video node
         notifiedOfEnd = false;
@@ -1393,8 +1438,10 @@ public class VidyoChatFragment extends BaseFragment
         }
     }
 
+    // unset the user's current_video_node_key
     private void stopForNow() {
         disconnectIfConnected();
+        User.getInstance().setCurrent_video_node_key(null);
         AuthUI aui = AuthUI.getInstance();
         Activity act = getActivity();
         if(act instanceof FragmentActivity) {
@@ -1419,17 +1466,20 @@ public class VidyoChatFragment extends BaseFragment
     private void figureOutConnectivity() {
         // Do I have a token?  -geez
         boolean doIHaveToken = false;
-        if(currentVideoNode.getRoom_id().startsWith("record"))
-            doIHaveToken = currentVideoNode.getParticipant(User.getInstance().getUid()).getTwilio_token_record() != null;
-        else
-            doIHaveToken = currentVideoNode.getParticipant(User.getInstance().getUid()).getTwilio_token() != null;
+        // Should we be connected?
+        VideoParticipant me = currentVideoNode.getParticipant(User.getInstance().getUid());
+        boolean iAmParticipant = me != null;
+        if(iAmParticipant) {
+            if (currentVideoNode.getRoom_id().startsWith("record"))
+                doIHaveToken = currentVideoNode.getParticipant(User.getInstance().getUid()).getTwilio_token_record() != null;
+            else
+                doIHaveToken = currentVideoNode.getParticipant(User.getInstance().getUid()).getTwilio_token() != null;
+        }
 
         boolean iAmAbleToConect = doIHaveToken;
 
         // Are we connected?
         boolean connected = room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING);
-        // Should we be connected?
-        VideoParticipant me = currentVideoNode.getParticipant(User.getInstance().getUid());
         boolean shouldBeConnected = me.isConnected();
         // Should we be disconnected?
         boolean shouldBeDisconnected = !shouldBeConnected;

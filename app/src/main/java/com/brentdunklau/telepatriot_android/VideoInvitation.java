@@ -307,10 +307,8 @@ public class VideoInvitation {
             values.put(absPath, value);
         }
 
-        // setting 'present' to true here because we are about to go to the Video Chat screen
-        // Sure, we also set present=true onResume() and onStart() but ... anyway
-        values.put("video/list/"+video_node_key+"/video_participants/"+user.getUid()+"/present", true);
         values.put("video/list/"+video_node_key+"/room_id", room_id);
+
         FirebaseDatabase.getInstance().getReference("/").updateChildren(values).addOnCompleteListener(onComplete);
     }
 

@@ -906,7 +906,7 @@ is in these attributes.  The constituent is always the person added most recentl
 
 Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
-exports.onParticipantAdded = functions.database.ref('video/list/{key}/video_participants').onCreate(event => {
+exports.onParticipantAdded = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}/{uid}').onCreate(event => {
     return email.evaluate_video_and_email(event.params.video_node_key)
 })
 
@@ -924,7 +924,7 @@ is in these attributes.  The constituent is always the person added most recentl
 
 Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
-exports.onParticipantRemoved = functions.database.ref('video/list/{key}/video_participants').onDelete(event => {
+exports.onParticipantRemoved = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}').onDelete(event => {
     return email.evaluate_video_and_email(event.params.video_node_key)
 })
 

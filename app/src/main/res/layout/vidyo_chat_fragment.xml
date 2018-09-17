@@ -5,7 +5,7 @@
     android:id="@+id/constraint_layout_1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/usflag2"
+    android:background="#222222"
     android:orientation="vertical"
     android:weightSum="3">
 
