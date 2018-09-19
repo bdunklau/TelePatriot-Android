@@ -122,17 +122,22 @@ public class User implements FirebaseAuth.AuthStateListener {
                 if(ub != null) {
                     redirectIfNotAllowed(ub);
                     User.this.recruiter_id = ub.getRecruiter_id();
-                    if(ub.getVideo_invitation_from()!=null && User.this.video_invitation_from == null) {
+                    boolean inviterId_null_to_notnull = User.this.video_invitation_from == null && ub.getVideo_invitation_from()!=null;
+                    boolean inviterId_notnull_to_null = User.this.video_invitation_from != null && ub.getVideo_invitation_from()==null;
+                    boolean nameChanged = ub.getVideo_invitation_from_name() != null && !ub.getVideo_invitation_from_name().equalsIgnoreCase(User.this.video_invitation_from_name);
+                    if(inviterId_null_to_notnull) {
                         updateAttributes(ub, User.this);
                         fireVideoInvitationExtended();
                     }
-                    // also fire when the inviter's name becomes present - otherwise you get "null has invited you to participate in a video call"
-                    if(ub.getVideo_invitation_from_name() != null && !ub.getVideo_invitation_from_name().equalsIgnoreCase(User.this.video_invitation_from_name)) {
+                    if(inviterId_notnull_to_null) {
                         updateAttributes(ub, User.this);
-                        fireVideoInvitationExtended();
-                    }
-                    if(ub.getVideo_invitation_from()==null && User.this.video_invitation_from != null) {
                         fireVideoInvitationRevoked();
+                    }
+
+                    // also fire when the inviter's name becomes present - otherwise you get "null has invited you to participate in a video call"
+                    if(nameChanged && /*and invitation currently extended*/User.this.video_invitation_from != null) {
+                        updateAttributes(ub, User.this);
+                        fireVideoInvitationExtended();
                     }
                 }
             }
@@ -235,6 +240,9 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     private void redirectIfNotAllowed(UserBean ub) {
+        if(ub == null)
+            fireAccountDisabled();
+
         boolean isAllowed = Boolean.TRUE == ub.getHas_signed_petition()
                 && Boolean.TRUE == ub.getHas_signed_confidentiality_agreement()
                 && Boolean.FALSE == ub.getIs_banned();
@@ -242,9 +250,9 @@ public class User implements FirebaseAuth.AuthStateListener {
         boolean isEnabled = "enabled".equalsIgnoreCase(ub.getAccount_disposition());
         boolean isDisabled = !isEnabled;
 
-        has_signed_petition = ub.getHas_signed_petition();
-        has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement();
-        is_banned = ub.getIs_banned();
+        has_signed_petition = Boolean.TRUE == ub.getHas_signed_petition();
+        has_signed_confidentiality_agreement = Boolean.TRUE == ub.getHas_signed_confidentiality_agreement();
+        is_banned = Boolean.TRUE == ub.getIs_banned();
 
 
         if(isDisabled) {

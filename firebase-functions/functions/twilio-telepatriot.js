@@ -386,11 +386,16 @@ exports.createRoom = function(room_id, host) {
     // but this time we prepend the name of the room with 'record' so that the logic below will create a room
     // with recording turned on.
     var recordParticipantsOnConnect = room_id.startsWith('record') ? true : false
-    var callback = function(room, twilio_account_sid, twilio_auth_token) {
-        // No need to really return anything.  Called from trigger switchboard.js:onConnectRequest()
-        return true
-    }
-    return exports.createRoom2(room_id, host, callback)
+//    var callback = function(room, twilio_account_sid, twilio_auth_token) {
+//        // No need to really return anything.  Called from trigger switchboard.js:onConnectRequest()
+//        return true
+//    }
+//    return exports.createRoom2(room_id, host, callback)
+
+//    return {room: room, twilio_account_sid: snapshot.val().twilio_account_sid,
+//                twilio_auth_token: snapshot.val().twilio_auth_token, twilio_secret: snapshot.val().twilio_secret,
+//                twilio_api_key: snapshot.val().twilio_api_key}
+    return exports.createRoom2(room_id, host, null)
 }
 
 
@@ -403,13 +408,10 @@ exports.createRoom2 = function(room_id, host, callback) {
     return createRoom_private_func(room_id, host, callback, recordParticipantsOnConnect)
 }
 
-
 var createRoom_private_func = function(room_id, host, callback, recordParticipantsOnConnect) {
     return db.ref('api_tokens').once('value').then(snapshot => {
 
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token)
-
-        db.ref('templog2').set({recordParticipantsOnConnect: recordParticipantsOnConnect})
 
         var roomParms = {statusCallback: 'https://'+host+'/twilioCallback',
                         uniqueName: room_id}
@@ -423,7 +425,13 @@ var createRoom_private_func = function(room_id, host, callback, recordParticipan
         }
 
         return client.video.rooms.create(roomParms).then(room => {
-            callback({room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token})
+            if(callback)
+                callback({room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token})
+            else return {room: room,
+                        twilio_account_sid: snapshot.val().twilio_account_sid,
+                        twilio_auth_token: snapshot.val().twilio_auth_token,
+                        twilio_api_key: snapshot.val().twilio_api_key,
+                        twilio_secret: snapshot.val().twilio_secret}
         })
         //.done();
     })
@@ -509,6 +517,7 @@ exports.compose = function(input) {
 }
 
 
+// We actually have a use for this "singular" version and for the "plural" version below
 // ref:  https://www.twilio.com/docs/iam/access-tokens#creating-tokens
 // We export this so we can call this function from switchboard.js  It's not meant to be a firebase function
 exports.generateTwilioToken = function(stuff) {
@@ -533,6 +542,34 @@ exports.generateTwilioToken = function(stuff) {
 
         return token.toJwt()
     })
+}
+
+
+
+// ref:  https://www.twilio.com/docs/iam/access-tokens#creating-tokens
+// We export this so we can call this function from switchboard.js  It's not meant to be a firebase function
+exports.generateTwilioTokens = function(stuff) {
+    var identities = stuff.identities
+
+    // Create Video Grant
+    const videoGrant = new VideoGrant({
+      room: stuff.room_id,
+    });
+
+    var tokens = []
+    _.each(identities, function(identity) {
+        // Create an access token which we will sign and return to the client,
+        // containing the grant we just created
+        console.log('stuff.twilio_account_sid: ', stuff.twilio_account_sid)
+        console.log('stuff.twilio_api_key: ', stuff.twilio_api_key)
+        console.log('stuff.twilio_secret: ', stuff.twilio_secret)
+        const token = new AccessToken(stuff.twilio_account_sid, stuff.twilio_api_key, stuff.twilio_secret)
+        token.addGrant(videoGrant)
+        token.identity = identity.name
+        tokens.push({uid: identity.uid, token: token.toJwt()})
+    })
+
+    return tokens
 }
 
 

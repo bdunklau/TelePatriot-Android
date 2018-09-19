@@ -20,6 +20,7 @@ paste this on the command line...
 firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,functions:onConnectRequest,functions:onDisconnectRequest,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
 ***/
 
+// When one person connects, connect the other person also.  It's one less thing we have to train people to do.
 exports.onConnectRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
     if(!event.data.val().request_type)
         return false //ignore malformed
@@ -31,53 +32,69 @@ exports.onConnectRequest = functions.database.ref('video/video_events/{key}').on
 
 var connect = function(video_event_key, video_node_key, uid, name, room_id, RoomSid) {
 
-    // we need to make sure the token is set first - and then set the connect_date/_ms attributes
-    var token_attr = room_id.startsWith('record') ? 'twilio_token_record' : 'twilio_token'
-    var stuff = {name: name,
-                room_id: room_id}
+    var stuff = {room_id: room_id,
+                  video_node_key: video_node_key,
+                  video_event_key: video_event_key}
 
-    return twilio_telepatriot.generateTwilioToken(stuff).then(token => {
-        var tokenUpdate = {}
-        tokenUpdate['video/list/'+video_node_key+'/video_participants/'+uid+'/'+token_attr] = token
-        return db.ref('/').update(tokenUpdate).then(() => {
-            // now that the token is correct, we can set the connect_date attributes...
-            var updates = {}
-            updates['video/video_events/'+video_event_key+'/date'] = date.asCentralTime()
-            updates['video/video_events/'+video_event_key+'/date_ms'] = date.asMillis()
-            updates['video/list/'+video_node_key+'/video_participants/'+uid+'/connect_date'] = date.asCentralTime()
-            updates['video/list/'+video_node_key+'/video_participants/'+uid+'/connect_date_ms'] = date.asMillis()
-            updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date'] = null
-            updates['video/list/'+video_node_key+'/video_participants/'+uid+'/disconnect_date_ms'] = null
+    if(RoomSid) { // means we don't have to create the room, it's already created
 
-//            We see errors that say we are trying to create a room that already exists.  I think it's because the RoomSid (or room_sid)
-//             value is written to the video node too late in some cases.  So the second person trying to connect goes through
-//             the same code path as the first person who created the room.  To fix this (hopefully), we will set an interim value
-//             for room_sid until twilio responds with the actual value...
-            var needToCreateRoom = !RoomSid
+        return db.ref('api_tokens').once('value').then(snap8 => {
+            stuff.twilio_account_sid = snap8.val().twilio_account_sid
+            stuff.twilio_api_key = snap8.val().twilio_api_key
+            stuff.twilio_secret = snap8.val().twilio_secret
 
-            if(needToCreateRoom) {
-                return db.ref('video/list/'+video_node_key+'/room_sid').set('creating the room_sid now...') // see also exports.onRoomCreated()
-                .then(() => {
+            return yy(stuff)
 
-                    return db.ref('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
-                       var host
-                       snapshot.forEach(function(child) { host = child.val().host })
+        }) // return db.ref('api_tokens').once('value').then(snap8
+    }
+    else {
+        return db.ref('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
 
-                       return twilio_telepatriot.createRoom(room_id, host).then(() => {
-                           // needed by doConnect in VidyoChatFragment and VideoChatVC
-                           return db.ref('/').update(updates)
-                       })
+            var host
+            snapshot.forEach(function(child) { host = child.val().host })
 
-                    })
-                })
+            return twilio_telepatriot.createRoom(room_id, host).then(roomResult => {
+                stuff.twilio_account_sid = roomResult.twilio_account_sid
+                stuff.twilio_api_key = roomResult.twilio_api_key
+                stuff.twilio_secret = roomResult.twilio_secret
 
-            }
-            else {
-                return db.ref('/').update(updates)
-            }
+                return yy(stuff)
+            })
+
         })
-    })
+    }
 
+}
+
+
+var yy = function(stuff) {
+
+    // we need to make sure the token is set first - and then set the connect_date/_ms attributes
+    var token_attr = stuff.room_id.startsWith('record') ? 'twilio_token_record' : 'twilio_token'
+
+    // get all participants, connect them all(both) whenever one connects
+    return db.ref('video/list/'+stuff.video_node_key+'/video_participants').once('value').then(snap9 => {
+        var identities = []
+        snap9.forEach(function(child) {
+            identities.push({name: child.val().name, uid: child.val().uid})
+        })
+        stuff.identities = identities
+
+        var tokens = twilio_telepatriot.generateTwilioTokens(stuff)
+
+        var updates = {}
+        updates['video/video_events/'+stuff.video_event_key+'/date'] = date.asCentralTime()
+        updates['video/video_events/'+stuff.video_event_key+'/date_ms'] = date.asMillis()
+        _.each(tokens, function(tokenData) {
+            updates['video/list/'+stuff.video_node_key+'/video_participants/'+tokenData.uid+'/'+token_attr] = tokenData.token
+            updates['video/list/'+stuff.video_node_key+'/video_participants/'+tokenData.uid+'/connect_date'] = date.asCentralTime()
+            updates['video/list/'+stuff.video_node_key+'/video_participants/'+tokenData.uid+'/connect_date_ms'] = date.asMillis()
+            updates['video/list/'+stuff.video_node_key+'/video_participants/'+tokenData.uid+'/disconnect_date'] = null
+            updates['video/list/'+stuff.video_node_key+'/video_participants/'+tokenData.uid+'/disconnect_date_ms'] = null
+        })
+        // these updates will trigger doConnect in VidyoChatFragment and VideoChatVC
+        return db.ref('/').update(updates)
+    })
 }
 
 
@@ -87,7 +104,7 @@ to a room that DOES have recording enabled.
 
 NOTE: You can't reuse the connect() / disconnect() functions because they rely on triggers to disconnect
 all the participants and 'complete' the current room.  When recording, we HAVE to make sure that the everyone
-is out of the pre-interview room before we 'complete' it.  If tried to reuse connect() and disconnect(), we
+is out of the pre-interview room before we 'complete' it.  If you tried to reuse connect() and disconnect(), we
 would end up 'complete'-ing both the pre-interview room AND the recorded interview room.  <-- This is based
 on observations I made of the video/video_events table.  I actually saw both rooms closed one right on top of
 the other.

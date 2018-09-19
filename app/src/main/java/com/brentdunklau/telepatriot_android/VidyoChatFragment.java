@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
@@ -166,6 +167,7 @@ public class VidyoChatFragment extends BaseFragment
     public View onCreateView (LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
         myView = inflater.inflate(R.layout.vidyo_chat_fragment,container,false);
 
+        this.getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         /*
          * Get shared preferences to read settings
@@ -432,8 +434,6 @@ public class VidyoChatFragment extends BaseFragment
 
         return myView;
     }
-
-
 
 
     /*
@@ -759,6 +759,8 @@ public class VidyoChatFragment extends BaseFragment
     public  void onResume() {
         super.onResume();
 
+        this.getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
         /*
          * Update preferred audio and video codec in case changed in settings
          */
@@ -806,6 +808,7 @@ public class VidyoChatFragment extends BaseFragment
 
     @Override
     public void onPause() {
+        this.getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         /*
          * Release the local video track before going in the background. This ensures that the
          * camera can be used by other applications while this app is in the background.
@@ -1480,7 +1483,7 @@ public class VidyoChatFragment extends BaseFragment
 
         // Are we connected?
         boolean connected = room != null && (room.getState() == RoomState.CONNECTED || room.getState() == RoomState.CONNECTING);
-        boolean shouldBeConnected = me.isConnected();
+        boolean shouldBeConnected = me!=null && me.isConnected();
         // Should we be disconnected?
         boolean shouldBeDisconnected = !shouldBeConnected;
         // Am I connected to the wrong room?
@@ -1567,6 +1570,10 @@ public class VidyoChatFragment extends BaseFragment
          * Set the sender side encoding parameters.
          */
         connectOptionsBuilder.encodingParameters(encodingParameters);
+
+        if(getActivity() == null) { // I've seen this happen when another user tries to connect and the android user is still on the limbo screen
+            return;
+        }
 
         room = Video.connect(getActivity(), connectOptionsBuilder.build(), roomListener());
 
@@ -1659,7 +1666,7 @@ public class VidyoChatFragment extends BaseFragment
                     else {
                         String initiator = new VideoInvitation(currentVideoNode).getInitiator_name();
                         guest_name.setText(initiator+" has invited you to participate in a video chat.  Click the green phone button to connect with "+initiator);
-                        //revoke_invitation_button.setVisibility(View.GONE);
+                        revoke_invitation_button.setVisibility(View.VISIBLE);
                     }
                 }
                 else {
@@ -2011,7 +2018,7 @@ public class VidyoChatFragment extends BaseFragment
             simpleOKDialog("Recording is currently disabled");
             return;
         }
-        if(currentVideoNode.getLeg_id() == null) {
+        if(currentVideoNode.getLeg_id() == null || currentVideoNode.getLeg_id().trim().equals("")) {
             chooseLegislatorFirst();
             return;
         }
