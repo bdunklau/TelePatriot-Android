@@ -143,10 +143,10 @@ var thePage = function(stuff) {
     }
     html +=     '<td valign="top">'+createMissionForm()+'</td>'
     if(stuff.body) {
-        html +=     '<td valign="top"><b>body: </b>'+body+'</td>'
+        html +=     '<td valign="top"><b>body: </b>'+stuff.body+'</td>'
     }
     if(stuff.httpResponse) {
-        html +=     '<td valign="top"><b>httpResponse: </b>'+httpResponse+'</td>'
+        html +=     '<td valign="top"><b>httpResponse: </b>'+stuff.httpResponse+'</td>'
     }
     html += '   </tr>'
     html += '</table>'
