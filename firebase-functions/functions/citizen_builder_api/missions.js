@@ -68,7 +68,7 @@ exports.createMission = functions.https.onRequest((req, res) => {
             form: formData
         },
         function (err, httpResponse, body) {
-            console.log(err, body);
+            console.log(err, body, httpResponse);
             if(err) {
                 return res.status(200).send(thePage({error: err}))
             } else {
