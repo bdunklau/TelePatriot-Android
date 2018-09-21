@@ -57,8 +57,14 @@ exports.testVolunteers = functions.https.onRequest((req, res) => {
 
 var testEmailList = function() {
     var html = ''
+    var emails = ['bdunklau@yahoo.com', 'ttpvolunteer@m.ri', 'chdn6@m.ri', 'chlb8@m.ri', 'someuser5@mailinator.com', 'chlb2@m.ri']
     html += '<table border="0">'
-    html += '   <tr><td><a href="/testVolunteers?email=bdunklau@yahoo.com">bdunklau@yahoo.com</a></td></tr>'
+    html += '   <tr><td>Click an email below to see the volunteer\'s info</td></tr>'
+
+    _.each(emails, function(email) {
+        html += '<tr><td><a href="/testVolunteers?email='+email+'>'+email+'</a></td></tr>'
+    })
+
     html += '</table>'
     return html
 }
