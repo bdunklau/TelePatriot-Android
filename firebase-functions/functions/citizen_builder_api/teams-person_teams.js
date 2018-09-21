@@ -43,11 +43,11 @@ exports.testPersonTeams = functions.https.onRequest((req, res) => {
             // see above:   var request = require('request')
             request.get(options, function(error, response, body){
                 //console.log(body);
-                var teams = JSON.parse(body)
+                var json = JSON.parse(body)
                 if(error) {
                     return res.status(200).send(thePage({error: error}))
                 }
-                else return res.status(200).send(thePage({teams: teams}))
+                else return res.status(200).send(thePage({teams: json.teams}))
             })
 
         })
