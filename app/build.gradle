@@ -6,8 +6,8 @@ android {
         applicationId "com.brentdunklau.telepatriot_android"
         minSdkVersion 17
         targetSdkVersion 26
-        versionCode 40
-        versionName "40"
+        versionCode 41
+        versionName "41"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -17,8 +17,9 @@ android {
             //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro' // build fails currently with this 8/10/18
         }
         release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled false
+            debuggable false
+            //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
     sourceSets {
