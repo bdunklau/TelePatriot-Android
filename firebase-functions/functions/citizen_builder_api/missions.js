@@ -146,7 +146,7 @@ var thePage = function(stuff) {
         html +=     '<td valign="top"><b>body: </b>'+stuff.body+'</td>'
     }
     if(stuff.httpResponse) {
-        html +=     '<td valign="top"><b>httpResponse: </b>'+JSON.parse(stuff.httpResponse)+'</td>'
+        html +=     '<td valign="top"><b>httpResponse.result: </b>'+stuff.httpResponse.result+'</td>'
     }
     html += '   </tr>'
     html += '</table>'
