@@ -42,7 +42,10 @@ exports.testVolunteers = functions.https.onRequest((req, res) => {
             request.get(options, function(error, response, body){
                 //console.log(body);
                 var vol = JSON.parse(body)
-                return return res.status(200).send(thePage({vol: vol}))
+                if(error) {
+                    return res.status(200).send(thePage({error: error}))
+                }
+                else return res.status(200).send(thePage({vol: vol}))
             })
 
         })
@@ -82,6 +85,9 @@ var testVolunteerInfo = function(vol) {
 var thePage = function(stuff) {
     var html = ''
     html += '<table border="0">'
+    html += '   <tr>'
+    html +=         '<td colspan="2">'+stuff.error+'</td>'
+    html += '   </tr>'
     html += '   <tr>'
     html +=         '<td>'+testEmailList()+'</td>'
     if(stuff.vol) {
