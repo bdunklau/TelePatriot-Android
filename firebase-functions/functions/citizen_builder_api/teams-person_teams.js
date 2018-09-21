@@ -85,6 +85,16 @@ var testTeamList = function(teams) {
     return html
 }
 
+var showError = function(stuff) {
+    var html = ''
+    if(stuff.error) {
+        html += '   <tr>'
+        html +=         '<td colspan="2">'+stuff.error+'</td>'
+        html += '   </tr>'
+    }
+    return html
+}
+
 var thePage = function(stuff) {
     var html = ''
     html += '<table border="0" cellspacing="10">'
