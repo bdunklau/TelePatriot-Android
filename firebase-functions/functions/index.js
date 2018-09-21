@@ -323,6 +323,9 @@ exports.testVolunteers = volunteers.testVolunteers
 const person_teams = require('./citizen_builder_api/teams-person_teams')
 exports.testPersonTeams = person_teams.testPersonTeams
 
+const team_missions = require('./citizen_builder_api/missions-team_missions')
+exports.testTeamMissions = team_missions.testTeamMissions
+
 // prod deploy: 9/12/18, 9/20/18
 const videoOffers = require('./video-offers')
 exports.onVideoOffer = videoOffers.onVideoOffer

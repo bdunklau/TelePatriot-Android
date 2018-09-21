@@ -15,19 +15,19 @@ const db = admin.database()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:testPersonTeams
+firebase deploy --only functions:testTeamMissions
 ***/
 
-//CREATED TO TEST AND SUPPORT THE /teams/person_teams ENDPOINT
+//CREATED TO TEST AND SUPPORT THE /missions/team_missions ENDPOINT
 
-exports.testPersonTeams = functions.https.onRequest((req, res) => {
+exports.testTeamMissions = functions.https.onRequest((req, res) => {
 
-    if(req.query.person_id) {
+    if(req.query.team_id) {
         return db.ref('api_tokens').once('value').then(snapshot => {
 
             // as long as there's an email address, call the CB API endpoint to see if this person
             // has satisfied the legal requirements
-            var endpoint = 'https://api.qacos.com/api/ios/v1/teams/person_teams?person_id='+req.query.person_id
+            var endpoint = 'https://api.qacos.com/api/ios/v1/missions/team_missions?team_id='+req.query.team_id
 
             var apiKeyName = snapshot.val().citizen_builder_api_key_name
             var apiKeyValue = snapshot.val().citizen_builder_api_key_value_QA
@@ -47,7 +47,7 @@ exports.testPersonTeams = functions.https.onRequest((req, res) => {
                 if(error) {
                     return res.status(200).send(thePage({error: error}))
                 }
-                else return res.status(200).send(thePage({teams: json.teams}))
+                else return res.status(200).send(thePage({teams: json.missions}))
             })
 
         })
@@ -57,28 +57,28 @@ exports.testPersonTeams = functions.https.onRequest((req, res) => {
     }
 })
 
-var testPersonIdList = function() {
+var testTeamIdList = function() {
     var html = ''
-    var list = [1329]
+    var list = [11, 14]
     html += '<table border="0">'
-    html += '   <tr><td><b>Click a person_id below to see the teams for this volunteer</b></td></tr>'
+    html += '   <tr><td><b>Click a team_id below to see the missions for this team</b></td></tr>'
 
     _.each(list, function(person_id) {
-        html += '<tr><td><a href="/testPersonTeams?person_id='+person_id+'">'+person_id+'</a></td></tr>'
+        html += '<tr><td><a href="/testTeamMissions?team_id='+team_id+'">'+team_id+'</a></td></tr>'
     })
 
     html += '</table>'
     return html
 }
 
-var testTeamList = function(teams) {
+var testMissionList = function(missions) {
     var html = ''
     html += '<table border="0">'
-    html += '   <tr><th colspan="2">Team Info</th></tr>'
-    html += '   <tr><th>id</th><th>name</th></tr>'
+    html += '   <tr><th colspan="2">Mission Info</th></tr>'
+    html += '   <tr><th>id</th><th>name</th><th>description</th><th>script</th><th>status</th></tr>'
 
-    _.each(teams, function(team) {
-        html += '<tr><td>'+team.id+'</td><td>'+team.name+'</td></tr>'
+    _.each(missions, function(mission) {
+        html += '<tr><td>'+missions.id+'</td><td>'+missions.name+'</td><td>'+missions.description+'</td><td>'+missions.script+'</td><td>'+missions.status+'</td></tr>'
     })
 
     html += '</table>'
@@ -100,9 +100,9 @@ var thePage = function(stuff) {
     html += '<table border="0" cellspacing="10">'
     html += showError(stuff)
     html += '   <tr>'
-    html +=         '<td valign="top">'+testPersonIdList()+'</td>'
-    if(stuff.teams) {
-        html +=     '<td valign="top">'+testTeamList(stuff.teams)+'</td>'
+    html +=         '<td valign="top">'+testTeamIdList()+'</td>'
+    if(stuff.missions) {
+        html +=     '<td valign="top">'+testMissionList(stuff.missions)+'</td>'
     }
     html += '   </tr>'
     html += '</table>'
