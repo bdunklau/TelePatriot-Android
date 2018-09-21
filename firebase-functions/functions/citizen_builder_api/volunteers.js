@@ -42,7 +42,7 @@ exports.testVolunteers = functions.https.onRequest((req, res) => {
             request.get(options, function(error, response, body){
                 //console.log(body);
                 var vol = JSON.parse(body)
-                return thePage({vol: vol})
+                return return res.status(200).send(thePage({vol: vol}))
             })
 
         })
