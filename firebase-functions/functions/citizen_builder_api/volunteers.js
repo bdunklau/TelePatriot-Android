@@ -64,7 +64,7 @@ var testEmailList = function() {
     html += '   <tr><td>Click an email below to see the volunteer\'s info</td></tr>'
 
     _.each(emails, function(email) {
-        html += '<tr><td><a href="/testVolunteers?email='+email+'>'+email+'</a></td></tr>'
+        html += '<tr><td><a href="/testVolunteers?email='+email+'">'+email+'</a></td></tr>'
     })
 
     html += '</table>'
