@@ -82,6 +82,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 //const googleAuth = require('google-auth-library');
 const google = require('googleapis');
+const _ = require('lodash');
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -104,7 +105,14 @@ const HARDCODED_MISSION_ID = '1'
 
 
 // setup for authGoogleAPI
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
+// all scope options:  https://developers.google.com/identity/protocols/googlescopes#youtubev3
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/youtube.upload',
+                'https://www.googleapis.com/auth/youtube.readonly',
+                'https://www.googleapis.com/auth/youtube',
+                'https://www.googleapis.com/auth/compute',         // https://cloud.google.com/compute/docs/reference/rest/v1/images/insert
+                'https://www.googleapis.com/auth/cloud-platform',  // https://cloud.google.com/compute/docs/reference/rest/v1/images/insert
+                'https://www.googleapis.com/auth/compute.readonly']; // https://cloud.google.com/compute/docs/reference/rest/v1/images/insert
 var OAuth2 = google.auth.OAuth2;
 var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
                                 FUNCTIONS_REDIRECT);
@@ -138,7 +146,12 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
       res.status(400).send(err);
       return;
     }
-    db.ref(DB_TOKEN_PATH).set(tokens).then(
+    var keys = Object.keys(tokens)
+    var updates = {}
+    _.each(keys, function(key) {
+        updates[DB_TOKEN_PATH+'/'+key] = tokens[key]
+    })
+    db.ref('/').update(updates).then(
         () => res.status(200).send('App successfully configured with new Credentials. ' +
                                    'You can now close this page.'));
   });

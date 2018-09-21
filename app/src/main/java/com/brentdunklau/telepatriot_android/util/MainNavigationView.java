@@ -13,6 +13,7 @@ import android.view.SubMenu;
 
 import com.brentdunklau.telepatriot_android.R;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -69,9 +70,10 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
         roles.put("Volunteer", User.getInstance().isVolunteer());
         roles.put("Director", User.getInstance().isDirector());
         roles.put("Admin", User.getInstance().isAdmin());
+        roles.put("Video Creator", User.getInstance().isVideoCreator());
         for(String role : roles.keySet()) {
-            MenuItem item = findMenuItemForRole(role);
-            if(item != null) {
+            List<MenuItem> items = findMenuItemsForRole(role);
+            for(MenuItem item : items) {
                 boolean bool = roles.get(role);
                 item.setVisible(bool);
             }
@@ -88,15 +90,23 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
         int size = menu.size();
         if(evt instanceof AccountStatusEvent.RoleAdded) {
             String role = evt.getEvent();
-            MenuItem item = findMenuItemForRole(role);
-            if(item != null)
+            List<MenuItem> items = findMenuItemsForRole(role);
+            for(MenuItem item : items) {
                 item.setVisible(true);
+            }
+//            MenuItem item = findMenuItemForRole(role);
+//            if(item != null)
+//                item.setVisible(true);
         }
         else if(evt instanceof AccountStatusEvent.RoleRemoved) {
             String role = evt.getEvent();
-            MenuItem item = findMenuItemForRole(role);
-            if(item != null)
+            List<MenuItem> items = findMenuItemsForRole(role);
+            for(MenuItem item : items) {
                 item.setVisible(false);
+            }
+//            MenuItem item = findMenuItemForRole(role);
+//            if(item != null)
+//                item.setVisible(false);
         }
         else if(evt instanceof AccountStatusEvent.TeamSelected) { // also fires when the user logs in, so we always have a team to display to the user
             // find MenuItem you want to change
@@ -106,12 +116,27 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
 
     }
 
-    private MenuItem findMenuItemForRole(String role) {
-        Map<String, String> rolesToMenuItems = new HashMap<String, String>();
-        rolesToMenuItems.put("Volunteer", "My Mission");
-        rolesToMenuItems.put("Director", "Directors");
-        rolesToMenuItems.put("Admin", "Admins");
-        String title = rolesToMenuItems.get(role);
+    private List<MenuItem> findMenuItemsForRole(String role) {
+
+        Map<String, String> menuItemsToRoles = new HashMap<String, String>();
+        menuItemsToRoles.put("My Mission", "Volunteer");
+        menuItemsToRoles.put("Directors", "Director");
+        menuItemsToRoles.put("Admins", "Admin");
+        menuItemsToRoles.put("Video Chat", "Video Creator");
+        menuItemsToRoles.put("Video Offers", "Video Creator");
+        List<MenuItem> items = new ArrayList<MenuItem>();
+        for(String key : menuItemsToRoles.keySet()) {
+            String r = menuItemsToRoles.get(key);
+            if(r.equals(role)) {
+                MenuItem item = findMenuItem(key);
+                if(item != null)
+                    items.add(item);
+            }
+        }
+        return items;
+    }
+
+    private MenuItem findMenuItem(String title) {
 
         Menu menu = getMenu();
         int size = menu.size();
@@ -132,4 +157,34 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
         }
         return null;
     }
+
+    // See also MainActivity.onNavigationItemSelected()
+//    private MenuItem findMenuItemForRole(String role) {
+//        Map<String, String> rolesToMenuItems = new HashMap<String, String>();
+//        rolesToMenuItems.put("Volunteer", "My Mission");
+//        rolesToMenuItems.put("Director", "Directors");
+//        rolesToMenuItems.put("Admin", "Admins");
+//        rolesToMenuItems.put("Video Creator", "Video Chat");
+//        rolesToMenuItems.put("Video Creator", "Video Offers");
+//        String title = rolesToMenuItems.get(role);
+//
+//        Menu menu = getMenu();
+//        int size = menu.size();
+//        for(int i = 0; i < size; i++) {
+//            MenuItem item = menu.getItem(i);
+//            if( item.getTitle().toString().equalsIgnoreCase(title) )
+//                return item;
+//            else if(item.getSubMenu() != null) {
+//                SubMenu subMenu = item.getSubMenu();
+//                int subsize = subMenu.size();
+//                for(int j=0; j < subsize; j++) {
+//                    MenuItem subitem = subMenu.getItem(j);
+//                    if(subitem.getTitle().toString().equalsIgnoreCase(title)) {
+//                        return subitem;
+//                    }
+//                }
+//            }
+//        }
+//        return null;
+//    }
 }

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+
+    <TextView
+        android:id="@+id/video_offer_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Offer to Go on Video"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/video_offer_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="offer date"
+        android:textColor="#777777"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/video_offer_header" />
+
+    <TextView
+        android:id="@+id/video_offer_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="name"
+        android:textColor="@android:color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/video_offer_date" />
+
+    <TextView
+        android:id="@+id/video_offer_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="email"
+        android:textColor="@color/colorPrimaryDark"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/video_offer_residential_address_state_abbrev" />
+
+    <TextView
+        android:id="@+id/video_offer_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="phone"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="16sp"
+        app:layout_constraintStart_toEndOf="@+id/phone_label"
+        app:layout_constraintTop_toTopOf="@+id/phone_label" />
+
+    <TextView
+        android:id="@+id/video_offer_residential_address_line1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="address line1"
+        android:textColor="@android:color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/address_label" />
+
+    <TextView
+        android:id="@+id/video_offer_residential_address_city"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="city"
+        android:textColor="@android:color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/video_offer_residential_address_line1" />
+
+    <TextView
+        android:id="@+id/video_offer_residential_address_state_abbrev"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="state"
+        android:textColor="@android:color/black"
+        app:layout_constraintStart_toEndOf="@+id/video_offer_residential_address_city"
+        app:layout_constraintTop_toBottomOf="@+id/video_offer_residential_address_line1" />
+
+    <TextView
+        android:id="@+id/video_offer_state_lower_district"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:text="HD#"
+        android:textColor="@android:color/black"
+        app:layout_constraintStart_toEndOf="@+id/video_offer_house_state"
+        app:layout_constraintTop_toTopOf="@+id/house_label" />
+
+    <TextView
+        android:id="@+id/video_offer_state_upper_district"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:text="SD#"
+        android:textColor="@android:color/black"
+        app:layout_constraintStart_toEndOf="@+id/video_offer_senate_state"
+        app:layout_constraintTop_toTopOf="@+id/senate_label" />
+
+    <TextView
+        android:id="@+id/video_offer_senate_state"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="senate_state"
+        android:textColor="@android:color/black"
+        app:layout_constraintStart_toEndOf="@+id/senate_label"
+        app:layout_constraintTop_toTopOf="@+id/senate_label" />
+
+    <TextView
+        android:id="@+id/video_offer_house_state"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="house_state"
+        android:textColor="@android:color/black"
+        app:layout_constraintStart_toEndOf="@+id/house_label"
+        app:layout_constraintTop_toTopOf="@+id/house_label" />
+
+    <Button
+        android:id="@+id/delete_offer_button"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="87dp"
+        android:layout_height="38dp"
+        android:layout_marginBottom="32dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/cardview_light_background"
+        android:text="Delete"
+        android:textColor="@android:color/holo_red_light"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/video_offer_email" />
+
+    <TextView
+        android:id="@+id/senate_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:text="Senate:"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/phone_label" />
+
+    <TextView
+        android:id="@+id/house_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="House:"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/senate_label" />
+
+    <TextView
+        android:id="@+id/address_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Address"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/house_label" />
+
+    <TextView
+        android:id="@+id/phone_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Phone:"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/video_offer_name" />
+
+
+    <!--
+
+        residential_address_line1 = itemView.findViewById(R.id.);
+        residential_address_line1 = itemView.findViewById(R.id.video_offer_residential_address_line2);
+        residential_address_state_abbrev = itemView.findViewById(R.id.video_offer_residential_address_state_abbrev);
+        residential_address_zip = itemView.findViewById(R.id.video_offer_residential_address_zip);
+        state_lower_district = itemView.findViewById(R.id.video_offer_state_lower_district);
+        state_upper_district = itemView.findViewById(R.id.video_offer_state_upper_district);
+        uid = itemView.findViewById(R.id.video_offer_uid);
+        -->
+
+
+</android.support.constraint.ConstraintLayout>

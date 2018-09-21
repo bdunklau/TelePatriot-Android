@@ -80,4 +80,40 @@ public class AccountStatusEvent {
         }
     }
 
+    public static class Allowed extends AccountStatusEvent {
+        Allowed() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "user allowed access");
+        }
+    }
+
+    public static class NotAllowed extends AccountStatusEvent {
+        NotAllowed() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "user not allowed access");
+        }
+    }
+
+    public static class AccountEnabled extends AccountStatusEvent {
+        AccountEnabled() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "user account enabled");
+        }
+    }
+
+    public static class AccountDisabled extends AccountStatusEvent {
+        AccountDisabled() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "user account disabled");
+        }
+    }
+
+    public static class VideoInvitationExtended extends AccountStatusEvent {
+        public VideoInvitationExtended() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "video invitation extended");
+        }
+    }
+
+    public static class VideoInvitationRevoked extends AccountStatusEvent {
+        public VideoInvitationRevoked() {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "video invitation revoked");
+        }
+    }
+
 }

@@ -404,6 +404,7 @@ public class MyMissionFragment extends BaseFragment {
     }
 
 
+    // Consider using the similar method in Util *************************
     // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
     // an app crash on the very first phone call.  Thinking that I'm requesting permission
     // too late ... ?

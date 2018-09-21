@@ -35,16 +35,17 @@ import java.util.Map;
  * Created by bdunklau on 10/5/2017.
  */
 
-public class AssignUserFragment extends AdminFragment {
+public class AssignUserFragment extends AdminFragment implements FragmentContainingUser {
 
     private SwitchCompat enabledDisabledSwitch;
     private SwitchCompat adminSwitch;
     private SwitchCompat directorSwitch;
     private SwitchCompat volunteerSwitch;
+    private SwitchCompat switch_video_creator;
     private Button okButton;
     private String uid;
     boolean isEnabled = true;
-    boolean isAdmin, isDirector, isVolunteer;
+    boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
     Boolean has_signed_petition, has_signed_confidentiality_agreement, is_banned;
     //View myView;
     private FragmentManager fragmentManager;
@@ -63,19 +64,34 @@ public class AssignUserFragment extends AdminFragment {
         this.uid = uid;
     }
 
+    // per FragmentContainingUser
+    public void userSelected(UserBean user) {
+        this.uid = user.getUid();
+    }
+
+    // per FragmentContainingUser
     public void setFragmentManager(FragmentManager fragmentManager, Fragment back) {
         this.fragmentManager = fragmentManager;
         this.back = back;
     }
 
+    // per FragmentContainingUser
+    public Fragment getFragment() {
+        return this;
+    }
+
     private void setUI() {
 
         enabledDisabledSwitch = myView.findViewById(R.id.switch_enabled_disabled);
+        enabledDisabledSwitch.setSwitchPadding(50);
         adminSwitch = myView.findViewById(R.id.switch_admin);
+        adminSwitch.setSwitchPadding(50);
         directorSwitch = myView.findViewById(R.id.switch_director);
+        directorSwitch.setSwitchPadding(50);
         volunteerSwitch = myView.findViewById(R.id.switch_volunteer);
-
-        adminSwitch.setSwitchPadding(100);
+        volunteerSwitch.setSwitchPadding(50);
+        switch_video_creator = myView.findViewById(R.id.switch_video_creator);
+        switch_video_creator.setSwitchPadding(50);
 
 
         enabledDisabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -97,6 +113,13 @@ public class AssignUserFragment extends AdminFragment {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 isDirector = b;
+            }
+        });
+
+        switch_video_creator.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                isVideoCreator = b;
             }
         });
 
@@ -147,10 +170,12 @@ public class AssignUserFragment extends AdminFragment {
                     isAdmin = ub.isRole("Admin");
                     isDirector = ub.isRole("Director");
                     isVolunteer = ub.isRole("Volunteer");
+                    isVideoCreator = ub.isRole("Video Creator");
                     setSwitch(isEnabled, enabledDisabledSwitch);
                     setSwitch(isAdmin, adminSwitch);
                     setSwitch(isDirector, directorSwitch);
                     setSwitch(isVolunteer, volunteerSwitch);
+                    setSwitch(isVideoCreator, switch_video_creator);
                     has_signed_petition = ub.getHas_signed_petition();
                     has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement();
                     is_banned = ub.getIs_banned();
@@ -192,19 +217,16 @@ public class AssignUserFragment extends AdminFragment {
      ************************/
     private void enabledDisabledChanged(boolean enabled) {
 
-        if(enabled) {
-            volunteerSwitch.setEnabled(true);
-            directorSwitch.setEnabled(true);
-            adminSwitch.setEnabled(true);
-        }
-        else {
-            volunteerSwitch.setChecked(false);
-            directorSwitch.setChecked(false);
-            adminSwitch.setChecked(false);
+        volunteerSwitch.setEnabled(enabled);
+        directorSwitch.setEnabled(enabled);
+        adminSwitch.setEnabled(enabled);
+        switch_video_creator.setEnabled(enabled);
 
-            volunteerSwitch.setEnabled(false);
-            directorSwitch.setEnabled(false);
-            adminSwitch.setEnabled(false);
+        if(!enabled) {
+            volunteerSwitch.setChecked(enabled);
+            directorSwitch.setChecked(enabled);
+            adminSwitch.setChecked(enabled);
+            switch_video_creator.setChecked(enabled);
         }
 
         enabledDisabledSwitch.setText(enabled ? "Enabled" : "Disabled");
@@ -305,6 +327,7 @@ public class AssignUserFragment extends AdminFragment {
         usr.setVolunteer(isVolunteer);
         usr.setDirector(isDirector);
         usr.setAdmin(isAdmin);
+        usr.setVideoCreator(isVideoCreator);
         usr.setHas_signed_petition(has_signed_petition);
         usr.setHas_signed_confidentiality_agreement(has_signed_confidentiality_agreement);
         usr.setIs_banned(is_banned);
@@ -314,23 +337,14 @@ public class AssignUserFragment extends AdminFragment {
         String returnToTab = "Admin";
         if(isVolunteer) {
             returnToTab = "Volunteer";
-            //setRole("Volunteer");
-        } else {
-            //unsetRole("Volunteer");
         }
 
         if(isDirector) {
             returnToTab = "Director";
-            //setRole("Director");
-        } else {
-            //unsetRole("Director");
         }
 
         if(isAdmin) {
             returnToTab = "Admin";
-            //setRole("Admin");
-        } else {
-            //unsetRole("Admin");
         }
 
         /****************
@@ -341,7 +355,7 @@ public class AssignUserFragment extends AdminFragment {
 
 
         // as long is something is set, remove the record from the no_roles node
-        if(isAdmin || isDirector || isVolunteer)
+        if(isAdmin || isDirector || isVolunteer || isVideoCreator)
             FirebaseDatabase.getInstance().getReference("no_roles/"+uid).removeValue();
 
         if(back instanceof PassInfo) {
@@ -361,18 +375,6 @@ public class AssignUserFragment extends AdminFragment {
                 .replace(R.id.content_frame, back)
                 .addToBackStack(back.getClass().getName())
                 .commit();
-    }
-
-    private void setValue(String uid, String attribute, Boolean value) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/"+attribute).setValue(value);
-    }
-
-    private void setRole(String role) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/roles/"+role).setValue("true");
-    }
-
-    private void unsetRole(String role) {
-        FirebaseDatabase.getInstance().getReference("users/"+uid+"/roles/"+role).removeValue();
     }
 
     private void setSwitch(final boolean value, final SwitchCompat switchCompat) {

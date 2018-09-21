@@ -8,9 +8,15 @@ const date = require('./dateformat')
 //admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
+/***
+to deploy everything in this file...
+firebase deploy --only functions:checkUsers,functions:insert,functions:update,functions:queryActive,functions:queryInactive,functions:copy,functions:deleteNodes,functions:deleteAttributes,functions:selectDistinct,functions:query,functions:addAttributeToChildren,functions:archive
+***/
+
+
 // throw-away function
 exports.checkUsers = functions.https.onRequest((req, res) => {
-    return db.ref(`users`).once('value').then(snapshot => {
+    return db.ref('users').once('value').then(snapshot => {
         var stuff = '<html><head></head><body><table border="1">'
         stuff += '<tr>'
         stuff += '<th>key</th>'
@@ -98,8 +104,8 @@ exports.insert = functions.https.onRequest((req, res) => {
     }
     else {
 
-        return db.ref(`${node}`).set({attribute: value}).then(() => {
-            db.ref(`${node}/${attribute}`).once('value').then(snapshot => {
+        return db.ref(node).set({attribute: value}).then(() => {
+            db.ref(node+'/'+attribute).once('value').then(snapshot => {
                 var stuff = 'OK<P/>JSON.stringify(snapshot) = '+JSON.stringify(snapshot)
                 res.status(200).send(stuff)
             })
@@ -124,8 +130,8 @@ exports.update = functions.https.onRequest((req, res) => {
     }
     else {
 
-        return db.ref(`${node}`).child(attribute).set(value).then(() => {
-            db.ref(`${node}`).once('value').then(snapshot => {
+        return db.ref(node).child(attribute).set(value).then(() => {
+            db.ref(node).once('value').then(snapshot => {
                 var stuff = ''
                 stuff += '<P/>snapshot = '+ snapshot
                 stuff += '<P/>snapshot.val() = '+ JSON.stringify(snapshot.val())
@@ -167,7 +173,7 @@ var queryActiveStatus = function(req, res, bool) {
         return res.status(200).send("This request parm is required: <P/> node - a path to a node in the tree<P/> Node can either point to missions or mission_items")
     }
     else {
-        return db.ref(`${node}`).orderByChild("active").equalTo(bool).once('value').then(snapshot => {
+        return db.ref(node).orderByChild("active").equalTo(bool).once('value').then(snapshot => {
             var childCount = snapshot.numChildren()
             var stuff = ''
             stuff += '<P/>snapshot.numChildren() = '+ childCount
@@ -200,8 +206,8 @@ exports.copy = functions.https.onRequest((req, res) => {
         return res.status(200).send("These request parms are required: <P/> to, from - both are nodes in the tree")
     }
     else {
-        return db.ref(`${from}`).once('value').then(snapshot => {
-            db.ref(`${to}`).set(snapshot.val())
+        return db.ref(from).once('value').then(snapshot => {
+            db.ref(to).set(snapshot.val())
             res.status(200).send("no idea")
         })
     }
@@ -226,7 +232,7 @@ exports.deleteNodes = functions.https.onRequest((req, res) => {
     }
     else {
         // ok, normal operation
-        var mref = db.ref(`${node}`)
+        var mref = db.ref(node)
         return mref.once('value').then(snapshot => {
             var childCount = snapshot.numChildren()
             var deletedCount = 0
@@ -262,7 +268,7 @@ exports.deleteAttributes = functions.https.onRequest((req, res) => {
     }
     else {
         // ok, normal operation
-        var mref = db.ref(`${node}`)
+        var mref = db.ref(node)
         return mref.once('value').then(snapshot => {
             var childCount = snapshot.numChildren()
             var deletedCount = 0
@@ -279,6 +285,7 @@ exports.deleteAttributes = functions.https.onRequest((req, res) => {
 })
 
 
+// WE CAN GET RID OF THIS METHOD ===============================
 // CONFIRMED by comparing the dev db with the prod db.  The function below creates
 // /missions and /mission_items in the dev db that are identical to the nodes in the prod
 // database.  So now, we can actually work on the script that converts the old format to
@@ -294,28 +301,28 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
     var status = ''
 
     // restore backup:  Copy /teams/The Cavalry/missions_bak over to /missions
-    return db.ref(`/teams/The Cavalry/missions_bak`).once('value').then(snapshot => {
-        db.ref(`/missions`).set(snapshot.val())
+    return db.ref('/teams/The Cavalry/missions_bak').once('value').then(snapshot => {
+        db.ref('/missions').set(snapshot.val())
         status += '<P/>OK copied /teams/The Cavalry/missions_bak to /missions'
     })
     .then(() => {
         // delete group_number from all /missions
         // delete mark_for_merge from all /missions
         // delete number_of_missions_in_master_mission from all /missions
-        return db.ref(`/missions`).once('value').then(s2 => {
+        return db.ref('/missions').once('value').then(s2 => {
             s2.forEach(function (child) {
-                db.ref(`/missions`).child(child.key).child('group_number').remove()
-                db.ref(`/missions`).child(child.key).child('mark_for_merge').remove()
-                db.ref(`/missions`).child(child.key).child('number_of_missions_in_master_mission').remove()
+                db.ref('/missions').child(child.key).child('group_number').remove()
+                db.ref('/missions').child(child.key).child('mark_for_merge').remove()
+                db.ref('/missions').child(child.key).child('number_of_missions_in_master_mission').remove()
                 status += '<P/>OK deleted /missions/'+child.key+'/group_number, /mark_for_merge, and /number_of_missions_in_master_mission'
             })
         })
         .then(() => {
-            return db.ref(`/missions`).once('value').then(s2 => {
+            return db.ref('/missions').once('value').then(s2 => {
                 s2.forEach(function (missionNode) {
-                    db.ref(`/missions`).child(missionNode.key).child(`mission_items`).once('value').then(snap => {
+                    db.ref('/missions').child(missionNode.key).child('mission_items').once('value').then(snap => {
                         snap.forEach(function (missionItemNode) {
-                            db.ref(`/mission_items`).child(missionItemNode.key).set(missionItemNode.val())
+                            db.ref('/mission_items').child(missionItemNode.key).set(missionItemNode.val())
                             status += '<P/>OK copied /missions/'+missionNode.key+'/mission_items/'+missionItemNode.key+' to /mission_items/'+missionItemNode.key
                         })
                     })
@@ -324,9 +331,9 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
         })
         .then(() => {
             // delete the mission_items node under each mission in /missions because that's how prod is now
-            return db.ref(`/missions`).once('value').then(snap => {
+            return db.ref('/missions').once('value').then(snap => {
                 snap.forEach(function (child) {
-                    db.ref(`/missions`).child(child.key).child(`mission_items`).remove()
+                    db.ref('/missions').child(child.key).child('mission_items').remove()
                     status += '<P/>OK delete /missions/'+child.key+'/mission_items'
                 })
             })
@@ -336,19 +343,19 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
     .then(() => {
         // make some /mission_items active and others inactive
         // what missions will we make active? mission_name=TP Test 1, TP Test 2
-        return db.ref(`/mission_items`).orderByChild(`mission_name`).equalTo("TP Test 1").once('value').then(s2 => {
+        return db.ref('/mission_items').orderByChild('mission_name').equalTo("TP Test 1").once('value').then(s2 => {
             s2.forEach(function (child) {
-                db.ref(`/mission_items`).child(child.key).child('active').set(true)
-                db.ref(`/mission_items`).child(child.key).child('active_and_accomplished').set('true_new')
+                db.ref('/mission_items').child(child.key).child('active').set(true)
+                db.ref('/mission_items').child(child.key).child('active_and_accomplished').set('true_new')
                 status += '<P/>OK set /mission_items/'+child.key+'/active = true'
                 status += '<P/>OK set /mission_items/'+child.key+'/active_and_accomplished = true_new'
             })
         })
         .then(() => {
-            return db.ref(`/mission_items`).orderByChild(`mission_name`).equalTo("TP Test 2").once('value').then(s2 => {
+            return db.ref('/mission_items').orderByChild('mission_name').equalTo("TP Test 2").once('value').then(s2 => {
                 s2.forEach(function (child) {
-                    db.ref(`/mission_items`).child(child.key).child('active').set(true)
-                    db.ref(`/mission_items`).child(child.key).child('active_and_accomplished').set('true_new')
+                    db.ref('/mission_items').child(child.key).child('active').set(true)
+                    db.ref('/mission_items').child(child.key).child('active_and_accomplished').set('true_new')
                     status += '<P/>OK set /mission_items/'+child.key+'/active = true'
                     status += '<P/>OK set /mission_items/'+child.key+'/active_and_accomplished = true_new'
                 })
@@ -356,10 +363,10 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
         })
         .then(() => {
             // for consistency, set the "TP Test 1" and "TP Test 2" MISSIONS also to be active
-            return db.ref(`/missions`).orderByChild(`mission_name`).equalTo("TP Test 1").once('value').then(s2 => {
+            return db.ref('/missions').orderByChild('mission_name').equalTo("TP Test 1").once('value').then(s2 => {
                 s2.forEach(function (child) {
-                    db.ref(`/missions`).child(child.key).child('active').set(true)
-                    db.ref(`/missions`).child(child.key).child('uid_and_active').set(child.val().uid+'_true')
+                    db.ref('/missions').child(child.key).child('active').set(true)
+                    db.ref('/missions').child(child.key).child('uid_and_active').set(child.val().uid+'_true')
                     status += '<P/>OK set /missions/'+child.key+'/active = true'
                     status += '<P/>OK set /missions/'+child.key+'/uid_and_active = '+child.val().uid+'_true'
                 })
@@ -367,10 +374,10 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
         })
         .then(() => {
             // for consistency, set the "TP Test 1" and "TP Test 2" MISSIONS also to be active
-            return db.ref(`/missions`).orderByChild(`mission_name`).equalTo("TP Test 2").once('value').then(s2 => {
+            return db.ref('/missions').orderByChild('mission_name').equalTo("TP Test 2").once('value').then(s2 => {
                 s2.forEach(function (child) {
-                    db.ref(`/missions`).child(child.key).child('active').set(true)
-                    db.ref(`/missions`).child(child.key).child('uid_and_active').set(child.val().uid+'_true')
+                    db.ref('/missions').child(child.key).child('active').set(true)
+                    db.ref('/missions').child(child.key).child('uid_and_active').set(child.val().uid+'_true')
                     status += '<P/>OK set /missions/'+child.key+'/active = true'
                     status += '<P/>OK set /missions/'+child.key+'/uid_and_active = '+child.val().uid+'_true'
                 })
@@ -381,11 +388,11 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
         // delete group_number from all /mission_items
         // delete mark_for_merge from all /mission_items
         // delete number_of_missions_in_master_mission from all /mission_items
-        return db.ref(`/mission_items`).once('value').then(s2 => {
+        return db.ref('/mission_items').once('value').then(s2 => {
             s2.forEach(function (child) {
-                db.ref(`/mission_items`).child(child.key).child('group_number').remove()
-                db.ref(`/mission_items`).child(child.key).child('mark_for_merge').remove()
-                db.ref(`/mission_items`).child(child.key).child('number_of_missions_in_master_mission').remove()
+                db.ref('/mission_items').child(child.key).child('group_number').remove()
+                db.ref('/mission_items').child(child.key).child('mark_for_merge').remove()
+                db.ref('/mission_items').child(child.key).child('number_of_missions_in_master_mission').remove()
                 status += '<P/>OK deleted /mission_items/'+child.key+'/group_number, /mark_for_merge, and /number_of_missions_in_master_mission'
             })
         })
@@ -402,6 +409,7 @@ exports.prepareDevDatabaseToTestMigration = functions.https.onRequest((req, res)
 
 
 
+// WE CAN GET RID OF THIS METHOD ===============================
 exports.migrateMissions = functions.https.onRequest((req, res) => {
 
     // make backup:  copy /missions to /missions_bak
@@ -413,17 +421,17 @@ exports.migrateMissions = functions.https.onRequest((req, res) => {
 
     // copy /missions to /teams/The Cavalry/missions
 
-    return db.ref(`/missions`).once('value').then(snapshot => {
-        db.ref(`/teams/The Cavalry/missions`).set(snapshot.val())
+    return db.ref('/missions').once('value').then(snapshot => {
+        db.ref('/teams/The Cavalry/missions').set(snapshot.val())
         status += '<P/>OK copied /missions to /teams/The Cavalry/missions'
     })
     .then(() => {
         // insert:  mark_for_merge = true  (the only missions we have are Idaho missions)
         // insert:  number_of_missions_in_master_mission = 15
-        return db.ref(`/teams/The Cavalry/missions`).once('value').then(snapshot => {
+        return db.ref('/teams/The Cavalry/missions').once('value').then(snapshot => {
             snapshot.forEach(function (missionNode) {
-                db.ref(`/teams/The Cavalry/missions`).child(missionNode.key).child('mark_for_merge').set(true)
-                db.ref(`/teams/The Cavalry/missions`).child(missionNode.key).child('number_of_missions_in_master_mission').set(15)
+                db.ref('/teams/The Cavalry/missions').child(missionNode.key).child('mark_for_merge').set(true)
+                db.ref('/teams/The Cavalry/missions').child(missionNode.key).child('number_of_missions_in_master_mission').set(15)
                 status += '<P/>OK set /teams/The Cavalry/missions/'+missionNode.key+'/mark_for_merge = true'
                 status += '<P/>OK set /teams/The Cavalry/missions/'+missionNode.key+'/number_of_missions_in_master_mission = 15'
             })
@@ -452,6 +460,8 @@ exports.migrateMissions = functions.https.onRequest((req, res) => {
 })
 
 
+
+// WE CAN GET RID OF THIS METHOD ===============================
 // run this separately because mission_items are inserted via trigger, which happens after
 // the migrateMissions function tries to delete them
 exports.deleteMissionItems = functions.https.onRequest((req, res) => {
@@ -461,7 +471,7 @@ exports.deleteMissionItems = functions.https.onRequest((req, res) => {
     // delete mission_items under each of the /teams/The Cavalry/missions - because there's a trigger that create the mission_items nodes
     //      We don't want these nodes created by the trigger in this case.  We want them created by this script, by copying the right nodes
     //      from /mission_items
-    var mref = db.ref(`/teams/The Cavalry/missions`)
+    var mref = db.ref('/teams/The Cavalry/missions')
     return mref.once('value').then(snapshot => {
         snapshot.forEach(function (missionNode) {
             mref.child(missionNode.key).child('mission_items').remove()
@@ -474,14 +484,15 @@ exports.deleteMissionItems = functions.https.onRequest((req, res) => {
 })
 
 
+// WE CAN GET RID OF THIS METHOD ===============================
 // copy mission_items from /mission_items to the right mission...  /teams/The Cavalry/missions/{mission_id}/mission_items
 exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
 
     var status = ''
     var number_of_missions_in_master_mission = 15 // default, might be overridden below
 
-    var sref = db.ref(`/teams/The Cavalry/missions`)
-    var mref = db.ref(`/mission_items`)
+    var sref = db.ref('/teams/The Cavalry/missions')
+    var mref = db.ref('/mission_items')
     return mref.once('value').then(snapshot => {
         snapshot.forEach(function (missionItemNode) {
 
@@ -513,10 +524,10 @@ exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
     // also copy all /mission_items over to /teams/The Cavalry/mission_items, and then, delete all the mission_items that are "complete"
     .then(() => {
 
-        return db.ref(`/mission_items`).orderByChild('active_and_accomplished').equalTo("true_new").once('value').then(snapshot => {
+        return db.ref('/mission_items').orderByChild('active_and_accomplished').equalTo("true_new").once('value').then(snapshot => {
             var ct = snapshot.numChildren()
             snapshot.forEach(function(child) {
-                db.ref(`/teams/The Cavalry/mission_items`).child(child.key).set(child.val())
+                db.ref('/teams/The Cavalry/mission_items').child(child.key).set(child.val())
                 status += '<P/>OK copied '+ct+' mission_items from /mission_items to /teams/The Cavalry/mission_items'
             })
         })
@@ -525,7 +536,7 @@ exports.copyOverMissionItems = functions.https.onRequest((req, res) => {
     .then(() => {
         // add node: number_of_missions_in_master_mission to each  /teams/The Cavalry/mission_items
         // add node: number_of_missions_in_master_mission to each  /teams/The Cavalry/mission_items
-        var mref = db.ref(`/teams/The Cavalry/mission_items`)
+        var mref = db.ref('/teams/The Cavalry/mission_items')
         return mref.once('value').then(snapshot => {
             var iter = 0
             snapshot.forEach(function (child) {
@@ -561,7 +572,7 @@ exports.selectDistinct = functions.https.onRequest((req, res) => {
     else {
         var values = []
         status += "<P/>node: "+node+"<P/>attribute: "+attribute+"<P/>values..."
-        return db.ref(`${node}`).orderByChild(attribute).once('value').then(snapshot => {
+        return db.ref(node).orderByChild(attribute).once('value').then(snapshot => {
             snapshot.forEach(function (child) {
                 var theval = child.val()[attribute]
                 if(values.indexOf(theval) == -1) {
@@ -590,10 +601,10 @@ exports.query = functions.https.onRequest((req, res) => {
         var value = req.query.value
         var nodeInfo = node
 
-        var theref = db.ref(`${node}`)
+        var theref = db.ref(node)
         if(attribute && value) {
             nodeInfo += ' where '+attribute+' = '+value
-            theref = db.ref(`${node}`).orderByChild(attribute).equalTo(value)
+            theref = db.ref(node).orderByChild(attribute).equalTo(value)
         }
 
         return theref.once('value').then(snapshot => {
@@ -629,7 +640,7 @@ exports.addAttributeToChildren = functions.https.onRequest((req, res) => {
 
     else {
 
-        var theref = db.ref(`${parentNode}`)
+        var theref = db.ref(parentNode)
         var updates = {}
         return theref.once('value').then(snapshot => {
             var ct = snapshot.numChildren()
@@ -674,8 +685,8 @@ exports.archive = functions.https.onRequest((req, res) => {
         var destNode = "zzz_archive_"+node+"_"+datePart
         var fromNode = node
 
-        return db.ref(`${fromNode}`).once('value').then(snapshot => {
-            db.ref(`${destNode}`).set(snapshot.val())
+        return db.ref(fromNode).once('value').then(snapshot => {
+            db.ref(destNode).set(snapshot.val())
             res.status(200).send("OK: copied "+fromNode+" -to-> "+destNode)
         })
     }

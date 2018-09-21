@@ -33,6 +33,13 @@ var OAuth2 = google.auth.OAuth2;
 var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
                                 FUNCTIONS_REDIRECT);
 
+
+/***
+paste this on the command line...
+firebase deploy --only functions:youtube_playlists,functions:testSavePlaylist,functions:testDeletePlaylist,functions:testEditPlaylist,functions:handlePlaylistRequest
+***/
+
+
 exports.youtube_playlists = functions.https.onRequest((req, res) => {
     return db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
         var uid

@@ -1,5 +1,7 @@
 'use strict';
 
+// external dependencies declared in firebase-functions/functions/package.json
+const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const date = require('./dateformat')
@@ -12,6 +14,15 @@ var request = require('request')
 // create reference to root of the database
 const db = admin.database().ref()
 
+/***
+paste this on the command line...
+firebase deploy --only functions:userCreated,functions:approveUserAccount
+
+***/
+
+
+// TODO fix index.js  This function should not be exported as userCreated.
+// TODO keep the names in index.js identical to what they are here
 exports.createUserAccount = functions.auth.user().onCreate(event => {
     console.log("userCreated.js: onCreate called")
     // UserRecord is created
@@ -21,75 +32,122 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
 
     const uid = event.data.uid
     const email = event.data.email
-    const photoUrl = event.data.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
-
-    // apparently you have to use backticks, not single quotes
-    const newUserRef = db.child(`/users/${uid}`)
-
-
-    console.log("createUserAccount: event.data = ", event.data)
     var name = email // default value if name not present
     if(event.data.displayName) name = event.data.displayName
-    var created = date.asCentralTime()
+    const photoUrl = event.data.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
 
-    // See comment at very bottom
-    var userrecord = {name:name, photoUrl:photoUrl, email: email, created: created, account_disposition: "enabled"}
-    /**********
-    var userrecord = {name:name, photoUrl:photoUrl, created: created, account_disposition: "enabled"}
-    // for the cases when there IS no email...
+    var updates = {}
+    updates['users/'+uid+'/name'] = name
+    updates['users/'+uid+'/photoUrl'] = photoUrl
+    updates['users/'+uid+'/created'] = date.asCentralTime()
+
+    // email will be null from FB if the person hasn't verified their email with FB
     if(email) {
-        userrecord['email'] = email
-    }
-    ***************/
 
-    // remember, .set() returns a promise
-    // just about everything returns a promise
+        updates['users/'+uid+'/email'] = email
 
-    return newUserRef.set(userrecord).then(snap => {
+        citizen_builder_api.checkVolunteerStatus(email,
+            function() {
+                citizen_builder_api.grantAccess(updates, uid, name, email)
 
-        db.child(`/no_roles/${uid}`).set(userrecord).then( whatisthis => {
-            admin.auth().getUser(uid)
-                .then(function(userRecord) {
-                    console.log("Successfully fetched user data:", userRecord.toJSON());
-                    db.child(`/users/${uid}/name`).set(userRecord.displayName) // displayName not ready
-                    // above, but it is at this point
-                    // https://github.com/firebase/firebaseui-web/issues/197
+                // TODO actually don't need this email anymore
+//                return db.update(attributes).then(() => {
+//                    return sendEmail2('On-Board This Person', email, name)
+//                })
+            },
+            function() {
+                // called when the user has NOT satisfied the legal requirements for access
+                // In this case, we still have to save the user to /users.  We just don't set
+                // the petition, conf agreement and banned flags like we do above.
+                return db.child('/').update(updates).then(() => {
+                    return sendEmail('petition_ca_email', email, name)
                 })
+            }
+        )
+        return true
+    }
+    else {
+        // no email - geez - send them to the limbo screen also I guess and let them know
+        // we never got their email.  Give them a text field to set it.
+        // Or maybe give them instructions to go back to FB and tell them how to confirm their email
+
+        return db.child('/').update(updates).then(() => {
+            return sendEmail('petition_ca_email', email, name)
         })
-    })
-    .then(() => {
-        if(email) {
-            citizen_builder_api.checkVolunteerStatus(email,
-                    function() {
-                        // called when the user HAS satisfied the legal requirements for access
-                        // In this case, set these attributes on the user's node
-                        var attributes = {}
-                        attributes[`/users/${uid}/has_signed_petition`] = true
-                        attributes[`/users/${uid}/has_signed_confidentiality_agreement`] = true
-                        attributes[`/users/${uid}/is_banned`] = false
-                        db.update(attributes)
-                    },
-                    function() {
-                        // called when the user has NOT satisfied the legal requirements for access
-                        // In this case, don't do anything.  The attributes that we set in the other
-                        // callback can be left out here.  Missing attribute will interpreted as "unknown"
-                        // We can't be more specific than "unknown" because we don't know exactly WHY
-                        // the CitizenBuilder API call returned false.
+    }
 
-                        // UPDATE 4/5/18 - BUT.... but we do want to send this person the email that
-                        // tells them they have to sign the petition and confidentiality agreement
-                        // Let's do that now...
 
-                        return sendEmail('petition_ca_email', email, name)
 
-                    }
-            )
-        }
-    })
+
+//    const newUserRef = db.child('/users/'+uid)
+//
+//    var created = date.asCentralTime()
+//
+//    // See comment at very bottom
+//    var userrecord = {name:name, photoUrl:photoUrl, email: email, created: created, account_disposition: "enabled"}
+//    /**********
+//    var userrecord = {name:name, photoUrl:photoUrl, created: created, account_disposition: "enabled"}
+//    // for the cases when there IS no email...
+//    if(email) {
+//        userrecord['email'] = email
+//    }
+//    ***************/
+//
+//    // remember, .set() returns a promise
+//    // just about everything returns a promise
+//
+//    return newUserRef.set(userrecord).then(snap => {
+//
+//        return db.child('/no_roles/'+uid).set(userrecord).then( whatisthis => {
+//            return admin.auth().getUser(uid)
+//                .then(function(userRecord) {
+//                    console.log("Successfully fetched user data:", userRecord.toJSON());
+//                    db.child('/users/'+uid+'/name').set(userRecord.displayName) // displayName not ready
+//                    // above, but it is at this point
+//                    // https://github.com/firebase/firebaseui-web/issues/197
+//                    return userRecord.displayName
+//                })
+//        })
+//    })
+//    .then(name /*userRecord.displayName*/ => {
+//        if(email) {
+//            citizen_builder_api.checkVolunteerStatus(email,
+//                function() {
+//                    // called when the user HAS satisfied the legal requirements for access
+//                    // In this case, set these attributes on the user's node
+//                    var attributes = {}
+//                    attributes['/users/'+uid+'/has_signed_petition'] = true
+//                    attributes['/users/'+uid+'/has_signed_confidentiality_agreement'] = true
+//                    attributes['/users/'+uid+'/is_banned'] = false
+//
+//                    // TODO this is where we
+//
+//                    return db.update(attributes).then(() => {
+//                        return sendEmail2('On-Board This Person', email, name)
+//                    })
+//                },
+//                function() {
+//                    // called when the user has NOT satisfied the legal requirements for access
+//                    // In this case, don't do anything.  The attributes that we set in the other
+//                    // callback can be left out here.  Missing attribute will interpreted as "unknown"
+//                    // We can't be more specific than "unknown" because we don't know exactly WHY
+//                    // the CitizenBuilder API call returned false.
+//
+//                    // UPDATE 4/5/18 - BUT.... but we do want to send this person the email that
+//                    // tells them they have to sign the petition and confidentiality agreement
+//                    // Let's do that now...
+//
+//                    return sendEmail('petition_ca_email', email, name)
+//
+//                }
+//            )
+//        }
+//    })
 })
 
 
-// Where do we actually delete the user's node under /no_roles?  Don't remember
+// TODO we can probably get rid of this because are automatically approving users now (8/28/18) if
+// TODO if we determine they have signed legal
 exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(event => {
 
     var uid = event.params.uid
@@ -97,12 +155,12 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
     var email = event.data.previous.val().email
 
     // put new users on this team by default...
-    return db.child(`/administration/newusers/assign_to_team`).once('value').then(snapshot => {
+    return db.child('/administration/newusers/assign_to_team').once('value').then(snapshot => {
         var team_name = snapshot.val()
         return team_name // return value here becomes the inbound parameter in the next "then" clause
     })
     .then(team_name => {
-        return db.child(`teams/${team_name}/members`).child(uid).set({name: name, email: email, date_added: date.asCentralTime()})
+        return db.child('teams/'+team_name+'/members').child(uid).set({name: name, email: email, date_added: date.asCentralTime()})
     })
     .then(() => {
         // send the welcome email
@@ -112,9 +170,10 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
 })
 
 
+// TODO move to sendEmail2 at some point
 var sendEmail = function(emailType, email, name) {
 
-        return db.child(`/administration/${emailType}`).once('value').then(snapshot => {
+        return db.child('/administration/'+emailType).once('value').then(snapshot => {
 
             var rep = "(newbie)"
             var message = snapshot.val().message.replace(rep, name)
@@ -154,6 +213,58 @@ var sendEmail = function(emailType, email, name) {
             });
 
         })
+}
+
+
+var sendEmail2 = function(emailType, email, name) {
+
+    return db.child('/administration/email_types').orderByChild('title').equalTo(emailType).once('value').then(snapshot => {
+
+        // not sure if I like having to do a second query just to get the email password
+        return db.child('/administration/email_config/pass').once('value').then(snap => {
+
+            var atype
+            snapshot.forEach(function(child) { atype = child.val() })
+
+            var rep = "newbie"
+            var message = _.replace(atype.message, new RegExp(rep,"g"), name) //snapshot.val().message.replace(rep, name)
+
+            var smtpTransport = nodemailer.createTransport({
+                host: atype.host,
+                port: atype.port,
+                secure: true, // true for 465, false for other ports
+                auth: {
+                    user: atype.user, pass: snap.val()
+                }
+            })
+
+            // setup e-mail data with unicode symbols
+            var mailOptions = {
+                from: atype.from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
+                to: email, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
+                cc: atype.cc,
+                subject: atype.subject, // Subject line
+                //text: "plain text: "+snapshot.val().message, // plaintext body
+                html: message // html body
+            }
+
+            // send mail with defined transport object
+            smtpTransport.sendMail(mailOptions, function(error, response){
+                if(error){
+                    console.log(error);
+                }else{
+                    console.log("Message sent: " + response.message);
+                }
+
+                // if you don't want to use this transport object anymore, uncomment following line
+                smtpTransport.close(); // shut down the connection pool, no more messages
+
+
+                // what are we going to return here?
+            });
+
+        })
+    })
 }
 
 

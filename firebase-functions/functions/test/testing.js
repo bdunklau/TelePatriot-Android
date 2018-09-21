@@ -2,6 +2,7 @@
 
 // lodash dependency declared in firebase-functions/functions/package.json
 const _ = require('lodash');
+const date = require('../dateformat')
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const citizen_builder_api = require('../citizen_builder_api/checkVolunteerStatus')
@@ -22,4 +23,16 @@ exports.testApi = functions.https.onRequest((req, res) => {
             function() {
                 res.status(200).send('no way !!!!!!!')
             })
+})
+
+
+exports.testPing = functions.https.onRequest((req, res) => {
+    var parm = req.query.parm
+    var val = {}
+    if(parm)
+        val.parm = parm
+    val['date'] = date.asCentralTime()
+    return db.ref(`templog2/ping`).set(val).then(() => {
+        return res.status(200).send('Receive: '+parm+' at '+date.asCentralTime())
+    })
 })

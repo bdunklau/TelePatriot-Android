@@ -11,6 +11,10 @@ const date = require('./dateformat')
 const db = admin.database()
 const FB = require('fb')   //https://www.npmjs.com/package/fb
 
+/***
+paste this on the command line...
+firebase deploy --only functions:facebook,functions:testPostFacebook,functions:handleFacebookRequest,functions:triggerComment,functions:onFacebookPostId
+***/
 
 exports.facebook = functions.https.onRequest((req, res) => {
     return db.ref('users').orderByChild('email').equalTo('bdunklau@yahoo.com').once('value').then(snapshot => {
@@ -92,7 +96,21 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
             }
             // TODO probably should write this to the db somewhere
             console.log('Post Id: ' + res.id);
-            event.data.ref.child('post_id').set(res.id)
+            event.data.ref.child('post_id').set(res.id) // not even sure if we NEED the post_id written here
+
+            if(event.data.val().video_node_key) { // may not exist in testing classes
+                // There's a trigger (not created yet) that listens for writes to this node and also to
+                // twitter_post_id.  The trigger then examines the values of post_to_facebook, post_to_twitter and
+                // email_to_legislator to figure out what the text of the emails should be.  There are two emails:
+                // one to the participants but not the legislator, and another to the participants AND the legislator
+                // The email to the legislator is addressed to him.  Whereas the other one is a congratulatory email to
+                // the participants
+                // SEE google-cloud:socialMediaPostsCreated()
+                return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/facebook_post_id').set(res.id)
+            }
+            else {
+                console.log("WHY ARE WE GETTING TO THIS BLOCK ?????")
+            }
         });
     })
 
@@ -113,23 +131,46 @@ exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/po
 
         var postThis = {}
 
+        return event.data.adminRef.root.child('facebook_post_requests/'+event.params.key+'/video_node_key').once('value').then(snap2 => {
+            var video_node_key = snap2.val()
+            return event.data.adminRef.root.child('video/list/'+video_node_key).once('value').then(snap3 => {
+                if(snap3.val().legislator_facebook) {
+                    /********* This works but I don't know what I want the comment to be yet  *********/
+//                    FB doesn't let you tag people and pages without permission
 
-        /********* This works but I don't know what I want the comment to be yet
-        FB doesn't let you tag people and pages without permission
+                    var msg = 'Please leave a comment using this tag: @'+snap3.val().legislator_facebook+' so that '+snap3.val().legislator_first_name+' '+snap3.val().legislator_last_name+' will get notified.  He *is* our representative after all :)'
+                    postThis['message'] = msg // ref:  https://developers.facebook.com/docs/graph-api/reference/v3.0/object/comments#publish
 
-        postThis['message'] = '' // ref:  https://developers.facebook.com/docs/graph-api/reference/v3.0/object/comments#publish
+                    FB.api(post_id+'/comments', 'post', postThis, function (res) {
+                        //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
 
-        FB.api(post_id+'/comments', 'post', postThis, function (res) {
-            //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
+                        // TODO need some real error handling
+                        if(!res || res.error) {
+                            console.log(!res ? 'error occurred' : res.error);
+                        }
+                        // TODO probably should write this to the db somewhere
+                        console.log('Post Id: ' + res.id);
+                    });
+                }
+            })
+        })
 
-            // TODO need some real error handling
-            if(!res || res.error) {
-                console.log(!res ? 'error occurred' : res.error);
-            }
-            // TODO probably should write this to the db somewhere
-            console.log('Post Id: ' + res.id);
-        });
-        *********/
+
+    })
+})
+
+
+// just doing onCreate to try to make the logic simpler
+// twitter.js has a corresponding trigger: onTwitterPostId()
+exports.onFacebookPostId = functions.database.ref('video/list/{video_node_key}/facebook_post_id').onCreate(event => {
+    // now see if we're supposed to tweet also, and if we are, do we have the tweet post id_str yet?...
+    return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
+        var tweetExists = snapshot.val().twitter_post_id
+        var tweetNotRequired = !snapshot.val().post_to_twitter
+        var readyToSendEmails = tweetExists || tweetNotRequired
+        if(readyToSendEmails)
+            return snapshot.ref.child("ready_to_send_emails").set(true) // which fires yet another trigger: onReadyToSendEmails()
+        else return false
     })
 })
 

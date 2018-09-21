@@ -34,7 +34,12 @@ public class SearchUsersFragment extends BaseFragment {
     private FirebaseRecyclerAdapter<UserBean, UserHolder> firebaseRecyclerAdapter22;
     private RecyclerView users;
     SearchView search_users;
+    private FragmentContainingUser whereTo;
     View myView;
+
+    public void setWhereTo(FragmentContainingUser whereTo) {
+        this.whereTo = whereTo;
+    }
 
     @Nullable
     @Override
@@ -95,11 +100,16 @@ public class SearchUsersFragment extends BaseFragment {
                                         // at the user's roles at /users/uid/roles because we need to set the role switches
                                         // to the right values
                                         String uid = dataSnapshot.getKey();
+                                        UserBean ub = dataSnapshot.getValue(UserBean.class);
+                                        ub.setUid(uid);
 
-                                        // Instead of going to an activity, we need to load a fragment...
-                                        AssignUserFragment fragment = new AssignUserFragment();
-                                        fragment.setUid(uid);
-                                        fragment.setFragmentManager(fragmentManager, SearchUsersFragment.this);
+                                        // need to allow this screen to go to any fragment we want - specified by whatever fragment called THIS fragment
+                                        // primarily because of the invite_someone link in VidyoChatFragment
+                                        if(whereTo == null)
+                                            whereTo = new AssignUserFragment();
+                                        whereTo.userSelected(ub);
+                                        whereTo.setFragmentManager(fragmentManager, SearchUsersFragment.this);
+
                                         try {
                                             /******
                                             FragmentTransaction t1 = fragmentManager.beginTransaction();
@@ -109,8 +119,8 @@ public class SearchUsersFragment extends BaseFragment {
                                             ********/
 
                                             fragmentManager.beginTransaction()
-                                                    .replace(R.id.content_frame, fragment)
-                                                    .addToBackStack(fragment.getClass().getName())
+                                                    .replace(R.id.content_frame, whereTo.getFragment())
+                                                    .addToBackStack(whereTo.getFragment().getClass().getName())
                                                     .commit();
 
 
@@ -144,58 +154,5 @@ public class SearchUsersFragment extends BaseFragment {
 
         return myView;
     }
-
-
-/*
-    private void doit(DatabaseReference ref, final FragmentManager fragmentManager, final Fragment back) {
-
-        // see:  https://www.youtube.com/watch?v=ynKWnC0XiXk
-        mAdapter = new FirebaseRecyclerAdapter<UserBean, UserHolder>(
-                UserBean.class,
-                R.layout.list_item,  // see 0:42 of https://www.youtube.com/watch?v=A-_hKWMA7mk
-                UserHolder.class,
-                ref) {
-            @Override
-            public void populateViewHolder(UserHolder holder, UserBean user, int position) {
-                holder.setName(user.getName());
-            }
-
-
-            // https://stackoverflow.com/a/41629505
-            @Override
-            public UserHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                UserHolder viewHolder = super.onCreateViewHolder(parent, viewType);
-                viewHolder.setOnClickListener(new UserHolder.ClickListener() {
-                    @Override
-                    public void onItemClick(View view, int position) {
-                        mAdapter.getRef(position).orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                // whenever you touch a user line item, that triggers another query that looks
-                                // at the user's roles at /users/uid/roles because we need to set the role switches
-                                // to the right values
-                                String uid = dataSnapshot.getKey();
-
-                                // When we click on someone, we want to be taken to their profile
-                                // page - which doesn't exist yet.  We could use/adapt AssignUserFragment
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onItemLongClick(View view, int position) {
-                    }
-                });
-                return viewHolder;
-            }
-        };
-        users.setAdapter(mAdapter);
-    }
-    */
 
 }

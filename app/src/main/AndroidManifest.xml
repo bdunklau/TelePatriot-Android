@@ -33,6 +33,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".DisabledActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".LimboActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait">
@@ -41,13 +49,30 @@
             </intent-filter>
         </activity>
 
+        <!-- let MainActivity switch to landscape mode for the video chat feature -->
         <activity android:name=".MainActivity"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait">
+            android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.CALL_PRIVILEGED" />
                 <action android:name="android.intent.action.CALL" />
+                <action android:name="android.intent.action.ACTION_SEND" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ShowMeHowActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".VideoChatActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
 

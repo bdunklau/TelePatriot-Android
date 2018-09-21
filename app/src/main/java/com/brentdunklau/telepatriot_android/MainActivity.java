@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -24,14 +25,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
+import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.User;
+import com.brentdunklau.telepatriot_android.util.VideoType;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +55,11 @@ public class MainActivity extends AppCompatActivity
     TextView text_user_name;
     TextView text_user_email;
     ImageView image_profile_pic;
+    String uid;
+    //String missionDescription;
+    //String missionType;
+    private ArrayList<MissionObject> mMissionArray = new ArrayList<>();
+    private int missionKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,18 +69,6 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         User.getInstance().addAccountStatusEventListener(this);
-
-
-/*
-        Holdover from back when everything was an activity.  This is how we were closing down the
-        app.  If we don't end up needing this soon (10/12/17), then just delete it.
-
-        // https://stackoverflow.com/a/14002030
-        if (getIntent().getBooleanExtra("EXIT", false)) {
-            finish();
-        }
-        */
-
 
 
         /**
@@ -122,9 +125,6 @@ public class MainActivity extends AppCompatActivity
                     Picasso.with(ctx).setLoggingEnabled(true);
                     Picasso.with(MainActivity.this).load(photoUrl).fit().into(image_profile_pic);
 
-      // dev:  OK      https://scontent.xx.fbcdn.net/v/t1.0-1/p100x100/15439743_10153884236291370_5482786558312089303_n.jpg?oh=6ed5db40855629a3253f222e3c69e914&oe=5AD064B1
-      // prod: NOT OK  https://scontent.xx.fbcdn.net/v/t1.0-1/p100x100/15439743_10153884236291370_5482786558312089303_n.jpg?oh=447d44d77c8f56f6eb619a21f8ee83ae&oe=5A814AB1
-
                 } catch(Throwable t) {
                     String msg = t.getMessage();
                     t.printStackTrace();
@@ -137,8 +137,11 @@ public class MainActivity extends AppCompatActivity
         text_user_name.setOnClickListener(beginEditingMyAccount());
         text_user_email.setOnClickListener(beginEditingMyAccount());
         image_profile_pic.setOnClickListener(beginEditingMyAccount());
-    }
 
+        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        VideoType.init();
+    }
 
     private View.OnClickListener beginEditingMyAccount() {
         return new View.OnClickListener() {
@@ -227,6 +230,8 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
+
+    // See MainNavigationView.findMenuItemForRole()
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -249,16 +254,24 @@ public class MainActivity extends AppCompatActivity
             Fragment fragment = new AdminFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
-        /***** take out till it's you now the petition link is correct
+        else if (id == R.id.vidyo_chat){
+            Fragment fragment = new VidyoChatFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
+        else if (id == R.id.video_offers){
+            Fragment fragment = new VideoOffersFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
+        else if (id == R.id.video_invitations) {
+            Fragment fragment = new VideoInvitationsFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
+        /***** take out till it's you know the petition link is correct
         else if( id == R.id.nav_send_petition) {
             Fragment fragment = new SendPetitionFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
          *****/
-        /******
-        else if (id == R.id.nav_chat && User.getInstance().isLoggedIn()) {
-            doChat();
-        } *****/
         else if (id == R.id.nav_signout) {
             signOut();
         }
@@ -356,7 +369,21 @@ public class MainActivity extends AppCompatActivity
     // per AccountStatusEvent.Listener
     @Override
     public void fired(AccountStatusEvent evt) {
-        if(evt instanceof AccountStatusEvent.NoRoles)
+//        if(evt instanceof AccountStatusEvent.NoRoles) {
+//            startActivity(new Intent(this, LimboActivity.class));
+//            User.getInstance().removeAccountStatusEventListener(this);
+//        }
+        if(evt instanceof AccountStatusEvent.AccountDisabled) {
+            startActivity(new Intent(this, DisabledActivity.class));
+            User.getInstance().removeAccountStatusEventListener(this);
+        }
+        else if(evt instanceof AccountStatusEvent.NotAllowed) {
             startActivity(new Intent(this, LimboActivity.class));
+            User.getInstance().removeAccountStatusEventListener(this);
+        }
+        else if(evt instanceof AccountStatusEvent.VideoInvitationRevoked) {
+            signOut();
+        }
     }
+
 }
