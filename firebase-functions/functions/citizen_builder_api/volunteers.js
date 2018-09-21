@@ -13,7 +13,82 @@ const db = admin.database()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:checkLegal,functions:timestampCbApiEvent,functions:onResponseFromLegal
+firebase deploy --only functions:testVolunteers
 ***/
 
 //CREATED TO TEST AND SUPPORT THE /volunteers ENDPOINT
+
+exports.testVolunteers = functions.https.onRequest((req, res) => {
+
+    if(req.query.email) {
+        return db.ref('api_tokens').once('value').then(snapshot => {
+
+            // as long as there's an email address, call the CB API endpoint to see if this person
+            // has satisfied the legal requirements
+            var endpoint = 'https://api.qacos.com/api/ios/v1/volunteers?email='+req.query.email
+
+            var apiKeyName = snapshot.val().citizen_builder_api_key_name
+            var apiKeyValue = snapshot.val().citizen_builder_api_key_value_QA
+
+            var headers = {}
+            headers[apiKeyName] = apiKeyValue
+
+            var options = {
+                url: endpoint,
+                headers: headers
+            };
+
+            // see above:   var request = require('request')
+            request.get(options, function(error, response, body){
+                //console.log(body);
+                var vol = JSON.parse(body)
+                return thePage({vol: vol})
+            })
+
+        })
+    }
+    else {
+        return res.status(200).send(testEmailList())
+    }
+})
+
+var testEmailList = function() {
+    var html = ''
+    html += '<table border="0">'
+    html += '   <tr><td><a href="/testVolunteers?email=bdunklau@yahoo.com">bdunklau@yahoo.com</a></td></tr>'
+    html += '</table>'
+    return html
+}
+
+var testVolunteerInfo = function(vol) {
+    var html = ''
+    html += '<table border="0">'
+    html += '   <tr><th colspan="2">Volunteer Info</th></tr>'
+    html += '   <tr><td>id</td><td>'+vol.id+'</td></tr>'
+    html += '   <tr><td>first_name</td><td>'+vol.first_name+'</td></tr>'
+    html += '   <tr><td>last_name</td><td>'+vol.last_name+'</td></tr>'
+    html += '   <tr><td>address</td><td>'+vol.address+'</td></tr>'
+    html += '   <tr><td>city</td><td>'+vol.city+'</td></tr>'
+    html += '   <tr><td>state</td><td>'+vol.state+'</td></tr>'
+    html += '   <tr><td>email</td><td>'+vol.email+'</td></tr>'
+    html += '   <tr><td>phone</td><td>'+vol.phone+'</td></tr>'
+    html += '   <tr><td>is_banned</td><td>'+vol.is_banned+'</td></tr>'
+    html += '   <tr><td>petition_signed</td><td>'+vol.petition_signed+'</td></tr>'
+    html += '   <tr><td>volunteer_agreement_signed</td><td>'+vol.volunteer_agreement_signed+'</td></tr>'
+    html += '</table>'
+    return html
+}
+
+var thePage = function(stuff) {
+    var html = ''
+    html += '<table border="0">'
+    html += '   <tr>'
+    html +=         '<td>'+testEmailList()+'</td>'
+    if(stuff.vol) {
+        html +=     '<td>'+testVolunteerInfo(stuff.vol)+'</td>'
+    }
+    html += '   </tr>'
+    html += '</table>'
+    return html
+}
+
