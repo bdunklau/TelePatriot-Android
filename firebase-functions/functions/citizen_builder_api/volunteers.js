@@ -94,12 +94,12 @@ var showError = function(stuff) {
 
 var thePage = function(stuff) {
     var html = ''
-    html += '<table border="0">'
+    html += '<table border="0" cellspacing="10">'
     html += showError(stuff)
     html += '   <tr>'
-    html +=         '<td>'+testEmailList()+'</td>'
+    html +=         '<td valign="top">'+testEmailList()+'</td>'
     if(stuff.vol) {
-        html +=     '<td>'+testVolunteerInfo(stuff.vol)+'</td>'
+        html +=     '<td valign="top">'+testVolunteerInfo(stuff.vol)+'</td>'
     }
     html += '   </tr>'
     html += '</table>'
