@@ -61,7 +61,7 @@ var testPersonIdList = function() {
     var html = ''
     var list = [1329]
     html += '<table border="0">'
-    html += '   <tr><td><b>Click an email below to see the volunteer\'s info</b></td></tr>'
+    html += '   <tr><td><b>Click an email below to see the teams for this volunteer</b></td></tr>'
 
     _.each(list, function(person_id) {
         html += '<tr><td><a href="/testVolunteers?person_id='+person_id+'">'+person_id+'</a></td></tr>'
