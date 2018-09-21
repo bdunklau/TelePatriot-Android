@@ -78,7 +78,7 @@ var testMissionList = function(missions) {
     html += '   <tr><th>id</th><th>name</th><th>description</th><th>script</th><th>status</th></tr>'
 
     _.each(missions, function(mission) {
-        html += '<tr><td>'+missions.id+'</td><td>'+missions.name+'</td><td>'+missions.description+'</td><td>'+missions.script+'</td><td>'+missions.status+'</td></tr>'
+        html += '<tr><td>'+mission.id+'</td><td>'+mission.name+'</td><td>'+mission.description+'</td><td>'+mission.script+'</td><td>'+mission.status+'</td></tr>'
     })
 
     html += '</table>'
