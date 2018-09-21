@@ -126,6 +126,8 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                                 }
                             }
 
+                            db.ref('video/invitations/'+child.val().video_invitation_key).remove()
+
                             // capture the details on the composition.  If we need to re-upload, having
                             // this info means we won't have to re-compose the file
                             child.ref.update({composition_PercentageDone: 100,
@@ -136,7 +138,8 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                                               composition_MediaUri: req.body.MediaUri,
                                               publishing_completed: true,
                                               publishing_stopped: date.asCentralTime(),
-                                              publishing_stopped_ms: date.asMillis()})
+                                              publishing_stopped_ms: date.asMillis(),
+                                              })
                         })
 
                         var formData = {

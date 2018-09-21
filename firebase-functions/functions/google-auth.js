@@ -35,6 +35,11 @@ var OAuth2 = google.auth.OAuth2;
 var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
                                 FUNCTIONS_REDIRECT);
 
+/***
+to deploy everything in this file...
+firebase deploy --only functions:getAuthorizedClient
+***/
+
 
 // CODE DUPLICATION: We have this function declared in demo-google-sheet-write.js and there
 // are actually TWO versions of this function in import-master-sheet.js

@@ -37,6 +37,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.CameraCapturerCompat;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.Util;
@@ -133,7 +134,6 @@ public class VidyoChatFragment extends BaseFragment
     private TextView recording_indicator; // the red "Recording..." label
     private ToggleButton connect_button;
     private ToggleButton microphone_button;
-    //private ToggleButton camera_button;
     private ToggleButton record_button;
     private ToggleButton publish_button;
     private ProgressBar progressBar5;
@@ -257,12 +257,12 @@ public class VidyoChatFragment extends BaseFragment
             @Override
             public void onClick(View v) {
                 String tw = legislator_twitter.getText()+"";
-                if(tw.startsWith("TW: "))
-                    tw = tw.substring("TW: ".length()).trim();
+                if(tw.startsWith("TW: @"))
+                    tw = tw.substring("TW: @".length()).trim();
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("twitter://user?screen_name=" + tw)));
                 }catch (Exception e) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://twitter.com/#!/" + tw)));
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://twitter.com/" + tw)));
                 }
             }
         });
@@ -555,22 +555,6 @@ public class VidyoChatFragment extends BaseFragment
                 (CameraCapturer.CameraSource.FRONT_CAMERA) :
                 (CameraCapturer.CameraSource.BACK_CAMERA);
     }
-
-    /*
-     * The initial state when there is no active room.
-     */
-//    private void initializeUI() {
-//                connectActionFab.setImageDrawable(ContextCompat.getDrawable(this,
-//                        R.drawable.ic_video_call_white_24dp));
-//                connectActionFab.show();
-//                connectActionFab.setOnClickListener(connectActionClickListener());
-//                switchCameraActionFab.show();
-//                switchCameraActionFab.setOnClickListener(switchCameraClickListener());
-//                localVideoActionFab.show();
-//                localVideoActionFab.setOnClickListener(localVideoClickListener());
-//                muteActionFab.show();
-//                muteActionFab.setOnClickListener(muteClickListener());
-//    }
 
     /*
      * Room events listener
@@ -1351,7 +1335,7 @@ public class VidyoChatFragment extends BaseFragment
 
     private boolean notifiedOfEnd = false;
     private void boomNotify() {
-        if (User.getInstance().isAllowed()) {
+        if (User.getInstance().isAllowed() && User.getInstance().isVideoCreator()) {
             boomNotify1();
         }
         else {
@@ -1684,8 +1668,8 @@ public class VidyoChatFragment extends BaseFragment
     //method to get the right URL to use in the intent
     public String getFacebookPageURL(Context context, String FACEBOOK_PAGE) {
         String fb = FACEBOOK_PAGE;
-        if(fb.startsWith("FB: "))
-            fb = fb.substring("FB: ".length()).trim();
+        if(fb.startsWith("FB: @"))
+            fb = fb.substring("FB: @".length()).trim();
         PackageManager packageManager = context.getPackageManager();
         try {
             int versionCode = packageManager.getPackageInfo("com.facebook.katana", 0).versionCode;
@@ -1746,11 +1730,12 @@ public class VidyoChatFragment extends BaseFragment
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog,int id) {
 
-                                // In Swift, this is EditSocialMediaVC.saveSocialMedia() which internall calls socialMediaDelegate.saveSocialMedia()
+                                // In Swift, this is EditSocialMediaVC.saveSocialMedia() which internally calls socialMediaDelegate.saveSocialMedia()
                                 // socialMediaDelegate.saveSocialMedia() is VideoChatInstructionsView.saveSocialMedia()
 
                                 // this is where we save the new value to the database
                                 String newval = ((EditText) promptsView.findViewById(R.id.dialog_input)).getText().toString();
+                                if(newval.startsWith("@")) newval = newval.substring(1);
 
                                 Map updates = new HashMap();
                                 updates.put("leg_id", currentVideoNode.getLeg_id());
@@ -1822,12 +1807,12 @@ public class VidyoChatFragment extends BaseFragment
 
             String fb = "FB: -";
             if(node.getLegislator_facebook() != null)
-                fb = "FB: "+node.getLegislator_facebook();
+                fb = "FB: @"+node.getLegislator_facebook();
             legislator_facebook.setText(fb);
 
             String tw = "TW: -";
             if(node.getLegislator_twitter() != null)
-                tw = "TW: "+node.getLegislator_twitter();
+                tw = "TW: @"+node.getLegislator_twitter();
             legislator_twitter.setText(tw);
         }
 
@@ -2077,5 +2062,4 @@ public class VidyoChatFragment extends BaseFragment
                                         currentVideoNode.getComposition_MediaUri()); // allowed to be null
         ve.save();
     }
-
 }

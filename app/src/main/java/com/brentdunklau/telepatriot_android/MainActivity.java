@@ -381,6 +381,9 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(this, LimboActivity.class));
             User.getInstance().removeAccountStatusEventListener(this);
         }
+        else if(evt instanceof AccountStatusEvent.VideoInvitationRevoked) {
+            signOut();
+        }
     }
 
 }
