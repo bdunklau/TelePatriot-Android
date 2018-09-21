@@ -105,6 +105,9 @@ var thePage = function(stuff) {
     html += '<table border="0" cellspacing="10">'
     html += showError(stuff)
     html += '   <tr>'
+    html +=         '<td colspan="2"><b>Endpoint:</b> /volunteers</td>'
+    html += '   </tr>'
+    html += '   <tr>'
     html +=         '<td valign="top">'+testEmailList()+'</td>'
     if(stuff.vol) {
         html +=     '<td valign="top">'+testVolunteerInfo(stuff.vol)+'</td>'

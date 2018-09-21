@@ -100,6 +100,9 @@ var thePage = function(stuff) {
     html += '<table border="0" cellspacing="10">'
     html += showError(stuff)
     html += '   <tr>'
+    html +=         '<td colspan="2"><b>Endpoint:</b> /missions/team_missions</td>'
+    html += '   </tr>'
+    html += '   <tr>'
     html +=         '<td valign="top">'+testTeamIdList()+'</td>'
     if(stuff.missions) {
         html +=     '<td valign="top">'+testMissionList(stuff.missions)+'</td>'
