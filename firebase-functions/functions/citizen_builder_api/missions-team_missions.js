@@ -47,7 +47,7 @@ exports.testTeamMissions = functions.https.onRequest((req, res) => {
                 if(error) {
                     return res.status(200).send(thePage({error: error}))
                 }
-                else return res.status(200).send(thePage({teams: json.missions}))
+                else return res.status(200).send(thePage({missions: json.missions}))
             })
 
         })
