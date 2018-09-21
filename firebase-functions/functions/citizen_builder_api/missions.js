@@ -99,9 +99,8 @@ var thePage = function(stuff) {
     var html = ''
     html += '<table border="0" cellspacing="10">'
     html += showError(stuff)
-    html += '   <tr>'
-    html +=         '<td colspan="2"><b>Endpoint:</b> /missions/team_missions</td>'
-    html += '   </tr>'
+    html += '   <tr><td colspan="2"><b>Endpoint:</b> GET /missions/team_missions</td></tr>'
+    html += '   <tr><td colspan="2"><b>Endpoint:</b> POST /missions</td></tr>'
     html += '   <tr>'
     html +=         '<td valign="top">'+testTeamIdList()+'</td>'
     if(stuff.missions) {
