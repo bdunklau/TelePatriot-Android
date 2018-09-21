@@ -15,7 +15,7 @@ const db = admin.database()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:testTeamMissions
+firebase deploy --only functions:testTeamMissions,functions:createMission
 ***/
 
 //CREATED TO TEST AND SUPPORT THE /missions/team_missions ENDPOINT
@@ -57,6 +57,27 @@ exports.testTeamMissions = functions.https.onRequest((req, res) => {
     }
 })
 
+exports.createMission = functions.https.onRequest((req, res) => {
+
+    var formData = {author_id: req.body.author_id, name: req.body.name, description: req.body.description, script: req.body.script}
+
+    var endpoint = 'https://api.qacos.com/api/ios/v1/missions'
+    request.post(
+        {
+            url: endpoint,
+            form: formData
+        },
+        function (err, httpResponse, body) {
+            console.log(err, body);
+            if(err) {
+                return res.status(200).send(thePage({error: err}))
+            } else {
+                return res.status(200).send(thePage({body: body, httpResponse: httpResponse}))
+            }
+        }
+    );
+})
+
 var testTeamIdList = function() {
     var html = ''
     var list = [11, 14]
@@ -95,6 +116,20 @@ var showError = function(stuff) {
     return html
 }
 
+var createMissionForm = function() {
+    var html = ''
+    html += '<form method="post" action="/createMission">'
+    html += '<table border="0">'
+    html +=     '<tr><td>author_id</td><td><input type="text" name="author_id" size="50"></td></tr>'
+    html +=     '<tr><td>name</td><td><input type="text" name="name" size="50"></td></tr>'
+    html +=     '<tr><td>description</td><td><input type="text" name="description" size="50"></td></tr>'
+    html +=     '<tr><td>script</td><td><input type="text" name="script" size="50"></td></tr>'
+    html +=     '<tr><td colspan="2"><input type="submit" name="create mission" size="50"></td></tr>'
+    html += '</table>'
+    html += '</form>'
+    return html
+}
+
 var thePage = function(stuff) {
     var html = ''
     html += '<table border="0" cellspacing="10">'
@@ -105,6 +140,13 @@ var thePage = function(stuff) {
     html +=         '<td valign="top">'+testTeamIdList()+'</td>'
     if(stuff.missions) {
         html +=     '<td valign="top">'+testMissionList(stuff.missions)+'</td>'
+    }
+    html +=     '<td valign="top">'+createMissionForm()+'</td>'
+    if(stuff.body) {
+        html +=     '<td valign="top"><b>body: </b>'+body+'</td>'
+    }
+    if(stuff.httpResponse) {
+        html +=     '<td valign="top"><b>httpResponse: </b>'+httpResponse+'</td>'
     }
     html += '   </tr>'
     html += '</table>'
