@@ -44,7 +44,6 @@ exports.testPersonTeams = functions.https.onRequest((req, res) => {
             request.get(options, function(error, response, body){
                 //console.log(body);
                 var json = JSON.parse(body)
-                console.log('json: ', json)
                 if(error) {
                     return res.status(200).send(thePage({error: error}))
                 }
