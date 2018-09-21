@@ -78,7 +78,7 @@ var testTeamList = function(teams) {
     html += '   <tr><th>id</th><th>name</th></tr>'
 
     _.each(teams, function(team) {
-        html += '<tr><td>'+team.id+'</td><td>'+team.name+'</td></tr>'
+        html += '<tr><td><a href="testTeamMissions?team_id='+team.id+'" title="see missions for this team">'+team.id+'</a></td><td>'+team.name+'</td></tr>'
     })
 
     html += '</table>'

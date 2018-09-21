@@ -75,7 +75,7 @@ var testVolunteerInfo = function(vol) {
     var html = ''
     html += '<table border="0">'
     html += '   <tr><th colspan="2">Volunteer Info</th></tr>'
-    html += '   <tr><td>id</td><td>'+vol.id+'</td></tr>'
+    html += '   <tr><td>id</td><td><a href="/testPersonTeams?person_id='+vol.id+'" title="see teams for this person">'+vol.id+'</a></td></tr>'
     html += '   <tr><td>first_name</td><td>'+vol.first_name+'</td></tr>'
     html += '   <tr><td>last_name</td><td>'+vol.last_name+'</td></tr>'
     html += '   <tr><td>address</td><td>'+vol.address+'</td></tr>'
