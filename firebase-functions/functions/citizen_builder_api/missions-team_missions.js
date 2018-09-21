@@ -53,7 +53,7 @@ exports.testTeamMissions = functions.https.onRequest((req, res) => {
         })
     }
     else {
-        return res.status(200).send(testPersonIdList())
+        return res.status(200).send(testTeamIdList())
     }
 })
 
