@@ -317,6 +317,9 @@ exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
 exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 
+const volunteers = require('./citizen_builder_api/volunteers')
+exports.testVolunteers = volunteers.testVolunteers
+
 // prod deploy: 9/12/18, 9/20/18
 const videoOffers = require('./video-offers')
 exports.onVideoOffer = videoOffers.onVideoOffer
