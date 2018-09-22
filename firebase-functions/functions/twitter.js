@@ -76,6 +76,7 @@ exports.handleTweetRequest = functions.database.ref('tweet_requests/{key}').onWr
 })
 
 
+// The actual text of the tweet is constructed in google-cloud.js:getTweetText()
 var tweet = function(stuff) {
     // send the tweet...
 

@@ -135,22 +135,25 @@ exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/po
             var video_node_key = snap2.val()
             return event.data.adminRef.root.child('video/list/'+video_node_key).once('value').then(snap3 => {
                 if(snap3.val().legislator_facebook) {
-                    /********* This works but I don't know what I want the comment to be yet  *********/
-//                    FB doesn't let you tag people and pages without permission
+                    return event.data.adminRef.root.child('social_media/cos_accounts/'+snap3.val().legislator_state_abbrev+'/facebook').once('value').then(snap4 => {
+                        /********* This works but I don't know what I want the comment to be yet  *********/
+    //                    FB doesn't let you tag people and pages without permission
 
-                    var msg = 'Please leave a comment using this tag: @'+snap3.val().legislator_facebook+' so that '+snap3.val().legislator_first_name+' '+snap3.val().legislator_last_name+' will get notified.  He *is* our representative after all :)'
-                    postThis['message'] = msg // ref:  https://developers.facebook.com/docs/graph-api/reference/v3.0/object/comments#publish
+                        var msg = 'Please leave a comment using this tag: @'+snap3.val().legislator_facebook+' so that '+snap3.val().legislator_first_name+' '+snap3.val().legislator_last_name
+                            +' will get notified.  He *is* our representative after all :)  Also tag @'+snap4.val() /*state-specific FB page*/
+                        postThis['message'] = msg // ref:  https://developers.facebook.com/docs/graph-api/reference/v3.0/object/comments#publish
 
-                    FB.api(post_id+'/comments', 'post', postThis, function (res) {
-                        //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
+                        FB.api(post_id+'/comments', 'post', postThis, function (res) {
+                            //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
 
-                        // TODO need some real error handling
-                        if(!res || res.error) {
-                            console.log(!res ? 'error occurred' : res.error);
-                        }
-                        // TODO probably should write this to the db somewhere
-                        console.log('Post Id: ' + res.id);
-                    });
+                            // TODO need some real error handling
+                            if(!res || res.error) {
+                                console.log(!res ? 'error occurred' : res.error);
+                            }
+                            // TODO probably should write this to the db somewhere
+                            console.log('Post Id: ' + res.id);
+                        });
+                    })
                 }
             })
         })

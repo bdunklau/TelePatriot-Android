@@ -1090,7 +1090,6 @@ exports.whenVideoIdIsCreated = functions.database.ref('video/list/{video_node_ke
     return event.data.adminRef.root.child('/').update(updates).then(() => {
 
         // construct the email that gets sent to the participants
-
         if(event.data.val().post_to_facebook) {
             // post to FB
             var facebook_request = {
@@ -1108,19 +1107,19 @@ exports.whenVideoIdIsCreated = functions.database.ref('video/list/{video_node_ke
 
         // Sample code: twitter.js:testTweet()
         if(event.data.val().post_to_twitter) {
-            var tweetRequest = {
-                //uid: req.body.uid, // do we care?
-                video_node_key: event.params.video_node_key,
-                date: date.asCentralTime(),
-                date_ms: date.asMillis(),
-                text: getTweetText(event.data.val(), video_url)
-            }
-            return db.ref('tweet_requests').push().set(tweetRequest).then(() => {
-                // twitter.js:handleTweetRequest() is what actually sends the tweet
+            return event.data.adminRef.root.child('social_media/cos_accounts/'+event.data.val().legislator_state_abbrev+'/twitter').once('value').then(snapshot => {
+                var tweetRequest = {
+                    //uid: req.body.uid, // do we care?
+                    video_node_key: event.params.video_node_key,
+                    date: date.asCentralTime(),
+                    date_ms: date.asMillis(),
+                    text: getTweetText(event.data.val(), video_url, snapshot.val() /*state-specific twitter page*/)
+                }
+                return db.ref('tweet_requests').push().set(tweetRequest).then(() => {
+                    // twitter.js:handleTweetRequest() is what actually sends the tweet
+                })
             })
         }
-
-
 
         // Send the email
     })
@@ -1154,7 +1153,7 @@ exports.socialMediaPostsCreated = functions.database.ref('video/list/{video_node
 
 
 
-var getTweetText = function(video_node, video_url) {
+var getTweetText = function(video_node, video_url, twitterHandle /*state-specific twitter page*/) {
     //video_url isn't actually on the video node at the point that we call this function.
     // That's why it's a separate arg
     var rep = video_node.legislator_chamber == 'lower' ? 'Rep' : 'Sen'
@@ -1166,7 +1165,7 @@ var getTweetText = function(video_node, video_url) {
         legislator_name = video_node.legislator_twitter
     }
     var text = video_node.video_type + ' to '+rep+' '+legislator_name+
-        ' ('+video_node.legislator_state_abbrev.toUpperCase()+' '+ch+' '+video_node.legislator_district+') '+video_url
+        ' ('+video_node.legislator_state_abbrev.toUpperCase()+' '+ch+' '+video_node.legislator_district+') @'+twitterHandle+' '+video_url
     return text
 }
 
