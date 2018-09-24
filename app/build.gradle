@@ -6,7 +6,7 @@ android {
         applicationId "com.brentdunklau.telepatriot_android"
         minSdkVersion 17
         targetSdkVersion 26
-        versionCode 42
+        versionCode 43
         versionName "${versionCode}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
