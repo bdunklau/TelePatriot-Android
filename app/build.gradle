@@ -6,19 +6,22 @@ android {
         applicationId "com.brentdunklau.telepatriot_android"
         minSdkVersion 17
         targetSdkVersion 26
-        versionCode 41
-        versionName "41"
+        versionCode 42
+        versionName "${versionCode}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         debug {
             minifyEnabled false
             debuggable true
+            versionNameSuffix ".debug"
+            resValue "string", "app_version", "TelePatriot version ${defaultConfig.versionName}${versionNameSuffix}"
             //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro' // build fails currently with this 8/10/18
         }
         release {
             minifyEnabled false
             debuggable false
+            resValue "string", "app_version", "TelePatriot version ${defaultConfig.versionName}"
             //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

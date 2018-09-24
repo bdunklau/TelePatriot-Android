@@ -71,4 +71,9 @@
         </menu>
     </item>
 
+
+
+    <item android:title="@string/app_version">
+    </item>
+
 </menu>
