@@ -45,6 +45,8 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
     if(email) {
 
         updates['users/'+uid+'/email'] = email
+        updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
+                                                                 // leave COS but aren't banned
 
         citizen_builder_api.checkVolunteerStatus(email,
             function() {

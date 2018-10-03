@@ -81,11 +81,13 @@ public class AccountStatusEvent {
     }
 
     public static class Allowed extends AccountStatusEvent {
-        Allowed() {
+        public Allowed() {
             super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "user allowed access");
         }
     }
 
+    // means the user has not met the legal requirements to be granted access to the app
+    // so they either haven't signed the petition, the conf agreement, or they are banned
     public static class NotAllowed extends AccountStatusEvent {
         NotAllowed() {
             super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "user not allowed access");
