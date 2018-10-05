@@ -90,6 +90,16 @@ public class LauncherActivity extends BaseActivity
                 // call.  We are asking for permission too late.
                 checkPhoneCallPermission();
 
+                if(User.getInstance().isDisabled()) {
+                    startActivity(new Intent(this, DisabledActivity.class));
+                    return;
+                }
+
+                if(!User.getInstance().isAllowed()) {
+                    startActivity(new Intent(this, LimboActivity.class));
+                    return;
+                }
+
 
                 // TODO experimenting...
                 // what if we just add the account status event listener here and let IT dictate

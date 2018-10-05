@@ -447,7 +447,7 @@ exports.testCompose = functions.https.onRequest((req, res) => {
         return res.status(200).send(roomDetails(stuff))
     }
 
-    return compose({
+    return exports.compose({
         room_sid: req.query.room_sid,
         host: req.get('host'),
         callback: showRoom

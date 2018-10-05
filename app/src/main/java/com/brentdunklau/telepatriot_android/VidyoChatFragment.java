@@ -449,7 +449,7 @@ public class VidyoChatFragment extends BaseFragment
     private CameraCapturerCompat cameraCapturerCompat;
     private LocalAudioTrack localAudioTrack;
     private LocalVideoTrack localVideoTrack;
-    private VideoRenderer localVideoView;
+    //private VideoRenderer localVideoView;
     private boolean previousMicrophoneMute;
     private boolean disconnectedFromOnDestroy;
     private LocalParticipant localParticipant;
@@ -547,7 +547,6 @@ public class VidyoChatFragment extends BaseFragment
         localVideoTrack = LocalVideoTrack.create(a,true, vc, LOCAL_VIDEO_TRACK_NAME);
         local_camera_view.setMirror(true);
         localVideoTrack.addRenderer(local_camera_view);
-        localVideoView = local_camera_view;
     }
 
     private CameraCapturer.CameraSource getAvailableCameraSource() {
@@ -759,15 +758,32 @@ public class VidyoChatFragment extends BaseFragment
          */
         final EncodingParameters newEncodingParameters = getEncodingParameters();
 
+
         /*
          * If the local video track was released when the app was put in the background, recreate.
          */
         if (localVideoTrack == null && checkPermissionForCameraAndMicrophone()) {
+
+            local_camera_view.setMirror(true);
+
+            if(localAudioTrack == null) {
+                // Share your microphone
+                localAudioTrack = LocalAudioTrack.create(getActivity(), true, LOCAL_AUDIO_TRACK_NAME);
+            }
+
+            if(cameraCapturerCompat == null) {
+                // Share your camera
+                cameraCapturerCompat = new CameraCapturerCompat(getActivity(), getAvailableCameraSource());
+            }
+            VideoCapturer vc = cameraCapturerCompat.getVideoCapturer();
+            Activity a = getActivity();
+            localVideoTrack = LocalVideoTrack.create(a,true, vc, LOCAL_VIDEO_TRACK_NAME);
+
             localVideoTrack = LocalVideoTrack.create(getActivity(),
                     true,
                     cameraCapturerCompat.getVideoCapturer(),
                     LOCAL_VIDEO_TRACK_NAME);
-            localVideoTrack.addRenderer(localVideoView);
+            localVideoTrack.addRenderer(local_camera_view);
 
             /*
              * If connected to a Room then share the local video track.

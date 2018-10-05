@@ -132,6 +132,10 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
         // This ---^ misses the first events from User.  This affects the cases of
         // VideoInvitationExtended and VideoInvitationRevoked, so check the User attributes
         // that may have fired these events...
+        if(User.getInstance().isAllowed()) {
+            fired(new AccountStatusEvent.Allowed());
+        }
+
         if(User.getInstance().getVideo_invitation_from() != null)
             fired(new AccountStatusEvent.VideoInvitationExtended());
         else

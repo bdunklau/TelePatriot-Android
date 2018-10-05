@@ -3,6 +3,7 @@ package com.brentdunklau.telepatriot_android.util;
 import android.accounts.Account;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.android.gms.auth.AccountChangeEvent;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -37,6 +38,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
     private String current_video_node_key;
+    private String account_disposition;
     private boolean has_signed_petition;
     private boolean has_signed_confidentiality_agreement;
     private boolean is_banned;
@@ -78,11 +80,17 @@ public class User implements FirebaseAuth.AuthStateListener {
         return FirebaseAuth.getInstance().getCurrentUser();
     }
 
+    private void log(String s) {
+//        for(int i=0; i < 20; i++) {
+//            Log.i("User", s);
+//        }
+    }
 
     /**
      * THIS METHOD IS STARTING TO LOOK LIKE A JUNK DRAWER - CLEAN IT UP
      */
     private void login(/*FirebaseUser firebaseUser*/) {
+        log(".login() ************************");
         /**
          * NOTE: No point in checking to see if the user is logged in already via getFirebaseUser() != null
          */
@@ -120,6 +128,7 @@ public class User implements FirebaseAuth.AuthStateListener {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 UserBean ub = dataSnapshot.getValue(UserBean.class);
                 if(ub != null) {
+                    account_disposition = ub.getAccount_disposition();
                     redirectIfNotAllowed(ub);
                     User.this.recruiter_id = ub.getRecruiter_id();
                     boolean inviterId_null_to_notnull = User.this.video_invitation_from == null && ub.getVideo_invitation_from()!=null;
@@ -240,15 +249,12 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     private void redirectIfNotAllowed(UserBean ub) {
-        if(ub == null)
-            fireAccountDisabled();
 
-        boolean isAllowed = Boolean.TRUE == ub.getHas_signed_petition()
-                && Boolean.TRUE == ub.getHas_signed_confidentiality_agreement()
-                && Boolean.FALSE == ub.getIs_banned();
-        boolean notAllowed = !isAllowed;
-        boolean isEnabled = "enabled".equalsIgnoreCase(ub.getAccount_disposition());
-        boolean isDisabled = !isEnabled;
+        boolean pet = Boolean.TRUE == ub.getHas_signed_petition();
+        boolean ca = Boolean.TRUE == ub.getHas_signed_confidentiality_agreement();
+        boolean ban = Boolean.FALSE == ub.getIs_banned();
+        boolean isAllowed = pet && ca && ban;
+        boolean isDisabled = "disabled".equalsIgnoreCase(ub.getAccount_disposition());
 
         has_signed_petition = Boolean.TRUE == ub.getHas_signed_petition();
         has_signed_confidentiality_agreement = Boolean.TRUE == ub.getHas_signed_confidentiality_agreement();
@@ -258,13 +264,14 @@ public class User implements FirebaseAuth.AuthStateListener {
         if(isDisabled) {
             fireAccountDisabled();
         }
-        else if(notAllowed) {
-            fireNotAllowed();
-        }
-        else if(isEnabled) {
+        else  {
             fireAccountEnabled();
         }
-        else fireAllowed();
+
+        if(isAllowed) {
+            fireAllowed();
+        }
+        else fireNotAllowed();
 
     }
 
@@ -491,6 +498,18 @@ public class User implements FirebaseAuth.AuthStateListener {
         }
     }
 
+    public String getAccount_disposition() {
+        return account_disposition;
+    }
+
+    public void setAccount_disposition(String account_disposition) {
+        this.account_disposition = account_disposition;
+    }
+
+    public boolean isDisabled() {
+        return "disabled".equalsIgnoreCase(account_disposition);
+    }
+
     public Team getCurrentTeam() {
         return currentTeam;
     }
@@ -615,8 +634,10 @@ public class User implements FirebaseAuth.AuthStateListener {
     // means the user is not allowed in to the app (hasn't signed legal or is banned)
     // They should be sent to LimboActivity
     private void fireNotAllowed() {
+        Log.i("USER", "fireNotAllowed() ---------------------------------------");
         AccountStatusEvent.NotAllowed evt = new AccountStatusEvent.NotAllowed();
         for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            Log.i("USER", "AccountStatusEvent.Listener = "+l.getClass().getName());
             l.fired(evt);
         }
     }
