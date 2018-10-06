@@ -25,30 +25,13 @@ exports.testVolunteers = functions.https.onRequest((req, res) => {
     if(req.query.email) {
         return db.ref('api_tokens').once('value').then(snapshot => {
 
-            // as long as there's an email address, call the CB API endpoint to see if this person
-            // has satisfied the legal requirements
-            var endpoint = 'https://api.qacos.com/api/ios/v1/volunteers?email='+req.query.email
-
-            var apiKeyName = snapshot.val().citizen_builder_api_key_name
-            var apiKeyValue = snapshot.val().citizen_builder_api_key_value_QA
-
-            var headers = {}
-            headers[apiKeyName] = apiKeyValue
-
-            var options = {
-                url: endpoint,
-                headers: headers
-            };
-
-            // see above:   var request = require('request')
-            request.get(options, function(error, response, body){
-                //console.log(body);
-                var vol = JSON.parse(body)
-                if(error) {
-                    return res.status(200).send(thePage({error: error}))
-                }
-                else return res.status(200).send(thePage({vol: vol}))
-            })
+            var input = {citizen_builder_api_key_name: snapshot.val().citizen_builder_api_key_name,
+                        citizen_builder_api_key_value: snapshot.val().citizen_builder_api_key_value_QA,
+                        email: req.query.email,
+                        successFn: function(result) { return res.status(200).send(thePage(result)) },
+                        errorFn: function(result) { return res.status(200).send(thePage(result)) }
+                        }
+            exports.volunteers(input)
 
         })
     }
@@ -56,6 +39,35 @@ exports.testVolunteers = functions.https.onRequest((req, res) => {
         return res.status(200).send(testEmailList())
     }
 })
+
+exports.volunteers = function(input) {
+
+    // as long as there's an email address, call the CB API endpoint to see if this person
+    // has satisfied the legal requirements
+    var endpoint = 'https://api.qacos.com/api/ios/v1/volunteers?email='+input.email
+
+    var apiKeyName = input.citizen_builder_api_key_name
+    var apiKeyValue = input.citizen_builder_api_key_value
+
+    var headers = {}
+    headers[input.citizen_builder_api_key_name] = input.citizen_builder_api_key_value
+
+    var options = {
+        url: endpoint,
+        headers: headers
+    };
+
+    // see above:   var request = require('request')
+    request.get(options, function(error, response, body){
+        //console.log(body);
+        var vol = JSON.parse(body)
+        if(error) {
+            //return res.status(200).send(thePage({error: error}))
+            input.errorFn({error: error})
+        }
+        else input.successFn({vol: vol}) //return res.status(200).send(thePage({vol: vol}))
+    })
+}
 
 var testEmailList = function() {
     var html = ''

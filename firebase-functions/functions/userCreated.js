@@ -48,6 +48,48 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
         updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
                                                                  // leave COS but aren't banned
 
+
+        return db.ref('api_tokens').once('value').then(snapshot => {
+
+            var input = {citizen_builder_api_key_name: snapshot.val().citizen_builder_api_key_name,
+                            citizen_builder_api_key_value: snapshot.val().citizen_builder_api_key_value_QA,
+                            email: email,
+                            successFn: function(result) {
+                                    var vol = result.vol
+                                    var allowed = vol.petition_signed && vol.volunteer_agreement_signed && !vol.is_banned
+                                    updates['users/'+uid+'/has_signed_petition'] = vol.petition_signed
+                                    updates['users/'+uid+'/has_signed_confidentiality_agreement'] = vol.volunteer_agreement_signed
+                                    updates['users/'+uid+'/is_banned'] = vol.is_banned
+                                    if(allowed) {
+
+                                    }
+                                    else {
+                                        if(vol.is_banned) {
+                                            // not going to give you any help at all
+                                        }
+                                        // need to figure out what requirement they don't meet and send an email
+                                        // about just those things
+                                        else if(!vol.petition_signed && !vol.volunteer_agreement_signed) {
+                                            return db.child('/').update(updates).then(() => {
+                                                return sendEmail('petition_ca_email', email, name)
+                                            })
+                                        }
+                                        else if(!vol.volunteer_agreement_signed) {
+                                            return db.child('/').update(updates).then(() => {
+                                                // send email just about the conf agreement
+                                            })
+                                        }
+                                        // not going to have the case of petition:no but conf_agreement:yes
+                                    }
+                                },
+                            errorFn: function(result) { /*http error*/ }
+                        }
+            exports.volunteers(input)
+
+        })
+
+
+
         citizen_builder_api.checkVolunteerStatus(email,
             function() {
                 citizen_builder_api.grantAccess(updates, uid, name, email)
