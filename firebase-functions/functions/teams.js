@@ -14,6 +14,13 @@ var tableheading = style + ';background-color:#ededed'
 const db = admin.database();
 
 
+/***
+paste this on the command line...
+firebase deploy --only functions:manageTeams,functions:copyTeam,functions:copyMembers,functions:createTeam,functions:deleteMissionItem,functions:deleteTeam,functions:addPeopleToTeam,functions:downloadMissionReport,functions:downloadTeamRoster,functions:removePeopleFromTeam,functions:viewMembers,functions:viewMissions,functions:viewQueue,functions:setCurrentTeam,functions:resetCurrentTeam,functions:updateMemberListUnderTeams,functions:updateTeamListUnderUsers,functions:viewMissionReport
+***/
+
+
+
 exports.manageTeams = functions.https.onRequest((req, res) => {
 
     return listTeams('', '')
@@ -27,7 +34,7 @@ exports.manageTeams = functions.https.onRequest((req, res) => {
 
 var listTeams = function(stuff, current_team) {
 
-    return db.ref(`teams`).orderByChild('team_name').once('value').then(snapshot => {
+    return db.ref('teams').orderByChild('team_name').once('value').then(snapshot => {
         stuff += '<table><tr><td colspan="5"><b>All Teams</b></td></tr>'
         stuff += '<tr><td colspan="5"><form method="post" action="/createTeam"><input type="submit" value="Create Team"/>&nbsp;&nbsp;<input type="text" name="team_name" placeholder="New Team"/></form></td></tr>'
         snapshot.forEach(function(child) {
@@ -172,7 +179,7 @@ var listQueue = function(team_name) {
             "mission_create_date", "mission_id", "mission_name", "mission_type", "name", "name2", "number_of_missions_in_master_mission",
             "phone", "phone2", "script", "uid", "uid_and_active", "url"]
 
-    return db.ref(`teams`).child(team_name).child(`mission_items`).once('value')
+    return db.ref('teams').child(team_name).child('mission_items').once('value')
     .then(snapshot => {
         var mission_items = []
         snapshot.forEach(function(child) {
@@ -226,7 +233,7 @@ var listQueue = function(team_name) {
 var listMissions = function(team_name) {
     var stuff = ''
 
-    return db.ref(`teams`).child(team_name).child(`missions`).once('value')
+    return db.ref('teams').child(team_name).child('missions').once('value')
     .then(snapshot => {
         var missions = []
         snapshot.forEach(function(child) {
@@ -289,7 +296,7 @@ exports.deleteMissionItem = functions.https.onRequest((req, res) => {
     var mission_id = req.query.mission_id
     var mission_item_id = req.query.mission_item_id
 
-    return db.ref(`/teams/${team_name}/mission_items/${mission_item_id}`).remove()
+    return db.ref('/teams/'+team_name+'/mission_items/'+mission_item_id).remove()
     .then(() => {
         return showTheWholePage_Queue(team_name).then(html => {
             return res.status(200).send(html)
@@ -301,7 +308,7 @@ exports.deleteMissionItem = functions.https.onRequest((req, res) => {
 })
 
 var getTeamRoster = function(team_name) {
-    return db.ref(`users`).once('value').then(snapshot => {
+    return db.ref('users').once('value').then(snapshot => {
         var team = []
         snapshot.forEach(function(child) {
             if(child.val().teams) {
@@ -318,7 +325,7 @@ var getTeamRoster = function(team_name) {
 
 
 var getMissionItems = function(team_name, mission_id) {
-    return db.ref(`/teams/${team_name}/missions/${mission_id}/mission_items`).orderByChild('name').once('value').then(snapshot => {
+    return db.ref('/teams/'+team_name+'/missions/'+mission_id+'/mission_items').orderByChild('name').once('value').then(snapshot => {
         var mission_items = []
         snapshot.forEach(function(child) {
             var mission_item = {}
@@ -422,7 +429,7 @@ var listMembers = function(team_name) {
 
     var stuff = ''
 
-    return db.ref(`teams`).child(team_name).child(`members`).once('value')
+    return db.ref('teams').child(team_name).child('members').once('value')
     .then(snapshot => {
         var members = []
         snapshot.forEach(function(child) {
@@ -465,7 +472,7 @@ exports.copyTeam = functions.https.onRequest((req, res) => {
     if(!team_name_untrimmed || team_name_untrimmed.trim() == '' || !new_team_untrimmed || new_team_untrimmed.trim() == ''
         || team_name_untrimmed.trim() == new_team_untrimmed.trim()) {
 
-        db.ref(`/templog`).push().set({result: 'copy team returned early', team_name: team_name_untrimmed, new_team: new_team_untrimmed})
+        db.ref('/templog').push().set({result: 'copy team returned early', team_name: team_name_untrimmed, new_team: new_team_untrimmed})
         return showTheWholePage(team_name_untrimmed).then(html => {
                   return res.status(200).send(html)
               })
@@ -475,20 +482,20 @@ exports.copyTeam = functions.https.onRequest((req, res) => {
     var new_team = stripSpecialChars(new_team_untrimmed.trim())
 
     // make sure the user isn't trying to do a "save as" on top of a team that already exists - that would be bad
-    return db.ref(`/teams/${new_team}`).once('value').then(snapshot => {
-        db.ref(`/templog`).push().set({result: 'check snapshot.val()', snapshot_val: snapshot.val()})
+    return db.ref('/teams/'+new_team).once('value').then(snapshot => {
+        db.ref('/templog').push().set({result: 'check snapshot.val()', snapshot_val: snapshot.val()})
         if(!snapshot.val()) {
             // this team doesn't exist yet, so we're ok to save the current team as this new team
 
-            db.ref(`/teams/${team_name}`).once('value').then(snapshot => {
+            db.ref('/teams/'+team_name).once('value').then(snapshot => {
                 var copy = snapshot.val()
                 copy.team_name = new_team
-                db.ref(`/teams/${new_team}/team_name`).set(new_team)
+                db.ref('/teams/'+new_team+'/team_name').set(new_team)
                 return snapshot
             })
             .then(snapshot => {
                 var members = snapshot.val().members
-                db.ref(`/teams/${new_team}/members`).set(members)
+                db.ref('/teams/'+new_team+'/members').set(members)
             })
 
         }
@@ -506,10 +513,10 @@ exports.copyMembers = functions.https.onRequest((req, res) => {
     var from_team = req.query.from_team
     var to_team = req.query.to_team
 
-    return db.ref(`teams`).child(from_team).child(`members`).once('value').then(snapshot => {
+    return db.ref('teams').child(from_team).child('members').once('value').then(snapshot => {
         snapshot.forEach(function(child) {
             var uid = child.key
-            db.ref(`teams`).child(to_team).child(`members`).child(uid).set(child.val())
+            db.ref('teams').child(to_team).child('members').child(uid).set(child.val())
         })
     })
     .then(() => {
@@ -537,10 +544,10 @@ exports.createTeam = functions.https.onRequest((req, res) => {
     else {
         var team_name = stripSpecialChars(team_name_untrimmed.trim())
         // have to make sure the team doesn't already exist, OR IT WILL BE OVERWRITTEN !
-        return db.ref(`/teams/${team_name}`).once('value').then(snapshot => {
+        return db.ref('/teams/'+team_name).once('value').then(snapshot => {
             if(!snapshot.val()) {
                 // this team doesn't exist yet, so we're ok to create it
-                db.ref(`/teams/${team_name}`).set({team_name: team_name})
+                db.ref('/teams/'+team_name).set({team_name: team_name})
             }
         })
         .then(() => {
@@ -565,7 +572,7 @@ exports.deleteTeam = functions.https.onRequest((req, res) => {
         return res.status(200).send(stuff+"<P/>These request parms are required: <P/> name")
     }
     else {
-        db.ref(`/teams/${name}`).remove()
+        db.ref('/teams/'+name).remove()
         stuff += '<P/>OK removed team: '+name
         return res.status(200).send(stuff)
     }
@@ -608,9 +615,9 @@ exports.addPeopleToTeam = functions.https.onRequest((req, res) => {
 
 
 var addPeopleByEmail = function(team, emails, stuff, callback) {
-    var teamref = db.ref(`teams/${team}/members`)
-    var userref = db.ref(`users`)
-    var log = db.ref(`logs`)
+    var teamref = db.ref('teams/'+team+'/members')
+    var userref = db.ref('users')
+    var log = db.ref('logs')
     var userCount = emails.length
     var iter = 0
     stuff += '<P/>Try adding these people: '+emails
@@ -659,8 +666,8 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
         return res.status(200).send(stuff+"<P/>These request parms are required: <P/> team<P/> email (comma-sep list)")
     }
     else {
-        var teamref = db.ref(`teams/${team}/members`)
-        var userref = db.ref(`users`)
+        var teamref = db.ref('teams/'+team+'/members')
+        var userref = db.ref('users')
         return teamref.orderByChild('email').equalTo(email).once('value').then(snapshot => {
             snapshot.forEach(function(child) {
                 var userId = child.key
@@ -693,14 +700,14 @@ exports.updateTeamListUnderUsers = functions.database.ref('/teams/{team_name}/me
     var memberDeletedUnderTeamNode = !event.data.exists() && event.data.previous.exists()
 
     if(memberAddedUnderTeamNode) {
-        /*return*/ event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).set({team_name: team_name, date_added: date.asCentralTime()})
+        /*return*/ event.data.adminRef.root.child('/users/'+uid+'/teams/'+team_name).set({team_name: team_name, date_added: date.asCentralTime()})
         var logmsg = 'Set /users/'+uid+'/teams/'+team_name+' = {team_name: '+team_name+'}'
-        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: date.asCentralTime()})
+        return event.data.adminRef.root.child('/templog').push().set({action: logmsg, date: date.asCentralTime()})
     }
     else if(memberDeletedUnderTeamNode) {
-        /*return*/ event.data.adminRef.root.child(`/users/${uid}/teams/${team_name}`).remove()
+        /*return*/ event.data.adminRef.root.child('/users/'+uid+'/teams/'+team_name).remove()
         var logmsg = 'Removed /users/'+uid+'/teams/'+team_name
-        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: date.asCentralTime()})
+        return event.data.adminRef.root.child('/templog').push().set({action: logmsg, date: date.asCentralTime()})
     }
 })
 
@@ -718,18 +725,18 @@ exports.updateMemberListUnderTeams = functions.database.ref('/users/{uid}/teams/
     var teamDeletedUnderUserNode = !event.data.exists() && event.data.previous.exists()
 
     if(teamAddedUnderUserNode) {
-        return event.data.adminRef.root.child(`/users/${uid}`).once('value').then(snapshot => {
+        return event.data.adminRef.root.child('/users/'+uid).once('value').then(snapshot => {
             var name = snapshot.val().name
             var email = snapshot.val().email
-            event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).set({name: name, email: email, date_added: date.asCentralTime()})
+            event.data.adminRef.root.child('/teams/'+team_name+'/members/'+uid).set({name: name, email: email, date_added: date.asCentralTime()})
             var logmsg = 'Set /teams/'+team_name+'/members/'+uid+' = {name: '+name+', email: '+email+'}'
-            event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: date.asCentralTime()})
+            event.data.adminRef.root.child('/templog').push().set({action: logmsg, date: date.asCentralTime()})
         })
     }
     else if(teamDeletedUnderUserNode) {
-        event.data.adminRef.root.child(`/teams/${team_name}/members/${uid}`).remove()
+        event.data.adminRef.root.child('/teams/'+team_name+'/members/'+uid).remove()
         var logmsg = 'Removed /teams/'+team_name+'/members/'+uid
-        return event.data.adminRef.root.child(`/templog`).push().set({action: logmsg, date: date.asCentralTime()})
+        return event.data.adminRef.root.child('/templog').push().set({action: logmsg, date: date.asCentralTime()})
     }
 })
 
@@ -745,14 +752,14 @@ exports.setCurrentTeam = functions.database.ref('/users/{uid}/teams/{team_name}'
     var teamDeleted = !event.data.exists() && event.data.previous.exists()
 
     if(teamAdded) {
-        //event.data.adminRef.root.child(`temp_log`).push().set({msg: "event.data.exists()"})
+        //event.data.adminRef.root.child('temp_log').push().set({msg: "event.data.exists()"})
         // query to see if we have a current_team yet
         // We will only set current_team to the new team if there is no current_team node yet
-        var currentTeamRef = event.data.adminRef.root.child(`/users/${uid}/current_team`)
+        var currentTeamRef = event.data.adminRef.root.child('/users/'+uid+'/current_team')
         return currentTeamRef.once('value').then(snapshot => {
             if(!snapshot.val()) {
                 // just for debugging...
-                //event.data.adminRef.root.child(`temp_log`).push().set({msg: "snapshot.val() does not exist"})
+                //event.data.adminRef.root.child('temp_log').push().set({msg: "snapshot.val() does not exist"})
                 var currentTeam = {}
                 currentTeam[team_name] = {team_name: team_name}
                 currentTeamRef.set(currentTeam)
@@ -764,8 +771,8 @@ exports.setCurrentTeam = functions.database.ref('/users/{uid}/teams/{team_name}'
         // If it's the same team as the current_team, then delete the current_team node too
         // which means we probably need a trigger on current_team to detect when it's deleted so
         // we can go get another one.
-        //event.data.adminRef.root.child(`temp_log`).push().set({msg: "event.data.exists() does not exist"})
-        var currentTeamRef = event.data.adminRef.root.child(`/users/${uid}/current_team`)
+        //event.data.adminRef.root.child('temp_log').push().set({msg: "event.data.exists() does not exist"})
+        var currentTeamRef = event.data.adminRef.root.child('/users/'+uid+'/current_team')
         return currentTeamRef.once('value').then(snapshot => {
             if(snapshot.val() && snapshot.val().team_name == team_name) {
                 currentTeamRef.remove()
@@ -782,12 +789,12 @@ exports.resetCurrentTeam = functions.database.ref('/users/{uid}/current_team').o
     var currentTeamDeleted = !event.data.exists() && event.data.previous.exists()
     if(currentTeamDeleted) {
         // go find the first team in the list and make that the new current_team
-        return event.data.adminRef.root.child(`/users/${uid}/teams`).limitToFirst(1).once('value').then(snapshot => {
+        return event.data.adminRef.root.child('/users/'+uid+'/teams').limitToFirst(1).once('value').then(snapshot => {
             var otherTeamsExist = snapshot.val()
             if(otherTeamsExist) {
                 var currentTeam = {}
                 currentTeam[team_name] = {team_name: team_name}
-                event.data.adminRef.root.child(`/users/${uid}/current_team`).set(currentTeam)
+                event.data.adminRef.root.child('/users/'+uid+'/current_team').set(currentTeam)
             }
         })
     }

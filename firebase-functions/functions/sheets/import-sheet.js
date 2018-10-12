@@ -95,7 +95,7 @@ const CONFIG_CLIENT_ID = functions.config().googleapi.client_id;
 const CONFIG_CLIENT_SECRET = functions.config().googleapi.client_secret;
 const CONFIG_SHEET_ID = functions.config().googleapi.sheet_id;
 // The OAuth Callback Redirect.
-const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //`https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
+const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //'https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback';
 
 const HARDCODED_SHEET_ID = '1WXn8VMIfgIhzNNvx5NFEJmGUCsMGrufFU9r_743ukGs'
 const HARDCODED_MISSION_ID = '2'
@@ -110,6 +110,11 @@ var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
 
 // OAuth token cached locally.
 let oauthTokens = null;
+
+
+/**
+firebase deploy --only functions:testsheetImport,functions:readSpreadsheet,functions:deleteMissionItems,functions:testReadSpreadsheet,functions:testMergeMissions,functions:oauthcallback,functions:authgoogleapi
+**/
 
 
 // visit the URL for this Function to request tokens
@@ -445,9 +450,8 @@ var isNamed = function(val, named) {
 // HTTPS function to write new data to CONFIG_DATA_PATH, for testing
 exports.testsheetImport = functions.https.onRequest((req, res) => {
 
-  return db.ref(`missions`).push({ sheet_id: HARDCODED_SHEET_ID }).then(
-     () => res.status(200).send(
-    `Wrote stuff at `+(new Date())));
+  return db.ref('missions').push({ sheet_id: HARDCODED_SHEET_ID }).then(
+     () => res.status(200).send('Wrote stuff at '+(new Date())));
 });
 
 
@@ -456,7 +460,7 @@ exports.testsheetImport = functions.https.onRequest((req, res) => {
 // HTTPS function to write new data to CONFIG_DATA_PATH, for testing
 exports.deleteMissionItems = functions.https.onRequest((req, res) => {
 
-  return db.ref(`mission_items`).remove()
+  return db.ref('mission_items').remove()
 });
 
 
@@ -494,7 +498,7 @@ exports.testReadSpreadsheet = functions.https.onRequest((req, res) => {
                             // don't know if we need mark_for_merge ALL the time (1/5/18)
                            }
 
-            return db.ref(`teams/${team}/missions`).push(mission).then(
+            return db.ref('teams/'+team+'/missions').push(mission).then(
                 () => {
                     var stuff = 'OK'
                     stuff += '<P/>req.query.team = '+team
@@ -517,7 +521,7 @@ exports.testReadSpreadsheet = functions.https.onRequest((req, res) => {
 exports.testMergeMissions = functions.https.onRequest((req, res) => {
 
     // query for all missions with mark_for_merge=true
-    return db.ref(`teams/The Cavalry/missions`).orderByChild(`mark_for_merge`).equalTo(true).once('value').then(snapshot => {
+    return db.ref('teams/The Cavalry/missions').orderByChild('mark_for_merge').equalTo(true).once('value').then(snapshot => {
         var mis = []
         console.log("snapshot.numChildren() = ", snapshot.numChildren()) // perfect, tells us how many missions are marked to be merged
                                                                          // not mission_items, but missions
@@ -530,7 +534,7 @@ exports.testMergeMissions = functions.https.onRequest((req, res) => {
                 missionInfo.mission_items[key]['group_number'] = groupNumber
                 mis.push(missionInfo.mission_items[key])
                 ++iii
-                db.ref(`teams/The Cavalry/mission_items/${key}`).set(missionInfo.mission_items[key])
+                db.ref('teams/The Cavalry/mission_items/'+key).set(missionInfo.mission_items[key])
             }
         })
         return {list: mis, count: snapshot.numChildren()} // <-- this is the arg that is passed to the second then() function
@@ -540,7 +544,7 @@ exports.testMergeMissions = functions.https.onRequest((req, res) => {
     .then(
             (returnValueFromFirstThenFunction) => { // returnValueFromFirstThenFunction isn't used below
                 var stuff = 'OK'
-                return db.ref(`teams/The Cavalry/merged_mission_items`).orderByChild(`group_number`).once('value').then(snapshot => {
+                return db.ref('teams/The Cavalry/merged_mission_items').orderByChild('group_number').once('value').then(snapshot => {
                     snapshot.forEach(function (child) {
                         var missionItemId = child.key
                         var missionItem = child.val()

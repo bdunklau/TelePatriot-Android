@@ -97,7 +97,7 @@ const CONFIG_CLIENT_ID = functions.config().googleapi.client_id;
 const CONFIG_CLIENT_SECRET = functions.config().googleapi.client_secret;
 const CONFIG_SHEET_ID = functions.config().googleapi.sheet_id;
 // The OAuth Callback Redirect.
-const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //`https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback`;
+const FUNCTIONS_REDIRECT = functions.config().googleapi.function_redirect  //'https://us-central1-telepatriot-bd737.cloudfunctions.net/oauthcallback';
 
 
 const HARDCODED_SHEET_ID = '178GnEv36vJ_2Odke_JvRHwNI3nS48bfV23jWak4F1Dc'
@@ -119,6 +119,14 @@ var functionsOauthClient = new OAuth2(CONFIG_CLIENT_ID, CONFIG_CLIENT_SECRET,
 
 // OAuth token cached locally.
 let oauthTokens = null;
+
+
+
+/**
+firebase deploy --only functions:updateSpreadsheet,functions:testsheetwrite
+**/
+
+
 
 
 /*************** clashes with  import-sheet.js:authgoogleapi
@@ -161,7 +169,7 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
 
 /*
 // trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
-exports.updateSpreadsheet = functions.database.ref(`missions/{missionId}/{sheetId}`).onWrite(
+exports.updateSpreadsheet = functions.database.ref('missions/{missionId}/{sheetId}').onWrite(
   event => {
 
     const newRecord = event.data.current.val();
@@ -193,7 +201,7 @@ function appendPromise(requestWithoutAuth) {
       request.auth = client;
       sheets.spreadsheets.values.append(request, (err, response) => {
         if (err) {
-          console.log(`The API returned an error: ${err}`);
+          console.log('The API returned an error: '+err}');
           return reject();
         }
         return resolve(response);
@@ -212,7 +220,7 @@ function updatePromise(requestWithoutAuth) {
       request.auth = client;
       sheets.spreadsheets.values.update(request, (err, response) => {
         if (err) {
-          console.log(`The API returned an error: ${err}`);
+          console.log('The API returned an error: '+err);
           return reject();
         }
         return resolve(response);
@@ -245,10 +253,10 @@ exports.testsheetwrite = functions.https.onRequest((req, res) => {
   const random2 = Math.floor(Math.random() * 100);
   const random3 = Math.floor(Math.random() * 100);
   const ID = new Date().getUTCMilliseconds();
-  return db.ref(`missions/${HARDCODED_MISSION_ID}/${HARDCODED_SHEET_ID}`).set({
+  return db.ref('missions/'+HARDCODED_MISSION_ID+'/'+HARDCODED_SHEET_ID).set({
     firstColumn: random1,
     secondColumn: random2,
     thirdColumn: random3
   }).then(() => res.status(200).send(
-    `Wrote ${random1}, ${random2}, ${random3} to DB, trigger should now update Sheet.`));
+    'Wrote '+random1+', '+random2+', '+random3+' to DB, trigger should now update Sheet.'));
 });
