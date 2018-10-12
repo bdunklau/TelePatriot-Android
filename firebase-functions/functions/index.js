@@ -7,8 +7,6 @@ const deleteModule = require('./userDeleted')
 const notifications = require('./notifications')
 const roles = require('./roles')
 const topics = require('./topics')
-const sheetsDemo = require('./sheets/demo-google-sheet-write')
-const sheetReader = require('./sheets/import-sheet')
 
 exports.messagestuff = onmessage.pushMessages
 exports.userDeleted = deleteModule.deleteUserAccount
@@ -18,10 +16,12 @@ exports.roleUnassigned = roles.roleUnassigned
 exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
 
+const sheetsDemo = require('./sheets/demo-google-sheet-write')
 exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
 
+const sheetReader = require('./sheets/import-sheet')
 exports.testsheetImport = sheetReader.testsheetImport
 exports.readSpreadsheet = sheetReader.readSpreadsheet
 exports.deleteMissionItems = sheetReader.deleteMissionItems

@@ -3,6 +3,11 @@
 const functions = require('firebase-functions');
 
 
+/**
+firebase deploy --only functions:missionActivation
+**/
+
+
 // to either activate or deactivate missions
 exports.missionActivation = functions.database.ref("teams/{team}/missions/{missionId}/uid_and_active").onWrite(
     event => {
