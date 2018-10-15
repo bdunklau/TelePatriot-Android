@@ -134,6 +134,14 @@ public class User implements FirebaseAuth.AuthStateListener {
                     boolean inviterId_null_to_notnull = User.this.video_invitation_from == null && ub.getVideo_invitation_from()!=null;
                     boolean inviterId_notnull_to_null = User.this.video_invitation_from != null && ub.getVideo_invitation_from()==null;
                     boolean nameChanged = ub.getVideo_invitation_from_name() != null && !ub.getVideo_invitation_from_name().equalsIgnoreCase(User.this.video_invitation_from_name);
+
+                    User.this.has_signed_petition = ub.getHas_signed_petition();
+                    User.this.has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement();
+                    User.this.is_banned = ub.getIs_banned();
+
+                    // TODO seems weird to do this each time, but the User object
+                    fireLegalAttributesChanged();
+
                     if(inviterId_null_to_notnull) {
                         updateAttributes(ub, User.this);
                         fireVideoInvitationExtended();
@@ -246,6 +254,30 @@ public class User implements FirebaseAuth.AuthStateListener {
         // make sure the user should be allowed in
         boolean allowed = has_signed_petition && has_signed_confidentiality_agreement && !is_banned;
         return allowed;
+    }
+
+    public boolean isHas_signed_petition() {
+        return has_signed_petition;
+    }
+
+    public void setHas_signed_petition(boolean has_signed_petition) {
+        this.has_signed_petition = has_signed_petition;
+    }
+
+    public boolean isHas_signed_confidentiality_agreement() {
+        return has_signed_confidentiality_agreement;
+    }
+
+    public void setHas_signed_confidentiality_agreement(boolean has_signed_confidentiality_agreement) {
+        this.has_signed_confidentiality_agreement = has_signed_confidentiality_agreement;
+    }
+
+    public boolean isIs_banned() {
+        return is_banned;
+    }
+
+    public void setIs_banned(boolean is_banned) {
+        this.is_banned = is_banned;
     }
 
     private void redirectIfNotAllowed(UserBean ub) {
@@ -695,6 +727,13 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     private void fireVideoInvitationExtended() {
         AccountStatusEvent.VideoInvitationExtended evt = new AccountStatusEvent.VideoInvitationExtended();
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(evt);
+        }
+    }
+
+    private void fireLegalAttributesChanged() {
+        AccountStatusEvent.LegalAttributesChanged evt = new AccountStatusEvent.LegalAttributesChanged();
         for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
             l.fired(evt);
         }

@@ -3,6 +3,7 @@
 const admin = require('firebase-admin')
 const functions = require('firebase-functions')
 const date = require('../dateformat')
+const email_js = require('../email')
 
 // for calling CitizenBuilder API
 var request = require('request')
@@ -121,6 +122,7 @@ exports.grantAccess = function(updates, uid, name, email) {
         updates['teams/'+team_name+'/members/'+uid+'/date_added'] = date.asCentralTime()
         updates['users/'+uid+'/teams/'+team_name+'/team_name'] = team_name
         updates['users/'+uid+'/teams/'+team_name+'/date_added'] = date.asCentralTime()
+        email_js.sendWelcomeEmail(email, name)
         return db.ref('/').update(updates)
     })
 }

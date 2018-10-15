@@ -7,6 +7,8 @@ const admin = require('firebase-admin')
 const date = require('./dateformat')
 const nodemailer = require('nodemailer')
 const citizen_builder_api = require('./citizen_builder_api/checkVolunteerStatus')
+const email_js = require('./email')
+const volunteers = require('./citizen_builder_api/volunteers')
 
 // for calling CitizenBuilder API
 var request = require('request')
@@ -23,7 +25,7 @@ firebase deploy --only functions:userCreated,functions:approveUserAccount
 
 // TODO fix index.js  This function should not be exported as userCreated.
 // TODO keep the names in index.js identical to what they are here
-exports.createUserAccount = functions.auth.user().onCreate(event => {
+exports.userCreated = functions.auth.user().onCreate(event => {
     console.log("userCreated.js: onCreate called")
     // UserRecord is created
     // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s
@@ -49,7 +51,7 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
                                                                  // leave COS but aren't banned
 
 
-        return db.ref('api_tokens').once('value').then(snapshot => {
+        return db.child('api_tokens').once('value').then(snapshot => {
 
             var input = {citizen_builder_api_key_name: snapshot.val().citizen_builder_api_key_name,
                             citizen_builder_api_key_value: snapshot.val().citizen_builder_api_key_value_QA,
@@ -57,58 +59,68 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
                             successFn: function(result) {
                                     var vol = result.vol
                                     var allowed = vol.petition_signed && vol.volunteer_agreement_signed && !vol.is_banned
-                                    updates['users/'+uid+'/has_signed_petition'] = vol.petition_signed
-                                    updates['users/'+uid+'/has_signed_confidentiality_agreement'] = vol.volunteer_agreement_signed
-                                    updates['users/'+uid+'/is_banned'] = vol.is_banned
+                                    updates['users/'+uid+'/has_signed_petition'] = vol.petition_signed ? vol.petition_signed : false
+                                    updates['users/'+uid+'/has_signed_confidentiality_agreement'] = vol.volunteer_agreement_signed ? vol.volunteer_agreement_signed : false
+                                    updates['users/'+uid+'/is_banned'] = vol.is_banned ? vol.is_banned : false
                                     if(allowed) {
-
+                                        citizen_builder_api.grantAccess(updates, uid, name, email)
                                     }
                                     else {
                                         if(vol.is_banned) {
                                             // not going to give you any help at all
+                                            console.log('banned?! - unhandled case: vol = ', vol)
                                         }
                                         // need to figure out what requirement they don't meet and send an email
                                         // about just those things
                                         else if(!vol.petition_signed && !vol.volunteer_agreement_signed) {
+                                            console.log('no petition or CA signed')
                                             return db.child('/').update(updates).then(() => {
-                                                return sendEmail('petition_ca_email', email, name)
+                                                return email_js.sendPetitionCAEmail(email, name)
                                             })
                                         }
                                         else if(!vol.volunteer_agreement_signed) {
+                                            console.log('no CA signed')
                                             return db.child('/').update(updates).then(() => {
                                                 // send email just about the conf agreement
+                                                // TODO improve this - send email that only mentions the CA
+                                                return email_js.sendPetitionCAEmail(email, name)
                                             })
+                                        }
+                                        else {
+                                            // We're not handling the case where the conf agreement is signed but not
+                                            // the petition because that's not a realistic use case.  No one signs
+                                            // the conf agreement but not the petition
                                         }
                                         // not going to have the case of petition:no but conf_agreement:yes
                                     }
                                 },
-                            errorFn: function(result) { /*http error*/ }
+                            errorFn: function(result) { console.log("error: result: ", result) /*http error*/ }
                         }
-            exports.volunteers(input)
+            volunteers.volunteers(input)
 
         })
 
 
-
-        citizen_builder_api.checkVolunteerStatus(email,
-            function() {
-                citizen_builder_api.grantAccess(updates, uid, name, email)
-
-                // TODO actually don't need this email anymore
-//                return db.update(attributes).then(() => {
-//                    return sendEmail2('On-Board This Person', email, name)
+//        // WE NEVER MAKE TO HERE SO WE *CAN* GRANT ACCESS - OOPS
+//        citizen_builder_api.checkVolunteerStatus(email,
+//            function() {
+//                citizen_builder_api.grantAccess(updates, uid, name, email)
+//
+//                // TODO actually don't need this email anymore
+////                return db.update(attributes).then(() => {
+////                    return sendEmail2('On-Board This Person', email, name)
+////                })
+//            },
+//            function() {
+//                // called when the user has NOT satisfied the legal requirements for access
+//                // In this case, we still have to save the user to /users.  We just don't set
+//                // the petition, conf agreement and banned flags like we do above.
+//                return db.child('/').update(updates).then(() => {
+//                    return email_js.sendPetitionCAEmail(email, name)
 //                })
-            },
-            function() {
-                // called when the user has NOT satisfied the legal requirements for access
-                // In this case, we still have to save the user to /users.  We just don't set
-                // the petition, conf agreement and banned flags like we do above.
-                return db.child('/').update(updates).then(() => {
-                    return sendEmail('petition_ca_email', email, name)
-                })
-            }
-        )
-        return true
+//            }
+//        )
+//        return true
     }
     else {
         // no email - geez - send them to the limbo screen also I guess and let them know
@@ -116,77 +128,10 @@ exports.createUserAccount = functions.auth.user().onCreate(event => {
         // Or maybe give them instructions to go back to FB and tell them how to confirm their email
 
         return db.child('/').update(updates).then(() => {
-            return sendEmail('petition_ca_email', email, name)
+            return email_js.sendPetitionCAEmail(email, name)
         })
     }
 
-
-
-
-//    const newUserRef = db.child('/users/'+uid)
-//
-//    var created = date.asCentralTime()
-//
-//    // See comment at very bottom
-//    var userrecord = {name:name, photoUrl:photoUrl, email: email, created: created, account_disposition: "enabled"}
-//    /**********
-//    var userrecord = {name:name, photoUrl:photoUrl, created: created, account_disposition: "enabled"}
-//    // for the cases when there IS no email...
-//    if(email) {
-//        userrecord['email'] = email
-//    }
-//    ***************/
-//
-//    // remember, .set() returns a promise
-//    // just about everything returns a promise
-//
-//    return newUserRef.set(userrecord).then(snap => {
-//
-//        return db.child('/no_roles/'+uid).set(userrecord).then( whatisthis => {
-//            return admin.auth().getUser(uid)
-//                .then(function(userRecord) {
-//                    console.log("Successfully fetched user data:", userRecord.toJSON());
-//                    db.child('/users/'+uid+'/name').set(userRecord.displayName) // displayName not ready
-//                    // above, but it is at this point
-//                    // https://github.com/firebase/firebaseui-web/issues/197
-//                    return userRecord.displayName
-//                })
-//        })
-//    })
-//    .then(name /*userRecord.displayName*/ => {
-//        if(email) {
-//            citizen_builder_api.checkVolunteerStatus(email,
-//                function() {
-//                    // called when the user HAS satisfied the legal requirements for access
-//                    // In this case, set these attributes on the user's node
-//                    var attributes = {}
-//                    attributes['/users/'+uid+'/has_signed_petition'] = true
-//                    attributes['/users/'+uid+'/has_signed_confidentiality_agreement'] = true
-//                    attributes['/users/'+uid+'/is_banned'] = false
-//
-//                    // TODO this is where we
-//
-//                    return db.update(attributes).then(() => {
-//                        return sendEmail2('On-Board This Person', email, name)
-//                    })
-//                },
-//                function() {
-//                    // called when the user has NOT satisfied the legal requirements for access
-//                    // In this case, don't do anything.  The attributes that we set in the other
-//                    // callback can be left out here.  Missing attribute will interpreted as "unknown"
-//                    // We can't be more specific than "unknown" because we don't know exactly WHY
-//                    // the CitizenBuilder API call returned false.
-//
-//                    // UPDATE 4/5/18 - BUT.... but we do want to send this person the email that
-//                    // tells them they have to sign the petition and confidentiality agreement
-//                    // Let's do that now...
-//
-//                    return sendEmail('petition_ca_email', email, name)
-//
-//                }
-//            )
-//        }
-//    })
 })
 
 
@@ -208,56 +153,10 @@ exports.approveUserAccount = functions.database.ref('/no_roles/{uid}').onDelete(
     })
     .then(() => {
         // send the welcome email
-        return sendEmail('welcome_email', email, name)
+        return email_js.sendWelcomeEmail(email, name)
 
     })
 })
-
-
-// TODO move to sendEmail2 at some point
-var sendEmail = function(emailType, email, name) {
-
-        return db.child('/administration/'+emailType).once('value').then(snapshot => {
-
-            var rep = "(newbie)"
-            var message = snapshot.val().message.replace(rep, name)
-
-            var smtpTransport = nodemailer.createTransport({
-              host: snapshot.val().host,
-                      port: snapshot.val().port,
-                      secure: true, // true for 465, false for other ports
-              auth: {
-                  user: snapshot.val().user, pass: snapshot.val().pass
-              }
-            })
-
-            // setup e-mail data with unicode symbols
-            var mailOptions = {
-                from: snapshot.val().from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
-                to: email, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
-                cc: snapshot.val().cc,
-                subject: snapshot.val().subject, // Subject line
-                //text: "plain text: "+snapshot.val().message, // plaintext body
-                html: message // html body
-            }
-
-            // send mail with defined transport object
-            smtpTransport.sendMail(mailOptions, function(error, response){
-                if(error){
-                    console.log(error);
-                }else{
-                    console.log("Message sent: " + response.message);
-                }
-
-                // if you don't want to use this transport object anymore, uncomment following line
-                smtpTransport.close(); // shut down the connection pool, no more messages
-
-
-                // what are we going to return here?
-            });
-
-        })
-}
 
 
 var sendEmail2 = function(emailType, email, name) {
@@ -273,39 +172,9 @@ var sendEmail2 = function(emailType, email, name) {
             var rep = "newbie"
             var message = _.replace(atype.message, new RegExp(rep,"g"), name) //snapshot.val().message.replace(rep, name)
 
-            var smtpTransport = nodemailer.createTransport({
-                host: atype.host,
-                port: atype.port,
-                secure: true, // true for 465, false for other ports
-                auth: {
-                    user: atype.user, pass: snap.val()
-                }
-            })
-
-            // setup e-mail data with unicode symbols
-            var mailOptions = {
-                from: atype.from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
-                to: email, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
-                cc: atype.cc,
-                subject: atype.subject, // Subject line
-                //text: "plain text: "+snapshot.val().message, // plaintext body
-                html: message // html body
-            }
-
-            // send mail with defined transport object
-            smtpTransport.sendMail(mailOptions, function(error, response){
-                if(error){
-                    console.log(error);
-                }else{
-                    console.log("Message sent: " + response.message);
-                }
-
-                // if you don't want to use this transport object anymore, uncomment following line
-                smtpTransport.close(); // shut down the connection pool, no more messages
-
-
-                // what are we going to return here?
-            });
+            email_js.sendEmail({message: message, email: email, host: atype.host, port: atype.port,
+                        user: atype.user, pass: snap.val(), from: atype.from, cc: atype.cc,
+                        subject: atype.subject})
 
         })
     })

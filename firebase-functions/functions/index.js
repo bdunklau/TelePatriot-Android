@@ -34,7 +34,7 @@ const createModule = require('./userCreated')
 // TODO fix index.js  This function should not be exported as userCreated.
 // TODO keep the names in index.js identical to what they are here
 exports.approveUserAccount = createModule.approveUserAccount
-exports.userCreated = createModule.createUserAccount
+exports.userCreated = createModule.userCreated
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
@@ -115,14 +115,14 @@ exports.updateUser = userList.updateUser
 
 // prod deploy: 9/12/18, 9/20/18
 const email = require('./email')
-exports.email = email.email
-exports.email2 = email.email2
+exports.testEmail = email.testEmail
+exports.testEmail2 = email.testEmail2
 exports.renderEmail = email.renderEmail
 exports.renderEmail2 = email.renderEmail2
 exports.saveEmail = email.saveEmail
 exports.saveEmail2 = email.saveEmail2
-exports.sendEmail = email.sendEmail
-exports.sendEmail2 = email.sendEmail2
+exports.testSendEmail = email.testSendEmail
+exports.testSendEmail2 = email.testSendEmail2
 exports.chooseEmailType = email.chooseEmailType
 exports.chooseEmailType2 = email.chooseEmailType2
 exports.onReadyToSendEmails = email.onReadyToSendEmails

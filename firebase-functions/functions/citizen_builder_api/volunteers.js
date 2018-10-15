@@ -61,6 +61,13 @@ exports.volunteers = function(input) {
     request.get(options, function(error, response, body){
         //console.log(body);
         var vol = JSON.parse(body)
+
+//        // test/mock code...
+//        vol.petition_signed = true
+//        vol.volunteer_agreement_signed = false
+//        vol.is_banned = false
+//        // test/mock code...
+
         if(error) {
             //return res.status(200).send(thePage({error: error}))
             input.errorFn({error: error})

@@ -88,8 +88,10 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
                 "record video messages of support for the Convention of States and this app will automatically upload them to YouTube," +
                 "Facebook and Twitter.  Click SHOW ME HOW to find out how.");
         full_access_description.setText("For Full Access to TelePatriot, there are two legal requirements you must meet.  They are described below.");
+
         legal_requirement_1.setText("You must sign the Convention of States petition using this email address: "+User.getInstance().getEmail());
         legal_requirement_2.setText("You must sign the Convention of States confidentiality agreement using this email address: "+User.getInstance().getEmail());
+
         when_finished.setText("Once you have signed both documents, click DONE below.");
 
         sign_petition_button.setOnClickListener(new View.OnClickListener() {
@@ -246,6 +248,26 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
             show_me_how_button.setVisibility(View.VISIBLE);
             video_invitation_button.setVisibility(View.INVISIBLE);
             access_limited_description.setText(ACCESS_LIMITED_DESCRIPTION);
+        }
+        else if(evt instanceof AccountStatusEvent.LegalAttributesChanged) {
+
+            if(User.getInstance().isHas_signed_petition()) {
+                legal_requirement_1.setText("You have already signed the Convention of States petition");
+                sign_petition_button.setVisibility(View.GONE);
+            }
+            else {
+                legal_requirement_1.setText("You must sign the Convention of States petition using this email address: "+User.getInstance().getEmail());
+                sign_petition_button.setVisibility(View.VISIBLE);
+            }
+
+            if(User.getInstance().isHas_signed_confidentiality_agreement()) {
+                legal_requirement_2.setText("You have already signed the Convention of States confidentiality agreement");
+                sign_confidentiality_agreement_button.setVisibility(View.GONE);
+            }
+            else {
+                legal_requirement_2.setText("You must sign the Convention of States confidentiality agreement using this email address: "+User.getInstance().getEmail());
+                sign_confidentiality_agreement_button.setVisibility(View.VISIBLE);
+            }
         }
     }
 }
