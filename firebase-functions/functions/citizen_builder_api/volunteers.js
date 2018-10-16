@@ -64,8 +64,8 @@ exports.volunteers = function(input) {
 
 //        // test/mock code...
 //        vol.petition_signed = true
-//        vol.volunteer_agreement_signed = false
-//        vol.is_banned = false
+//        vol.volunteer_agreement_signed = true
+//        vol.is_banned = true
 //        // test/mock code...
 
         if(error) {

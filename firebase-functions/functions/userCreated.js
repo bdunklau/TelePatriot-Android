@@ -69,6 +69,7 @@ exports.userCreated = functions.auth.user().onCreate(event => {
                                         if(vol.is_banned) {
                                             // not going to give you any help at all
                                             console.log('banned?! - unhandled case: vol = ', vol)
+                                            return db.child('/').update(updates)
                                         }
                                         // need to figure out what requirement they don't meet and send an email
                                         // about just those things
