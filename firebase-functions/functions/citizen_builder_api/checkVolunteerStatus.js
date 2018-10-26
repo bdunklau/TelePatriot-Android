@@ -3,6 +3,7 @@
 const admin = require('firebase-admin')
 const functions = require('firebase-functions')
 const date = require('../dateformat')
+const email_js = require('../email')
 
 // for calling CitizenBuilder API
 var request = require('request')
@@ -42,8 +43,8 @@ exports.checkVolunteerStatus = function(email, allowed, notAllowed) {
 
         // see above:   var request = require('request')
         request.get(options, function(error, response, body){
-            //console.log(body);
             var obj = JSON.parse(body)
+            console.log('JSON.parse(body) = ', JSON.parse(body));
             var ok = ''
             if(obj.volunteer) {
                 allowed()
@@ -60,15 +61,23 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
     if(event.data.val().event_type != 'check legal')
         return false
 
-    var f = function(valid) {
-        db.ref('cb_api_events/all-events').push().set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email,
-                                        event_type: 'check-legal-response', valid: valid})
-        // for users from the Limbo screens.  There is a "Done" button on that page that they can click that
-        // causes this event to get called.  The limbo screens monitor /cb_api_events/check-legal-responses
-        // in order to tell the client whether they have in fact satisfied all the legal requirements now
-        db.ref('cb_api_events/check-legal-responses/'+event.data.val().uid)
-            .push()
-            .set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email, valid: valid, date_ms: date.asMillis()})
+    var f = function(valid_actual) {
+        event.data.adminRef.root.child('administration/configuration/simulate_passing_legal').once('value').then(snapshot => {
+            var valid = valid_actual
+            if(snapshot.val()) {
+                valid = snapshot.val()
+            }
+            console.log("checkLegal: valid_actual: ", valid_actual, " valid: ", valid)
+
+            db.ref('cb_api_events/all-events').push().set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email,
+                                            event_type: 'check-legal-response', valid: valid})
+            // for users from the Limbo screens.  There is a "Done" button on that page that they can click that
+            // causes this event to get called.  The limbo screens monitor /cb_api_events/check-legal-responses
+            // in order to tell the client whether they have in fact satisfied all the legal requirements now
+            db.ref('cb_api_events/check-legal-responses/'+event.data.val().uid)
+                .push()
+                .set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email, valid: valid, date_ms: date.asMillis()})
+        })
     }
 
     // now check legal status...
@@ -76,7 +85,7 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
         f(true)
     }
     var notAllowed = function() {
-        f(false) // change this to true to simulate anyone passing legal
+        f(false)
     }
     exports.checkVolunteerStatus(event.data.val().email, allowed, notAllowed)
     return true
@@ -121,6 +130,7 @@ exports.grantAccess = function(updates, uid, name, email) {
         updates['teams/'+team_name+'/members/'+uid+'/date_added'] = date.asCentralTime()
         updates['users/'+uid+'/teams/'+team_name+'/team_name'] = team_name
         updates['users/'+uid+'/teams/'+team_name+'/date_added'] = date.asCentralTime()
+        email_js.sendWelcomeEmail(email, name)
         return db.ref('/').update(updates)
     })
 }

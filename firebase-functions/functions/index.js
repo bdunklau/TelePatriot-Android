@@ -7,8 +7,6 @@ const deleteModule = require('./userDeleted')
 const notifications = require('./notifications')
 const roles = require('./roles')
 const topics = require('./topics')
-const sheetsDemo = require('./sheets/demo-google-sheet-write')
-const sheetReader = require('./sheets/import-sheet')
 
 exports.messagestuff = onmessage.pushMessages
 exports.userDeleted = deleteModule.deleteUserAccount
@@ -18,10 +16,12 @@ exports.roleUnassigned = roles.roleUnassigned
 exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
 
+const sheetsDemo = require('./sheets/demo-google-sheet-write')
 exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
 
+const sheetReader = require('./sheets/import-sheet')
 exports.testsheetImport = sheetReader.testsheetImport
 exports.readSpreadsheet = sheetReader.readSpreadsheet
 exports.deleteMissionItems = sheetReader.deleteMissionItems
@@ -34,7 +34,7 @@ const createModule = require('./userCreated')
 // TODO fix index.js  This function should not be exported as userCreated.
 // TODO keep the names in index.js identical to what they are here
 exports.approveUserAccount = createModule.approveUserAccount
-exports.userCreated = createModule.createUserAccount
+exports.userCreated = createModule.userCreated
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
@@ -115,14 +115,14 @@ exports.updateUser = userList.updateUser
 
 // prod deploy: 9/12/18, 9/20/18
 const email = require('./email')
-exports.email = email.email
-exports.email2 = email.email2
+exports.testEmail = email.testEmail
+exports.testEmail2 = email.testEmail2
 exports.renderEmail = email.renderEmail
 exports.renderEmail2 = email.renderEmail2
 exports.saveEmail = email.saveEmail
 exports.saveEmail2 = email.saveEmail2
-exports.sendEmail = email.sendEmail
-exports.sendEmail2 = email.sendEmail2
+exports.testSendEmail = email.testSendEmail
+exports.testSendEmail2 = email.testSendEmail2
 exports.chooseEmailType = email.chooseEmailType
 exports.chooseEmailType2 = email.chooseEmailType2
 exports.onReadyToSendEmails = email.onReadyToSendEmails
@@ -317,6 +317,17 @@ exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
 exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 
+const volunteers = require('./citizen_builder_api/volunteers')
+exports.testVolunteers = volunteers.testVolunteers
+
+const person_teams = require('./citizen_builder_api/teams-person_teams')
+exports.testPersonTeams = person_teams.testPersonTeams
+
+const cb_missions = require('./citizen_builder_api/missions')
+exports.testTeamMissions = cb_missions.testTeamMissions
+exports.createMission = cb_missions.createMission
+
+
 // prod deploy: 9/12/18, 9/20/18
 const videoOffers = require('./video-offers')
 exports.onVideoOffer = videoOffers.onVideoOffer
@@ -326,4 +337,7 @@ const geocode = require('./geocode')
 exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
+
+const simulate = require('./simulate')
+exports.testViewSimulatorParameters = simulate.testViewSimulatorParameters
 

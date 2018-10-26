@@ -24,12 +24,12 @@ const db = admin.database();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:email,functions:email2,functions:chooseEmailType,functions:chooseEmailType2,functions:renderEmail,functions:renderEmail2,functions:saveEmail,functions:saveEmail2,functions:sendEmail,functions:sendEmail2,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
+firebase deploy --only functions:testEmail,functions:testEmail2,functions:chooseEmailType,functions:chooseEmailType2,functions:renderEmail,functions:renderEmail2,functions:saveEmail,functions:saveEmail2,functions:testSendEmail,functions:testSendEmail2,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
 ***/
 
 
 // TODO get rid of this, replace with email2
-exports.email = functions.https.onRequest((req, res) => {
+exports.testEmail = functions.https.onRequest((req, res) => {
 
     var html = ''
     html += '<html><head></head><body>'
@@ -40,10 +40,20 @@ exports.email = functions.https.onRequest((req, res) => {
 })
 
 
+exports.sendWelcomeEmail = function(email, name) {
+    return sendEmail('welcome_email', email, name)
+}
+
+
+exports.sendPetitionCAEmail = function(email, name) {
+    return sendEmail('petition_ca_email', email, name)
+}
+
+
 // an improvement over email.  We aren't hard-coding email type info in the node keys anymore
 // We're putting all email templates under administration/email_types.  But we're leaving the original
 // email function for now because that touches on user sign ups.
-exports.email2 = functions.https.onRequest((req, res) => {
+exports.testEmail2 = functions.https.onRequest((req, res) => {
 
     var html = ''
     html += '<html><head></head><body>'
@@ -266,7 +276,7 @@ var emailForm = function(parms) {
 
     html += '<tr>'
     html += '<td>'
-    html += '<input type="submit" value="preview" formaction="/renderEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="sendEmail">'
+    html += '<input type="submit" value="preview" formaction="/renderEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="testSendEmail">'
     html += '</td>'
     html += '</tr>'
 
@@ -336,7 +346,7 @@ var emailForm2 = function(parms) {
 
     html += '<tr>'
     html += '<td>'
-    html += '<input type="submit" value="preview" formaction="/renderEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="/sendEmail2">'
+    html += '<input type="submit" value="preview" formaction="/renderEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="save" formaction="/saveEmail2"> &nbsp;&nbsp;&nbsp; <input type="submit" value="send" formaction="/testSendEmail2">'
     html += '</td>'
     html += '</tr>'
 
@@ -860,8 +870,8 @@ exports.saveEmail2 = functions.https.onRequest((req, res) => {
 })
 
 
-// TODO replace with sendEmail2 at some point
-exports.sendEmail = functions.https.onRequest((req, res) => {
+// TODO replace with testSendEmail2 at some point
+exports.testSendEmail = functions.https.onRequest((req, res) => {
 
     var formParams = {title: req.body.title,
                     host: req.body.host,
@@ -916,7 +926,7 @@ exports.sendEmail = functions.https.onRequest((req, res) => {
 })
 
 
-exports.sendEmail2 = functions.https.onRequest((req, res) => {
+exports.testSendEmail2 = functions.https.onRequest((req, res) => {
 
     var formParams = {title: req.body.title,
                     host: req.body.host,
@@ -999,7 +1009,7 @@ exports.sendLegislatorEmailRegardingVideo = function(subject, message, to /*legi
 
     var stuff = exports.createLegislatorEmailRegardingVideo(subject, message, to /*legislator*/, cc)
 
-    sendEmail(stuff)
+    sendEmail3(stuff)
 }
 
 
@@ -1029,13 +1039,13 @@ exports.createLegislatorEmailRegardingVideo = function(subject, message, to /*le
 }
 
 
-var sendEmail = function(stuff) {
+var sendEmail3 = function(stuff) {
 
     return db.ref('administration/email_config').once('value').then(snapshot => {
         var smtpTransport = nodemailer.createTransport({
             host: snapshot.val().host,
-                  port: snapshot.val().port,
-                  secure: true, // true for 465, false for other ports
+            port: snapshot.val().port,
+            secure: true, // true for 465, false for other ports
             auth: {
                 user: snapshot.val().user, pass: snapshot.val().pass
             }
@@ -1067,6 +1077,65 @@ var sendEmail = function(stuff) {
         });
     })
 }
+
+
+exports.sendEmail = function(input) {
+
+      var smtpTransport = nodemailer.createTransport({
+          host: input.host,
+          port: input.port,
+          secure: true, // true for 465, false for other ports
+          auth: {
+              user: input.user, pass: input.pass
+          }
+      })
+
+      // setup e-mail data with unicode symbols
+      var mailOptions = {
+          from: input.from, //"Fred Foo ✔ <foo@blurdybloop.com>", // sender address
+          to: input.email, //"bar@blurdybloop.com, baz@blurdybloop.com", // list of receivers
+          cc: input.cc,
+          subject: input.subject, // Subject line
+          //text: "plain text: "+snapshot.val().message, // plaintext body
+          html: input.message // html body
+      }
+
+      // send mail with defined transport object
+      smtpTransport.sendMail(mailOptions, function(error, response){
+          if(error){
+              console.log(error);
+          }else{
+              console.log("Message sent: " + response.message);
+          }
+
+          // if you don't want to use this transport object anymore, uncomment following line
+          smtpTransport.close(); // shut down the connection pool, no more messages
+
+
+          // what are we going to return here?
+      });
+}
+
+
+var sendEmail = function(emailType, email, name) {
+
+    return db.ref('/administration/'+emailType).once('value').then(snapshot => {
+
+        var rep = "(newbie)"
+        var message = snapshot.val().message.replace(rep, name)
+
+        sendEmail4({message: message, email: email, host: snapshot.val().host, port: snapshot.val().port,
+                    user: snapshot.val().user, pass: snapshot.val().pass, from: snapshot.val().from, cc: snapshot.val().cc,
+                    subject: snapshot.val().subject})
+    })
+}
+
+
+var sendEmail4 = function(input) {
+
+    exports.sendEmail(input)
+}
+
 
 var mailMerge = function(str, replace) {
     _.each(replace, function(rep) {

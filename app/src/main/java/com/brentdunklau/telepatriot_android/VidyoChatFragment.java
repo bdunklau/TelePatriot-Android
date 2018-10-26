@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.twilio.video.AudioCodec;
+import com.twilio.video.AudioOptions;
 import com.twilio.video.CameraCapturer;
 import com.twilio.video.ConnectOptions;
 import com.twilio.video.EncodingParameters;
@@ -536,9 +537,18 @@ public class VidyoChatFragment extends BaseFragment
 //        }
 //    }
 
+    private LocalAudioTrack createLocalAudioTrack() {
+        // Share your microphone
+        AudioOptions.Builder builder = new AudioOptions.Builder();
+        AudioOptions options = builder.echoCancellation(true).autoGainControl(true).highpassFilter(true).noiseSuppression(true).build();
+        LocalAudioTrack at = LocalAudioTrack.create(getActivity(), true, options, LOCAL_AUDIO_TRACK_NAME);
+//                localAudioTrack = LocalAudioTrack.create(getActivity(), true, LOCAL_AUDIO_TRACK_NAME);
+        return at;
+    }
+
     private void createAudioAndVideoTracks() {
         // Share your microphone
-        localAudioTrack = LocalAudioTrack.create(getActivity(), true, LOCAL_AUDIO_TRACK_NAME);
+        localAudioTrack = createLocalAudioTrack();
 
         // Share your camera
         cameraCapturerCompat = new CameraCapturerCompat(getActivity(), getAvailableCameraSource());
@@ -768,7 +778,7 @@ public class VidyoChatFragment extends BaseFragment
 
             if(localAudioTrack == null) {
                 // Share your microphone
-                localAudioTrack = LocalAudioTrack.create(getActivity(), true, LOCAL_AUDIO_TRACK_NAME);
+                localAudioTrack = createLocalAudioTrack();
             }
 
             if(cameraCapturerCompat == null) {

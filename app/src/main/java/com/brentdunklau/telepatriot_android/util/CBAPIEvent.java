@@ -24,8 +24,8 @@ public class CBAPIEvent {
     }
 
     public static class CheckLegal extends CBAPIEvent {
-        public CheckLegal(User user) {
-            super(user.getUid(), user.getEmail(), user.getName(), "check legal");
+        public CheckLegal(User user, String name, String email) {
+            super(user.getUid(), email, name, "check legal");
         }
     }
 

@@ -15,8 +15,15 @@ import android.widget.Button;
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by bdunklau on 10/12/2017.
@@ -90,33 +97,44 @@ public class LauncherActivity extends BaseActivity
                 // call.  We are asking for permission too late.
                 checkPhoneCallPermission();
 
-                if(User.getInstance().isDisabled()) {
-                    startActivity(new Intent(this, DisabledActivity.class));
-                    return;
-                }
+                final String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                final String name = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
+                final String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
 
-                if(!User.getInstance().isAllowed()) {
-                    startActivity(new Intent(this, LimboActivity.class));
-                    return;
-                }
+                FirebaseDatabase.getInstance().getReference("administration/configuration").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Map<String, Object> config = (Map<String, Object>) dataSnapshot.getValue();
+//                        Map<String, Object> config = (Map<String, Object>) m.get("configuration");
+                        Boolean simulate_missing_name = (Boolean) config.get("simulate_missing_name");
+                        Boolean simulate_missing_email = (Boolean) config.get("simulate_missing_email");
+                        Boolean simulate_passing_legal = (Boolean) config.get("simulate_passing_legal");
 
+                        boolean dataMissing = name==null || email==null || name.trim().equals("") || email.trim().equals("")
+                                || simulate_missing_name || simulate_missing_email;
 
-                // TODO experimenting...
-                // what if we just add the account status event listener here and let IT dictate
-                // whether we go to MainActivity or LimboActivity ...?
-                //User.getInstance().addAccountStatusEventListener(this);
+                        if(dataMissing) {
+                            Intent intent = new Intent(LauncherActivity.this, MissingInformationActivity.class);
+                            intent.putExtra("uid", uid);
+                            startActivity(intent);
+                            return;
+                        }
 
+                        if(User.getInstance().isDisabled()) {
+                            startActivity(new Intent(LauncherActivity.this, DisabledActivity.class));
+                            return;
+                        }
 
-//                if(User.getInstance().hasAnyRole()) {
-//                    startActivity(new Intent(this, MainActivity.class));
-//                }
-//                else {
-//                    // We only do this if the user is brand new and doesn't have any roles yet.
-//                    // When the user is brand new, we send them to the LimboActivity screen
-//                    // where they just have to sit and wait for an admin to let them in.
-//                    // Look at fired(AccountStatusEvent evt) below...
-//                    User.getInstance().addAccountStatusEventListener(this);
-//                }
+                        if(!User.getInstance().isAllowed()) {
+                            startActivity(new Intent(LauncherActivity.this, LimboActivity.class));
+                            return;
+                        }
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {  }
+                });
 
             } else {
                 // user not authenticated

@@ -338,6 +338,7 @@ public class UserBean {
         // ref:  https://firebase.googleblog.com/2015/09/introducing-multi-location-updates-and_86.html
         // multi-path updates...
 
+        // multi-path update example
         Map m = new HashMap();
         m.put("account_disposition", account_disposition);
         m.put("account_dispositioned_by", account_dispositioned_by);
