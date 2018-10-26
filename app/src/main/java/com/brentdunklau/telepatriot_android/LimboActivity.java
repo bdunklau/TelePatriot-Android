@@ -52,6 +52,8 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
     private TextView when_finished;
     private Button done_button;
 
+    private String name, email;
+
     private static final String ACCESS_LIMITED_DESCRIPTION = "You currently have Limited Access to TelePatriot.  With Limited Access, you can " +
             "record video messages of support for the Convention of States and this app will automatically upload them to YouTube," +
             "Facebook and Twitter.  Click SHOW ME HOW to find out how.";
@@ -63,6 +65,11 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_limbo);
+
+        name = getIntent().getStringExtra("name");
+        email = getIntent().getStringExtra("email");
+        if(name == null) name = User.getInstance().getName();
+        if(email == null) email = User.getInstance().getEmail();
 
         welcome_heading = findViewById(R.id.welcome_heading);
         limboExplanation = findViewById(R.id.limboExplanation);
@@ -82,15 +89,15 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
         when_finished = findViewById(R.id.when_finished);
         done_button = findViewById(R.id.done_button);
 
-        limboExplanation.setText(User.getInstance().getName()+", welcome to TelePatriot. This app is a powerful tool for " +
+        limboExplanation.setText(name+", welcome to TelePatriot. This app is a powerful tool for " +
                 "supporters of the Convention of States Project.");
         access_limited_description.setText("You currently have Limited Access to TelePatriot.  With Limited Access, you can " +
                 "record video messages of support for the Convention of States and this app will automatically upload them to YouTube," +
                 "Facebook and Twitter.  Click SHOW ME HOW to find out how.");
         full_access_description.setText("For Full Access to TelePatriot, there are two legal requirements you must meet.  They are described below.");
 
-        legal_requirement_1.setText("You must sign the Convention of States petition using this email address: "+User.getInstance().getEmail());
-        legal_requirement_2.setText("You must sign the Convention of States confidentiality agreement using this email address: "+User.getInstance().getEmail());
+        legal_requirement_1.setText("You must sign the Convention of States petition using this email address: "+email);
+        legal_requirement_2.setText("You must sign the Convention of States confidentiality agreement using this email address: "+email);
 
         when_finished.setText("Once you have signed both documents, click DONE below.");
 
@@ -179,7 +186,7 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
     private void clickDone() {
         long now = System.currentTimeMillis();
         done_button.setText("Verifying...");
-        CBAPIEvent evt = new CBAPIEvent.CheckLegal(User.getInstance());
+        CBAPIEvent evt = new CBAPIEvent.CheckLegal(User.getInstance(), name, email);
         evt.save();
 
         FirebaseDatabase.getInstance()
@@ -256,7 +263,7 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
                 sign_petition_button.setVisibility(View.GONE);
             }
             else {
-                legal_requirement_1.setText("You must sign the Convention of States petition using this email address: "+User.getInstance().getEmail());
+                legal_requirement_1.setText("You must sign the Convention of States petition using this email address: "+email);
                 sign_petition_button.setVisibility(View.VISIBLE);
             }
 
@@ -265,7 +272,7 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
                 sign_confidentiality_agreement_button.setVisibility(View.GONE);
             }
             else {
-                legal_requirement_2.setText("You must sign the Convention of States confidentiality agreement using this email address: "+User.getInstance().getEmail());
+                legal_requirement_2.setText("You must sign the Convention of States confidentiality agreement using this email address: "+email);
                 sign_confidentiality_agreement_button.setVisibility(View.VISIBLE);
             }
         }

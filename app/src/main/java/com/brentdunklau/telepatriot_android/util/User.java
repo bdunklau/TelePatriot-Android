@@ -135,12 +135,13 @@ public class User implements FirebaseAuth.AuthStateListener {
                     boolean inviterId_notnull_to_null = User.this.video_invitation_from != null && ub.getVideo_invitation_from()==null;
                     boolean nameChanged = ub.getVideo_invitation_from_name() != null && !ub.getVideo_invitation_from_name().equalsIgnoreCase(User.this.video_invitation_from_name);
 
-                    User.this.has_signed_petition = ub.getHas_signed_petition();
-                    User.this.has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement();
-                    User.this.is_banned = ub.getIs_banned();
+                    User.this.has_signed_petition = ub.getHas_signed_petition() == null ? false : ub.getHas_signed_petition();
+                    User.this.has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement() == null ? false : ub.getHas_signed_confidentiality_agreement();
+                    User.this.is_banned = ub.getIs_banned() == null ? false : ub.getIs_banned();
 
+                    // PUT THIS BACK IN EVENTUALLY
                     // TODO seems weird to do this each time, but the User object
-                    fireLegalAttributesChanged();
+                    //fireLegalAttributesChanged();
 
                     if(inviterId_null_to_notnull) {
                         updateAttributes(ub, User.this);
@@ -732,12 +733,13 @@ public class User implements FirebaseAuth.AuthStateListener {
         }
     }
 
-    private void fireLegalAttributesChanged() {
-        AccountStatusEvent.LegalAttributesChanged evt = new AccountStatusEvent.LegalAttributesChanged();
-        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
-            l.fired(evt);
-        }
-    }
+//    PUT THIS BACK IN EVENTUALLY
+//    private void fireLegalAttributesChanged() {
+//        AccountStatusEvent.LegalAttributesChanged evt = new AccountStatusEvent.LegalAttributesChanged();
+//        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+//            l.fired(evt);
+//        }
+//    }
 
     private void fireVideoInvitationRevoked() {
         AccountStatusEvent.VideoInvitationRevoked evt = new AccountStatusEvent.VideoInvitationRevoked();

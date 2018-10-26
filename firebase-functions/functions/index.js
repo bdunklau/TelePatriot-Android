@@ -338,3 +338,6 @@ exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
 
+const simulate = require('./simulate')
+exports.testViewSimulatorParameters = simulate.testViewSimulatorParameters
+

@@ -222,7 +222,7 @@ exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key
                                     up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = null
                                     up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = null
                                 })
-                                // update the video node to reflect recording has started
+                                // update the video node to reflect recording has stopped
                                 up2['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = date.asCentralTime()
                                 up2['video/list/'+event.data.val().video_node_key+'/recording_stopped_ms'] = date.asMillis()
 
@@ -357,17 +357,40 @@ var disconnect = function(adminRef, video_event_key, video_node_key, uid, room_i
     //    clear out the room_sid on disconnect because room_sid represents an active twilio room
     updates['video/list/'+video_node_key+'/room_sid'] = null
 
+
+
     // first, query for all video_participants under the video_node_key.  We will disconnect them all right here
     return adminRef.root.child('video/list/'+video_node_key).once('value').then(snapshot => {
+        var wasRecording = snapshot.val().recording_started && !snapshot.val().recording_stopped
+        if(wasRecording) {
+            // Also need to figure out if we were recording so we can stop the recording...
+
+            var newroom_id = room_id
+            if(newroom_id.startsWith('record'))
+                newroom_id = newroom_id.substring('record'.length)
+
+            // update the video node to reflect recording has stopped
+            updates['video/list/'+video_node_key+'/recording_stopped'] = date.asCentralTime()
+            updates['video/list/'+video_node_key+'/recording_stopped_ms'] = date.asMillis()
+
+            // this attribute in particular gets picked up by the clients in their figureOutConnectivity() method
+            updates['video/list/'+video_node_key+'/room_id'] = newroom_id
+            updates['video/list/'+video_node_key+'/recording_completed'] = true // see also twilio-telepatriot.js:twilioCallback()
+
+        }
+
         _.each(snapshot.val().video_participants, function(child) {
             // child.key not available in this case because we're working with snapshot.val()
             updates['video/list/'+video_node_key+'/video_participants/'+child.uid+'/disconnect_date'] = date.asCentralTime()
             updates['video/list/'+video_node_key+'/video_participants/'+child.uid+'/disconnect_date_ms'] = date.asMillis()
         })
+
+        var room_sid = snapshot.val().room_sid
+
         // the mobile client will detect 'disconnect_date' which causes the client to actually disconnect from the room
         return adminRef.root.child('/').update(updates).then(() => {
             // now 'complete' the room...
-            twilio_telepatriot.completeRoom(snapshot.val().room_sid, function(stuff) {/*do anything?*/})
+            twilio_telepatriot.completeRoom(room_sid, function(stuff) {/*do anything?*/})
             // return the participants because onStartRecording needs them so that function can automatically
             // connect them all the recording room
             return snapshot.val().video_participants
