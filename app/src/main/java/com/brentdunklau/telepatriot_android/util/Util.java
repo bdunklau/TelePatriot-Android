@@ -101,12 +101,17 @@ public class Util {
 
 
     public static void simpleOKCancelDialog(Context ctx, String title, String message, DialogInterface.OnClickListener l) {
+        simpleOKCancelDialog(ctx, title, message, "OK", "Cancel", l);
+    }
+
+
+    public static void simpleOKCancelDialog(Context ctx, String title, String message, String positiveButton, String negativeButton, DialogInterface.OnClickListener l) {
         AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
         builder.setMessage(message)
                 .setTitle(title)
                 .setCancelable(true)
-                .setPositiveButton("OK", l)
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                .setPositiveButton(positiveButton, l)
+                .setNegativeButton(negativeButton, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     // User cancelled the dialog
                     // nothing to do here - the dialog closes by default
@@ -131,5 +136,6 @@ public class Util {
             System.out.println(email+" is valid: "+valid(email));
         }
     }
+
 
 }

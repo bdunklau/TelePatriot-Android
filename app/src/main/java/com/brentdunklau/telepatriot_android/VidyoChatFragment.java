@@ -2034,6 +2034,28 @@ public class VidyoChatFragment extends BaseFragment
             return;
         }
 
+        if(currentVideoNode.getRoom_id() != null && currentVideoNode.getRoom_sid() != null) {
+            boolean previousRecordingExists = currentVideoNode.getRecording_stopped() != null;
+            if(previousRecordingExists) {
+
+                DialogInterface.OnClickListener l = new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        doRecording();
+                    }
+                };
+
+                Util.simpleOKCancelDialog(myView.getContext(), "Erase Recording?", "Do you want to record over the video you just created?", "Record Over", "Keep", l);
+            }
+            else {
+                doRecording();
+            }
+        }
+        else {
+            simpleOKDialog("Recording is currently disabled");
+        }
+    }
+
+    private void doRecording() {
         if (currentVideoNode.recordingHasNotStarted() || currentVideoNode.recordingHasStopped()) {
             record_label.setText("Recording will start momentarily");
             recordingWillStart = true;
