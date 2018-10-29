@@ -47,22 +47,26 @@ var simParms = function(stuff) {
     return db.ref().child('administration/configuration').once('value').then(snapshot => {
         html += '<form id="simulator-form" method="post" action="/testViewSimulatorParameters">'
         var updates = {}
-        snapshot.forEach(function(child) {
-            var theVal = child.val() == true || child.val() == "true"
 
-            if(stuff.req.body[child.key]) {
-                theVal = stuff.req.body[child.key] == true || stuff.req.body[child.key] == "true"
-                updates[child.key] = theVal
+        var simprops = ["simulate_missing_email", "simulate_missing_name", "simulate_passing_legal"]
+        _.each(simprops, function(prop) {
+            var theVal = snapshot.val()[prop] == true || snapshot.val()[prop] == "true"
+
+            if(stuff.req.body[prop]) {
+                theVal = stuff.req.body[prop] == true || stuff.req.body[prop] == "true"
+                updates[prop] = theVal
             }
 
             var trueSelected = theVal==true || theVal=="true" ?  'checked' : ''
             var falseSelected = theVal==false || theVal=="false" ? 'checked' : ''
 
-            html += '<P/>'+child.key+' &nbsp;&nbsp;&nbsp;'
-            html += '<input type="radio" name="'+child.key+'" value="true" '+trueSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> true '
+            html += '<P/>'+prop+' &nbsp;&nbsp;&nbsp;'
+            html += '<input type="radio" name="'+prop+'" value="true" '+trueSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> true '
             html += '&nbsp;&nbsp;&nbsp;&nbsp;'
-            html += '<input type="radio" name="'+child.key+'" value="false" '+falseSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> false'
+            html += '<input type="radio" name="'+prop+'" value="false" '+falseSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> false'
+
         })
+
         if(updates != {}) {
             snapshot.ref.update(updates)
         }

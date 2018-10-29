@@ -277,7 +277,7 @@ exports.testSaveVideoType = videoTypes.testSaveVideoType
 exports.testSendLegislatorEmail = videoTypes.testSendLegislatorEmail
 exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
-// prod deploy: 9/12/18, 9/20/18
+// prod deploy: 9/12/18, 9/20/18, 10/29/18
 const switchboard = require('./switchboard')
 exports.onConnectRequest = switchboard.onConnectRequest
 exports.onDisconnectRequest = switchboard.onDisconnectRequest
@@ -285,7 +285,6 @@ exports.testViewVideoEvents = switchboard.testViewVideoEvents
 exports.onTwilioEvent = switchboard.onTwilioEvent
 exports.onStartRecordingRequest = switchboard.onStartRecordingRequest
 exports.onStopRecordingRequest = switchboard.onStopRecordingRequest
-exports.onParticipantDisconnected = switchboard.onParticipantDisconnected
 exports.onRoomCreated = switchboard.onRoomCreated
 exports.onRevokeInvitation = switchboard.onRevokeInvitation
 exports.onRoomIdChange = switchboard.onRoomIdChange
@@ -338,6 +337,7 @@ exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
 
+// prod deploy: 10/29/18
 const simulate = require('./simulate')
 exports.testViewSimulatorParameters = simulate.testViewSimulatorParameters
 
