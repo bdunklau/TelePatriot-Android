@@ -5,16 +5,17 @@ admin.initializeApp(functions.config().firebase)
 const onmessage = require('./onMessage')
 const deleteModule = require('./userDeleted')
 const notifications = require('./notifications')
-const roles = require('./roles')
 const topics = require('./topics')
 
 exports.messagestuff = onmessage.pushMessages
 exports.userDeleted = deleteModule.deleteUserAccount
 exports.notifyUserCreated = notifications.notifyUserCreated
-exports.roleAssigned = roles.roleAssigned
-exports.roleUnassigned = roles.roleUnassigned
 exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
+
+const roles = require('./roles')
+exports.roleAssigned = roles.roleAssigned
+exports.roleUnassigned = roles.roleUnassigned
 
 const sheetsDemo = require('./sheets/demo-google-sheet-write')
 exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
