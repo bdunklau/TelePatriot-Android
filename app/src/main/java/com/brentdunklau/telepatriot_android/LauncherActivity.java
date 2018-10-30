@@ -108,7 +108,9 @@ public class LauncherActivity extends BaseActivity
 //                        Map<String, Object> config = (Map<String, Object>) m.get("configuration");
                         Boolean simulate_missing_name = (Boolean) config.get("simulate_missing_name");
                         Boolean simulate_missing_email = (Boolean) config.get("simulate_missing_email");
-                        Boolean simulate_passing_legal = (Boolean) config.get("simulate_passing_legal");
+
+                        String environment = config.get("environment")+"";
+                        
 
                         boolean dataMissing = name==null || email==null || name.trim().equals("") || email.trim().equals("")
                                 || simulate_missing_name || simulate_missing_email;

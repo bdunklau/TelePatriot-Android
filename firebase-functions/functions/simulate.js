@@ -47,6 +47,51 @@ var simParms = function(stuff) {
     return db.ref().child('administration/configuration').once('value').then(snapshot => {
         html += '<form id="simulator-form" method="post" action="/testViewSimulatorParameters">'
         var updates = {}
+        var env = snapshot.val().environment
+        var prodSelected = 'checked'
+        var qaSelected = ''
+        if(env && env == 'cb_qa_environment') {
+            prodSelected = ''
+            qaSelected = 'checked'
+        }
+        if(stuff.req.body.environment && stuff.req.body.environment == 'cb_production_environment') {
+            var prodSelected = 'checked'
+            var qaSelected = ''
+            updates['environment'] = 'cb_production_environment'
+        }
+        if(stuff.req.body.environment && stuff.req.body.environment == 'cb_qa_environment') {
+            var prodSelected = ''
+            var qaSelected = 'checked'
+            updates['environment'] = 'cb_qa_environment'
+        }
+        html += '<P/>Environment: &nbsp;&nbsp;&nbsp;'
+        html += '<input type="radio" name="environment" value="cb_production_environment" '+prodSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> Production '
+        html += '&nbsp;&nbsp;&nbsp;&nbsp;'
+        html += '<input type="radio" name="environment" value="cb_qa_environment" '+qaSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> QA'
+
+        // get_teams_from
+        var get_teams_from = snapshot.val().get_teams_from
+        var tpSelected = ''
+        var cbSelected = 'checked'
+        if(get_teams_from && get_teams_from == 'telepatriot') {
+            tpSelected = 'checked'
+            cbSelected = ''
+        }
+        if(stuff.req.body.get_teams_from && stuff.req.body.get_teams_from == 'telepatriot') {
+            tpSelected = 'checked'
+            cbSelected = ''
+            updates['get_teams_from'] = 'telepatriot'
+        }
+        if(stuff.req.body.get_teams_from && stuff.req.body.get_teams_from == 'citizenbuilder') {
+            tpSelected = ''
+            cbSelected = 'checked'
+            updates['get_teams_from'] = 'citizenbuilder'
+        }
+        html += '<P/>Get Teams from: &nbsp;&nbsp;&nbsp;'
+        html += '<input type="radio" name="get_teams_from" value="citizenbuilder" '+cbSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder '
+        html += '&nbsp;&nbsp;&nbsp;&nbsp;'
+        html += '<input type="radio" name="get_teams_from" value="telepatriot" '+tpSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot'
+
 
         var simprops = ["simulate_missing_email", "simulate_missing_name", "simulate_passing_legal"]
         _.each(simprops, function(prop) {

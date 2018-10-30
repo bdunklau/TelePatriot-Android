@@ -28,9 +28,14 @@ exports.checkVolunteerStatus = function(email, allowed, notAllowed) {
     // has satisfied the legal requirements
     var endpoint = 'https://api.conventionofstates.com/api/ios/v1/volunteer_validation/check?email='+email
 
-    db.ref('api_tokens').once('value').then(snapshot => {
-        var apiKeyName = snapshot.val().citizen_builder_api_key_name
-        var apiKeyValue = snapshot.val().citizen_builder_api_key_value
+    db.ref('administration/configuration').once('value').then(snapshot => {
+        var environment = 'cb_production_environment'
+        if(snapshot.val().environment && snapshot.val().environment == 'cb_qa_environment') {
+            environment = snapshot.val().environment
+        }
+
+        var apiKeyName = snapshot.val()[environment].citizen_builder_api_key_name
+        var apiKeyValue = snapshot.val()[environment].citizen_builder_api_key_value
 
 
         var headers = {}

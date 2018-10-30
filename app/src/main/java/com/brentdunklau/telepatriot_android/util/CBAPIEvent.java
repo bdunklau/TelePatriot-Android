@@ -1,5 +1,6 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.FirebaseDatabase;
 
 /**
@@ -26,6 +27,10 @@ public class CBAPIEvent {
     public static class CheckLegal extends CBAPIEvent {
         public CheckLegal(User user, String name, String email) {
             super(user.getUid(), email, name, "check legal");
+        }
+
+        public CheckLegal(User user) {
+            this(user, user.getName(), user.getEmail());
         }
     }
 
@@ -61,7 +66,11 @@ public class CBAPIEvent {
         this.event_type = event_type;
     }
 
-    public void save() {
-        FirebaseDatabase.getInstance().getReference("cb_api_events/all-events").push().setValue(this);
+    /**
+     *
+     * @return Task so that we can add an onCompleteListener if we want to
+     */
+    public Task<Void> save() {
+        return FirebaseDatabase.getInstance().getReference("cb_api_events/all-events").push().setValue(this);
     }
 }
