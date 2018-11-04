@@ -22,6 +22,7 @@ exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
 
+// dev deploy: 11/3/18
 const sheetReader = require('./sheets/import-sheet')
 exports.testsheetImport = sheetReader.testsheetImport
 exports.readSpreadsheet = sheetReader.readSpreadsheet
@@ -31,6 +32,7 @@ exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
 
+// dev deploy: 10/31/18, 11/3/18
 const createModule = require('./userCreated')
 // TODO fix index.js  This function should not be exported as userCreated.
 // TODO keep the names in index.js identical to what they are here
@@ -313,6 +315,7 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
+// dev deploy: 10/31/18
 // prod deploy: 9/12/18, 9/20/18
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
@@ -341,7 +344,7 @@ exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
 
 // dev deploy: 10/29/18
-// prod deploy: 10/29/18
+// prod deploy: 10/29/18, 10/30/18
 const simulate = require('./simulate')
 exports.testViewSimulatorParameters = simulate.testViewSimulatorParameters
 

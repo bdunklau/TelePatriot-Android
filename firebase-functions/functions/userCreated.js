@@ -60,80 +60,123 @@ exports.userCreated = functions.auth.user().onCreate(event => {
             updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
                                                                      // leave COS but aren't banned
 
+//          Which endpoint are we going to call?  The new one: volunteers, or the old one: checkVolunteerStatus ?
+            if(snapshot.val().on_user_created == "volunteers") {
+                var environment = snapshot.val().environment
+                var input = {
+                    citizen_builder_api_key_name: snapshot.val()[environment].citizen_builder_api_key_name,
+                    citizen_builder_api_key_value: snapshot.val()[environment].citizen_builder_api_key_value,
+                    email: email,
+                    successFn: function(result) {
+                        var vol = result.vol
+                        var allowed = vol.petition_signed && vol.volunteer_agreement_signed && !vol.is_banned
+                        updates['users/'+uid+'/has_signed_petition'] = vol.petition_signed ? vol.petition_signed : false
+                        updates['users/'+uid+'/has_signed_confidentiality_agreement'] = vol.volunteer_agreement_signed ? vol.volunteer_agreement_signed : false
+                        updates['users/'+uid+'/is_banned'] = vol.is_banned ? vol.is_banned : false
 
-    //          PUT THIS BACK IN EVENTUALLY
-    //
-    //        return db.child('api_tokens').once('value').then(snapshot => {
-    //
-    //            var input = {citizen_builder_api_key_name: snapshot.val().citizen_builder_api_key_name,
-    //                            citizen_builder_api_key_value: snapshot.val().citizen_builder_api_key_value_QA,
-    //                            email: email,
-    //                            successFn: function(result) {
-    //                                    var vol = result.vol
-    //                                    var allowed = vol.petition_signed && vol.volunteer_agreement_signed && !vol.is_banned
-    //                                    updates['users/'+uid+'/has_signed_petition'] = vol.petition_signed ? vol.petition_signed : false
-    //                                    updates['users/'+uid+'/has_signed_confidentiality_agreement'] = vol.volunteer_agreement_signed ? vol.volunteer_agreement_signed : false
-    //                                    updates['users/'+uid+'/is_banned'] = vol.is_banned ? vol.is_banned : false
-    //                                    if(allowed) {
-    //                                        citizen_builder_api.grantAccess(updates, uid, name, email)
-    //                                    }
-    //                                    else {
-    //                                        if(vol.is_banned) {
-    //                                            // not going to give you any help at all
-    //                                            console.log('banned?! - unhandled case: vol = ', vol)
-    //                                            return db.child('/').update(updates)
-    //                                        }
-    //                                        // need to figure out what requirement they don't meet and send an email
-    //                                        // about just those things
-    //                                        else if(!vol.petition_signed && !vol.volunteer_agreement_signed) {
-    //                                            console.log('no petition or CA signed')
-    //                                            return db.child('/').update(updates).then(() => {
-    //                                                return email_js.sendPetitionCAEmail(email, name)
-    //                                            })
-    //                                        }
-    //                                        else if(!vol.volunteer_agreement_signed) {
-    //                                            console.log('no CA signed')
-    //                                            return db.child('/').update(updates).then(() => {
-    //                                                // send email just about the conf agreement
-    //                                                // TODO improve this - send email that only mentions the CA
-    //                                                return email_js.sendPetitionCAEmail(email, name)
-    //                                            })
-    //                                        }
-    //                                        else {
-    //                                            // We're not handling the case where the conf agreement is signed but not
-    //                                            // the petition because that's not a realistic use case.  No one signs
-    //                                            // the conf agreement but not the petition
-    //                                        }
-    //                                        // not going to have the case of petition:no but conf_agreement:yes
-    //                                    }
-    //                                },
-    //                            errorFn: function(result) { console.log("error: result: ", result) /*http error*/ }
-    //                        }
-    //            volunteers.volunteers(input)
-    //
-    //        })
+                        if(vol.id)
+                            updates['users/'+uid+'/citizen_builder_id'] = vol.id
+                        if(vol.address)
+                            updates['users/'+uid+'/residential_address_line1'] = vol.address
+                        if(vol.city)
+                            updates['users/'+uid+'/residential_address_city'] = vol.city
+                        if(vol.state)
+                            updates['users/'+uid+'/residential_address_state'] = vol.state.toLowerCase()
+                        if(vol.phone)
+                            updates['users/'+uid+'/phone'] = vol.phone.replace(/\D/g,'') // get rid of everything that isn't a digit
+                        var thename = ''
+                        if(vol.first_name)
+                            thename = vol.first_name
+                        if(vol.last_name)
+                            thename = thename + vol.last_name
+                        if(name != '')
+                            updates['users/'+uid+'/name'] = thename
 
-
-
-            // WE NEVER MAKE TO HERE SO WE *CAN* GRANT ACCESS - OOPS
-            citizen_builder_api.checkVolunteerStatus(email,
-                function() {
-                    citizen_builder_api.grantAccess(updates, uid, name, email)
-
-                    // TODO actually don't need this email anymore
-    //                return db.update(attributes).then(() => {
-    //                    return sendEmail2('On-Board This Person', email, name)
-    //                })
-                },
-                function() {
-                    // called when the user has NOT satisfied the legal requirements for access
-                    // In this case, we still have to save the user to /users.  We just don't set
-                    // the petition, conf agreement and banned flags like we do above.
-                    return db.child('/').update(updates).then(() => {
-                        return email_js.sendPetitionCAEmail(email, name)
-                    })
+                        if(allowed) {
+                            citizen_builder_api.grantAccess(updates, uid, name, email)
+                        }
+                        else {
+                            if(vol.is_banned) {
+                                // not going to give you any help at all
+                                console.log('banned?! - unhandled case: vol = ', vol)
+                                return db.child('/').update(updates)
+                            }
+                            // need to figure out what requirement they don't meet and send an email
+                            // about just those things
+                            else if(!vol.petition_signed && !vol.volunteer_agreement_signed) {
+                                console.log('no petition or CA signed')
+                                return db.child('/').update(updates).then(() => {
+                                    return email_js.sendPetitionCAEmail(email, name)
+                                })
+                            }
+                            else if(!vol.volunteer_agreement_signed) {
+                                console.log('no CA signed')
+                                return db.child('/').update(updates).then(() => {
+                                    // send email just about the conf agreement
+                                    // TODO improve this - send email that only mentions the CA
+                                    return email_js.sendPetitionCAEmail(email, name)
+                                })
+                            }
+                            else {
+                                // We're not handling the case where the conf agreement is signed but not
+                                // the petition because that's not a realistic use case.  No one signs
+                                // the conf agreement but not the petition
+                            }
+                               // not going to have the case of petition:no but conf_agreement:yes
+                        }
+                    },
+                    errorFn: function(result) { console.log("error: result: ", result) /*http error*/ }
                 }
-            )
+
+                volunteers.volunteers(input)
+
+            }
+            else { /* use checkVolunteerStatus */
+
+                citizen_builder_api.checkVolunteerStatus(email,
+                    function() {
+                        citizen_builder_api.grantAccess(updates, uid, name, email)
+
+                        // TODO actually don't need this email anymore
+        //                return db.update(attributes).then(() => {
+        //                    return sendEmail2('On-Board This Person', email, name)
+        //                })
+                    },
+                    function() {
+                        // called when the user has NOT satisfied the legal requirements for access
+                        // In this case, we still have to save the user to /users.  We just don't set
+                        // the petition, conf agreement and banned flags like we do above.
+                        return db.child('/').update(updates).then(() => {
+                            return email_js.sendPetitionCAEmail(email, name)
+                        })
+                    }
+                )
+            }
+
+//            call the /volunteers endpoint using the email address
+//            get the values of: is_banned, petition_signed, volunteer_agreement_signed
+//
+//            If the person is found you get this...
+//            {
+//              "id": 1329,
+//              "first_name": "Brent",
+//              "last_name": "Xxxxxx",
+//              "address": "street number and street",
+//              "city": "city",
+//              "state": "AA",
+//              "email": "email@yahoo.com",
+//              "phone": "(214) 000-0000",
+//              "is_banned": false,
+//              "petition_signed": true,
+//              "volunteer_agreement_signed": true
+//            }
+//
+//            If the person isn't found, you get this...
+//            {
+//              "error": "Not found"
+//            }
+
+
             return true
         }
         else {

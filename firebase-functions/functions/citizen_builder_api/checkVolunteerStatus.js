@@ -24,10 +24,6 @@ The requirements are: petition signed, conf agreement signed, and not banned
 *****************************/
 exports.checkVolunteerStatus = function(email, allowed, notAllowed) {
 
-    // as long as there's an email address, call the CB API endpoint to see if this person
-    // has satisfied the legal requirements
-    var endpoint = 'https://api.conventionofstates.com/api/ios/v1/volunteer_validation/check?email='+email
-
     db.ref('administration/configuration').once('value').then(snapshot => {
         var environment = 'cb_production_environment'
         if(snapshot.val().environment && snapshot.val().environment == 'cb_qa_environment') {
@@ -36,7 +32,14 @@ exports.checkVolunteerStatus = function(email, allowed, notAllowed) {
 
         var apiKeyName = snapshot.val()[environment].citizen_builder_api_key_name
         var apiKeyValue = snapshot.val()[environment].citizen_builder_api_key_value
+        var domain = snapshot.val()[environment].citizen_builder_domain
+        // as long as there's an email address, call the CB API endpoint to see if this person
+        // has satisfied the legal requirements
+        var endpoint = 'https://'+domain+'/api/ios/v1/volunteer_validation/check?email='+email
 
+//        console.log('email = ', email)
+//        console.log('apiKeyName = ', apiKeyName)
+//        console.log('apiKeyValue = ', apiKeyValue)
 
         var headers = {}
         headers[apiKeyName] = apiKeyValue
@@ -47,7 +50,10 @@ exports.checkVolunteerStatus = function(email, allowed, notAllowed) {
         };
 
         // see above:   var request = require('request')
-        request.get(options, function(error, response, body){
+        request.get(options, function(error, response, body) {
+//            console.log('error: ', error)
+//            console.log('body: ', body)
+//            console.log('response: ', response)
             var obj = JSON.parse(body)
             console.log('JSON.parse(body) = ', JSON.parse(body));
             var ok = ''
