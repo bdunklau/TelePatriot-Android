@@ -23,10 +23,16 @@ firebase deploy --only functions:testVolunteers
 exports.testVolunteers = functions.https.onRequest((req, res) => {
 
     if(req.query.email) {
-        return db.ref('api_tokens').once('value').then(snapshot => {
 
-            var input = {citizen_builder_api_key_name: snapshot.val().citizen_builder_api_key_name,
-                        citizen_builder_api_key_value: snapshot.val().citizen_builder_api_key_value_QA,
+        return db.ref('administration/configuration').once('value').then(snapshot => {
+            var environment = 'cb_production_environment'
+            if(snapshot.val().environment && snapshot.val().environment == 'cb_qa_environment') {
+                environment = snapshot.val().environment
+            }
+
+            var input = {citizen_builder_api_key_name: snapshot.val()[environment].citizen_builder_api_key_name,
+                        citizen_builder_api_key_value: snapshot.val()[environment].citizen_builder_api_key_value,
+                        domain: snapshot.val()[environment].citizen_builder_domain,
                         email: req.query.email,
                         successFn: function(result) { return res.status(200).send(thePage(result)) },
                         errorFn: function(result) { return res.status(200).send(thePage(result)) }
@@ -44,7 +50,7 @@ exports.volunteers = function(input) {
 
     // as long as there's an email address, call the CB API endpoint to see if this person
     // has satisfied the legal requirements
-    var endpoint = 'https://api.qacos.com/api/ios/v1/volunteers?email='+input.email
+    var endpoint = 'https://'+input.domain+'/api/ios/v1/volunteers?email='+input.email
 
     var apiKeyName = input.citizen_builder_api_key_name
     var apiKeyValue = input.citizen_builder_api_key_value

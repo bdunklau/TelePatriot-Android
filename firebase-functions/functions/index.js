@@ -23,6 +23,7 @@ exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
 
 // dev deploy: 11/3/18
+// prod deploy: 11/3/18
 const sheetReader = require('./sheets/import-sheet')
 exports.testsheetImport = sheetReader.testsheetImport
 exports.readSpreadsheet = sheetReader.readSpreadsheet
@@ -315,19 +316,22 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
-// dev deploy: 10/31/18
+// dev deploy: 10/31/18, 11/3/18
 // prod deploy: 9/12/18, 9/20/18
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
 exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 
+// dev deploy: 11/3/18
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
 
+// dev deploy: 11/3/18
 const person_teams = require('./citizen_builder_api/teams-person_teams')
 exports.testPersonTeams = person_teams.testPersonTeams
 
+// dev deploy: 11/3/18
 const cb_missions = require('./citizen_builder_api/missions')
 exports.testTeamMissions = cb_missions.testTeamMissions
 exports.createMission = cb_missions.createMission

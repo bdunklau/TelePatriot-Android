@@ -23,14 +23,16 @@ firebase deploy --only functions:testTeamMissions,functions:createMission
 exports.testTeamMissions = functions.https.onRequest((req, res) => {
 
     if(req.query.team_id) {
-        return db.ref('api_tokens').once('value').then(snapshot => {
+        return db.ref('administration/configuration').once('value').then(snapshot => {
+            var environment = 'cb_production_environment'
+            if(snapshot.val().environment && snapshot.val().environment == 'cb_qa_environment') {
+                environment = snapshot.val().environment
+            }
 
-            // as long as there's an email address, call the CB API endpoint to see if this person
-            // has satisfied the legal requirements
-            var endpoint = 'https://api.qacos.com/api/ios/v1/missions/team_missions?team_id='+req.query.team_id
-
-            var apiKeyName = snapshot.val().citizen_builder_api_key_name
-            var apiKeyValue = snapshot.val().citizen_builder_api_key_value_QA
+            var apiKeyName = snapshot.val()[environment].citizen_builder_api_key_name
+            var apiKeyValue = snapshot.val()[environment].citizen_builder_api_key_value
+            var domain = snapshot.val()[environment].citizen_builder_domain
+            var endpoint = 'https://'+domain+'/api/ios/v1/missions/team_missions?team_id='+req.query.team_id
 
             var headers = {}
             headers[apiKeyName] = apiKeyValue
@@ -51,6 +53,7 @@ exports.testTeamMissions = functions.https.onRequest((req, res) => {
             })
 
         })
+
     }
     else {
         return res.status(200).send(testTeamIdList())
@@ -61,21 +64,36 @@ exports.createMission = functions.https.onRequest((req, res) => {
 
     var formData = {author_id: req.body.author_id, name: req.body.name, description: req.body.description, script: req.body.script}
 
-    var endpoint = 'https://api.qacos.com/api/ios/v1/missions'
-    request.post(
-        {
-            url: endpoint,
-            form: formData
-        },
-        function (err, httpResponse, body) {
-            console.log(err, body, httpResponse);
-            if(err) {
-                return res.status(200).send(thePage({error: err}))
-            } else {
-                return res.status(200).send(thePage({body: body, httpResponse: httpResponse}))
-            }
+    return db.ref('administration/configuration').once('value').then(snapshot => {
+        var environment = 'cb_production_environment'
+        if(snapshot.val().environment && snapshot.val().environment == 'cb_qa_environment') {
+            environment = snapshot.val().environment
         }
-    );
+
+        var apiKeyName = snapshot.val()[environment].citizen_builder_api_key_name
+        var apiKeyValue = snapshot.val()[environment].citizen_builder_api_key_value
+        var domain = snapshot.val()[environment].citizen_builder_domain
+        var endpoint = 'https://'+domain+'/api/ios/v1/missions'
+
+        request.post(
+            {
+                url: endpoint,
+                form: formData
+            },
+            function (err, httpResponse, body) {
+                console.log(err, body, httpResponse);
+                if(err) {
+                    return res.status(200).send(thePage({error: err}))
+                } else {
+                    return res.status(200).send(thePage({body: body, httpResponse: httpResponse}))
+                }
+            }
+        );
+    })
+
+
+
+
 })
 
 var testTeamIdList = function() {

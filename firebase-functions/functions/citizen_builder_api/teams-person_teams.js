@@ -23,14 +23,17 @@ firebase deploy --only functions:testPersonTeams
 exports.testPersonTeams = functions.https.onRequest((req, res) => {
 
     if(req.query.person_id) {
-        return db.ref('api_tokens').once('value').then(snapshot => {
 
-            // as long as there's an email address, call the CB API endpoint to see if this person
-            // has satisfied the legal requirements
-            var endpoint = 'https://api.qacos.com/api/ios/v1/teams/person_teams?person_id='+req.query.person_id
+        return db.ref('administration/configuration').once('value').then(snapshot => {
+            var environment = 'cb_production_environment'
+            if(snapshot.val().environment && snapshot.val().environment == 'cb_qa_environment') {
+                environment = snapshot.val().environment
+            }
 
-            var apiKeyName = snapshot.val().citizen_builder_api_key_name
-            var apiKeyValue = snapshot.val().citizen_builder_api_key_value_QA
+            var apiKeyName = snapshot.val()[environment].citizen_builder_api_key_name
+            var apiKeyValue = snapshot.val()[environment].citizen_builder_api_key_value
+            var domain = snapshot.val()[environment].citizen_builder_domain
+            var endpoint = 'https://'+domain+'/api/ios/v1/teams/person_teams?person_id='+req.query.person_id
 
             var headers = {}
             headers[apiKeyName] = apiKeyValue
