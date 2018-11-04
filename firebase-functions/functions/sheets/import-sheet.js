@@ -320,9 +320,9 @@ var getMissionColumnInfo = function(rows) {
     var threeWayPhoneColumn = -1
     var threeWayNameColumn = -1
     for(var c = 0; c < rows[0].length; c++) {
-        if(rows[0][c].toLowerCase() == 'email') {
+        if(rows[0][c].toLowerCase().trim() == 'email') {
             emailColumn = c
-            colnames.push(rows[0][c].toLowerCase())
+            colnames.push(rows[0][c].toLowerCase().trim())
         }
         else if(isPhoneColumn(rows[0][c])) {
             phoneColumn = c
@@ -337,7 +337,7 @@ var getMissionColumnInfo = function(rows) {
             colnames.push("name2")
         }
         else {
-            colnames.push(rows[0][c].toLowerCase())
+            colnames.push(rows[0][c].toLowerCase().trim())
         }
     }
 
@@ -414,7 +414,7 @@ var stripYesNo = function(val) {
 var isPhoneColumn = function(val) {
     if(!val)
         return false
-    var lower = val.toLowerCase()
+    var lower = val.toLowerCase().trim()
     if(lower == "phone" || lower == "phone#" || lower == "phone number" || lower == "phone num" || lower == "phone #")
         return true
     else return false
@@ -440,7 +440,7 @@ var is3WayNameColumn = function(val) {
 var isNamed = function(val, named) {
     if(!val)
         return false
-    var lower = val.toLowerCase()
+    var lower = val.toLowerCase().trim()
     if(lower == named)
         return true
     else return false

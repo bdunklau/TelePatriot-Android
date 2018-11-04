@@ -22,6 +22,8 @@ exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
 //exports.updatespreadsheet = sheetsDemo.updatespreadsheet
 exports.testsheetwrite = sheetsDemo.testsheetwrite
 
+// dev deploy: 11/3/18
+// prod deploy: 11/3/18
 const sheetReader = require('./sheets/import-sheet')
 exports.testsheetImport = sheetReader.testsheetImport
 exports.readSpreadsheet = sheetReader.readSpreadsheet
