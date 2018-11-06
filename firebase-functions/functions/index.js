@@ -316,16 +316,19 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
-// dev deploy: 10/31/18, 11/3/18
+// dev deploy: 10/31/18, 11/3/18, 11/4/18
 // prod deploy: 9/12/18, 9/20/18
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
 exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
+exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
+exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
-// dev deploy: 11/3/18
+// dev deploy: 11/3/18, 11/4/18
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
+exports.onLogin = volunteers.onLogin
 
 // dev deploy: 11/3/18
 const person_teams = require('./citizen_builder_api/teams-person_teams')
@@ -351,4 +354,8 @@ exports.testLookupDistrict = geocode.testLookupDistrict
 // prod deploy: 10/29/18, 10/30/18
 const simulate = require('./simulate')
 exports.testViewSimulatorParameters = simulate.testViewSimulatorParameters
+
+// dev deploy:  11/4/18
+const cb_api_events = require('./citizen_builder_api/cb_api_events')
+exports.testViewCBAPIEvents = cb_api_events.testViewCBAPIEvents
 

@@ -14,7 +14,7 @@ const db = admin.database()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:checkLegal,functions:timestampCbApiEvent,functions:onResponseFromLegal
+firebase deploy --only functions:checkLegal,functions:timestampCbApiEvent,functions:onResponseFromLegal,functions:timestampLegalResponses,functions:timestampLoginResponses
 ***/
 
 
@@ -87,7 +87,7 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
             // in order to tell the client whether they have in fact satisfied all the legal requirements now
             db.ref('cb_api_events/check-legal-responses/'+event.data.val().uid)
                 .push()
-                .set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email, valid: valid, date_ms: date.asMillis()})
+                .set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email, valid: valid})
         })
     }
 
@@ -148,5 +148,15 @@ exports.grantAccess = function(updates, uid, name, email) {
 
 // just housekeeping - always timestamp the event
 exports.timestampCbApiEvent = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
+    return event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
+})
+
+// just housekeeping - always timestamp the event
+exports.timestampLegalResponses = functions.database.ref('cb_api_events/check-legal-responses/{key1}/{key2}').onCreate(event => {
+    return event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
+})
+
+// just housekeeping - always timestamp the event
+exports.timestampLoginResponses = functions.database.ref('cb_api_events/login-responses/{key1}/{key2}').onCreate(event => {
     return event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
 })

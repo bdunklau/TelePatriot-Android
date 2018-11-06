@@ -15,7 +15,7 @@ const db = admin.database()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:testVolunteers
+firebase deploy --only functions:testVolunteers,functions:onLogin
 ***/
 
 //CREATED TO TEST AND SUPPORT THE /volunteers ENDPOINT
@@ -45,6 +45,57 @@ exports.testVolunteers = functions.https.onRequest((req, res) => {
         return res.status(200).send(testEmailList())
     }
 })
+
+
+// See in XCode CenterViewController.checkLoggedIn()
+exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
+    if(event.data.val().event_type != 'login')
+        return false
+
+    return db.ref('administration/configuration').once('value').then(snapshot => {
+        var environment = 'cb_production_environment'
+        if(snapshot.val().environment && snapshot.val().environment == 'cb_qa_environment') {
+            environment = snapshot.val().environment
+        }
+
+        var successFn = function(result) {
+            var r = {}
+            r.address = result.vol.address
+            r.citizen_builder_id = result.vol.id
+            r.city = result.vol.city
+            r.email = result.vol.email
+            r.event_type = 'login-response'
+            r.first_name = result.vol.first_name
+            r.is_banned = result.vol.is_banned
+            r.last_name = result.vol.last_name
+            r.name = event.data.val().name
+            r.petition_signed = result.vol.petition_signed
+            r.phone = result.vol.phone
+            if(result.vol.state)
+                r.state = result.vol.state.toLowerCase()
+            r.uid = event.data.val().uid
+            r.volunteer_agreement_signed = result.vol.volunteer_agreement_signed
+
+            // timestamping is done by triggers in checkVolunteerStatus.js
+            db.ref('cb_api_events/all-events').push().set(r)
+            db.ref('cb_api_events/login-responses/'+event.data.val().uid).push().set(r)
+
+        }
+        var errorFn = function(result) { /*TODO what here if error? */ }
+
+        var input = {citizen_builder_api_key_name: snapshot.val()[environment].citizen_builder_api_key_name,
+                    citizen_builder_api_key_value: snapshot.val()[environment].citizen_builder_api_key_value,
+                    domain: snapshot.val()[environment].citizen_builder_domain,
+                    email: event.data.val().email,
+                    successFn: successFn,
+                    errorFn: errorFn
+                    }
+
+        exports.volunteers(input)
+
+    })
+})
+
 
 exports.volunteers = function(input) {
 
