@@ -391,7 +391,9 @@ exports.downloadMissionReport = functions.https.onRequest((req, res) => {
             mission_name = value.mission_name
         })
 
-        return res.set({'Content-Type': 'application/vnd.ms-excel', 'Content-Disposition': 'attachment;filename='+mission_name+'.xls'}).status(200).send(stuff)
+        var filename = mission_name.replace(/,/g, '').replace(/\'/g, '').replace(/’/g, '')
+
+        return res.set({'Content-Type': 'application/vnd.ms-excel', 'Content-Disposition': 'attachment;filename='+filename+'.xls'}).status(200).send(stuff)
     })
 })
 

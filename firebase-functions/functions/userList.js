@@ -33,7 +33,8 @@ var showPage = function(stuff) {
     var res = stuff.res
     return listUsers(stuff)
     .then(userList => {
-        return listUsersAsHtml(userList)
+        stuff.users = userList
+        return listUsersAsHtml(stuff)
     })
     .then(userListHtml => {
         var html = '<html><head></head><body><table width="100%"><tr><td colspan="33%">' + userListHtml + '</td><td colspan="33%">&nbsp;</td><td colspan="33%">&nbsp;</td></tr></table></body></html>'
@@ -71,12 +72,14 @@ var listUsers = function(stuff) {
 }
 
 
-var listUsersAsHtml = function(users) {
+var listUsersAsHtml = function(stuff) {
+    var users = stuff.users
+    var roleParm = stuff.role ? '?role='+stuff.role : ''
     var stuff = ''
     stuff += '<table>'
     stuff +=    '<tr>'
     stuff +=        '<td colspan="5">'
-    stuff +=            '<b> <a href="/downloadUsers">Download</a> All Users</b> &nbsp;&nbsp;&nbsp;&nbsp;'
+    stuff +=            '<b> <a href="/downloadUsers'+roleParm+'">Download</a> All Users</b> &nbsp;&nbsp;&nbsp;&nbsp;'
     stuff +=            '<a href="/manageUsers?role=Admin">Admin</a> &nbsp;&nbsp;&nbsp;&nbsp;'
     stuff +=            '<a href="/manageUsers?role=Director">Director</a> &nbsp;&nbsp;&nbsp;&nbsp;'
     stuff +=            '<a href="/manageUsers?role=Volunteer">Volunteer</a> &nbsp;&nbsp;&nbsp;&nbsp;'
@@ -109,7 +112,13 @@ var listUsersAsHtml = function(users) {
 exports.downloadUsers = functions.https.onRequest((req, res) => {
     var filename = 'TelePatriotUsers' // just a default value, expect this to be overwritten below
 
-    return listUsers()
+    var stuff = {res: res}
+    if(req.query.role) {
+        stuff.role = req.query.role
+        filename = 'TelePatriot-'+stuff.role+'s'
+    }
+
+    return listUsers(stuff)
     .then(userList => {
         var stuff = '' // csv data, really tab-delimited
         stuff = 'Name\tEmail\tPhone\n'
