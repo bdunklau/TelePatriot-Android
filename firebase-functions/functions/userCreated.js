@@ -88,7 +88,7 @@ exports.userCreated = functions.auth.user().onCreate(event => {
                         if(vol.first_name)
                             thename = vol.first_name
                         if(vol.last_name)
-                            thename = thename + vol.last_name
+                            thename = thename + ' ' + vol.last_name
                         if(name != '')
                             updates['users/'+uid+'/name'] = thename
 

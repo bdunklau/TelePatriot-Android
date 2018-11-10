@@ -119,6 +119,31 @@ var configToHtml = function(stuff) {
 
 
 
+    // on user login
+    var on_user_login = stuff.config.on_user_login
+    var sel1 = 'checked'
+    var sel2 = ''
+    if(on_user_login == 'volunteers') {
+        sel1 = ''
+        sel2 = 'checked'
+    }
+    if(stuff.req.body.on_user_login && stuff.req.body.on_user_login == 'volunteers') {
+        sel1 = ''
+        sel2 = 'checked'
+        updates['on_user_login'] = 'volunteers'
+    }
+    if(stuff.req.body.on_user_login && stuff.req.body.on_user_login == 'checkVolunteerStatus') {
+        sel1 = 'checked'
+        sel2 = ''
+        updates['on_user_login'] = 'checkVolunteerStatus'
+    }
+    html += '<P/>On User Login: &nbsp;&nbsp;&nbsp;'
+    html += '<input type="radio" name="on_user_login" value="volunteers" '+sel2+' onclick="document.getElementById(\'simulator-form\').submit()"> volunteers'
+    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
+    html += '<input type="radio" name="on_user_login" value="checkVolunteerStatus" '+sel1+' onclick="document.getElementById(\'simulator-form\').submit()"> checkVolunteerStatus '
+
+
+
     // get_teams_from
     var get_teams_from = stuff.config.get_teams_from
     var tpSelected = ''
@@ -143,7 +168,8 @@ var configToHtml = function(stuff) {
     html += '<input type="radio" name="get_teams_from" value="telepatriot" '+tpSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot'
 
 
-    var simprops = ["simulate_missing_email", "simulate_missing_name", "simulate_passing_legal"]
+    var simprops = ["simulate_missing_email", "simulate_missing_name", "simulate_passing_legal", "simulate_no_petition",
+                    "simulate_no_confidentiality_agreement", "simulate_banned"]
     _.each(simprops, function(prop) {
         var theVal = stuff.config[prop] == true || stuff.config[prop] == "true"
 

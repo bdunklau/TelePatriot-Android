@@ -58,6 +58,11 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
             environment = snapshot.val().environment
         }
 
+        var simulate_no_petition = snapshot.val().simulate_no_petition
+        var simulate_no_confidentiality_agreement = snapshot.val().simulate_no_confidentiality_agreement
+        var simulate_banned = snapshot.val().simulate_banned
+
+        // the /volunteers endpoint calls this when it completes successfully (see further down)
         var successFn = function(result) {
             var r = {}
             r.address = result.vol.address
@@ -66,19 +71,32 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
             r.email = result.vol.email
             r.event_type = 'login-response'
             r.first_name = result.vol.first_name
-            r.is_banned = result.vol.is_banned
+            r.is_banned = simulate_banned ? true: result.vol.is_banned
             r.last_name = result.vol.last_name
             r.name = event.data.val().name
-            r.petition_signed = result.vol.petition_signed
+            r.petition_signed = simulate_no_petition ? false : result.vol.petition_signed
             r.phone = result.vol.phone
             if(result.vol.state)
                 r.state = result.vol.state.toLowerCase()
             r.uid = event.data.val().uid
-            r.volunteer_agreement_signed = result.vol.volunteer_agreement_signed
+            r.volunteer_agreement_signed = simulate_no_confidentiality_agreement ? false : result.vol.volunteer_agreement_signed
 
             // timestamping is done by triggers in checkVolunteerStatus.js
-            db.ref('cb_api_events/all-events').push().set(r)
-            db.ref('cb_api_events/login-responses/'+event.data.val().uid).push().set(r)
+            db.ref('cb_api_events/all-events').push().set(r)  // really just for record keeping
+            db.ref('cb_api_events/login-responses/'+event.data.val().uid).push().set(r) // really just for record keeping
+            var userUpdate = {citizen_builder_id: r.citizen_builder_id,
+                               has_signed_confidentiality_agreement: r.volunteer_agreement_signed,
+                               has_signed_petition: r.petition_signed,
+                               is_banned: r.is_banned,
+                               name: r.name,
+                               phone: r.phone,
+                               residential_address_line1: r.address,
+                               residential_address_city: r.city,
+                               residential_address_state: r.state }
+            if(r.is_banned) {
+                userUpdate.account_disposition = 'disabled'
+            }
+            db.ref('users/'+event.data.val().uid).update(userUpdate)
 
         }
         var errorFn = function(result) { /*TODO what here if error? */ }
