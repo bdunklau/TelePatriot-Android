@@ -50,6 +50,8 @@ const masterSpreadsheetReader = require('./sheets/import-master-sheet')
 exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
 exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
 
+// dev deploy:  11/12/18
+// prod deploy:  11/12/18
 const teams = require('./teams')
 exports.manageTeams = teams.manageTeams // contains links to all the other team functions
 exports.copyTeam = teams.copyTeam
@@ -73,6 +75,8 @@ exports.resetCurrentTeam = teams.resetCurrentTeam
 exports.updateMemberListUnderTeams = teams.updateMemberListUnderTeams
 exports.updateTeamListUnderUsers = teams.updateTeamListUnderUsers
 exports.viewMissionReport = teams.viewMissionReport
+exports.cullTrainingTeam = teams.cullTrainingTeam
+exports.removeFromTrainingTeam = teams.removeFromTrainingTeam
 
 
 // prod deploy: 9/12/18, 9/20/18
