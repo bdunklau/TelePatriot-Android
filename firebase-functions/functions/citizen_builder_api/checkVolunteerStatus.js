@@ -56,12 +56,12 @@ exports.checkVolunteerStatus = function(email, allowed, notAllowed) {
 //            console.log('response: ', response)
             var obj = JSON.parse(body)
             console.log('JSON.parse(body) = ', JSON.parse(body));
-            var ok = ''
+
             if(obj.volunteer) {
-                allowed()
+                allowed(obj.volunteer)
             }
             else {
-                notAllowed()
+                notAllowed(obj.volunteer)
             }
         })
 
@@ -92,11 +92,11 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
     }
 
     // now check legal status...
-    var allowed = function() {
-        f(true)
+    var allowed = function(valid) {
+        f(valid) // true under normal circumstances, set to false to simulate failing legal
     }
-    var notAllowed = function() {
-        f(false)
+    var notAllowed = function(valid) {
+        f(valid) // false under normal circumstances, set to true to simulate passing legal
     }
     exports.checkVolunteerStatus(event.data.val().email, allowed, notAllowed)
     return true
@@ -125,7 +125,13 @@ exports.denyAccess = function(updates, uid) {
     return db.ref('/').update(updates)
 }
 
+
+// TODO Need to rethink this.  Granting access is JUST setting these attribute:
+// account_disposition, has_signed_petition, has_signed_confidentiality_agreement, and is_banned
+// NOT assigned roles or teams.  We'll "grandfather" the legacy stuff and leave it alone
+// if administration/configuration/get_teams_from = 'telepatriot' and administration/configuration/get_roles_from = 'telepatriot'
 exports.grantAccess = function(updates, uid, name, email) {
+
 
     // called when the user HAS satisfied the legal requirements for access
     // In this case, set these attributes on the user's node
@@ -133,17 +139,40 @@ exports.grantAccess = function(updates, uid, name, email) {
     updates['users/'+uid+'/has_signed_petition'] = true
     updates['users/'+uid+'/has_signed_confidentiality_agreement'] = true
     updates['users/'+uid+'/is_banned'] = false
-    updates['users/'+uid+'/roles/Volunteer'] = "true" // TODO not a boolean - geez
-    return db.ref('/administration/newusers/assign_to_team').once('value').then(snapshot => {
-        var team_name = snapshot.val()
-        updates['teams/'+team_name+'/members/'+uid+'/name'] = name
-        updates['teams/'+team_name+'/members/'+uid+'/email'] = email
-        updates['teams/'+team_name+'/members/'+uid+'/date_added'] = date.asCentralTime()
-        updates['users/'+uid+'/teams/'+team_name+'/team_name'] = team_name
-        updates['users/'+uid+'/teams/'+team_name+'/date_added'] = date.asCentralTime()
-        email_js.sendWelcomeEmail(email, name)
-        return db.ref('/').update(updates)
+
+    return db.ref('administration/configuration').once('value').then(snap2 => {
+        var get_roles_from = 'citizenbuilder'
+        if(snap2.val().get_roles_from == 'telepatriot') get_roles_from = snap2.val().get_roles_from
+
+        var get_teams_from = 'citizenbuilder'
+        if(snap2.val().get_teams_from == 'telepatriot') get_teams_from = snap2.val().get_teams_from
+
+        if(get_roles_from == 'telepatriot') updates['users/'+uid+'/roles/Volunteer'] = "true" // TODO not a boolean - geez
+
+        // TODO If we're getting team list from CitizenBuilder, we don't know yet (11/17/18) what the default team will be
+        if(get_teams_from == 'telepatriot') {
+
+            return db.ref('/administration/newusers/assign_to_team').once('value').then(snapshot => {
+                var team_name = snapshot.val()
+                updates['teams/'+team_name+'/members/'+uid+'/name'] = name
+                updates['teams/'+team_name+'/members/'+uid+'/email'] = email
+                updates['teams/'+team_name+'/members/'+uid+'/date_added'] = date.asCentralTime()
+                updates['users/'+uid+'/teams/'+team_name+'/team_name'] = team_name
+                updates['users/'+uid+'/teams/'+team_name+'/date_added'] = date.asCentralTime()
+                email_js.sendWelcomeEmail(email, name)
+                return db.ref('/').update(updates)
+            })
+        }
+        else {
+            email_js.sendWelcomeEmail(email, name)
+            return db.ref('/').update(updates)
+        }
+
     })
+
+
+
+
 }
 
 // just housekeeping - always timestamp the event

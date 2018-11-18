@@ -33,7 +33,7 @@ exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
 
-// dev deploy: 11/9/18
+// dev deploy: 11/9/18, 11/16/18, 11/17/18
 const createModule = require('./userCreated')
 // TODO fix index.js  This function should not be exported as userCreated.
 // TODO keep the names in index.js identical to what they are here
@@ -320,7 +320,7 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
-// dev deploy: 10/31/18, 11/3/18, 11/4/18
+// dev deploy: 10/31/18, 11/3/18, 11/4/18, 11/16/18, 11/17/18
 // prod deploy: 9/12/18, 9/20/18
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
@@ -329,7 +329,7 @@ exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
 exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
-// dev deploy: 11/9/18
+// dev deploy: 11/9/18, 11/16/18, 11/17/18
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
 exports.onLogin = volunteers.onLogin
@@ -354,12 +354,20 @@ exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
 
-// dev deploy: 10/29/18, 11/9/18
-// prod deploy: 10/29/18, 10/30/18
+// dev deploy: 11/17/18
+// prod deploy: 11/17/18
 const simulate = require('./simulate')
 exports.testViewSimulatorParameters = simulate.testViewSimulatorParameters
 
 // dev deploy:  11/4/18
 const cb_api_events = require('./citizen_builder_api/cb_api_events')
 exports.testViewCBAPIEvents = cb_api_events.testViewCBAPIEvents
+
+
+// dev deploy: 11/17/18
+const role_api = require('./telepatriot_api/role_api')
+exports.testRoleApiForm = role_api.testRoleApiForm
+exports.testRoleApi = role_api.testRoleApi
+exports.api_add_role = role_api.api_add_role
+exports.api_remove_role = role_api.api_remove_role
 

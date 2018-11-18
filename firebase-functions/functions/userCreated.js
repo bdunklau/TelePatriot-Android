@@ -134,18 +134,33 @@ exports.userCreated = functions.auth.user().onCreate(event => {
             else { /* use checkVolunteerStatus */
 
                 citizen_builder_api.checkVolunteerStatus(email,
-                    function() {
+                    function(valid) {
                         citizen_builder_api.grantAccess(updates, uid, name, email)
 
-                        // TODO actually don't need this email anymore
-        //                return db.update(attributes).then(() => {
-        //                    return sendEmail2('On-Board This Person', email, name)
-        //                })
+                        var resp = {uid: uid,
+                                   name: name,
+                                   email: event.data.email,
+                                   event_type: 'check-legal-response',
+                                   valid: valid}
+
+                        db.child('cb_api_events/all-events').push().set(resp)
+                        db.child('cb_api_events/check-legal-responses/'+uid).push().set(resp)
+
                     },
-                    function() {
+                    function(valid) {
                         // called when the user has NOT satisfied the legal requirements for access
                         // In this case, we still have to save the user to /users.  We just don't set
                         // the petition, conf agreement and banned flags like we do above.
+
+                        var resp = {uid: uid,
+                                   name: name,
+                                   email: event.data.email,
+                                   event_type: 'check-legal-response',
+                                   valid: valid}
+
+                        db.child('cb_api_events/all-events').push().set(resp)
+                        db.child('cb_api_events/check-legal-responses/'+uid).push().set(resp)
+
                         return db.child('/').update(updates).then(() => {
                             return email_js.sendPetitionCAEmail(email, name)
                         })
@@ -191,6 +206,7 @@ exports.userCreated = functions.auth.user().onCreate(event => {
 
     }) // end:  return db.child('administration/configuration').once('value').then(snapshot => {
 })
+
 
 
 // TODO we can probably get rid of this because are automatically approving users now (8/28/18) if

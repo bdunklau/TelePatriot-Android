@@ -53,6 +53,14 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
         return false
 
     return db.ref('administration/configuration').once('value').then(snapshot => {
+        var on_user_login = 'volunteers'
+        if(snapshot.val().on_user_login) {
+            on_user_login = snapshot.val().on_user_login
+        }
+        if(on_user_login != 'volunteers') {
+            return false // everything below is the "new" way.  If config is not for the "new" way, just quit early
+        }
+
         var environment = 'cb_production_environment'
         if(snapshot.val().environment && snapshot.val().environment == 'cb_qa_environment') {
             environment = snapshot.val().environment
@@ -65,42 +73,46 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
         // the /volunteers endpoint calls this when it completes successfully (see further down)
         var successFn = function(result) {
             var r = {}
-            r.address = result.vol.address
-            r.citizen_builder_id = result.vol.id
-            r.city = result.vol.city
-            r.email = result.vol.email
+            if(result.vol.address) r.address = result.vol.address
+            if(result.vol.id) r.citizen_builder_id = result.vol.id
+            if(result.vol.city) r.city = result.vol.city
+            if(result.vol.email) r.email = result.vol.email
             r.event_type = 'login-response'
-            r.first_name = result.vol.first_name
-            r.is_banned = simulate_banned ? true: result.vol.is_banned
-            r.last_name = result.vol.last_name
-            r.name = event.data.val().name
-            r.petition_signed = simulate_no_petition ? false : result.vol.petition_signed
-            r.phone = result.vol.phone
-            if(result.vol.state)
-                r.state = result.vol.state.toLowerCase()
-            r.uid = event.data.val().uid
-            r.volunteer_agreement_signed = simulate_no_confidentiality_agreement ? false : result.vol.volunteer_agreement_signed
+            if(result.vol.first_name) r.first_name = result.vol.first_name
+            if(result.vol.is_banned) r.is_banned = simulate_banned ? true : result.vol.is_banned
+            if(result.vol.last_name) r.last_name = result.vol.last_name
+            if(event.data.val().name) r.name = result.vol.first_name && result.vol.last_name ? result.vol.first_name+' '+result.vol.last_name : event.data.val().name
+            if(result.vol.petition_signed) r.petition_signed = simulate_no_petition ? false : result.vol.petition_signed
+            if(result.vol.phone) r.phone = result.vol.phone.replace(/\D/g,''); // gets rid of everything that isn't a digit
+            if(result.vol.state) r.state = result.vol.state.toLowerCase()
+            if(event.data.val().uid) r.uid = event.data.val().uid
+            if(result.vol.volunteer_agreement_signed) r.volunteer_agreement_signed = simulate_no_confidentiality_agreement ? false : result.vol.volunteer_agreement_signed
 
             // timestamping is done by triggers in checkVolunteerStatus.js
             db.ref('cb_api_events/all-events').push().set(r)  // really just for record keeping
             db.ref('cb_api_events/login-responses/'+event.data.val().uid).push().set(r) // really just for record keeping
-            var userUpdate = {citizen_builder_id: r.citizen_builder_id,
-                               has_signed_confidentiality_agreement: r.volunteer_agreement_signed,
-                               has_signed_petition: r.petition_signed,
-                               is_banned: r.is_banned,
-                               name: r.name,
-                               phone: r.phone,
-                               residential_address_line1: r.address,
-                               residential_address_city: r.city,
-                               residential_address_state: r.state }
-            if(r.is_banned) {
-                userUpdate.account_disposition = 'disabled'
-            }
+
+            var userUpdate = {}
+            if(r.citizen_builder_id) userUpdate['citizen_builder_id'] = r.citizen_builder_id
+            if(r.volunteer_agreement_signed) userUpdate['has_signed_confidentiality_agreement'] = r.volunteer_agreement_signed
+            if(r.petition_signed) userUpdate['has_signed_petition'] = r.petition_signed
+            if(r.is_banned) userUpdate['is_banned'] = r.is_banned
+            if(r.is_banned) userUpdate.account_disposition = 'disabled'
+            else userUpdate.account_disposition = 'enabled'
+            if(r.name) userUpdate['name'] = r.name
+            else userUpdate['name'] = event.data.val().name
+            if(event.data.val().email) userUpdate['email'] = event.data.val().email
+            if(r.phone) userUpdate['phone'] = r.phone
+            if(r.address) userUpdate['residential_address_line1'] = r.address
+            if(r.city) userUpdate['residential_address_city'] = r.city
+            if(r.state) userUpdate['residential_address_state'] = r.state
+
             db.ref('users/'+event.data.val().uid).update(userUpdate)
 
         }
         var errorFn = function(result) { /*TODO what here if error? */ }
 
+        console.log('event.data.val().email = ', event.data.val().email)
         var input = {citizen_builder_api_key_name: snapshot.val()[environment].citizen_builder_api_key_name,
                     citizen_builder_api_key_value: snapshot.val()[environment].citizen_builder_api_key_value,
                     domain: snapshot.val()[environment].citizen_builder_domain,
@@ -116,6 +128,8 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
 
 
 exports.volunteers = function(input) {
+
+    console.log('input.email = ', input.email)
 
     // as long as there's an email address, call the CB API endpoint to see if this person
     // has satisfied the legal requirements
@@ -134,7 +148,7 @@ exports.volunteers = function(input) {
 
     // see above:   var request = require('request')
     request.get(options, function(error, response, body){
-        //console.log(body);
+        console.log('volunteers:  body = ',body);
         var vol = JSON.parse(body)
 
 //        // test/mock code...

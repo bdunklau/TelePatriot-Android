@@ -168,6 +168,31 @@ var configToHtml = function(stuff) {
     html += '<input type="radio" name="get_teams_from" value="telepatriot" '+tpSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot'
 
 
+    // get_roles_from
+    var get_roles_from = stuff.config.get_roles_from
+    var tp_role_selected = ''
+    var cb_role_selected = 'checked'
+    if(get_roles_from && get_roles_from == 'telepatriot') {
+        tp_role_selected = 'checked'
+        cb_role_selected = ''
+    }
+    if(stuff.req.body.get_roles_from && stuff.req.body.get_roles_from == 'telepatriot') {
+        tp_role_selected = 'checked'
+        cb_role_selected = ''
+        updates['get_roles_from'] = 'telepatriot'
+    }
+    if(stuff.req.body.get_roles_from && stuff.req.body.get_roles_from == 'citizenbuilder') {
+        tp_role_selected = ''
+        cb_role_selected = 'checked'
+        updates['get_roles_from'] = 'citizenbuilder'
+    }
+    html += '<P/>Get Roles from: &nbsp;&nbsp;&nbsp;'
+    html += '<input type="radio" name="get_roles_from" value="citizenbuilder" '+cb_role_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder '
+    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
+    html += '<input type="radio" name="get_roles_from" value="telepatriot" '+tp_role_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot'
+
+
+
     var simprops = ["simulate_missing_email", "simulate_missing_name", "simulate_passing_legal", "simulate_no_petition",
                     "simulate_no_confidentiality_agreement", "simulate_banned"]
     _.each(simprops, function(prop) {
