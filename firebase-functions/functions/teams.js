@@ -16,7 +16,7 @@ const db = admin.database();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:manageTeams,functions:copyTeam,functions:copyMembers,functions:createTeam,functions:deleteMissionItem,functions:deleteTeam,functions:addPeopleToTeam,functions:downloadMissionReport,functions:downloadTeamRoster,functions:removePeopleFromTeam,functions:viewMembers,functions:viewMissions,functions:viewQueue,functions:setCurrentTeam,functions:resetCurrentTeam,functions:updateMemberListUnderTeams,functions:updateTeamListUnderUsers,functions:viewMissionReport,functions:cullTrainingTeam,functions:removeFromTrainingTeam
+firebase deploy --only functions:manageTeams,functions:copyTeam,functions:copyMembers,functions:createTeam,functions:deleteMissionItem,functions:deleteTeam,functions:addPeopleToTeam,functions:downloadMissionReport,functions:downloadTeamRoster,functions:removePeopleFromTeam,functions:viewMembers,functions:viewMissions,functions:viewQueue,functions:setCurrentTeam,functions:resetCurrentTeam,functions:updateMemberListUnderTeams,functions:updateTeamListUnderUsers,functions:viewMissionReport,functions:cullTrainingTeam,functions:removeFromTrainingTeam,functions:teamlist,functions:addToTeamList,functions:removeTeamFromList
 ***/
 
 
@@ -34,7 +34,7 @@ exports.manageTeams = functions.https.onRequest((req, res) => {
 
 var listTeams = function(stuff, current_team) {
 
-    return db.ref('teams').orderByChild('team_name').once('value').then(snapshot => {
+    return db.ref('team_list').orderByChild('team_name').once('value').then(snapshot => {
         stuff += '<table><tr><td colspan="5"><b>All Teams</b></td></tr>'
         stuff += '<tr><td colspan="5"><form method="post" action="/createTeam"><input type="submit" value="Create Team"/>&nbsp;&nbsp;<input type="text" name="team_name" placeholder="New Team"/></form></td></tr>'
         snapshot.forEach(function(child) {
@@ -634,6 +634,7 @@ exports.copyMembers = functions.https.onRequest((req, res) => {
 // kinda don't need createTeam anymore because we have copyTeam
 // Not part of the /manageTeams page at the moment (12/27/17)
 // commented out in index.js
+// SEE: function addToTeamList
 exports.createTeam = functions.https.onRequest((req, res) => {
 
     var stuff = ''
@@ -909,6 +910,38 @@ exports.resetCurrentTeam = functions.database.ref('/users/{uid}/current_team').o
     }
     else return false;
 })
+
+
+// NOTE: This will be obsolete once TP is talking to CB
+exports.teamlist = functions.https.onRequest((req, res) => {
+    return db.ref('teams').once('value').then(snapshot => {
+        var team_names = {}
+        snapshot.forEach(function(child) {
+            var key = db.ref('team_list').push().getKey()
+            team_names['team_list/'+key+'/team_name'] = child.key
+        })
+        return db.ref('/').update(team_names).then(() => {
+            return res.status(200).send('go check /team_list')
+        })
+    })
+})
+
+
+// NOTE: This will be obsolete once TP is talking to CB
+// when a team in created in TelePatriot, add that team name under /team_list also
+// SEE:  function createTeam
+exports.addToTeamList = functions.database.ref('teams/{team_name}').onCreate(event => {
+    return db.ref('team_list').push().set({team_name: event.params.team_name})
+})
+
+// NOTE: This will be obsolete once TP is talking to CB
+// the opposite of addToTeamList
+exports.removeTeamFromList = functions.database.ref('teams/{team_name}').onDelete(event => {
+    return db.ref('team_list').orderByChild('team_name').equalTo(event.params.team_name).once('value').then(snapshot => {
+        snapshot.forEach(function(child) { child.ref.remove() })
+    })
+})
+
 
 
 var stripSpecialChars = function(str) {
