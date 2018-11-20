@@ -222,7 +222,7 @@ public class SwitchTeamsFragment extends BaseFragment {
 
 
     private RecyclerView.Adapter createJsonAdapter() {
-        
+
     }
 
 
