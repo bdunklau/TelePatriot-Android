@@ -34,6 +34,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     //private List<String> teamNames = new ArrayList<String>();
+    private Integer citizen_builder_id;
     private boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
     private String recruiter_id, missionItemId, missionId;
     private MissionDetail missionItem;
@@ -138,6 +139,7 @@ public class User implements FirebaseAuth.AuthStateListener {
                     User.this.has_signed_petition = ub.getHas_signed_petition() == null ? false : ub.getHas_signed_petition();
                     User.this.has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement() == null ? false : ub.getHas_signed_confidentiality_agreement();
                     User.this.is_banned = ub.getIs_banned() == null ? false : ub.getIs_banned();
+                    User.this.citizen_builder_id = ub.getCitizen_builder_id();
 
                     // PUT THIS BACK IN EVENTUALLY
                     // TODO seems weird to do this each time, but the User object
@@ -243,6 +245,14 @@ public class User implements FirebaseAuth.AuthStateListener {
             public void onCancelled(DatabaseError databaseError) { }
         });
 
+    }
+
+    public Integer getCitizen_builder_id() {
+        return citizen_builder_id;
+    }
+
+    public void setCitizen_builder_id(Integer citizen_builder_id) {
+        this.citizen_builder_id = citizen_builder_id;
     }
 
     private void updateAttributes(UserBean ub, User user) {
@@ -628,7 +638,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public String getCurrentTeamName() {
-        return currentTeam != null ? currentTeam.getTeam_name() : "No Team Selected";
+        return currentTeam != null ? currentTeam.getTeam_name() : "None";
     }
 
     public void setCurrentTeam(Team currentTeam) {
