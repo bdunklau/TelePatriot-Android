@@ -50,7 +50,7 @@ exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
 exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
 
 // dev deploy:  11/18/18
-// prod deploy: 11/18/18
+// prod deploy: 11/19/18
 const teams = require('./teams')
 exports.manageTeams = teams.manageTeams // contains links to all the other team functions
 exports.copyTeam = teams.copyTeam

@@ -313,8 +313,11 @@ var getTeamRoster = function(team_name) {
         snapshot.forEach(function(child) {
             if(child.val().teams) {
                 var onteam = _.find(child.val().teams, {'team_name': team_name})
-                if(onteam && child.val().name && child.val().email && child.val().phone) {
-                    team.push({name: child.val().name, email: child.val().email, phone: child.val().phone})
+                if(onteam) {
+                    var thename = child.val().name ? child.val().name : ' '
+                    var theemail = child.val().email ? child.val().email : ' '
+                    var thephone = child.val().phone ? child.val().phone : ' '
+                    team.push({name: thename, email: theemail, phone: thephone})
                 }
             }
         })
@@ -403,9 +406,10 @@ exports.downloadTeamRoster = functions.https.onRequest((req, res) => {
     var filename = team_name+' Roster.xls' // just a default value, expect this to be overwritten below
 
     return getTeamRoster(team_name).then(members => {
+        var sorted = _.sortBy(members, o => o.name)
         var stuff = '' // csv data
         stuff = 'name\tphone\temail\n'
-        _.forEach(members, function(value) {
+        _.forEach(sorted, function(value) {
             stuff += value.name+'\t'
             stuff += value.phone+'\t'
             stuff += value.email+'\t'
