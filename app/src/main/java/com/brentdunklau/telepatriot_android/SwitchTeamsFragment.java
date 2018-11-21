@@ -2,14 +2,9 @@ package com.brentdunklau.telepatriot_android;
 
 import android.app.Activity;
 import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.app.IntentService;
 import android.app.ProgressDialog;
-import android.content.Intent;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,8 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.brentdunklau.telepatriot_android.util.Mission;
-import com.brentdunklau.telepatriot_android.util.MissionHolder;
+import com.brentdunklau.telepatriot_android.util.TeamAdapter;
 import com.brentdunklau.telepatriot_android.util.Team;
 import com.brentdunklau.telepatriot_android.util.TeamHolder;
 import com.brentdunklau.telepatriot_android.util.User;
@@ -30,7 +24,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONArray;
@@ -57,6 +50,7 @@ public class SwitchTeamsFragment extends BaseFragment {
     private DatabaseReference ref;
     //private Query query; // Ex: this.query = this.ref.orderByChild("uid").equalTo(User.getInstance().getUid());
     private FirebaseRecyclerAdapter<Team, TeamHolder> mAdapter;
+    private TeamAdapter jAdapter;
     View myView;
 
     @Nullable
@@ -221,71 +215,78 @@ public class SwitchTeamsFragment extends BaseFragment {
     }
 
 
-    private RecyclerView.Adapter createJsonAdapter() {
 
-    }
+
+
+
 
 
     ProgressDialog pd;
 
 
-private class JsonTask extends AsyncTask<String, String, Map<Integer, String>> {
+    private class JsonTask extends AsyncTask<String, String, Map<Integer, String>> {
 
-    protected void onPreExecute() {
-        super.onPreExecute();
+        protected void onPreExecute() {
+            super.onPreExecute();
 
-        pd = new ProgressDialog(SwitchTeamsFragment.this.myView.getContext());
-        pd.setMessage("Please wait");
-        pd.setCancelable(false);
-        pd.show();
-    }
+            pd = new ProgressDialog(SwitchTeamsFragment.this.myView.getContext());
+            pd.setMessage("Please wait");
+            pd.setCancelable(false);
+            pd.show();
+        }
 
-    protected Map<Integer, String> doInBackground(String... params) {
+        protected Map<Integer, String> doInBackground(String... params) {
 
-        String url = params[0];
-        String citizen_builder_api_key_name = params[1];
-        String citizen_builder_api_key_value = params[2];
+            String url = params[0];
+            String citizen_builder_api_key_name = params[1];
+            String citizen_builder_api_key_value = params[2];
 
-        Map<Integer, String> teams = new HashMap<Integer, String>();
+            Map<Integer, String> teams = new HashMap<Integer, String>();
 
-        try {
-            OkHttpClient client = new OkHttpClient();
-            Request request = new Request.Builder()
-                    .addHeader(citizen_builder_api_key_name, citizen_builder_api_key_value)
-                    .url(url)
-                    .build();
+            try {
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                        .addHeader(citizen_builder_api_key_name, citizen_builder_api_key_value)
+                        .url(url)
+                        .build();
 
-            Response response = client.newCall(request).execute();
+                Response response = client.newCall(request).execute();
 
-            String jsonData = response.body().string();
-            JSONObject Jobject = new JSONObject(jsonData);
-            JSONArray jarray = Jobject.getJSONArray("teams");
-            for (int i = 0; i < jarray.length(); i++) {
-                JSONObject j = jarray.getJSONObject(i);
-                Integer teamId = j.getInt("id");
-                String teamName = j.getString("name");
-                teams.put(teamId, teamName);
+                String jsonData = response.body().string();
+                JSONObject Jobject = new JSONObject(jsonData);
+                JSONArray jarray = Jobject.getJSONArray("teams");
+                for (int i = 0; i < jarray.length(); i++) {
+                    JSONObject j = jarray.getJSONObject(i);
+                    Integer teamId = j.getInt("id");
+                    String teamName = j.getString("name");
+                    teams.put(teamId, teamName);
+                }
+            } catch (IOException ex) {
+                // TODO log to the database - we have the user's id
+                ex.printStackTrace();
+            } catch (JSONException ex)  {
+                // TODO log to the database - we have the user's id
+                ex.printStackTrace();
             }
-        } catch (IOException ex) {
-            // TODO log to the database - we have the user's id
-            ex.printStackTrace();
-        } catch (JSONException ex)  {
-            // TODO log to the database - we have the user's id
-            ex.printStackTrace();
+
+            return teams;
         }
 
-        return teams;
-    }
+        @Override
+        protected void onPostExecute(Map<Integer, String> teams) {
+            super.onPostExecute(teams);
+            if (pd.isShowing()){
+                pd.dismiss();
+            }
+            if(teams == null || teams.size() == 0)
+                return;
+            String[] sarr = new String[teams.values().size()];
+            teams.values().toArray(sarr);
+            jAdapter = new TeamAdapter(sarr);
+            SwitchTeamsFragment.this.teams.setAdapter(jAdapter);
 
-    @Override
-    protected void onPostExecute(Map<Integer, String> teams) {
-        super.onPostExecute(teams);
-        if (pd.isShowing()){
-            pd.dismiss();
         }
-//        txtJson.setText(result);  what here ????
     }
-}
 }
 
 
