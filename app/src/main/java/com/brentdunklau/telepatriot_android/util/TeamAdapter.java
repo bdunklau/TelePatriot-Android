@@ -1,12 +1,18 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import android.app.Activity;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.R;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Created by bdunklau on 11/20/18.
@@ -21,10 +27,26 @@ public class TeamAdapter extends RecyclerView.Adapter<TeamAdapter.TeamNameHolder
     public static class TeamNameHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
         public TextView mTextView;
-        public TeamNameHolder(View v) {
-            super(v);
-            View team_name = v.findViewById(R.id.team_name);
+        private TeamNameHolder.ClickListener mClickListener;
+        public TeamNameHolder(View view) {
+            super(view);
+            View team_name = view.findViewById(R.id.team_name);
             mTextView = (TextView)team_name;
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mClickListener.onItemClick(v, getAdapterPosition());
+                }
+            });
+        }
+
+        public void setOnClickListener(TeamNameHolder.ClickListener clickListener){
+            mClickListener = clickListener;
+        }
+
+        public interface ClickListener {
+            public void onItemClick(View view, int position);
+            public void onItemLongClick(View view, int position);
         }
     }
 
@@ -40,13 +62,30 @@ public class TeamAdapter extends RecyclerView.Adapter<TeamAdapter.TeamNameHolder
         // create a new view
         View obj = LayoutInflater.from(parent.getContext()).inflate(R.layout.team_summary, parent, false);
 
-        TeamNameHolder vh = null;
-        try {
-            vh = new TeamNameHolder(obj);
-        } catch(Throwable t) {
-            t.printStackTrace(); // TODO fix this
-        }
+        TeamNameHolder vh = new TeamNameHolder(obj);
+        vh.setOnClickListener(new TeamNameHolder.ClickListener() {
+
+            /**
+             * touching one of the teams switches you over to that team
+             */
+            @Override
+            public void onItemClick(final View view, int position) {
+                String selectedTeam = mDataset[position];
+                Team team = new Team(selectedTeam);
+                User.getInstance().setCurrentTeam(team);
+
+                Activity act = (Activity) view.getContext();
+                DrawerLayout drawer = (DrawerLayout) act.findViewById(R.id.drawer_layout);
+                drawer.openDrawer(Gravity.START);
+            }
+
+            @Override
+            public void onItemLongClick(View view, int position) {
+            }
+        });
+
         return vh;
+
     }
 
     // Replace the contents of a view (invoked by the layout manager)
