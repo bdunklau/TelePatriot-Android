@@ -15,6 +15,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.citizenbuilder.CBTeam;
+import com.brentdunklau.telepatriot_android.util.Configuration;
 import com.brentdunklau.telepatriot_android.util.TeamAdapter;
 import com.brentdunklau.telepatriot_android.util.Team;
 import com.brentdunklau.telepatriot_android.util.TeamHolder;
@@ -31,7 +33,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import okhttp3.OkHttpClient;
@@ -70,16 +74,17 @@ public class SwitchTeamsFragment extends BaseFragment {
         FirebaseDatabase.getInstance().getReference("administration/configuration").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Map<String, Object> config = (Map<String, Object>) dataSnapshot.getValue();
-                String get_teams_from = "citizenbuilder";
-                if(config.get("get_teams_from") != null)
-                    get_teams_from = config.get("get_teams_from")+"";
+//                Map<String, Object> config = (Map<String, Object>) dataSnapshot.getValue();
+//                String get_teams_from = "citizenbuilder";
+//                if(config.get("get_teams_from") != null)
+//                    get_teams_from = config.get("get_teams_from")+"";
+//
+//                String environment = config.get("environment")+"";
+//                Map<String, String> env = (Map<String, String>) config.get(environment);
 
-                String environment = config.get("environment")+"";
-                Map<String, String> env = (Map<String, String>) config.get(environment);
-
-                if(get_teams_from.equals("citizenbuilder")) {
-                    showTeams_fromCitizenBuilder(env);
+                Configuration conf = dataSnapshot.getValue(Configuration.class);
+                if(conf.getTeamsFromCB()) {
+                    showTeams_fromCitizenBuilder(conf);
                 }
                 else {
                     showTeams_legacy();
@@ -96,10 +101,10 @@ public class SwitchTeamsFragment extends BaseFragment {
     }
 
 
-    private void showTeams_fromCitizenBuilder(Map<String, String> env) {
-        final String citizen_builder_domain = env.get("citizen_builder_domain")+"";
-        final String citizen_builder_api_key_name = env.get("citizen_builder_api_key_name")+"";
-        final String citizen_builder_api_key_value = env.get("citizen_builder_api_key_value")+"";
+    private void showTeams_fromCitizenBuilder(Configuration conf/*Map<String, String> env*/) {
+        String citizen_builder_domain = conf.getCitizenBuilderDomain();
+        String citizen_builder_api_key_name = conf.getCitizenBuilderApiKeyName();
+        String citizen_builder_api_key_value = conf.getCitizenBuilderApiKeyValue();
 
         // http://square.github.io/okhttp/
         if(User.getInstance().getCitizen_builder_id() == null)
@@ -107,10 +112,6 @@ public class SwitchTeamsFragment extends BaseFragment {
 
         final String url = "https://"+citizen_builder_domain+"/api/ios/v1/teams/person_teams?person_id="+User.getInstance().getCitizen_builder_id();
 
-//        Intent mServiceIntent = new Intent();
-//        mServiceIntent.putExtra("url", url);
-//        mServiceIntent.putExtra("citizen_builder_api_key_name", citizen_builder_api_key_name);
-//        mServiceIntent.putExtra("citizen_builder_api_key_value", citizen_builder_api_key_value);
         new JsonTask().execute(url, citizen_builder_api_key_name, citizen_builder_api_key_value);
     }
 
@@ -218,13 +219,10 @@ public class SwitchTeamsFragment extends BaseFragment {
 
 
 
-
-
-
     ProgressDialog pd;
 
 
-    private class JsonTask extends AsyncTask<String, String, Map<Integer, String>> {
+    private class JsonTask extends AsyncTask<String, String, List<CBTeam>> {
 
         protected void onPreExecute() {
             super.onPreExecute();
@@ -235,13 +233,13 @@ public class SwitchTeamsFragment extends BaseFragment {
             pd.show();
         }
 
-        protected Map<Integer, String> doInBackground(String... params) {
+        protected List<CBTeam> doInBackground(String... params) {
 
             String url = params[0];
             String citizen_builder_api_key_name = params[1];
             String citizen_builder_api_key_value = params[2];
 
-            Map<Integer, String> teams = new HashMap<Integer, String>();
+            List<CBTeam> teams = new ArrayList<CBTeam>();
 
             try {
                 OkHttpClient client = new OkHttpClient();
@@ -259,7 +257,7 @@ public class SwitchTeamsFragment extends BaseFragment {
                     JSONObject j = jarray.getJSONObject(i);
                     Integer teamId = j.getInt("id");
                     String teamName = j.getString("name");
-                    teams.put(teamId, teamName);
+                    teams.add(new CBTeam(teamId, teamName));
                 }
             } catch (IOException ex) {
                 // TODO log to the database - we have the user's id
@@ -273,16 +271,16 @@ public class SwitchTeamsFragment extends BaseFragment {
         }
 
         @Override
-        protected void onPostExecute(Map<Integer, String> teams) {
+        protected void onPostExecute(List<CBTeam> teams) {
             super.onPostExecute(teams);
             if (pd.isShowing()){
                 pd.dismiss();
             }
             if(teams == null || teams.size() == 0)
                 return;
-            String[] sarr = new String[teams.values().size()];
-            teams.values().toArray(sarr);
-            jAdapter = new TeamAdapter(sarr);
+            CBTeam[] tarr = new CBTeam[teams.size()];
+            teams.toArray(tarr);
+            jAdapter = new TeamAdapter(tarr);
             SwitchTeamsFragment.this.teams.setAdapter(jAdapter);
 
         }

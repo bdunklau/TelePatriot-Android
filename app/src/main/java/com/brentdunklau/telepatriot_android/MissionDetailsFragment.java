@@ -20,6 +20,7 @@ import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionDetail;
 import com.brentdunklau.telepatriot_android.util.MissionDetailHolder;
 import com.brentdunklau.telepatriot_android.util.Team;
+import com.brentdunklau.telepatriot_android.util.TeamIF;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
@@ -60,7 +61,7 @@ public class MissionDetailsFragment extends BaseFragment {
         mission_script = myView.findViewById(R.id.mission_script);
         mission_script.setText(mission.getScript());
 
-        final Team team = User.getInstance().getCurrentTeam();
+        final TeamIF team = User.getInstance().getCurrentTeam();
 
         button_delete_mission = myView.findViewById(R.id.button_delete_mission);
         button_delete_mission.setOnClickListener(new View.OnClickListener() {
@@ -81,7 +82,7 @@ public class MissionDetailsFragment extends BaseFragment {
     }
 
 
-    private void alertDeleteMission(final String missionId, final Team team) {
+    private void alertDeleteMission(final String missionId, final TeamIF team) {
         // should never return early but just in case...
         if(missionId == null || team == null)
             return;

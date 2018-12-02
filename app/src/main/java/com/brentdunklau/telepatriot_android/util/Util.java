@@ -36,6 +36,11 @@ public class Util {
     }
 
 
+    public static String getDate_yyyy_MM_dd() {
+        return getDate("yyyy-MM-dd"); // i.e.  2018-11-25
+    }
+
+
     private static String getDate(String withFormat) {
         return new SimpleDateFormat(withFormat).format(new Date());
     }

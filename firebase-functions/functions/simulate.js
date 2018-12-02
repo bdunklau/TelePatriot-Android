@@ -193,6 +193,32 @@ var configToHtml = function(stuff) {
 
 
 
+    // get_missions_from
+    var get_missions_from = stuff.config.get_missions_from
+    var tp_mission_selected = ''
+    var cb_mission_selected = 'checked'
+    if(get_missions_from && get_missions_from == 'telepatriot') {
+        tp_mission_selected = 'checked'
+        cb_mission_selected = ''
+    }
+    if(stuff.req.body.get_missions_from && stuff.req.body.get_missions_from == 'telepatriot') {
+        tp_mission_selected = 'checked'
+        cb_mission_selected = ''
+        updates['get_missions_from'] = 'telepatriot'
+    }
+    if(stuff.req.body.get_missions_from && stuff.req.body.get_missions_from == 'citizenbuilder') {
+        tp_mission_selected = ''
+        cb_mission_selected = 'checked'
+        updates['get_missions_from'] = 'citizenbuilder'
+    }
+    html += '<P/>Get Missions from: &nbsp;&nbsp;&nbsp;'
+    html += '<input type="radio" name="get_missions_from" value="citizenbuilder" '+cb_mission_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder '
+    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
+    html += '<input type="radio" name="get_missions_from" value="telepatriot" '+tp_mission_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot'
+
+
+
+
     var simprops = ["simulate_missing_email", "simulate_missing_name", "simulate_passing_legal", "simulate_no_petition",
                     "simulate_no_confidentiality_agreement", "simulate_banned"]
     _.each(simprops, function(prop) {

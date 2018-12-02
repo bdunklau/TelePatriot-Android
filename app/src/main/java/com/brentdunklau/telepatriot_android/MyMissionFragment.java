@@ -4,10 +4,12 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -20,15 +22,31 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionDetail;
+import com.brentdunklau.telepatriot_android.citizenbuilder.CBTeam;
+import com.brentdunklau.telepatriot_android.util.Configuration;
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionDetail;
 import com.brentdunklau.telepatriot_android.util.MissionItemEvent;
+import com.brentdunklau.telepatriot_android.util.TeamAdapter;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Created by bdunklau on 10/26/17.
@@ -77,6 +95,7 @@ public class MyMissionFragment extends BaseFragment {
         });
 
 
+
         // BUG FIX:  If you choose My Mission, then swipe to get the menu, then touch My Mission again, you will "orphan"
         // the mission you were currently working.  That orphan mission will be stuck in an in-progress state with a group_number
         // of 999999 meaning no one else will be assigned that mission either.
@@ -93,20 +112,31 @@ public class MyMissionFragment extends BaseFragment {
             indicateNoMissionsAvailable();
 
 
-            final String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
+            getMission_fromTelePatriot();
 
-            FirebaseDatabase.getInstance().getReference("teams/" + team + "/mission_items").orderByChild("group_number").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.getChildrenCount() == 0) {
-                        indicateNoMissionsAvailable();
-                        return; // we should indicate no missions available for the user
-                    }
 
-                    for (DataSnapshot child : dataSnapshot.getChildren()) {
-                        missionItemId = child.getKey();
+        } // else  that belongs to if(missionItem != null) {
 
-                        missionDetail = child.getValue(MissionDetail.class);
+
+        setHasOptionsMenu(true);
+        return myView;
+    }
+
+    private void getMission_fromTelePatriot() {
+        final String team = User.getInstance().getCurrentTeamName();    // nodes here should ALWAYS be "true_new" - this is a change to how we used to do things 12/8/17.  If it's in this node, it is ready to be worked.
+
+        FirebaseDatabase.getInstance().getReference("teams/" + team + "/mission_items").orderByChild("group_number").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getChildrenCount() == 0) {
+                    indicateNoMissionsAvailable();
+                    return; // we should indicate no missions available for the user
+                }
+
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    missionItemId = child.getKey();
+
+                    missionDetail = child.getValue(MissionDetail.class);
 
                         // if all we got was a 999999, then this item is being worked by someone else and
                         // there basically are no more missions for this user
@@ -115,76 +145,69 @@ public class MyMissionFragment extends BaseFragment {
                             return; // we should indicate no missions available for the user
                         }
 
-                        // Get progress info from mission object (have to query for that unfortunately)
-                        // TODO This is an expensive query too.  It returns all mission items for this mission because
-                        // we keep mission_items under each mission
-                        FirebaseDatabase.getInstance().getReference("teams/" + team + "/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
+                    // Get progress info from mission object (have to query for that unfortunately)
+                    // TODO This is an expensive query too.  It returns all mission items for this mission because
+                    // we keep mission_items under each mission
+                    FirebaseDatabase.getInstance().getReference("teams/" + team + "/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
 
-                                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            for (DataSnapshot child : dataSnapshot.getChildren()) {
 
-                                    Mission mission = child.getValue(Mission.class);
-                                    Integer total_rows_completed = mission.getTotal_rows_completed();
-                                    Integer total_rows_with_phone = mission.getTotal_rows_in_spreadsheet_with_phone();
-                                    if (total_rows_completed != null && total_rows_with_phone != null) {
-                                        int calls_remaining = total_rows_with_phone - total_rows_completed;
-                                        Integer percent_complete = mission.getPercent_complete();
-                                        //  have to double up the % sign to escape it ----v
-                                        heading_mission_progress.setText(String.format("%d%% Complete (%d calls remaining)", percent_complete, calls_remaining));
-                                    }
+                                Mission mission = child.getValue(Mission.class);
+                                Integer total_rows_completed = mission.getTotal_rows_completed();
+                                Integer total_rows_with_phone = mission.getTotal_rows_in_spreadsheet_with_phone();
+                                if (total_rows_completed != null && total_rows_with_phone != null) {
+                                    int calls_remaining = total_rows_with_phone - total_rows_completed;
+                                    Integer percent_complete = mission.getPercent_complete();
+                                    //  have to double up the % sign to escape it ----v
+                                    heading_mission_progress.setText(String.format("%d%% Complete (%d calls remaining)", percent_complete, calls_remaining));
                                 }
-
                             }
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-                            }
-                        });
+                        }
 
-                        // set fields back to visible if they were previously set to View.GONE
-                        setFieldsVisible();
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                        }
+                    });
 
-                        User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
+                    // set fields back to visible if they were previously set to View.GONE
+                    setFieldsVisible();
 
-                        String missionName = missionDetail.getMission_name();
-                        String missionDescription = missionDetail.getDescription();
-                        String missionScript = missionDetail.getScript();
+                    User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
 
-                        mission_name.setText(missionName);
-                        mission_description.setText(missionDescription);
-                        mission_script.setText(missionScript);
-                        button_call_person1.setVisibility(View.VISIBLE);
-                        button_call_person1.setText(missionDetail.getName() + " " + missionDetail.getPhone());
-                        wireUp(button_call_person1, missionDetail);
+                    String missionName = missionDetail.getMission_name();
+                    String missionDescription = missionDetail.getDescription();
+                    String missionScript = missionDetail.getScript();
 
-                        prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
+                    mission_name.setText(missionName);
+                    mission_description.setText(missionDescription);
+                    mission_script.setText(missionScript);
+                    button_call_person1.setVisibility(View.VISIBLE);
+                    button_call_person1.setText(missionDetail.getName() + " " + missionDetail.getPhone());
+                    wireUp(button_call_person1, missionDetail);
 
-                        missionDetail.setAccomplished("in progress");
-                        missionDetail.setActive_and_accomplished("true_in progress");
+                    prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
 
-                        // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
-                        // and save the original value in group_number_was
-                        missionDetail.setGroup_number_was(missionDetail.getGroup_number());
-                        missionDetail.setGroup_number(999999);
+                    missionDetail.setAccomplished("in progress");
+                    missionDetail.setActive_and_accomplished("true_in progress");
 
-                        dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
-                    }
+                    // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
+                    // and save the original value in group_number_was
+                    missionDetail.setGroup_number_was(missionDetail.getGroup_number());
+                    missionDetail.setGroup_number(999999);
 
+                    dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
                 }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+            }
 
-                }
-            });
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
 
-
-        } // else  that belongs to if(missionItem != null) {
-
-
-        setHasOptionsMenu(true);
-        return myView;
+            }
+        });
     }
 
     private void workThis(MissionDetail missionItem) {
@@ -441,5 +464,7 @@ public class MyMissionFragment extends BaseFragment {
             }
         }
     }
+
+
 
 }

@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.R;
+import com.brentdunklau.telepatriot_android.citizenbuilder.CBTeam;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -19,7 +20,7 @@ import com.google.firebase.database.ValueEventListener;
  */
 
 public class TeamAdapter extends RecyclerView.Adapter<TeamAdapter.TeamNameHolder> {
-    private String[] mDataset;
+    private CBTeam[] mDataset;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -51,7 +52,7 @@ public class TeamAdapter extends RecyclerView.Adapter<TeamAdapter.TeamNameHolder
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public TeamAdapter(String[] myDataset) {
+    public TeamAdapter(CBTeam[] myDataset) {
         mDataset = myDataset;
     }
 
@@ -70,9 +71,8 @@ public class TeamAdapter extends RecyclerView.Adapter<TeamAdapter.TeamNameHolder
              */
             @Override
             public void onItemClick(final View view, int position) {
-                String selectedTeam = mDataset[position];
-                Team team = new Team(selectedTeam);
-                User.getInstance().setCurrentTeam(team);
+                CBTeam selectedTeam = mDataset[position];
+                User.getInstance().setCurrentTeam(selectedTeam);
 
                 Activity act = (Activity) view.getContext();
                 DrawerLayout drawer = (DrawerLayout) act.findViewById(R.id.drawer_layout);
@@ -93,7 +93,7 @@ public class TeamAdapter extends RecyclerView.Adapter<TeamAdapter.TeamNameHolder
     public void onBindViewHolder(TeamNameHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        String val = mDataset[position];
+        String val = mDataset[position].getTeam_name();
         holder.mTextView.setText(val);
     }
 
