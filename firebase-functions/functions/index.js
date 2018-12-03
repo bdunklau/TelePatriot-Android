@@ -119,8 +119,8 @@ const fixstuff = require('./fixstuff')
 exports.correctPhoneCallOutcomes = fixstuff.correctPhoneCallOutcomes
 exports.fixBadMissionItemRecords = fixstuff.fixBadMissionItemRecords
 
-// dev deploy: 11/8/18
-// prod deploy: 11/8/18
+// dev deploy: 11/8/18, 12/1/18
+// prod deploy: 11/8/18, 12/1/18
 const userList = require('./userList')
 exports.downloadUsers = userList.downloadUsers
 exports.manageUsers = userList.manageUsers
