@@ -170,9 +170,6 @@ exports.grantAccess = function(updates, uid, name, email) {
 
     })
 
-
-
-
 }
 
 // just housekeeping - always timestamp the event

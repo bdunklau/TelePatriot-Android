@@ -27,6 +27,9 @@ public class CBMissionDetail {
     private String name;
     private String phone;
     private String person_id;
+    private String total; // calls to make, actually int value
+    private String calls_made; //actually int value
+    private String percent_complete; //actually int value
 
     private String citizen_builder_domain;
     private String citizen_builder_api_key_name;

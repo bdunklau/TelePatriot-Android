@@ -18,14 +18,134 @@ const db = admin.database().ref()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:userCreated,functions:approveUserAccount
+firebase deploy --only functions:userCreated,functions:approveUserAccount,functions:onEmailEstablished,functions:onCitizenBuilerId,functions:onPetition,functions:onConfidentialityAgreement,functions:onBanned
 
 ***/
 
 
-// TODO fix index.js  This function should not be exported as userCreated.
-// TODO keep the names in index.js identical to what they are here
 exports.userCreated = functions.auth.user().onCreate(event => {
+    console.log("userCreated.js: onCreate called")
+    // UserRecord is created
+    // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s
+    // UserRecord contains: displayName, email, photoUrl, uid
+    // all of this is accessible via event.data
+
+    var uid = event.data.uid
+    var email = event.data.email
+    var name = email // default value if name not present
+    if(event.data.displayName) name = event.data.displayName
+    var photoUrl = event.data.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
+
+    var updates = {}
+
+
+    // kinda sucky - this query just to simulate an error condition (not getting name and/or email from auth provider)
+    return db.child('administration/configuration').once('value').then(snapshot => {
+        if(!snapshot.val().simulate_missing_name) {
+            updates['users/'+uid+'/name'] = name
+            updates['users/'+uid+'/name_lower'] = name.toLowerCase()
+        }
+        if(!snapshot.val().simulate_missing_email) {
+            updates['users/'+uid+'/email'] = email
+        }
+
+        updates['users/'+uid+'/photoUrl'] = photoUrl
+        updates['users/'+uid+'/created'] = date.asCentralTime()
+        updates['users/'+uid+'/created_ms'] = date.asMillis()
+
+        // email will be null from FB if the person hasn't verified their email with FB
+        if(updates['users/'+uid+'/email'] && updates['users/'+uid+'/name']) {
+            updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
+                                                                     // leave COS but aren't banned
+        }
+        else {
+            updates['users/'+uid+'/account_disposition'] = 'disabled'
+        }
+
+        return db.child('/').update(updates)
+
+    }) // end:  return db.child('administration/configuration').once('value').then(snapshot => {
+})
+
+
+// fires when a user's email is first added to his record in the firebase db
+exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreate(event => {
+    var uid = event.params.uid
+    var email = event.data.val()
+    var event = "on_user_created" //  ref:  administration/configuration/on_user_created
+    var returnFn = function(result) {
+        if(result.returnEarly) return false
+        else if(result.error) {
+            // TODO what do we do with an error?
+        }
+        else if(result.notFound) {
+            // TODO what to do when the user isn't in the CB db?
+        }
+        else if(result.vol) {
+            // This is what we want to happen: email was found in the CB db
+            volunteers.updateUser(uid, result)
+        }
+        else return false
+    }
+
+    // "event" will be the name of some node under administration/configuration like
+    // on_user_created or on_user_login.  Whatever attribute we care about, we are going to
+    // check the value of the attribute to make sure the value is "volunteers".  Because
+    // if the value isn't "volunteers" then this function should return false
+    volunteers.getUserInfoFromCB_byEmail(email, event, returnFn)
+    return true
+})
+
+
+// fires when a user's email is first added to his record in the firebase db
+// When the CB ID is first written to the user's record, we will take this as our cue to make an API
+// call to CB.  The API call will tell CB to put this user on his state training team.  CB will respond
+// with the team_name and team_id of this team so that we can write this team info to the user's
+// current_team node
+exports.onCitizenBuilderId = functions.database.ref('users/{uid}/citizen_builder_id').onCreate(event => {
+    return addTrainingTeam(event)
+})
+
+exports.onPetition = functions.database.ref('users/{uid}/has_signed_petition').onCreate(event => {
+    return addTrainingTeam(event)
+})
+
+exports.onConfidentialityAgreement = functions.database.ref('users/{uid}/has_signed_confidentiality_agreement').onCreate(event => {
+    return addTrainingTeam(event)
+})
+
+exports.onBanned = functions.database.ref('users/{uid}/is_banned').onCreate(event => {
+    return addTrainingTeam(event)
+})
+
+
+addTrainingTeam = function(event) {
+    var uid = event.params.uid
+    var state_abbrev = event.data.val()
+
+    return event.data.adminRef.root.child('users/'+uid).once('value').then(snapshot => {
+        var citizen_builder_id = snapshot.val().citizen_builder_id
+        // ok to place on training team?...
+        var ok = snapshot.val().citizen_builder_id && snapshot.val().has_signed_petition && snapshot.val().has_signed_confidentiality_agreement
+                    && !snapshot.val().is_banned
+        if(!ok) return false
+
+        // TODO : POST citizen_builder_id and team_name to CB to add this person to the team
+        // TODO response from CB should contain the team_id
+        // TODO Need to call a CB endpoint that doesn't exist yet.  Once it does exist,
+        // TODO we'll put the stuff below into the success call fn
+//        var updates = {}
+//        updates['users/'+uid+'/current_team/'+team_name+'/team_name'] = team_name
+//        updates['users/'+uid+'/current_team/'+team_name+'/team_id'] = team_id
+//        return event.data.adminRef.root.child('/').update(updates)
+    })
+}
+
+
+/***
+This _backup version is just here until I get the new userCreated function is done
+***/
+exports.userCreated_backup = functions.auth.user().onCreate(event => {
     console.log("userCreated.js: onCreate called")
     // UserRecord is created
     // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s

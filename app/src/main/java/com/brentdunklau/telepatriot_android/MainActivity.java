@@ -238,6 +238,7 @@ public class MainActivity extends AppCompatActivity
 
 
     // See MainNavigationView.findMenuItemForRole()
+    // See CenterViewController.didSelectSomething() on the iOS side
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -266,7 +267,7 @@ public class MainActivity extends AppCompatActivity
                     }
                     else {
                         Fragment fragment = new MyMissionFragment();
-                        getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+                        getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, "mission_fragment").addToBackStack(fragment.getClass().getName()).commit();
                     }
                 }
 

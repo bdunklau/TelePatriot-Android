@@ -33,12 +33,16 @@ exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
 
-// dev deploy: 11/9/18, 11/16/18, 11/17/18
+// dev deploy: 12/8/18
 const createModule = require('./userCreated')
-// TODO fix index.js  This function should not be exported as userCreated.
-// TODO keep the names in index.js identical to what they are here
 exports.approveUserAccount = createModule.approveUserAccount
 exports.userCreated = createModule.userCreated
+exports.onEmailEstablished = createModule.onEmailEstablished
+exports.onCitizenBuilderId = createModule.onCitizenBuilderId
+exports.onPetition = createModule.onPetition
+exports.onConfidentialityAgreement = createModule.onConfidentialityAgreement
+exports.onBanned = createModule.onBanned
+
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
@@ -50,7 +54,7 @@ const masterSpreadsheetReader = require('./sheets/import-master-sheet')
 exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
 exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
 
-// dev deploy:  11/18/18
+// dev deploy:  11/18/18, 12/10/18
 // prod deploy: 11/19/18
 const teams = require('./teams')
 exports.manageTeams = teams.manageTeams // contains links to all the other team functions
@@ -332,7 +336,7 @@ exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
 exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
-// dev deploy: 11/9/18, 11/16/18, 11/17/18
+// dev deploy: 12/8/18
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
 exports.onLogin = volunteers.onLogin
