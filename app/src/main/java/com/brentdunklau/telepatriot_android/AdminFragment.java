@@ -39,7 +39,7 @@ public class AdminFragment extends BaseFragment {
         wireUp(button_unassigned_users, new UnassignedUsersFragment());
         wireUp(button_search_users, new SearchUsersFragment());
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

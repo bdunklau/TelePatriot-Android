@@ -58,7 +58,7 @@ public class SwitchTeamsFragment extends BaseFragment {
         ref = FirebaseDatabase.getInstance().getReference("users/"+User.getInstance().getUid()+"/teams");
         showTeams(ref);
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

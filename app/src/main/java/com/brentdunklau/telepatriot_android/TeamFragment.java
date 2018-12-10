@@ -22,7 +22,7 @@ public class TeamFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.team_fragment, container, false);
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 }

@@ -39,7 +39,7 @@ public class VolunteerFragment extends BaseFragment {
          wireUp(button_test_volunteer_screen, new TestVolunteerFragment());
          *****/
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

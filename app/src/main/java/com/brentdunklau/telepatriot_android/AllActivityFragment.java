@@ -58,7 +58,7 @@ public class AllActivityFragment extends BaseFragment {
 
         showMissionActivity();
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

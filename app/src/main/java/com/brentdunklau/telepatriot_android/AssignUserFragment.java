@@ -202,7 +202,7 @@ public class AssignUserFragment extends AdminFragment implements FragmentContain
             }
         });
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
     }
 
 

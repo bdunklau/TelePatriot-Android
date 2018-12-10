@@ -53,7 +53,7 @@ public class MissionsFragment extends DirectorFragment {
         wireUp(btnAllMissions, new AllMissionsFragment());
         wireUp(btnAllActivity, new AllActivityFragment());
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

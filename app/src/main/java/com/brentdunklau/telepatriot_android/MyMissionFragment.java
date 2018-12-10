@@ -183,7 +183,7 @@ public class MyMissionFragment extends BaseFragment {
         } // else  that belongs to if(missionItem != null) {
 
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 
