@@ -77,7 +77,7 @@ public class MissionDetailsFragment extends BaseFragment {
 
         getMissionItems();
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

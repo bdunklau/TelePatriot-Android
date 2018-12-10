@@ -40,7 +40,7 @@ public class UnassignedUsersFragment extends AdminFragment {
 
         showUnassignedUsers();
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

@@ -58,7 +58,7 @@ public class MissionItemWrapUpFragment extends BaseFragment {
             }
         });
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

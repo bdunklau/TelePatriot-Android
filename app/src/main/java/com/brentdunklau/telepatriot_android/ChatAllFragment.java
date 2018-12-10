@@ -56,7 +56,7 @@ public class ChatAllFragment extends BaseFragment {
 
         showUsersWithChats(getFragmentManager(), this);
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

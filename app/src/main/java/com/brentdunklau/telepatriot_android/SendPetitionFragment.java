@@ -121,7 +121,7 @@ public class SendPetitionFragment extends BaseFragment {
         });
 
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

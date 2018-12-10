@@ -96,7 +96,7 @@ public class SwitchTeamsFragment extends BaseFragment {
         });
 
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

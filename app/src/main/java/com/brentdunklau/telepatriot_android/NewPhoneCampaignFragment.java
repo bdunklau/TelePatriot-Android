@@ -96,7 +96,7 @@ public class NewPhoneCampaignFragment extends BaseFragment {
         });
 
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

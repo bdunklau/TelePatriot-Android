@@ -34,7 +34,7 @@ public class ListUsersFragment extends AdminFragment implements PassInfo {
             t.printStackTrace();
         }
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
 
         text_admin = myView.findViewById(R.id.text_admin);
         text_director = myView.findViewById(R.id.text_director);

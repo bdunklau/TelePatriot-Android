@@ -56,7 +56,7 @@ public class ChooseSpreadsheetTypeFragment extends DirectorFragment {
         wireUp(button_links_to_other_spreadsheets, n2);
 
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

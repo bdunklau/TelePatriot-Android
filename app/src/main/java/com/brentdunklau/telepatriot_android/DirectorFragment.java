@@ -40,7 +40,7 @@ public class DirectorFragment extends BaseFragment {
         wireUp(button_missions, missionsFragment);
         wireUp(button_teams, teamsFragment);
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

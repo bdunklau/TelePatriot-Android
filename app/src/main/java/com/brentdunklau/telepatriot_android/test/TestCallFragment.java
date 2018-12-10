@@ -68,7 +68,7 @@ public class TestCallFragment extends Fragment {
         });
 
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

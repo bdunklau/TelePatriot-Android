@@ -36,7 +36,7 @@ public class TestVolunteerFragment extends Fragment {
         wireUp(button_test_camera, new CameraFragment());
         wireUp(button_test_video, new VideoFragment());
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 

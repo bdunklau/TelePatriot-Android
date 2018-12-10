@@ -70,7 +70,7 @@ public class TeamsFragment extends BaseFragment {
         setUI();
         showTeams();
 
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
         return myView;
     }
 
