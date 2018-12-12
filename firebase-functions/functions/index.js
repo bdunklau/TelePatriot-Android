@@ -371,10 +371,16 @@ const cb_api_events = require('./citizen_builder_api/cb_api_events')
 exports.testViewCBAPIEvents = cb_api_events.testViewCBAPIEvents
 
 
-// dev deploy: 11/17/18
+// dev deploy: 12/11/18
 const role_api = require('./telepatriot_api/role_api')
 exports.testRoleApiForm = role_api.testRoleApiForm
 exports.testRoleApi = role_api.testRoleApi
 exports.api_add_role = role_api.api_add_role
 exports.api_remove_role = role_api.api_remove_role
+
+
+// dev deploy: 12/11/18
+const account_api = require('./telepatriot_api/account_api')
+exports.testAccountDisposition = account_api.testAccountDisposition
+exports.api_account_disposition = account_api.api_account_disposition
 

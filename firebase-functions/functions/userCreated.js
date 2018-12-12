@@ -119,7 +119,7 @@ exports.onBanned = functions.database.ref('users/{uid}/is_banned').onCreate(even
 })
 
 
-addTrainingTeam = function(event) {
+var addTrainingTeam = function(event) {
     var uid = event.params.uid
     var state_abbrev = event.data.val()
 
