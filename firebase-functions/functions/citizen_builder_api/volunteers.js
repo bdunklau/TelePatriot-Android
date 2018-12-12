@@ -243,6 +243,7 @@ exports.getUserInfoFromCB_byEmail = function(email, event, returnFn) {
     return db.ref('administration/configuration').once('value').then(snapshot => {
         var eventValue = snapshot.val()[event]
         if(!eventValue || eventValue != "volunteers") {
+            console.log('eventValue = ', eventValue, ' : return early : not what we wanted')
             returnFn({returnEarly : false})
         }
         var environment = snapshot.val().environment ? snapshot.val().environment : "cb_production_environment"
@@ -273,12 +274,17 @@ exports.getUserInfoFromCB_byEmail = function(email, event, returnFn) {
 
             if(error) {
                 //return res.status(200).send(thePage({error: error}))
+                console.log('return error = ',error,  ' not what we wanted')
                 returnFn({error: error})
             }
             else if(ret.error) {
+                console.log('notFound: true')
                 returnFn({notFound: true})
             }
-            else returnFn({vol: ret, configuration: snapshot.val()})
+            else {
+                console.log('found: ', email, ' in CB')
+                returnFn({vol: ret, configuration: snapshot.val()})
+            }
 
             // If there's no one in CB with this email, the API call will
             // return {"error": "Not found"}

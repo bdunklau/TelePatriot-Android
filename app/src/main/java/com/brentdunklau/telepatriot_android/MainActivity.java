@@ -275,14 +275,21 @@ public class MainActivity extends AppCompatActivity
                 public void onCancelled(DatabaseError databaseError) { }
             });
 
-        } else if (id == R.id.nav_director_layout) {
-            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
-            Fragment fragment = new MissionsFragment();
-            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-        } else if (id == R.id.nav_admin_layout) {
-            Fragment fragment = new AdminFragment();
-            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
         }
+
+
+        // TODO take this out for the time being (Dec 2018) until we decide what kind of Director and Admin
+        // functionality we want to put back in after the CB integration.  Integrating with CB means most/all of
+        // the Director and Admin functions are being done through CB now.
+
+//        else if (id == R.id.nav_director_layout) {
+//            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
+//            Fragment fragment = new MissionsFragment();
+//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+//        } else if (id == R.id.nav_admin_layout) {
+//            Fragment fragment = new AdminFragment();
+//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+//        }
         else if (id == R.id.vidyo_chat){
             Fragment fragment = new VidyoChatFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();

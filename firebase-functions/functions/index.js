@@ -33,7 +33,7 @@ exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
 
-// dev deploy: 12/8/18
+// dev deploy: 12/11/18
 const createModule = require('./userCreated')
 exports.approveUserAccount = createModule.approveUserAccount
 exports.userCreated = createModule.userCreated
@@ -327,7 +327,7 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
-// dev deploy: 10/31/18, 11/3/18, 11/4/18, 11/16/18, 11/17/18
+// dev deploy: 12/11/18
 // prod deploy: 9/12/18, 9/20/18
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
@@ -336,7 +336,7 @@ exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
 exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
-// dev deploy: 12/8/18
+// dev deploy: 12/11/18
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
 exports.onLogin = volunteers.onLogin
