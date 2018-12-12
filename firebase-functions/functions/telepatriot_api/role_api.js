@@ -58,8 +58,11 @@ exports.testRoleApi = functions.https.onRequest((req, res) => {
 
 
 
-var rolemapping = {'TelePatriot Volunteer':'Volunteer', 'TelePatriot Director':'Director',
-                    'TelePatriot Admin':'Admin', 'TelePatriot Moderator':'Moderator'}
+var rolemapping = {'TelePatriot Volunteer':'Volunteer',
+                    'TelePatriot Director':'Director',
+                    'TelePatriot Video Creator':'Video Creator',
+                    'TelePatriot Admin':'Admin',
+                    'TelePatriot Moderator':'Moderator'}
 
 
 exports.api_add_role = functions.https.onRequest((req, res) => {
