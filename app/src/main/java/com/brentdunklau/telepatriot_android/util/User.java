@@ -1,11 +1,11 @@
 package com.brentdunklau.telepatriot_android.util;
 
-import android.accounts.Account;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.google.android.gms.auth.AccountChangeEvent;
+import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionDetail;
+import com.brentdunklau.telepatriot_android.citizenbuilder.CBTeam;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -34,9 +34,13 @@ public class User implements FirebaseAuth.AuthStateListener {
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     //private List<String> teamNames = new ArrayList<String>();
+    private Integer citizen_builder_id;
     private boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
-    private String recruiter_id, missionItemId, missionId;
-    private MissionDetail missionItem;
+    private String recruiter_id;
+    private String missionItemId;  // no longer useful once we move to CB
+    private String missionId;
+    private MissionDetail missionItem;     // old way of getting missions
+    private CBMissionDetail cbMissionItem; // new way of getting missions (Dec 2018)
     private String current_video_node_key;
     private String account_disposition;
     private boolean has_signed_petition;
@@ -53,7 +57,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     private String video_invitation_from; // uid of someone that invited this person to a video chat
     private String video_invitation_from_name; // name of someone that invited this person to a video chat
 
-    private Team currentTeam;
+    private TeamIF currentTeam;
     //private List<Team> teams = new ArrayList<Team>();
     private ChildEventListener childEventListener;
     private static User singleton;
@@ -138,6 +142,7 @@ public class User implements FirebaseAuth.AuthStateListener {
                     User.this.has_signed_petition = ub.getHas_signed_petition() == null ? false : ub.getHas_signed_petition();
                     User.this.has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement() == null ? false : ub.getHas_signed_confidentiality_agreement();
                     User.this.is_banned = ub.getIs_banned() == null ? false : ub.getIs_banned();
+                    User.this.citizen_builder_id = ub.getCitizen_builder_id();
 
                     // PUT THIS BACK IN EVENTUALLY
                     // TODO seems weird to do this each time, but the User object
@@ -205,7 +210,7 @@ public class User implements FirebaseAuth.AuthStateListener {
                 // team nodes are keyed by the team name and they also have a "team_name" node
                 // under the key that is also the name of the team.  The team_name node is so
                 // that we can take advantage of the deserialization function built in to firebase
-                Team team = dataSnapshot.getValue(Team.class);
+                TeamIF team = dataSnapshot.getValue(CBTeam.class);
                 //setCurrentTeam(team);
                 User.this.currentTeam = team;
                 fireTeamSelected(User.this.currentTeam);
@@ -243,6 +248,14 @@ public class User implements FirebaseAuth.AuthStateListener {
             public void onCancelled(DatabaseError databaseError) { }
         });
 
+    }
+
+    public Integer getCitizen_builder_id() {
+        return citizen_builder_id;
+    }
+
+    public void setCitizen_builder_id(Integer citizen_builder_id) {
+        this.citizen_builder_id = citizen_builder_id;
     }
 
     private void updateAttributes(UserBean ub, User user) {
@@ -339,10 +352,19 @@ public class User implements FirebaseAuth.AuthStateListener {
         unassignCurrentMissionItem();
     }
 
+    // TODO remove after CB integration is complete
     public void setCurrentMissionItem(String missionItemId, MissionDetail missionItem) {
         this.missionItemId = missionItemId;
         this.missionItem = missionItem;
         this.missionId = missionItem.getMission_id();
+    }
+
+    public void setCurrentCBMissionItem(CBMissionDetail cbMissionItem) {
+        this.cbMissionItem = cbMissionItem;
+    }
+
+    public CBMissionDetail getCurrentCBMissionItem() {
+        return cbMissionItem;
     }
 
     public MissionDetail getCurrentMissionItem() {
@@ -350,13 +372,19 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public void unassignCurrentMissionItem() {
-        if(missionItem == null)
-            return;
-        missionItem.unassign(missionItemId);
-        missionItemId = null;
-        missionItem = null;
+        // TODO this can go after CB integration is complete
+        if(missionItem != null) {
+            missionItem.unassign(missionItemId);
+            missionItemId = null;
+            missionItem = null;
+        }
+
+        if(cbMissionItem != null) {
+            cbMissionItem.unassign();
+        }
     }
 
+    // TODO remove after CB integration is complete
     // called from MissionItemWrapUpFragment when the user submit the notes at the end of a call
     public void submitWrapUp(String outcome, String notes) {
         String team = User.getInstance().getCurrentTeamName();
@@ -377,20 +405,29 @@ public class User implements FirebaseAuth.AuthStateListener {
         missionItem = null;
     }
 
+
     // similar to AppDelegate.onCallEnded() on iOS
-    public void completeMissionItem(String myPhone) {
-        if(missionItem == null || missionItemId == null || missionItem._isAccomplished())
-            return;
-        missionItem.complete(missionItemId);
+    public void callEnded(String myPhone) {
+        // for "legacy" missions that are stored in the TelePatriot/Firebase db
+        if(missionItem != null && missionItemId != null && !missionItem._isAccomplished()) {
+            missionItem.complete(missionItemId);
 
-        String team = User.getInstance().getCurrentTeamName();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/activity");
+            String team = User.getInstance().getCurrentTeamName();
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
 
-        String volunteerPhone = myPhone;
-        String supporterName = missionItem.getName();
-        MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), volunteerPhone, supporterName);
-        ref.child("all").push().setValue(m);
-        ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
+            String volunteerPhone = myPhone;
+            String supporterName = missionItem.getName();
+            MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), volunteerPhone, supporterName);
+            ref.child("all").push().setValue(m);
+            ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
+        }
+
+        if(cbMissionItem != null) {
+            AccountStatusEvent.CallEnded evt = new AccountStatusEvent.CallEnded(cbMissionItem);
+            for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+                l.fired(evt); // MainActivity is the listener we care about in this case
+            }
+        }
     }
 
     public String getName() {
@@ -543,7 +580,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         return "disabled".equalsIgnoreCase(account_disposition);
     }
 
-    public Team getCurrentTeam() {
+    public TeamIF getCurrentTeam() {
         return currentTeam;
     }
 
@@ -628,10 +665,14 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public String getCurrentTeamName() {
-        return currentTeam != null ? currentTeam.getTeam_name() : "No Team Selected";
+        return currentTeam != null ? currentTeam.getTeam_name() : "None";
     }
 
-    public void setCurrentTeam(Team currentTeam) {
+    public Integer getCurrentTeamId() {
+        return currentTeam != null ? currentTeam.getId() : null;
+    }
+
+    public void setCurrentTeam(TeamIF currentTeam) {
         HashMap map = new HashMap();
         map.put(currentTeam.getTeam_name(), currentTeam);
         userRef.child("current_team").setValue(map);
@@ -719,7 +760,7 @@ public class User implements FirebaseAuth.AuthStateListener {
         }
     }
 
-    private void fireTeamSelected(Team team) {
+    private void fireTeamSelected(TeamIF team) {
         AccountStatusEvent.TeamSelected evt = new AccountStatusEvent.TeamSelected(team.getTeam_name());
         for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
             l.fired(evt);

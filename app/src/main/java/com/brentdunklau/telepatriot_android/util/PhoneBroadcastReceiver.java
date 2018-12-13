@@ -3,15 +3,7 @@ package com.brentdunklau.telepatriot_android.util;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.telephony.TelephonyManager;
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-
-import java.util.Date;
 
 /**
  * Created by bdunklau on 10/23/17.
@@ -70,7 +62,7 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
             ref.child(phone).push().setValue(m);
             */
             String volunteerPhone = getVolunteerPhone(ctx);
-            User.getInstance().completeMissionItem(volunteerPhone); // all the stuff above could go in this method
+            User.getInstance().callEnded(volunteerPhone);
         }
 
         /*

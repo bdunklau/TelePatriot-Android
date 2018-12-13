@@ -1,5 +1,7 @@
 package com.brentdunklau.telepatriot_android.util;
 
+import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionDetail;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -103,6 +105,18 @@ public class AccountStatusEvent {
     public static class AccountDisabled extends AccountStatusEvent {
         AccountDisabled() {
             super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "user account disabled");
+        }
+    }
+
+    // not really an account status event
+    public static class CallEnded extends AccountStatusEvent {
+        CBMissionDetail cbMissionDetail;
+        CallEnded(CBMissionDetail cbMissionDetail) {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "CitizenBuilder mission completed");
+            this.cbMissionDetail = cbMissionDetail;
+        }
+        public CBMissionDetail getCbMissionDetail() {
+            return cbMissionDetail;
         }
     }
 

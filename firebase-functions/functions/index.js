@@ -33,11 +33,17 @@ exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
 
+// dev deploy: 12/11/18
+// prod deploy: 12/12/18
 const createModule = require('./userCreated')
-// TODO fix index.js  This function should not be exported as userCreated.
-// TODO keep the names in index.js identical to what they are here
 exports.approveUserAccount = createModule.approveUserAccount
 exports.userCreated = createModule.userCreated
+exports.onEmailEstablished = createModule.onEmailEstablished
+exports.onCitizenBuilderId = createModule.onCitizenBuilderId
+exports.onPetition = createModule.onPetition
+exports.onConfidentialityAgreement = createModule.onConfidentialityAgreement
+exports.onBanned = createModule.onBanned
+
 
 const missions = require('./sheets/mission-activator')
 exports.missionActivation = missions.missionActivation
@@ -49,8 +55,8 @@ const masterSpreadsheetReader = require('./sheets/import-master-sheet')
 exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
 exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
 
-// dev deploy:  11/18/18
-// prod deploy: 11/19/18
+// dev deploy:  11/18/18, 12/10/18
+// prod deploy: 12/12/18
 const teams = require('./teams')
 exports.manageTeams = teams.manageTeams // contains links to all the other team functions
 exports.copyTeam = teams.copyTeam
@@ -304,7 +310,7 @@ exports.onTokenRequested = switchboard.onTokenRequested
 exports.onPublishRequested = switchboard.onPublishRequested
 
 
-// prod deploy: 9/12/18, 9/20/18
+// prod deploy: 12/12/18
 const twilio = require('./twilio-telepatriot')
 exports.testTwilioToken = twilio.testTwilioToken
 exports.twilioCallback = twilio.twilioCallback
@@ -316,40 +322,75 @@ exports.testListParticipants = twilio.testListParticipants
 exports.testCompose = twilio.testCompose
 
 // prod deploy: 9/12/18, 9/20/18
+// prod deploy: 12/12/18
 const videoList = require('./video-list')
 exports.videoListMain = videoList.videoListMain
 exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
-// prod deploy: 9/12/18, 9/20/18
+// dev deploy: 12/11/18
+// prod deploy: 12/12/18
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
 exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
+exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
+exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
+// dev deploy: 12/11/18
+// prod deploy: 12/12/18
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
+exports.onLogin = volunteers.onLogin
 
+// dev deploy: 11/3/18
+// prod deploy: 12/12/18
 const person_teams = require('./citizen_builder_api/teams-person_teams')
 exports.testPersonTeams = person_teams.testPersonTeams
 
+// dev deploy: 11/3/18
+// prod deploy: 12/12/18
 const cb_missions = require('./citizen_builder_api/missions')
 exports.testTeamMissions = cb_missions.testTeamMissions
 exports.createMission = cb_missions.createMission
 
 
 // prod deploy: 9/12/18, 9/20/18
+// prod deploy: 12/12/18
 const videoOffers = require('./video-offers')
 exports.onVideoOffer = videoOffers.onVideoOffer
 
 // prod deploy: 9/12/18, 9/20/18
+// prod deploy: 12/12/18
 const geocode = require('./geocode')
 exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
 
-// prod deploy: 10/29/18
+// dev deploy: 11/21/18
+// prod deploy: 12/12/18
 const simulate = require('./simulate')
 exports.testViewSimulatorParameters = simulate.testViewSimulatorParameters
+
+// dev deploy:  11/4/18
+// prod deploy: 12/12/18
+const cb_api_events = require('./citizen_builder_api/cb_api_events')
+exports.testViewCBAPIEvents = cb_api_events.testViewCBAPIEvents
+
+
+// dev deploy: 12/11/18
+// prod deploy: 12/12/18
+const role_api = require('./telepatriot_api/role_api')
+exports.testRoleApiForm = role_api.testRoleApiForm
+exports.testRoleApi = role_api.testRoleApi
+exports.api_add_role = role_api.api_add_role
+exports.api_remove_role = role_api.api_remove_role
+
+
+// dev deploy: 12/11/18
+// prod deploy: 12/12/18
+const account_api = require('./telepatriot_api/account_api')
+exports.testAccountDisposition = account_api.testAccountDisposition
+exports.api_account_disposition = account_api.api_account_disposition
 

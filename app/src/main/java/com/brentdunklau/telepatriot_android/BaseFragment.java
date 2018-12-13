@@ -22,7 +22,7 @@ public class BaseFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume");
+        Log.d(TAG, "onResume", new Exception("check stack trace"));
         handleCurrentMissionItem();
     }
 
@@ -55,23 +55,22 @@ public class BaseFragment extends Fragment {
     }
 
     private boolean userInTheMiddleOfSomething() {
-        boolean hasMission = User.getInstance().getCurrentMissionItem() != null;
-        return hasMission;
+        boolean hasLegacyMission = User.getInstance().getCurrentMissionItem() != null;
+        boolean hasCBMission = User.getInstance().getCurrentCBMissionItem() != null;
+        return hasLegacyMission || hasCBMission;
     }
 
-    private void unassignMissionItem() {
-        User.getInstance().unassignCurrentMissionItem();
-    }
+//    private void unassignMissionItem() {
+//        User.getInstance().unassignCurrentMissionItem();
+//    }
 
     private void handleCurrentMissionItem() {
         if(!doSuper)
             return;
 
         if(userInTheMiddleOfSomething()) {
-            // alert the user that he should skip/dismiss the current mission?
-            // why do that?  why can't we just un-assign the mission FOR them?
             Log.d(TAG, "un-assigning mission item");
-            unassignMissionItem();
+            User.getInstance().unassignCurrentMissionItem();
         }
     }
 

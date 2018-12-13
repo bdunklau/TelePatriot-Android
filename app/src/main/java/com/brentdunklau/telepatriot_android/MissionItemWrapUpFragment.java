@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import com.brentdunklau.telepatriot_android.util.QuitListener;
 import com.brentdunklau.telepatriot_android.util.User;
 
 /**
@@ -23,7 +24,7 @@ public class MissionItemWrapUpFragment extends BaseFragment {
     private String TAG = "MissionItemWrapUpFrag";
     private EditText edit_text_notes;
     private Button button_submit_get_another, button_submit_and_quit;
-    private Spinner mission_item_outcome;
+    private Spinner mission_item_outcome; // see outcome_array in strings.xml
     View myView;
 
     @Nullable
@@ -62,11 +63,6 @@ public class MissionItemWrapUpFragment extends BaseFragment {
     }
 
 
-    public interface QuitListener {
-        public void quit();
-    }
-
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -74,7 +70,7 @@ public class MissionItemWrapUpFragment extends BaseFragment {
             quitListener = (QuitListener) context; // basically, this is MainActivity
         }
         catch(ClassCastException e) {
-            // TODO don't do this
+            // TODO better to log in the db
             e.printStackTrace();
         }
     }

@@ -15,6 +15,7 @@ import java.util.Map;
 
 public class UserBean {
 
+    private Integer citizen_builder_id;
     private String name, email, uid, photoUrl, created, reviewed_by, recruiter_id;
     private Boolean has_signed_petition;
     private Boolean has_signed_confidentiality_agreement;
@@ -50,6 +51,14 @@ public class UserBean {
 
     public UserBean() {
 
+    }
+
+    public Integer getCitizen_builder_id() {
+        return citizen_builder_id;
+    }
+
+    public void setCitizen_builder_id(Integer citizen_builder_id) {
+        this.citizen_builder_id = citizen_builder_id;
     }
 
     public void setName(String name) {
@@ -340,6 +349,7 @@ public class UserBean {
 
         // multi-path update example
         Map m = new HashMap();
+        m.put("citizen_builder_id", citizen_builder_id);
         m.put("account_disposition", account_disposition);
         m.put("account_dispositioned_by", account_dispositioned_by);
         m.put("account_dispositioned_by_uid", account_dispositioned_by_uid);

@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
  * Created by bdunklau on 10/19/17.
  */
 
-public class Team implements Comparable<Team> {
+public class Team implements Comparable<Team>, TeamIF {
     String team_name;
 
     public Team() {
@@ -15,6 +15,11 @@ public class Team implements Comparable<Team> {
 
     public Team(String team_name) {
         setTeam_name(team_name);
+    }
+
+    // per TeamIF
+    public Integer getId() {
+        return null;
     }
 
     public String getTeam_name() {

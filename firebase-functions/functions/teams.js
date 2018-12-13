@@ -16,7 +16,7 @@ const db = admin.database();
 
 /***
 paste this on the command line...
-firebase deploy --only functions:manageTeams,functions:copyTeam,functions:copyMembers,functions:createTeam,functions:deleteMissionItem,functions:deleteTeam,functions:addPeopleToTeam,functions:downloadMissionReport,functions:downloadTeamRoster,functions:removePeopleFromTeam,functions:viewMembers,functions:viewMissions,functions:viewQueue,functions:setCurrentTeam,functions:resetCurrentTeam,functions:updateMemberListUnderTeams,functions:updateTeamListUnderUsers,functions:viewMissionReport,functions:cullTrainingTeam,functions:removeFromTrainingTeam,functions:teamlist,functions:addToTeamList,functions:removeTeamFromList
+firebase deploy --only functions:manageTeams,functions:copyTeam,functions:copyMembers,functions:createTeam,functions:deleteMissionItem,functions:deleteTeam,functions:addPeopleToTeam,functions:downloadMissionReport,functions:downloadTeamRoster,functions:removePeopleFromTeam,functions:viewMembers,functions:viewMissions,functions:viewQueue,functions:setCurrentTeam,functions:resetCurrentTeam,functions:updateMemberListUnderTeams,functions:updateTeamListUnderUsers,functions:viewMissionReport,functions:removeFromTrainingTeam,functions:teamlist,functions:addToTeamList,functions:removeTeamFromList
 ***/
 
 
@@ -450,88 +450,6 @@ exports.removeFromTrainingTeam = functions.database.ref('/users/{uid}/teams/{tea
 
 
 
-// This a one-time clean up function.  We had a bunch of people in Nov 2018 that were never
-// moved off the Training Team even though they were on other teams.
-// This function identifies them, and at the top of the page provides a link that fires this
-// function again, only this time, adds a cull=true request parameter that tells this function
-// to go ahead and remove the Training Team of the people identified as belong to at least one other team
-exports.cullTrainingTeam = functions.https.onRequest((req, res) => {
-
-    var count = 1
-    var cull = false
-    if(req.query.cull && req.query.cull == 'true') {
-        cull = true
-        //count = 0
-    }
-
-    return db.ref('users').once('value').then(snapshot => {
-
-        return db.ref('administration/newusers/assign_to_team').once('value').then(snap2 => {
-            var deleteTeam = snap2.val()
-            var deletes = {}
-            var data = []
-            var deleteTeam = snap2.val()
-            snapshot.forEach(function(child) {
-                var uid = child.key
-                var teams = child.val().teams
-                if(teams) {
-                    var keys = Object.keys(teams)
-                    if(keys.length > count) {
-                        var team = _.find(teams, {team_name: deleteTeam})
-                        var path = 'users/'+uid+'/teams/'+deleteTeam
-                        deletes[path] = null
-                        data.push({name: child.val().name, uid: uid, path: path, teams: teams})
-                    }
-                }
-            })
-
-            return {data: data, deletes: deletes, deleteTeam: deleteTeam}
-        })
-    })
-    .then(stuff => {
-        if(cull) {
-            return db.ref('/').update(stuff.deletes).then(() => {
-                return db.ref('users').once('value').then(snap3 => {
-                    var html = ''
-                    html += '<html><head></head><body>'
-                    html += '<h3><a href="/cullTrainingTeam?cull=true">Delete Everyone not on '+stuff.deleteTeam+'</a></h3>'
-                    html += '<table>'
-                    snap3.forEach(function(child) {
-                        var teams = child.val().teams
-                        if(teams) {
-                            var keys = Object.keys(teams)
-                            if(keys.length > count) {
-                                html += '<tr><td valign="top">'+child.val().name+'</td><td valign="top">'+child.key+'</td><td valign="top">'+_.join(keys, '<br/>')+'</td></tr>'
-                            }
-                        }
-                    })
-                    html += '</table>'
-                    html += '</body></html>'
-                    return res.status(200).send(html)
-                })
-            })
-
-        }
-        else {
-
-            var html = ''
-            html += '<html><head></head><body>'
-            html += '<h3><a href="/cullTrainingTeam?cull=true">Delete Everyone not on '+stuff.deleteTeam+'</a></h3>'
-            html += '<table>'
-
-            _.each(stuff.data, function(line) {
-                html += '<tr><td valign="top">'+line.name+'</td><td valign="top">'+line.uid+'</td><td valign="top">'+line.path+'</td><td valign="top">'+_.join(Object.keys(line.teams), '<br/>')+'</td></tr>'
-            })
-
-            html += '</table>'
-            html += '</body></html>'
-            return res.status(200).send(html)
-        }
-    })
-
-})
-
-
 var listMembers = function(team_name) {
 
     var stuff = ''
@@ -794,6 +712,7 @@ exports.removePeopleFromTeam = functions.https.onRequest((req, res) => {
 })
 
 
+// TODO might not need this after CB integration is complete
 // When a user is added as a member of a team, add this team to the user's list of teams also
 // That way, the new team will show up in SwitchTeamsVC
 exports.updateTeamListUnderUsers = functions.database.ref('/teams/{team_name}/members/{uid}').onWrite(event => {
@@ -808,7 +727,7 @@ exports.updateTeamListUnderUsers = functions.database.ref('/teams/{team_name}/me
     var memberDeletedUnderTeamNode = !event.data.exists() && event.data.previous.exists()
 
     if(memberAddedUnderTeamNode) {
-        /*return*/ event.data.adminRef.root.child('/users/'+uid+'/teams/'+team_name).set({team_name: team_name, date_added: date.asCentralTime()})
+        /*return*/ event.data.adminRef.root.child('/users/'+uid+'/teams/'+team_name).update({team_name: team_name, date_added: date.asCentralTime()})
         var logmsg = 'Set /users/'+uid+'/teams/'+team_name+' = {team_name: '+team_name+'}'
         return event.data.adminRef.root.child('/templog').push().set({action: logmsg, date: date.asCentralTime()})
     }
@@ -869,7 +788,7 @@ exports.setCurrentTeam = functions.database.ref('/users/{uid}/teams/{team_name}'
                 // just for debugging...
                 //event.data.adminRef.root.child('temp_log').push().set({msg: "snapshot.val() does not exist"})
                 var currentTeam = {}
-                currentTeam[team_name] = {team_name: team_name}
+                currentTeam[team_name] = event.data.val() //{team_name: team_name}
                 currentTeamRef.set(currentTeam)
             }
         })

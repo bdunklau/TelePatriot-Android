@@ -187,6 +187,11 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
         long now = System.currentTimeMillis();
         done_button.setText("Verifying...");
         CBAPIEvent evt = new CBAPIEvent.CheckLegal(User.getInstance(), name, email);
+
+        /**
+         * See checkLegal() in checkVolunteerStatus.js
+         * checkLegal() is triggered by this save()
+         */
         evt.save();
 
         FirebaseDatabase.getInstance()

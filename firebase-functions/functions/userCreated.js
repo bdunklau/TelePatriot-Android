@@ -18,14 +18,134 @@ const db = admin.database().ref()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:userCreated,functions:approveUserAccount
+firebase deploy --only functions:userCreated,functions:approveUserAccount,functions:onEmailEstablished,functions:onCitizenBuilerId,functions:onPetition,functions:onConfidentialityAgreement,functions:onBanned
 
 ***/
 
 
-// TODO fix index.js  This function should not be exported as userCreated.
-// TODO keep the names in index.js identical to what they are here
 exports.userCreated = functions.auth.user().onCreate(event => {
+    console.log("userCreated.js: onCreate called")
+    // UserRecord is created
+    // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s
+    // UserRecord contains: displayName, email, photoUrl, uid
+    // all of this is accessible via event.data
+
+    var uid = event.data.uid
+    var email = event.data.email
+    var name = email // default value if name not present
+    if(event.data.displayName) name = event.data.displayName
+    var photoUrl = event.data.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
+
+    var updates = {}
+
+
+    // kinda sucky - this query just to simulate an error condition (not getting name and/or email from auth provider)
+    return db.child('administration/configuration').once('value').then(snapshot => {
+        if(!snapshot.val().simulate_missing_name) {
+            updates['users/'+uid+'/name'] = name
+            updates['users/'+uid+'/name_lower'] = name.toLowerCase()
+        }
+        if(!snapshot.val().simulate_missing_email) {
+            updates['users/'+uid+'/email'] = email
+        }
+
+        updates['users/'+uid+'/photoUrl'] = photoUrl
+        updates['users/'+uid+'/created'] = date.asCentralTime()
+        updates['users/'+uid+'/created_ms'] = date.asMillis()
+
+        // email will be null from FB if the person hasn't verified their email with FB
+        if(updates['users/'+uid+'/email'] && updates['users/'+uid+'/name']) {
+            updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
+                                                                     // leave COS but aren't banned
+        }
+        else {
+            updates['users/'+uid+'/account_disposition'] = 'disabled'
+        }
+
+        return db.child('/').update(updates)
+
+    }) // end:  return db.child('administration/configuration').once('value').then(snapshot => {
+})
+
+
+// fires when a user's email is first added to his record in the firebase db
+exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreate(event => {
+    var uid = event.params.uid
+    var email = event.data.val()
+    var event = "on_user_created" //  ref:  administration/configuration/on_user_created
+    var returnFn = function(result) {
+        if(result.returnEarly) return false
+        else if(result.error) {
+            // TODO what do we do with an error?
+        }
+        else if(result.notFound) {
+            // TODO what to do when the user isn't in the CB db?
+        }
+        else if(result.vol) {
+            // This is what we want to happen: email was found in the CB db
+            volunteers.updateUser(uid, result)
+        }
+        else return false
+    }
+
+    // "event" will be the name of some node under administration/configuration like
+    // on_user_created or on_user_login.  Whatever attribute we care about, we are going to
+    // check the value of the attribute to make sure the value is "volunteers".  Because
+    // if the value isn't "volunteers" then this function should return false
+    volunteers.getUserInfoFromCB_byEmail(email, event, returnFn)
+    return true
+})
+
+
+// fires when a user's email is first added to his record in the firebase db
+// When the CB ID is first written to the user's record, we will take this as our cue to make an API
+// call to CB.  The API call will tell CB to put this user on his state training team.  CB will respond
+// with the team_name and team_id of this team so that we can write this team info to the user's
+// current_team node
+exports.onCitizenBuilderId = functions.database.ref('users/{uid}/citizen_builder_id').onCreate(event => {
+    return addTrainingTeam(event)
+})
+
+exports.onPetition = functions.database.ref('users/{uid}/has_signed_petition').onCreate(event => {
+    return addTrainingTeam(event)
+})
+
+exports.onConfidentialityAgreement = functions.database.ref('users/{uid}/has_signed_confidentiality_agreement').onCreate(event => {
+    return addTrainingTeam(event)
+})
+
+exports.onBanned = functions.database.ref('users/{uid}/is_banned').onCreate(event => {
+    return addTrainingTeam(event)
+})
+
+
+var addTrainingTeam = function(event) {
+    var uid = event.params.uid
+    var state_abbrev = event.data.val()
+
+    return event.data.adminRef.root.child('users/'+uid).once('value').then(snapshot => {
+        var citizen_builder_id = snapshot.val().citizen_builder_id
+        // ok to place on training team?...
+        var ok = snapshot.val().citizen_builder_id && snapshot.val().has_signed_petition && snapshot.val().has_signed_confidentiality_agreement
+                    && !snapshot.val().is_banned
+        if(!ok) return false
+
+        // TODO : POST citizen_builder_id and team_name to CB to add this person to the team
+        // TODO response from CB should contain the team_id
+        // TODO Need to call a CB endpoint that doesn't exist yet.  Once it does exist,
+        // TODO we'll put the stuff below into the success call fn
+//        var updates = {}
+//        updates['users/'+uid+'/current_team/'+team_name+'/team_name'] = team_name
+//        updates['users/'+uid+'/current_team/'+team_name+'/team_id'] = team_id
+//        return event.data.adminRef.root.child('/').update(updates)
+    })
+}
+
+
+/***
+This _backup version is just here until I get the new userCreated function is done
+***/
+exports.userCreated_backup = functions.auth.user().onCreate(event => {
     console.log("userCreated.js: onCreate called")
     // UserRecord is created
     // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s
@@ -60,80 +180,138 @@ exports.userCreated = functions.auth.user().onCreate(event => {
             updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
                                                                      // leave COS but aren't banned
 
+//          Which endpoint are we going to call?  The new one: volunteers, or the old one: checkVolunteerStatus ?
+            if(snapshot.val().on_user_created == "volunteers") {
+                var environment = snapshot.val().environment
+                var input = {
+                    citizen_builder_api_key_name: snapshot.val()[environment].citizen_builder_api_key_name,
+                    citizen_builder_api_key_value: snapshot.val()[environment].citizen_builder_api_key_value,
+                    email: email,
+                    successFn: function(result) {
+                        var vol = result.vol
+                        var allowed = vol.petition_signed && vol.volunteer_agreement_signed && !vol.is_banned
+                        updates['users/'+uid+'/has_signed_petition'] = vol.petition_signed ? vol.petition_signed : false
+                        updates['users/'+uid+'/has_signed_confidentiality_agreement'] = vol.volunteer_agreement_signed ? vol.volunteer_agreement_signed : false
+                        updates['users/'+uid+'/is_banned'] = vol.is_banned ? vol.is_banned : false
 
-    //          PUT THIS BACK IN EVENTUALLY
-    //
-    //        return db.child('api_tokens').once('value').then(snapshot => {
-    //
-    //            var input = {citizen_builder_api_key_name: snapshot.val().citizen_builder_api_key_name,
-    //                            citizen_builder_api_key_value: snapshot.val().citizen_builder_api_key_value_QA,
-    //                            email: email,
-    //                            successFn: function(result) {
-    //                                    var vol = result.vol
-    //                                    var allowed = vol.petition_signed && vol.volunteer_agreement_signed && !vol.is_banned
-    //                                    updates['users/'+uid+'/has_signed_petition'] = vol.petition_signed ? vol.petition_signed : false
-    //                                    updates['users/'+uid+'/has_signed_confidentiality_agreement'] = vol.volunteer_agreement_signed ? vol.volunteer_agreement_signed : false
-    //                                    updates['users/'+uid+'/is_banned'] = vol.is_banned ? vol.is_banned : false
-    //                                    if(allowed) {
-    //                                        citizen_builder_api.grantAccess(updates, uid, name, email)
-    //                                    }
-    //                                    else {
-    //                                        if(vol.is_banned) {
-    //                                            // not going to give you any help at all
-    //                                            console.log('banned?! - unhandled case: vol = ', vol)
-    //                                            return db.child('/').update(updates)
-    //                                        }
-    //                                        // need to figure out what requirement they don't meet and send an email
-    //                                        // about just those things
-    //                                        else if(!vol.petition_signed && !vol.volunteer_agreement_signed) {
-    //                                            console.log('no petition or CA signed')
-    //                                            return db.child('/').update(updates).then(() => {
-    //                                                return email_js.sendPetitionCAEmail(email, name)
-    //                                            })
-    //                                        }
-    //                                        else if(!vol.volunteer_agreement_signed) {
-    //                                            console.log('no CA signed')
-    //                                            return db.child('/').update(updates).then(() => {
-    //                                                // send email just about the conf agreement
-    //                                                // TODO improve this - send email that only mentions the CA
-    //                                                return email_js.sendPetitionCAEmail(email, name)
-    //                                            })
-    //                                        }
-    //                                        else {
-    //                                            // We're not handling the case where the conf agreement is signed but not
-    //                                            // the petition because that's not a realistic use case.  No one signs
-    //                                            // the conf agreement but not the petition
-    //                                        }
-    //                                        // not going to have the case of petition:no but conf_agreement:yes
-    //                                    }
-    //                                },
-    //                            errorFn: function(result) { console.log("error: result: ", result) /*http error*/ }
-    //                        }
-    //            volunteers.volunteers(input)
-    //
-    //        })
+                        if(vol.id)
+                            updates['users/'+uid+'/citizen_builder_id'] = vol.id
+                        if(vol.address)
+                            updates['users/'+uid+'/residential_address_line1'] = vol.address
+                        if(vol.city)
+                            updates['users/'+uid+'/residential_address_city'] = vol.city
+                        if(vol.state)
+                            updates['users/'+uid+'/residential_address_state'] = vol.state.toLowerCase()
+                        if(vol.phone)
+                            updates['users/'+uid+'/phone'] = vol.phone.replace(/\D/g,'') // get rid of everything that isn't a digit
+                        var thename = ''
+                        if(vol.first_name)
+                            thename = vol.first_name
+                        if(vol.last_name)
+                            thename = thename + ' ' + vol.last_name
+                        if(name != '')
+                            updates['users/'+uid+'/name'] = thename
 
-
-
-            // WE NEVER MAKE TO HERE SO WE *CAN* GRANT ACCESS - OOPS
-            citizen_builder_api.checkVolunteerStatus(email,
-                function() {
-                    citizen_builder_api.grantAccess(updates, uid, name, email)
-
-                    // TODO actually don't need this email anymore
-    //                return db.update(attributes).then(() => {
-    //                    return sendEmail2('On-Board This Person', email, name)
-    //                })
-                },
-                function() {
-                    // called when the user has NOT satisfied the legal requirements for access
-                    // In this case, we still have to save the user to /users.  We just don't set
-                    // the petition, conf agreement and banned flags like we do above.
-                    return db.child('/').update(updates).then(() => {
-                        return email_js.sendPetitionCAEmail(email, name)
-                    })
+                        if(allowed) {
+                            citizen_builder_api.grantAccess(updates, uid, name, email)
+                        }
+                        else {
+                            if(vol.is_banned) {
+                                // not going to give you any help at all
+                                console.log('banned?! - unhandled case: vol = ', vol)
+                                return db.child('/').update(updates)
+                            }
+                            // need to figure out what requirement they don't meet and send an email
+                            // about just those things
+                            else if(!vol.petition_signed && !vol.volunteer_agreement_signed) {
+                                console.log('no petition or CA signed')
+                                return db.child('/').update(updates).then(() => {
+                                    return email_js.sendPetitionCAEmail(email, name)
+                                })
+                            }
+                            else if(!vol.volunteer_agreement_signed) {
+                                console.log('no CA signed')
+                                return db.child('/').update(updates).then(() => {
+                                    // send email just about the conf agreement
+                                    // TODO improve this - send email that only mentions the CA
+                                    return email_js.sendPetitionCAEmail(email, name)
+                                })
+                            }
+                            else {
+                                // We're not handling the case where the conf agreement is signed but not
+                                // the petition because that's not a realistic use case.  No one signs
+                                // the conf agreement but not the petition
+                            }
+                               // not going to have the case of petition:no but conf_agreement:yes
+                        }
+                    },
+                    errorFn: function(result) { console.log("error: result: ", result) /*http error*/ }
                 }
-            )
+
+                volunteers.volunteers(input)
+
+            }
+            else { /* use checkVolunteerStatus */
+
+                citizen_builder_api.checkVolunteerStatus(email,
+                    function(valid) {
+                        citizen_builder_api.grantAccess(updates, uid, name, email)
+
+                        var resp = {uid: uid,
+                                   name: name,
+                                   email: event.data.email,
+                                   event_type: 'check-legal-response',
+                                   valid: valid}
+
+                        db.child('cb_api_events/all-events').push().set(resp)
+                        db.child('cb_api_events/check-legal-responses/'+uid).push().set(resp)
+
+                    },
+                    function(valid) {
+                        // called when the user has NOT satisfied the legal requirements for access
+                        // In this case, we still have to save the user to /users.  We just don't set
+                        // the petition, conf agreement and banned flags like we do above.
+
+                        var resp = {uid: uid,
+                                   name: name,
+                                   email: event.data.email,
+                                   event_type: 'check-legal-response',
+                                   valid: valid}
+
+                        db.child('cb_api_events/all-events').push().set(resp)
+                        db.child('cb_api_events/check-legal-responses/'+uid).push().set(resp)
+
+                        return db.child('/').update(updates).then(() => {
+                            return email_js.sendPetitionCAEmail(email, name)
+                        })
+                    }
+                )
+            }
+
+//            call the /volunteers endpoint using the email address
+//            get the values of: is_banned, petition_signed, volunteer_agreement_signed
+//
+//            If the person is found you get this...
+//            {
+//              "id": 1329,
+//              "first_name": "Brent",
+//              "last_name": "Xxxxxx",
+//              "address": "street number and street",
+//              "city": "city",
+//              "state": "AA",
+//              "email": "email@yahoo.com",
+//              "phone": "(214) 000-0000",
+//              "is_banned": false,
+//              "petition_signed": true,
+//              "volunteer_agreement_signed": true
+//            }
+//
+//            If the person isn't found, you get this...
+//            {
+//              "error": "Not found"
+//            }
+
+
             return true
         }
         else {
@@ -148,6 +326,7 @@ exports.userCreated = functions.auth.user().onCreate(event => {
 
     }) // end:  return db.child('administration/configuration').once('value').then(snapshot => {
 })
+
 
 
 // TODO we can probably get rid of this because are automatically approving users now (8/28/18) if
