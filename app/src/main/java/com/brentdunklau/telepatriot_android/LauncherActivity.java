@@ -68,7 +68,7 @@ public class LauncherActivity extends BaseActivity
             AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
                     .setAvailableProviders(Arrays.asList(
                             new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build()
-                            //, new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build()
+                            , new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build()
                             //, new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build() // removed till I figure out what's wrong
                             )
                     );

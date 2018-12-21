@@ -121,13 +121,29 @@ public class CBMissionDetail {
         this.citizen_builder_api_key_value = citizen_builder_api_key_value;
     }
 
-//    public boolean isCompleted() {
-//        return completed;
-//    }
-//
-//    public void setCompleted(boolean completed) {
-//        this.completed = completed;
-//    }
+    public String getTotal() {
+        return total;
+    }
+
+    public void setTotal(String total) {
+        this.total = total;
+    }
+
+    public String getCalls_made() {
+        return calls_made;
+    }
+
+    public void setCalls_made(String calls_made) {
+        this.calls_made = calls_made;
+    }
+
+    public String getPercent_complete() {
+        return percent_complete;
+    }
+
+    public void setPercent_complete(String percent_complete) {
+        this.percent_complete = percent_complete;
+    }
 
     public void unassign() {
         new UnassignMissionTask().execute(citizen_builder_domain, citizen_builder_api_key_name, citizen_builder_api_key_value,

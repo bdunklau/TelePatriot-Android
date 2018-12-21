@@ -101,7 +101,7 @@ public class TestCallFragment extends Fragment {
         TelephonyManager mTelephonyMgr;
         mTelephonyMgr = (TelephonyManager)
                 myView.getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        String tel = mTelephonyMgr.getLine1Number();
+        String tel = "Android Phone # n/a"; //mTelephonyMgr.getLine1Number();
         return tel;
     }
 

@@ -13,25 +13,30 @@
 
     <RelativeLayout
         android:id="@+id/launcher_layout"
-        android:layout_width="428dp"
-        android:layout_height="820dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="#ddffffff"
         android:orientation="vertical"
-        tools:layout_editor_absoluteX="-30dp"
-        tools:layout_editor_absoluteY="-1dp"></RelativeLayout>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.418"></RelativeLayout>
 
     <Button
         android:id="@+id/button_get_started"
         android:layout_width="369dp"
         android:layout_height="48dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/com_facebook_blue"
         android:text="Get Started"
         android:textColor="#ffffff"
-        android:background="@color/com_facebook_blue"
-        app:layout_constraintTop_toTopOf="@+id/launcher_layout"
-        android:layout_marginTop="244dp"
-        android:layout_marginLeft="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/launcher_layout"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginRight="8dp"
-        app:layout_constraintRight_toRightOf="parent" />
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/launcher_layout" />
 
 </android.support.constraint.ConstraintLayout>

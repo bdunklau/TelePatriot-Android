@@ -417,7 +417,7 @@ public class MyMissionFragment extends BaseFragment {
             }
 
             try {
-                String tel = mTelephonyMgr.getLine1Number();
+                String tel = "Android Phone # n/a"; //mTelephonyMgr.getLine1Number();
                 return tel;
             }catch (Throwable throwable ){
             return "phone # n/a";

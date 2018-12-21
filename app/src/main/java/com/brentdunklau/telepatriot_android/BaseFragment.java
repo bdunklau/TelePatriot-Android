@@ -22,7 +22,7 @@ public class BaseFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume", new Exception("check stack trace"));
+        Log.d(TAG, "onResume");
         handleCurrentMissionItem();
     }
 
