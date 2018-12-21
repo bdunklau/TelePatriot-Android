@@ -85,7 +85,7 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
     private String getVolunteerPhone(Context ctx) {
         TelephonyManager mTelephonyMgr;
         mTelephonyMgr = (TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
-        String tel = mTelephonyMgr.getLine1Number();
+        String tel = "Android Phone # n/a"; //mTelephonyMgr.getLine1Number();
         return tel;
     }
 }

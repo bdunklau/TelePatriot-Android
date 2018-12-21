@@ -47,6 +47,7 @@ public class MyCBMissionFragment extends BaseFragment
 
 //    private TextView heading_mission_progress;
     private TextView mission_name, mission_description, mission_script;
+    private TextView heading_mission_progress;
     private Button button_call_person1;
     private Button button_call_person2;
     private String citizen_builder_domain;
@@ -76,6 +77,7 @@ public class MyCBMissionFragment extends BaseFragment
         mission_script = myView.findViewById(R.id.mission_script);
         button_call_person1 = myView.findViewById(R.id.button_call_person1);
         button_call_person2 = myView.findViewById(R.id.button_call_person2);
+        heading_mission_progress = myView.findViewById(R.id.heading_mission_progress);
 
         citizen_builder_domain = this.getArguments().getString("citizen_builder_domain");
         citizen_builder_api_key_name = this.getArguments().getString("citizen_builder_api_key_name");
@@ -102,27 +104,6 @@ public class MyCBMissionFragment extends BaseFragment
     public void onResume() {
         doSuper = false; // see BaseFragment
         super.onResume();
-        // what do we do here?
-        // when does this get called?  When the user returns from a call
-        //      but also when the user returns here from anywhere
-        // but we DO now have the current mission item stored in the User object
-        // If we are resuming on a mission that is  active_and_accomplished: true_complete,
-        // then we need to send the user on to a fragment where they can enter notes on the
-        // call
-//        CBMissionDetail cbMissionDetail = User.getInstance().getCurrentCBMissionItem();
-//        if (cbMissionDetail == null)
-//            return;
-//
-//        if(cbMissionDetail.isCompleted()) {
-//            FragmentManager fragmentManager = getFragmentManager();
-//            Fragment fragment = new CBMissionItemWrapUpFragment();
-//            Bundle bundle = new Bundle();
-//            bundle.putString("citizen_builder_domain", citizen_builder_domain);
-//            bundle.putString("citizen_builder_api_key_name", citizen_builder_api_key_name);
-//            bundle.putString("citizen_builder_api_key_value", citizen_builder_api_key_value);
-//            fragment.setArguments(bundle);
-//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-//        }
     }
 
     @Override
@@ -155,7 +136,7 @@ public class MyCBMissionFragment extends BaseFragment
 
     private void setFieldsVisible() {
         button_call_person1.setVisibility(View.VISIBLE);
-        button_call_person2.setVisibility(View.GONE); // temporarily setting to GONE always because 3way calling isn't supported yet by CB
+        button_call_person2.setVisibility(View.VISIBLE);
         mission_name.setVisibility(View.VISIBLE);
         mission_script.setVisibility(View.VISIBLE);
         myView.findViewById(R.id.heading_mission_description).setVisibility(View.VISIBLE);
@@ -190,16 +171,48 @@ public class MyCBMissionFragment extends BaseFragment
         });
     }
 
-//    private void prepareFor3WayCallIfNecessary(CBMissionDetail missionDetail, Button button) {
-//        if (missionDetail.getName2() != null && missionDetail.getPhone2() != null) {
-//            // we have a 3way call scenario
-//            button.setText(missionDetail.getName2() + " " + missionDetail.getPhone2());
-//            wireUp2(button, missionDetail);
-//        } else {
-//            // not a 3way call scenario, so hide the second phone button
-//            button.setVisibility(View.GONE);
-//        }
-//    }
+    private void prepareFor3WayCallIfNecessary(CBMissionDetail missionDetail, Button button) {
+        String _3WayCallName = get3WallCallName(missionDetail);
+        String _3WayCallPhone = get3WallCallPhone(missionDetail);
+        boolean is3WayCallMission = _3WayCallName != null && _3WayCallPhone != null;
+        if(is3WayCallMission) {
+            // we have a 3way call scenario
+            button.setText(_3WayCallName + " " + _3WayCallPhone);
+            wireUp2(button, missionDetail);
+        }
+        else {
+            // not a 3way call scenario, so hide the second phone button
+            button.setVisibility(View.GONE);
+        }
+    }
+
+    private String get3WallCallName(CBMissionDetail missionDetail) {
+
+        // TODO Once CB officially supports 3way calling, we will get rid of this line
+        return getPart(missionDetail.getScript(), "start 3way call name", "end 3way call name");
+
+        // TODO Once CB officially supports 3way calling, we will uncomment the line below and implement getName2()
+//        return missionDetail.getName2();
+    }
+
+    private String get3WallCallPhone(CBMissionDetail missionDetail) {
+
+        // TODO Once CB officially supports 3way calling, we will get rid of this line
+        return getPart(missionDetail.getScript(), "start 3way call phone", "end 3way call phone");
+
+        // TODO Once CB officially supports 3way calling, we will uncomment the line below and implement getPhone2()
+//        return missionDetail.getPhone2();
+    }
+
+    // TODO Once CB officially supports 3way calling, this method won't even be needed
+    private String getPart(String whole, String begin, String end) {
+        if(whole.indexOf(begin) == -1 || whole.indexOf(end) == -1) return null;
+        int idx1 = whole.indexOf(begin) + begin.length();
+        int idx2 = whole.indexOf(end);
+        String part = whole.substring(idx1, idx2).trim();
+        if(part.equals("")) return null;
+        else return part;
+    }
 
 
     /**
@@ -215,10 +228,10 @@ public class MyCBMissionFragment extends BaseFragment
     }
 
     // call the name2/phone2 person
-    private void call2(MissionDetail missionDetail) {
+    private void call2(CBMissionDetail missionDetail) {
         checkPermission();
         Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
+        intent.setData(Uri.parse("tel:" + get3WallCallPhone(missionDetail)));
         startActivity(intent);
     }
 
@@ -261,7 +274,7 @@ public class MyCBMissionFragment extends BaseFragment
         }
     }
 
-    private void wireUp2(Button button, final MissionDetail missionDetail) {
+    private void wireUp2(Button button, final CBMissionDetail missionDetail) {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -281,6 +294,9 @@ public class MyCBMissionFragment extends BaseFragment
 
         mission_name.setText(missionName);
         mission_description.setText(missionDescription);
+        heading_mission_progress.setText(String.format("%s%% Complete (%s of %s calls made)",
+                missionItem.getPercent_complete(), missionItem.getCalls_made(), missionItem.getTotal()));
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             mission_script.setText(Html.fromHtml(missionScript, Html.FROM_HTML_MODE_COMPACT));
@@ -291,37 +307,8 @@ public class MyCBMissionFragment extends BaseFragment
         button_call_person1.setText(missionItem.getName() + " " + missionItem.getPhone());
         wireUp(button_call_person1, missionItem);
 
-        //prepareFor3WayCallIfNecessary(missionItem, button_call_person2);  CB is not ready for 3way calls yet
+        prepareFor3WayCallIfNecessary(missionItem, button_call_person2);
     }
-
-    // Make MainActivity the listener, not this fragment
-//    // per AccountStatusEvent.Listener
-//    public void fired(AccountStatusEvent evt) {
-//        if(evt instanceof AccountStatusEvent.CallEnded) {
-//            // switch over to the CBMissionItemWrapUpFragment
-//
-////            new Handler().post(new Runnable() {
-////                public void run() {
-//                    FragmentManager fragmentManager = MyCBMissionFragment.this.getFragmentManager();
-//                    Fragment fragment = new CBMissionItemWrapUpFragment();
-//                    Bundle bundle = new Bundle();
-//                    bundle.putString("citizen_builder_domain", citizen_builder_domain);
-//                    bundle.putString("citizen_builder_api_key_name", citizen_builder_api_key_name);
-//                    bundle.putString("citizen_builder_api_key_value", citizen_builder_api_key_value);
-//                    bundle.putString("mission_person_id", mission_person_id);
-//                    bundle.putString("mission_id", mission_id);
-//                    bundle.putString("mission_phone", mission_phone);
-//                    fragment.setArguments(bundle);
-//                    if(fragmentManager == null) {
-//                        System.out.println("oops - fragmentManager is null");
-//                    }
-//                    else fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commitAllowingStateLoss();
-////                }
-////            });
-//
-//        }
-//    }
-
 
 
     ProgressDialog pd;
@@ -357,7 +344,10 @@ public class MyCBMissionFragment extends BaseFragment
 //                "person_id": 208995,
 //                "first_name": "Chuck",
 //                "last_name": "Laird",
-//                "phone": "(609) 5559224"
+//                "phone": "(609) 5559224",
+//                "total": 0,
+//                "calls_made": 0,
+//                "percent_complete": 0
 //        }
 
 
@@ -382,6 +372,10 @@ public class MyCBMissionFragment extends BaseFragment
                 m.setPerson_id(j.getInt("person_id")+"");
                 m.setName(j.getString("first_name")+" "+j.getString("last_name"));
                 m.setPhone(j.getString("phone"));
+
+                m.setTotal(j.getInt("total")+"");
+                m.setCalls_made(j.getInt("calls_made")+"");
+                m.setPercent_complete(j.getInt("percent_complete")+"");
 
                 // these 3 are so we can unassign later if needed
                 m.setCitizen_builder_domain(citizen_builder_domain);
