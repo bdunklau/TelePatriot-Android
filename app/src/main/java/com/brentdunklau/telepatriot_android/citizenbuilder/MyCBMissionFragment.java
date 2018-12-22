@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
@@ -61,13 +62,6 @@ public class MyCBMissionFragment extends BaseFragment
 
     @Nullable
     @Override
-    /**
-     * ALL mission items are under the /mission_items node.  So now, all we have to do for the volunteers is do a
-     * limitToFirst(1) query for the mission that has the following criteria:
-     * active_and_accomplished: true_new
-     *
-     *
-     */
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.my_cb_mission_fragment, container, false);
 
@@ -162,6 +156,21 @@ public class MyCBMissionFragment extends BaseFragment
         mission_description.setText("No missions for this team");
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        System.out.println("MyCBMissionFragment - onRequestPermissionsResult()");
+
+        // only checking for CALL_PHONE permission
+        if(permissions.length == 0
+                || !permissions[0].equalsIgnoreCase(android.Manifest.permission.CALL_PHONE)
+                || grantResults.length == 0
+                || grantResults[0] != PackageManager.PERMISSION_GRANTED
+                || User.getInstance().getCurrentCBMissionItem() == null)
+            return;
+        call(User.getInstance().getCurrentCBMissionItem());
+    }
+
     private void wireUp(Button button, final CBMissionDetail missionDetail) {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -220,58 +229,40 @@ public class MyCBMissionFragment extends BaseFragment
      * logic is that fires when the call ends
      * @param missionDetail
      */
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void call(CBMissionDetail missionDetail) {
-        checkPermission();
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + missionDetail.getPhone()));
-        startActivity(intent);
+        call(missionDetail.getPhone());
     }
 
     // call the name2/phone2 person
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void call2(CBMissionDetail missionDetail) {
-        checkPermission();
+        String phone = get3WallCallPhone(missionDetail);
+        call(phone);
+    }
+
+    private void call(String phone) {
+        if(permittedToCall()) {
+            placeCall(phone);
+        }
+        else {
+            requestPermissionToCall();
+        }
+    }
+
+    private void placeCall(String phone) {
         Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + get3WallCallPhone(missionDetail)));
+        intent.setData(Uri.parse("tel:" + phone));
         startActivity(intent);
     }
 
-
-    // Consider using the similar method in Util *************************
-    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
-    // an app crash on the very first phone call.  Thinking that I'm requesting permission
-    // too late ... ?
-    // https://developer.android.com/training/permissions/requesting.html
-    private void checkPermission() {
-        checkPermission(android.Manifest.permission.CALL_PHONE);
+    private boolean permittedToCall() {
+        return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
     }
 
-    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
-    // an app crash on the very first phone call.  Thinking that I'm requesting permission
-    // too late ... ?
-    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(myView.getContext(), androidPermission)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), androidPermission)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-
-                // No explanation needed, we can request the permission.
-
-                ActivityCompat.requestPermissions((Activity) myView.getContext(),
-                        new String[]{androidPermission},
-                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        }
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void requestPermissionToCall() {
+        this.requestPermissions(new String[]{android.Manifest.permission.CALL_PHONE}, 1);
     }
 
     private void wireUp2(Button button, final CBMissionDetail missionDetail) {

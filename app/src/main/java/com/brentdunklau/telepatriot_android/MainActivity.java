@@ -149,6 +149,13 @@ public class MainActivity extends AppCompatActivity
         VideoType.init();
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+
+        System.out.println("MainActivity - onRequestPermissionsResult()");
+    }
+
     private View.OnClickListener beginEditingMyAccount() {
         return new View.OnClickListener() {
             @Override

@@ -320,9 +320,9 @@ public class MyMissionFragment extends BaseFragment {
         Log.d(TAG, "onDestroy");
     }
 
-    private void setMissionItemState(String state) {
-        missionDetail.setState(state, missionItemId);
-    }
+//    private void setMissionItemState(String state) {
+//        missionDetail.setState(state, missionItemId);
+//    }
 
     private void wireUp(Button button, final MissionDetail missionDetail) {
         button.setOnClickListener(new View.OnClickListener() {
@@ -343,22 +343,13 @@ public class MyMissionFragment extends BaseFragment {
     }
 
     private void call(MissionDetail missionDetail) {
-        checkPermission();
-        setMissionItemState("calling");
         Intent intent = new Intent(Intent.ACTION_CALL);
         intent.setData(Uri.parse("tel:" + missionDetail.getPhone()));
-
-        //intent.putExtra("mission", missionDetail.getMission_name()); // don't need this
-        // WRITE THE BEGINNING OF THE CALL TO THE DATABASE HERE BECAUSE SOME CARRIERS LIKE
-        // SPRINT BLOCK INTERNET ACCESS WHILE THE PHONE
-        // IS OFFHOOK.
-        // Writing to the database here just gives the directors the cool visual of seeing the
-        // call start and then seeing it end
 
         String team = User.getInstance().getCurrentTeamName();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
         String eventType = "is calling";
-        String volunteerPhone = getVolunteerPhone();
+//        String volunteerPhone = getVolunteerPhone();
         String supporterName = missionDetail.getName();
         MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
         ref.child("all").push().setValue(m);
@@ -369,15 +360,13 @@ public class MyMissionFragment extends BaseFragment {
 
     // call the name2/phone2 person
     private void call2(MissionDetail missionDetail) {
-        checkPermission();
-        //setMissionItemState("calling");
         Intent intent = new Intent(Intent.ACTION_CALL);
         intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
 
         String team = User.getInstance().getCurrentTeamName();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
         String eventType = "is calling";
-        String volunteerPhone = getVolunteerPhone();
+//        String volunteerPhone = getVolunteerPhone();
         String name2 = missionDetail.getName2();
         MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone2(), volunteerPhone, name2);
         ref.child("all").push().setValue(m);
@@ -386,84 +375,84 @@ public class MyMissionFragment extends BaseFragment {
         startActivity(intent);
     }
 
-    private String getVolunteerPhone() {
+//    private String getVolunteerPhone() {
+//
+//        TelephonyManager mTelephonyMgr;
+//        mTelephonyMgr = (TelephonyManager)
+//                myView.getContext().getSystemService(Context.TELEPHONY_SERVICE);
+//
+//
+//        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+//
+//                // Should we show an explanation?
+//                if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), readPhoneState)) {
+//
+//                    // Show an explanation to the user *asynchronously* -- don't block
+//                    // this thread waiting for the user's response! After the user
+//                    // sees the explanation, try again to request the permission.
+//
+//                } else {
+//
+//                    // No explanation needed, we can request the permission.
+//
+//                    ActivityCompat.requestPermissions((Activity) myView.getContext(),
+//                            new String[]{readPhoneState},
+//                            1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
+//
+//                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                    // app-defined int constant. The callback method gets the
+//                    // result of the request.
+//                }
+//            }
+//
+//            try {
+//                String tel = "Android Phone # n/a"; //mTelephonyMgr.getLine1Number();
+//                return tel;
+//            }catch (Throwable throwable ){
+//            return "phone # n/a";
+//            }
+//
+//
+//    }
 
-        TelephonyManager mTelephonyMgr;
-        mTelephonyMgr = (TelephonyManager)
-                myView.getContext().getSystemService(Context.TELEPHONY_SERVICE);
 
-
-        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-
-                // Should we show an explanation?
-                if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), readPhoneState)) {
-
-                    // Show an explanation to the user *asynchronously* -- don't block
-                    // this thread waiting for the user's response! After the user
-                    // sees the explanation, try again to request the permission.
-
-                } else {
-
-                    // No explanation needed, we can request the permission.
-
-                    ActivityCompat.requestPermissions((Activity) myView.getContext(),
-                            new String[]{readPhoneState},
-                            1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
-
-                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                    // app-defined int constant. The callback method gets the
-                    // result of the request.
-                }
-            }
-
-            try {
-                String tel = "Android Phone # n/a"; //mTelephonyMgr.getLine1Number();
-                return tel;
-            }catch (Throwable throwable ){
-            return "phone # n/a";
-            }
-
-
-    }
-
-
-    // Consider using the similar method in Util *************************
-    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
-    // an app crash on the very first phone call.  Thinking that I'm requesting permission
-    // too late ... ?
-    // https://developer.android.com/training/permissions/requesting.html
-    private void checkPermission() {
-        checkPermission(android.Manifest.permission.CALL_PHONE);
-    }
-
-    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
-    // an app crash on the very first phone call.  Thinking that I'm requesting permission
-    // too late ... ?
-    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(myView.getContext(), androidPermission)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), androidPermission)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-
-                // No explanation needed, we can request the permission.
-
-                ActivityCompat.requestPermissions((Activity) myView.getContext(),
-                        new String[]{androidPermission},
-                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        }
-    }
+//    // Consider using the similar method in Util *************************
+//    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
+//    // an app crash on the very first phone call.  Thinking that I'm requesting permission
+//    // too late ... ?
+//    // https://developer.android.com/training/permissions/requesting.html
+//    private void checkPermission() {
+//        checkPermission(android.Manifest.permission.CALL_PHONE);
+//    }
+//
+//    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
+//    // an app crash on the very first phone call.  Thinking that I'm requesting permission
+//    // too late ... ?
+//    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
+//        if (ContextCompat.checkSelfPermission(myView.getContext(), androidPermission)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//            // Should we show an explanation?
+//            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), androidPermission)) {
+//
+//                // Show an explanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//            } else {
+//
+//                // No explanation needed, we can request the permission.
+//
+//                ActivityCompat.requestPermissions((Activity) myView.getContext(),
+//                        new String[]{androidPermission},
+//                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
+//
+//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                // app-defined int constant. The callback method gets the
+//                // result of the request.
+//            }
+//        }
+//    }
 
 
 
