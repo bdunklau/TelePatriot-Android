@@ -370,8 +370,8 @@ exports.testLookupDistrict = geocode.testLookupDistrict
 
 // dev deploy: 11/21/18
 // prod deploy: 12/12/18
-const simulate = require('./simulate')
-exports.testViewSimulatorParameters = simulate.testViewSimulatorParameters
+const configure = require('./configure')
+exports.testConfiguration = configure.testConfiguration
 
 // dev deploy:  11/4/18
 // prod deploy: 12/12/18
