@@ -10,11 +10,11 @@ const admin = require('firebase-admin')
 const db = admin.database();
 
 /**
-firebase deploy --only functions:testViewSimulatorParameters
+firebase deploy --only functions:testConfiguration
 **/
 
 
-exports.testViewSimulatorParameters = functions.https.onRequest((req, res) => {
+exports.testConfiguration = functions.https.onRequest((req, res) => {
     var stuff = {req: req, res: res}
     return thepage(stuff).then(html => {
         return res.status(200).send(html)
