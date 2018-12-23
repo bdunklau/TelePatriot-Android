@@ -368,8 +368,8 @@ exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
 
-// dev deploy: 11/21/18
-// prod deploy: 12/12/18
+// dev deploy: 12/22/18
+// prod deploy: 12/22/18
 const configure = require('./configure')
 exports.testConfiguration = configure.testConfiguration
 

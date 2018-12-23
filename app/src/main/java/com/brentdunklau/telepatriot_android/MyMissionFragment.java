@@ -10,8 +10,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
@@ -210,23 +212,13 @@ public class MyMissionFragment extends BaseFragment {
         });
     }
 
-    private void workThis(MissionDetail missionItem) {
-
-        // set fields back to visible if they were previously set to View.GONE
-        setFieldsVisible();
-
-        String missionName = missionItem.getMission_name();
-        String missionDescription = missionItem.getDescription();
-        String missionScript = missionItem.getScript();
-
-        mission_name.setText(missionName);
-        mission_description.setText(missionDescription);
-        mission_script.setText(missionScript);
+    private void setFieldsVisible() {
         button_call_person1.setVisibility(View.VISIBLE);
-        button_call_person1.setText(missionItem.getName() + " " + missionItem.getPhone());
-        wireUp(button_call_person1, missionItem);
-
-        prepareFor3WayCallIfNecessary(missionItem, button_call_person2);
+        button_call_person2.setVisibility(View.VISIBLE);
+        mission_name.setVisibility(View.VISIBLE);
+        mission_script.setVisibility(View.VISIBLE);
+        myView.findViewById(R.id.heading_mission_description).setVisibility(View.VISIBLE);
+        myView.findViewById(R.id.heading_mission_script).setVisibility(View.VISIBLE);
     }
 
     private void indicateNoMissionsAvailable() {
@@ -248,13 +240,28 @@ public class MyMissionFragment extends BaseFragment {
         mission_description.setText("No missions found yet for this team...");
     }
 
-    private void setFieldsVisible() {
-        button_call_person1.setVisibility(View.VISIBLE);
-        button_call_person2.setVisibility(View.VISIBLE);
-        mission_name.setVisibility(View.VISIBLE);
-        mission_script.setVisibility(View.VISIBLE);
-        myView.findViewById(R.id.heading_mission_description).setVisibility(View.VISIBLE);
-        myView.findViewById(R.id.heading_mission_script).setVisibility(View.VISIBLE);
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        System.out.println("MyCBMissionFragment - onRequestPermissionsResult()");
+
+        // only checking for CALL_PHONE permission
+        if(permissions.length == 0
+                || !permissions[0].equalsIgnoreCase(android.Manifest.permission.CALL_PHONE)
+                || grantResults.length == 0
+                || grantResults[0] != PackageManager.PERMISSION_GRANTED
+                || User.getInstance().getCurrentCBMissionItem() == null)
+            return;
+        call(User.getInstance().getCurrentMissionItem());
+    }
+
+    private void wireUp(Button button, final MissionDetail missionDetail) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                call(missionDetail);
+            }
+        });
     }
 
     private void prepareFor3WayCallIfNecessary(MissionDetail missionDetail, Button button) {
@@ -266,6 +273,84 @@ public class MyMissionFragment extends BaseFragment {
             // not a 3way call scenario, so hide the second phone button
             button.setVisibility(View.GONE);
         }
+    }
+
+    private void call(MissionDetail missionDetail) {
+        call(missionDetail.getMission_name(), missionDetail.getName(), missionDetail.getPhone());
+//        Intent intent = new Intent(Intent.ACTION_CALL);
+//        intent.setData(Uri.parse("tel:" + missionDetail.getPhone()));
+//
+//        String team = User.getInstance().getCurrentTeamName();
+//        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
+//        String eventType = "is calling";
+//        String supporterName = missionDetail.getName();
+//        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
+//        ref.child("all").push().setValue(m);
+//        ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
+//
+//        startActivity(intent);
+    }
+
+    // call the name2/phone2 person
+    private void call2(MissionDetail missionDetail) {
+        call(missionDetail.getMission_name(), missionDetail.getName2(), missionDetail.getPhone2());
+    }
+
+    private void call(String mission_name, String name, String phone) {
+        if(permittedToCall()) {
+            placeCall(mission_name, name, phone);
+        }
+        else {
+            requestPermissionToCall();
+        }
+    }
+
+    private boolean permittedToCall() {
+        return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private void placeCall(String mission_name, String name, String phone) {
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + phone));
+        String team = User.getInstance().getCurrentTeamName();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
+        String eventType = "is calling";
+        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), mission_name, phone, /*volunteerPhone, */name);
+        ref.child("all").push().setValue(m);
+        startActivity(intent);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void requestPermissionToCall() {
+        this.requestPermissions(new String[]{android.Manifest.permission.CALL_PHONE}, 1);
+    }
+
+    private void wireUp2(Button button, final MissionDetail missionDetail) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                call2(missionDetail);
+            }
+        });
+    }
+
+    private void workThis(MissionDetail missionItem) {
+
+        // set fields back to visible if they were previously set to View.GONE
+        setFieldsVisible();
+
+        String missionName = missionItem.getMission_name();
+        String missionDescription = missionItem.getDescription();
+        String missionScript = missionItem.getScript();
+
+        mission_name.setText(missionName);
+        mission_description.setText(missionDescription);
+        mission_script.setText(missionScript);
+        button_call_person1.setVisibility(View.VISIBLE);
+        button_call_person1.setText(missionItem.getName() + " " + missionItem.getPhone());
+        wireUp(button_call_person1, missionItem);
+
+        prepareFor3WayCallIfNecessary(missionItem, button_call_person2);
     }
 
     // called when we come back from a call
@@ -324,56 +409,6 @@ public class MyMissionFragment extends BaseFragment {
 //        missionDetail.setState(state, missionItemId);
 //    }
 
-    private void wireUp(Button button, final MissionDetail missionDetail) {
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                call(missionDetail);
-            }
-        });
-    }
-
-    private void wireUp2(Button button, final MissionDetail missionDetail) {
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                call2(missionDetail);
-            }
-        });
-    }
-
-    private void call(MissionDetail missionDetail) {
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + missionDetail.getPhone()));
-
-        String team = User.getInstance().getCurrentTeamName();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
-        String eventType = "is calling";
-//        String volunteerPhone = getVolunteerPhone();
-        String supporterName = missionDetail.getName();
-        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
-        ref.child("all").push().setValue(m);
-        ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
-
-        startActivity(intent);
-    }
-
-    // call the name2/phone2 person
-    private void call2(MissionDetail missionDetail) {
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
-
-        String team = User.getInstance().getCurrentTeamName();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
-        String eventType = "is calling";
-//        String volunteerPhone = getVolunteerPhone();
-        String name2 = missionDetail.getName2();
-        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone2(), volunteerPhone, name2);
-        ref.child("all").push().setValue(m);
-        ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
-
-        startActivity(intent);
-    }
 
 //    private String getVolunteerPhone() {
 //

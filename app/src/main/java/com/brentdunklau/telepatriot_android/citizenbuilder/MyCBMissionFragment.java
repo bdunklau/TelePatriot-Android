@@ -93,41 +93,6 @@ public class MyCBMissionFragment extends BaseFragment
         new GetCBMissionTask().execute(citizen_builder_domain, citizen_builder_api_key_name, citizen_builder_api_key_value);
     }
 
-    // called when we come back from a call
-    @Override
-    public void onResume() {
-        doSuper = false; // see BaseFragment
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        doSuper = false; // see BaseFragment
-        super.onPause();
-        Log.d("MyCBMissionFragment", "onPause");
-    }
-
-    @Override
-    public void onStop() {
-        doSuper = false; // see BaseFragment
-        super.onStop();
-        Log.d("MyCBMissionFragment", "onStop");
-    }
-
-    @Override
-    public void onDestroyView() {
-        doSuper = false; // see BaseFragment
-        super.onDestroyView();
-        Log.d("MyCBMissionFragment", "onDestroyView");
-    }
-
-    @Override
-    public void onDestroy() {
-        doSuper = false; // see BaseFragment
-        super.onDestroy();
-        Log.d("MyCBMissionFragment", "onDestroy");
-    }
-
     private void setFieldsVisible() {
         button_call_person1.setVisibility(View.VISIBLE);
         button_call_person2.setVisibility(View.VISIBLE);
@@ -195,34 +160,6 @@ public class MyCBMissionFragment extends BaseFragment
         }
     }
 
-    private String get3WallCallName(CBMissionDetail missionDetail) {
-
-        // TODO Once CB officially supports 3way calling, we will get rid of this line
-        return getPart(missionDetail.getScript(), "start 3way call name", "end 3way call name");
-
-        // TODO Once CB officially supports 3way calling, we will uncomment the line below and implement getName2()
-//        return missionDetail.getName2();
-    }
-
-    private String get3WallCallPhone(CBMissionDetail missionDetail) {
-
-        // TODO Once CB officially supports 3way calling, we will get rid of this line
-        return getPart(missionDetail.getScript(), "start 3way call phone", "end 3way call phone");
-
-        // TODO Once CB officially supports 3way calling, we will uncomment the line below and implement getPhone2()
-//        return missionDetail.getPhone2();
-    }
-
-    // TODO Once CB officially supports 3way calling, this method won't even be needed
-    private String getPart(String whole, String begin, String end) {
-        if(whole.indexOf(begin) == -1 || whole.indexOf(end) == -1) return null;
-        int idx1 = whole.indexOf(begin) + begin.length();
-        int idx2 = whole.indexOf(end);
-        String part = whole.substring(idx1, idx2).trim();
-        if(part.equals("")) return null;
-        else return part;
-    }
-
 
     /**
      * @see com.brentdunklau.telepatriot_android.util.PhoneBroadcastReceiver.handleCall() - that's where the
@@ -250,14 +187,14 @@ public class MyCBMissionFragment extends BaseFragment
         }
     }
 
+    private boolean permittedToCall() {
+        return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
+    }
+
     private void placeCall(String phone) {
         Intent intent = new Intent(Intent.ACTION_CALL);
         intent.setData(Uri.parse("tel:" + phone));
         startActivity(intent);
-    }
-
-    private boolean permittedToCall() {
-        return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -299,6 +236,41 @@ public class MyCBMissionFragment extends BaseFragment
         wireUp(button_call_person1, missionItem);
 
         prepareFor3WayCallIfNecessary(missionItem, button_call_person2);
+    }
+
+    // called when we come back from a call
+    @Override
+    public void onResume() {
+        doSuper = false; // see BaseFragment
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        doSuper = false; // see BaseFragment
+        super.onPause();
+        Log.d("MyCBMissionFragment", "onPause");
+    }
+
+    @Override
+    public void onStop() {
+        doSuper = false; // see BaseFragment
+        super.onStop();
+        Log.d("MyCBMissionFragment", "onStop");
+    }
+
+    @Override
+    public void onDestroyView() {
+        doSuper = false; // see BaseFragment
+        super.onDestroyView();
+        Log.d("MyCBMissionFragment", "onDestroyView");
+    }
+
+    @Override
+    public void onDestroy() {
+        doSuper = false; // see BaseFragment
+        super.onDestroy();
+        Log.d("MyCBMissionFragment", "onDestroy");
     }
 
 
@@ -411,6 +383,34 @@ public class MyCBMissionFragment extends BaseFragment
             MyCBMissionFragment.this.workThis(m);
             User.getInstance().setCurrentCBMissionItem(m);
         }
+    }
+
+    private String get3WallCallName(CBMissionDetail missionDetail) {
+
+        // TODO Once CB officially supports 3way calling, we will get rid of this line
+        return getPart(missionDetail.getScript(), "start 3way call name", "end 3way call name");
+
+        // TODO Once CB officially supports 3way calling, we will uncomment the line below and implement getName2()
+//        return missionDetail.getName2();
+    }
+
+    private String get3WallCallPhone(CBMissionDetail missionDetail) {
+
+        // TODO Once CB officially supports 3way calling, we will get rid of this line
+        return getPart(missionDetail.getScript(), "start 3way call phone", "end 3way call phone");
+
+        // TODO Once CB officially supports 3way calling, we will uncomment the line below and implement getPhone2()
+//        return missionDetail.getPhone2();
+    }
+
+    // TODO Once CB officially supports 3way calling, this method won't even be needed
+    private String getPart(String whole, String begin, String end) {
+        if(whole.indexOf(begin) == -1 || whole.indexOf(end) == -1) return null;
+        int idx1 = whole.indexOf(begin) + begin.length();
+        int idx2 = whole.indexOf(end);
+        String part = whole.substring(idx1, idx2).trim();
+        if(part.equals("")) return null;
+        else return part;
     }
 
 }
