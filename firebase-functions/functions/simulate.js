@@ -25,34 +25,42 @@ var thepage = function(stuff) {
     return getConfig(stuff).then(st => {
         var html = ''
         html += '<html><head></head><body>'
-        html += '<table border="0" cellspacing="5"><tr><td width="50%" valign="top">'
-        console.log('thepage(): st.config: ', st.config)
-        var st3 = configToHtml(st)
-        var h2 = html + st3.html
-        st3.html = h2
-        return st3
-    })
-    .then(st => {
-        var h2 = ''
-        h2 += st.html
-        h2 += '</td>'
-        h2 += '<td valign="top">'
-        h2 += what(st)
-        h2 += '</td></tr></table>'
-        h2 += '</body></html>'
-        return h2
+        html += '<table border="0" cellspacing="5">'
+        html +=     '<tr>'
+        html +=         '<td valign="top">'
+        html +=         what(st)
+        html +=         '</td>'
+        html +=     '</tr>'
+        html +=     '<tr>'
+        html +=         '<td valign="top">'
+        html +=         configToHtml(st)
+        html +=         '</td>'
+        html +=     '</tr>'
+        html += '</table>'
+        html += '</body></html>'
+        return html
     })
 }
 
 var what = function(stuff) {
     console.log('what(): stuff.config: ', stuff.config)
     var html = ''
+    html += '<h3>Configuration Parameters</h3>'
+    html += 'This page supports the transition of TelePatriot from a self-contained app to one that gets most of its data from CitizenBuilder. '
+    html += 'To support this transition, this page lets you choose where the app gets its data under various circumstances. '
+    html += 'For example, will the app make API calls to the production CitizenBuilder instance at conventionofstates.com?  Or will the app make API '
+    html += 'calls against the qacos.com instance?  <b>The "CitizenBuilder database" property lets you decide which database the app will hit.</b>'
+    html += '<P/>'
     html += '<h3>Simulated Parameters</h3>'
-    html += 'This page lets you simulate various scenarios, like simulating that the user has signed the petition '
-    html += 'and confidentiality agreement when they actually haven\'t'
-    html += '<P/>Something else we can simulate: the auth provider (Google or Facebook) not returning the person\'s '
-    html += 'name and/or email address <P/>'
-    html += '<b>CitizenBuilder API: <a href="https://api.qacos.com/swagger/docs/ios#/ios" target="api">https://api.qacos.com/swagger/docs/ios#/ios</a></b><br/>'
+    html += 'These paramaters let you simulate conditions that are hard to replicate but necessary for testing.  For example, <b>we can simulate '
+    html += 'that the user hasn\'t signed the petition or confidentiality agreement.</b>  We can simulate the user is banned to make sure the app '
+    html += 'refuses access without actually banning them in CitizenBuilder.'
+    html += '<P/><b>We can also simulate the user\'s name and email address not being supplied</b> when the user first logs in and creates his account. '
+    html += 'These are basically error conditions, but I have seen them occur.  And when they do occur, we have to route the user to a special page '
+    html += 'where the use is required to enter this mission information before they can go any further.  Since it is difficult to reproduce this error, '
+    html += 'I instead created a parameter that simulates either a missing name or missing email when the corresponding parameter is true.'
+    html += '<P/><b>Prod CitizenBuilder API: <a href="https://api.conventionofstates.com/swagger/docs/ios#/ios" target="api">https://api.conventionofstates.com/swagger/docs/ios#/ios</a></b><br/>'
+    html += '<b>QA CitizenBuilder API: <a href="https://api.qacos.com/swagger/docs/ios#/ios" target="api">https://api.qacos.com/swagger/docs/ios#/ios</a></b><br/>'
     html += 'Prod '+stuff.config.cb_production_environment.citizen_builder_api_key_name+' = '+stuff.config.cb_production_environment.citizen_builder_api_key_value+'<br/>'
     html += 'QA '+stuff.config.cb_qa_environment.citizen_builder_api_key_name+' = '+stuff.config.cb_qa_environment.citizen_builder_api_key_value+'<br/>'
     return html
@@ -88,11 +96,19 @@ var configToHtml = function(stuff) {
         var qaSelected = 'checked'
         updates['environment'] = 'cb_qa_environment'
     }
-    html += '<P/>Environment: &nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="environment" value="cb_production_environment" '+prodSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> Production '
-    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="environment" value="cb_qa_environment" '+qaSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> QA'
-
+    html += '<table border="0" cellpadding="5">'
+    html +=     '<tr>'
+    html +=         '<th></th>'
+    html +=         '<th>"Production" Settings</th>'
+    html +=         '<th>"Testing" and "Legacy" Settings</th>'
+    html +=         '<th>Node under /administration/configuration</th>'
+    html +=     '<tr>'
+    html +=     '<tr>'
+    html +=         '<td>CitizenBuilder database: </td>'
+    html +=         '<td><input type="radio" name="environment" value="cb_production_environment" '+prodSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> conventionofstates.com </td>'
+    html +=         '<td><input type="radio" name="environment" value="cb_qa_environment" '+qaSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> qacos.com</td>'
+    html +=         '<td>environment</td>'
+    html +=     '<tr>'
 
     // on_user_created
     var on_user_created = stuff.config.on_user_created
@@ -112,11 +128,12 @@ var configToHtml = function(stuff) {
         sel2 = ''
         updates['on_user_created'] = 'checkVolunteerStatus'
     }
-    html += '<P/>On User Created: &nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="on_user_created" value="volunteers" '+sel2+' onclick="document.getElementById(\'simulator-form\').submit()"> volunteers'
-    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="on_user_created" value="checkVolunteerStatus" '+sel1+' onclick="document.getElementById(\'simulator-form\').submit()"> checkVolunteerStatus '
-
+    html +=     '<tr>'
+    html +=         '<td>When a User is Created:</td>'
+    html +=         '<td><input type="radio" name="on_user_created" value="volunteers" '+sel2+' onclick="document.getElementById(\'simulator-form\').submit()">call /volunteers</td>'
+    html +=         '<td><input type="radio" name="on_user_created" value="checkVolunteerStatus" '+sel1+' onclick="document.getElementById(\'simulator-form\').submit()">call /volunteer_validation/check</td>'
+    html +=         '<td>on_user_created</td>'
+    html +=     '</tr>'
 
 
     // on user login
@@ -137,11 +154,12 @@ var configToHtml = function(stuff) {
         sel2 = ''
         updates['on_user_login'] = 'checkVolunteerStatus'
     }
-    html += '<P/>On User Login: &nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="on_user_login" value="volunteers" '+sel2+' onclick="document.getElementById(\'simulator-form\').submit()"> volunteers'
-    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="on_user_login" value="checkVolunteerStatus" '+sel1+' onclick="document.getElementById(\'simulator-form\').submit()"> checkVolunteerStatus '
-
+    html +=     '<tr>'
+    html +=         '<td>When a User Logs in:</td>'
+    html +=         '<td><input type="radio" name="on_user_login" value="volunteers" '+sel2+' onclick="document.getElementById(\'simulator-form\').submit()">call /volunteers</td>'
+    html +=         '<td><input type="radio" name="on_user_login" value="checkVolunteerStatus" '+sel1+' onclick="document.getElementById(\'simulator-form\').submit()">call /volunteer_validation/check </td>'
+    html +=         '<td>on_user_login</td>'
+    html +=     '</tr>'
 
 
     // get_teams_from
@@ -162,11 +180,12 @@ var configToHtml = function(stuff) {
         cbSelected = 'checked'
         updates['get_teams_from'] = 'citizenbuilder'
     }
-    html += '<P/>Get Teams from: &nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="get_teams_from" value="citizenbuilder" '+cbSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder '
-    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="get_teams_from" value="telepatriot" '+tpSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot'
-
+    html +=     '<tr>'
+    html +=         '<td>Get Teams from:</td>'
+    html +=         '<td><input type="radio" name="get_teams_from" value="citizenbuilder" '+cbSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder</td>'
+    html +=         '<td><input type="radio" name="get_teams_from" value="telepatriot" '+tpSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot</td>'
+    html +=         '<td>get_teams_from</td>'
+    html +=     '</tr>'
 
     // get_roles_from
     var get_roles_from = stuff.config.get_roles_from
@@ -186,11 +205,12 @@ var configToHtml = function(stuff) {
         cb_role_selected = 'checked'
         updates['get_roles_from'] = 'citizenbuilder'
     }
-    html += '<P/>Get Roles from: &nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="get_roles_from" value="citizenbuilder" '+cb_role_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder '
-    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="get_roles_from" value="telepatriot" '+tp_role_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot'
-
+    html +=     '<tr>'
+    html +=         '<td>Get Roles from: </td>'
+    html +=         '<td><input type="radio" name="get_roles_from" value="citizenbuilder" '+cb_role_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder </td>'
+    html +=         '<td><input type="radio" name="get_roles_from" value="telepatriot" '+tp_role_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot</td>'
+    html +=         '<td>get_roles_from</td>'
+    html +=     '</tr>'
 
 
     // get_missions_from
@@ -211,16 +231,22 @@ var configToHtml = function(stuff) {
         cb_mission_selected = 'checked'
         updates['get_missions_from'] = 'citizenbuilder'
     }
-    html += '<P/>Get Missions from: &nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="get_missions_from" value="citizenbuilder" '+cb_mission_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder '
-    html += '&nbsp;&nbsp;&nbsp;&nbsp;'
-    html += '<input type="radio" name="get_missions_from" value="telepatriot" '+tp_mission_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot'
+    html +=     '<tr>'
+    html +=         '<td>Get Missions from: </td>'
+    html +=         '<td><input type="radio" name="get_missions_from" value="citizenbuilder" '+cb_mission_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> CitizenBuilder </td>'
+    html +=         '<td><input type="radio" name="get_missions_from" value="telepatriot" '+tp_mission_selected+' onclick="document.getElementById(\'simulator-form\').submit()"> TelePatriot</td>'
+    html +=         '<td>get_missions_from</td>'
+    html +=     '</tr>'
 
 
 
 
-    var simprops = ["simulate_missing_email", "simulate_missing_name", "simulate_passing_legal", "simulate_no_petition",
-                    "simulate_no_confidentiality_agreement", "simulate_banned"]
+    var simprops = [{db_prop: "simulate_missing_email", readable: 'Simulate email is missing'},
+                    {db_prop: "simulate_missing_name", readable: 'Simulate name is missing'},
+                    {db_prop: "simulate_passing_legal", readable: 'Simulate user has signed petition and conf agreement'},
+                    {db_prop: "simulate_no_petition", readable: 'Simulate user has not signed petition'},
+                    {db_prop: "simulate_no_confidentiality_agreement", readable: 'Simulate user has not signed conf agreement'},
+                    {db_prop: "simulate_banned", readable: 'Simulate user is banned'}]
     _.each(simprops, function(prop) {
         var theVal = stuff.config[prop] == true || stuff.config[prop] == "true"
 
@@ -232,17 +258,18 @@ var configToHtml = function(stuff) {
         var trueSelected = theVal==true || theVal=="true" ?  'checked' : ''
         var falseSelected = theVal==false || theVal=="false" ? 'checked' : ''
 
-        html += '<P/>'+prop+' &nbsp;&nbsp;&nbsp;'
-        html += '<input type="radio" name="'+prop+'" value="false" '+falseSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> false'
-        html += '&nbsp;&nbsp;&nbsp;&nbsp;'
-        html += '<input type="radio" name="'+prop+'" value="true" '+trueSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> true '
-
+        html +=     '<tr>'
+        html +=         '<td>'+prop.readable+'</td>'
+        html +=         '<td><input type="radio" name="'+prop.db_prop+'" value="false" '+falseSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> false</td>'
+        html +=         '<td><input type="radio" name="'+prop.db_prop+'" value="true" '+trueSelected+' onclick="document.getElementById(\'simulator-form\').submit()"> true </td>'
+        html +=         '<td>'+prop.db_prop+'</td>'
+        html +=     '</tr>'
     })
 
     if(updates != {}) {
         stuff.snapshot.ref.update(updates)
     }
+    html += '</table>'
     html += '</form>'
-    stuff.html = html
-    return stuff
+    return html
 }
