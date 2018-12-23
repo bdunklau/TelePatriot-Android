@@ -77,7 +77,7 @@ var getConfig = function(stuff) {
 var configToHtml = function(stuff) {
     var html = ''
 
-    html += '<form id="simulator-form" method="post" action="/testViewSimulatorParameters">'
+    html += '<form id="simulator-form" method="post" action="/testConfiguration">'
     var updates = {}
     var env = stuff.config.environment
     var prodSelected = 'checked'
