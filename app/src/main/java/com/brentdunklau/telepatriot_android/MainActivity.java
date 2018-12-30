@@ -286,15 +286,15 @@ public class MainActivity extends AppCompatActivity
         }
 
 
-        // TODO take this out for the time being (Dec 2018) until we decide what kind of Director and Admin
-        // functionality we want to put back in after the CB integration.  Integrating with CB means most/all of
-        // the Director and Admin functions are being done through CB now.
+        // Director and Admin menu items are commented out for the time being (Dec 2018)
+        // To put these back in, uncomment the blocks below AND THEN go to activity_main_drawer.xml
+        // and uncomment the menu items there also
 
-        else if (id == R.id.nav_director_layout) {
-            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
-            Fragment fragment = new MissionsFragment();
-            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-        }
+//        else if (id == R.id.nav_director_layout) {
+//            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
+//            Fragment fragment = new MissionsFragment();
+//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+//        }
 //        else if (id == R.id.nav_admin_layout) {
 //            Fragment fragment = new AdminFragment();
 //            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
