@@ -16,6 +16,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -26,6 +27,7 @@ import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionDetail;
 import com.brentdunklau.telepatriot_android.citizenbuilder.CBTeam;
+import com.brentdunklau.telepatriot_android.util.AppLog;
 import com.brentdunklau.telepatriot_android.util.Configuration;
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionDetail;
@@ -135,10 +137,13 @@ public class MyMissionFragment extends BaseFragment {
                     return; // we should indicate no missions available for the user
                 }
 
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    missionItemId = child.getKey();
+                try {
+                    for (DataSnapshot child : dataSnapshot.getChildren()) {
+                        missionItemId = child.getKey();
 
-                    missionDetail = child.getValue(MissionDetail.class);
+                        missionDetail = child.getValue(MissionDetail.class);
+
+                        AppLog.debug(User.getInstance(), TAG, "onCreateView", "Mission: " + missionDetail.getMission_name() + ", Name: " + missionDetail.getName() + ", Phone: " + missionDetail.getPhone());
 
                         // if all we got was a 999999, then this item is being worked by someone else and
                         // there basically are no more missions for this user
@@ -147,60 +152,68 @@ public class MyMissionFragment extends BaseFragment {
                             return; // we should indicate no missions available for the user
                         }
 
-                    // Get progress info from mission object (have to query for that unfortunately)
-                    // TODO This is an expensive query too.  It returns all mission items for this mission because
-                    // we keep mission_items under each mission
-                    FirebaseDatabase.getInstance().getReference("teams/" + team + "/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
+                        // Get progress info from mission object (have to query for that unfortunately)
+                        // TODO This is an expensive query too.  It returns all mission items for this mission because
+                        // we keep mission_items under each mission
+                        FirebaseDatabase.getInstance().getReference("teams/" + team + "/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                try {
+                                    for (DataSnapshot child : dataSnapshot.getChildren()) {
 
-                            for (DataSnapshot child : dataSnapshot.getChildren()) {
-
-                                Mission mission = child.getValue(Mission.class);
-                                Integer total_rows_completed = mission.getTotal_rows_completed();
-                                Integer total_rows_with_phone = mission.getTotal_rows_in_spreadsheet_with_phone();
-                                if (total_rows_completed != null && total_rows_with_phone != null) {
-                                    int calls_remaining = total_rows_with_phone - total_rows_completed;
-                                    Integer percent_complete = mission.getPercent_complete();
-                                    //  have to double up the % sign to escape it ----v
-                                    heading_mission_progress.setText(String.format("%d%% Complete (%d calls remaining)", percent_complete, calls_remaining));
+                                        Mission mission = child.getValue(Mission.class);
+                                        Integer total_rows_completed = mission.getTotal_rows_completed();
+                                        Integer total_rows_with_phone = mission.getTotal_rows_in_spreadsheet_with_phone();
+                                        if (total_rows_completed != null && total_rows_with_phone != null) {
+                                            int calls_remaining = total_rows_with_phone - total_rows_completed;
+                                            Integer percent_complete = mission.getPercent_complete();
+                                            //  have to double up the % sign to escape it ----v
+                                            heading_mission_progress.setText(String.format("%d%% Complete (%d calls remaining)", percent_complete, calls_remaining));
+                                        }
+                                    }
                                 }
+                                catch(Throwable t) {
+                                    AppLog.error(User.getInstance(), TAG, "getMission_fromTelePatriot().onDataChange().onDataChange()", "Throwable: " + t.getMessage());
+                                }
+
                             }
 
-                        }
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                            }
+                        });
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                        }
-                    });
+                        // set fields back to visible if they were previously set to View.GONE
+                        setFieldsVisible();
 
-                    // set fields back to visible if they were previously set to View.GONE
-                    setFieldsVisible();
+                        User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
 
-                    User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
+                        String missionName = missionDetail.getMission_name();
+                        String missionDescription = missionDetail.getDescription();
+                        String missionScript = missionDetail.getScript();
 
-                    String missionName = missionDetail.getMission_name();
-                    String missionDescription = missionDetail.getDescription();
-                    String missionScript = missionDetail.getScript();
+                        mission_name.setText(missionName);
+                        mission_description.setText(missionDescription);
+                        mission_script.setText(missionScript);
+                        button_call_person1.setVisibility(View.VISIBLE);
+                        button_call_person1.setText(missionDetail.getName() + " " + missionDetail.getPhone());
+                        wireUp(button_call_person1, missionDetail);
 
-                    mission_name.setText(missionName);
-                    mission_description.setText(missionDescription);
-                    mission_script.setText(missionScript);
-                    button_call_person1.setVisibility(View.VISIBLE);
-                    button_call_person1.setText(missionDetail.getName() + " " + missionDetail.getPhone());
-                    wireUp(button_call_person1, missionDetail);
+                        prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
 
-                    prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
+                        missionDetail.setAccomplished("in progress");
+                        missionDetail.setActive_and_accomplished("true_in progress");
 
-                    missionDetail.setAccomplished("in progress");
-                    missionDetail.setActive_and_accomplished("true_in progress");
+                        // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
+                        // and save the original value in group_number_was
+                        missionDetail.setGroup_number_was(missionDetail.getGroup_number());
+                        missionDetail.setGroup_number(999999);
 
-                    // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
-                    // and save the original value in group_number_was
-                    missionDetail.setGroup_number_was(missionDetail.getGroup_number());
-                    missionDetail.setGroup_number(999999);
-
-                    dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
+                        dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
+                    }
+                }
+                catch(Throwable t) {
+                    AppLog.error(User.getInstance(), TAG, "getMission_fromTelePatriot().onDataChange()", "Throwable: " + t.getMessage());
                 }
 
             }
@@ -243,16 +256,24 @@ public class MyMissionFragment extends BaseFragment {
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
-        System.out.println("MyCBMissionFragment - onRequestPermissionsResult()");
 
-        // only checking for CALL_PHONE permission
-        if(permissions.length == 0
-                || !permissions[0].equalsIgnoreCase(android.Manifest.permission.CALL_PHONE)
-                || grantResults.length == 0
-                || grantResults[0] != PackageManager.PERMISSION_GRANTED
-                || User.getInstance().getCurrentCBMissionItem() == null)
-            return;
-        call(User.getInstance().getCurrentMissionItem());
+        try {
+            // only checking for CALL_PHONE permission
+            if (permissions.length == 0
+                    || !permissions[0].equalsIgnoreCase(android.Manifest.permission.CALL_PHONE)
+                    || grantResults.length == 0
+                    || grantResults[0] != PackageManager.PERMISSION_GRANTED
+                    || User.getInstance().getCurrentMissionItem() == null) {
+                AppLog.debug(User.getInstance(), TAG, "onRequestPermissionsResult", "permission denied to make phone calls");
+                return;
+            }
+
+            AppLog.debug(User.getInstance(), TAG, "onRequestPermissionsResult", "permission granted to make phone calls");
+            call(User.getInstance().getCurrentMissionItem());
+        }
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "onRequestPermissionsResult", "Throwable: " + t.getMessage());
+        }
     }
 
     private void wireUp(Button button, final MissionDetail missionDetail) {
@@ -277,18 +298,6 @@ public class MyMissionFragment extends BaseFragment {
 
     private void call(MissionDetail missionDetail) {
         call(missionDetail.getMission_name(), missionDetail.getName(), missionDetail.getPhone());
-//        Intent intent = new Intent(Intent.ACTION_CALL);
-//        intent.setData(Uri.parse("tel:" + missionDetail.getPhone()));
-//
-//        String team = User.getInstance().getCurrentTeamName();
-//        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
-//        String eventType = "is calling";
-//        String supporterName = missionDetail.getName();
-//        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
-//        ref.child("all").push().setValue(m);
-//        ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
-//
-//        startActivity(intent);
     }
 
     // call the name2/phone2 person
@@ -306,23 +315,57 @@ public class MyMissionFragment extends BaseFragment {
     }
 
     private boolean permittedToCall() {
-        return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
+        try {
+            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "checking permission...");
+            int perm1 = ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE);
+            int perm2 = ContextCompat.checkSelfPermission(myView.getContext(), Manifest.permission.PROCESS_OUTGOING_CALLS);
+            boolean isPermitted1 = perm1 == PackageManager.PERMISSION_GRANTED;
+            boolean isPermitted2 = perm2 == PackageManager.PERMISSION_GRANTED;
+            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "isPermitted1: "+isPermitted1);
+            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "isPermitted2: "+isPermitted2);
+            return isPermitted1 && isPermitted2;
+        }
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "permittedToCall", "Throwable: " + t.getMessage());
+            return false;
+        }
     }
 
     private void placeCall(String mission_name, String name, String phone) {
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + phone));
-        String team = User.getInstance().getCurrentTeamName();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
-        String eventType = "is calling";
-        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), mission_name, phone, /*volunteerPhone, */name);
-        ref.child("all").push().setValue(m);
-        startActivity(intent);
+        try {
+            Uri uri = Uri.fromParts("tel", phone, null);
+            Bundle extras = new Bundle();
+            TelecomManager telephony = (TelecomManager)myView.getContext().getSystemService(Context.TELECOM_SERVICE);
+            try {
+                telephony.placeCall(uri, extras);
+            }
+            catch(SecurityException se) {
+                AppLog.error(User.getInstance(), TAG, "placeCall", se.getMessage());
+                return;
+            }
+
+            String team = User.getInstance().getCurrentTeamName();
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
+            String eventType = "is calling";
+            MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), mission_name, phone, /*volunteerPhone, */name);
+            ref.child("all").push().setValue(m);
+            AppLog.debug(User.getInstance(), TAG, "placeCall", "Mission: "+mission_name+", Name: "+name+", Phone: "+phone+" - started call");
+        } catch(Throwable t) {
+            System.out.println(t.getMessage());
+            AppLog.error(User.getInstance(), TAG, "placeCall", t.getMessage());
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void requestPermissionToCall() {
-        this.requestPermissions(new String[]{android.Manifest.permission.CALL_PHONE}, 1);
+        try {
+            AppLog.debug(User.getInstance(), TAG, "requestPermissionToCall", "requesting permission to call...");
+            this.requestPermissions(new String[]{android.Manifest.permission.CALL_PHONE, Manifest.permission.PROCESS_OUTGOING_CALLS}, 1);
+            AppLog.debug(User.getInstance(), TAG, "requestPermissionToCall", "requesting permission to call - done");
+        }
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "requestPermissionToCall", "Throwable: "+t.getMessage());
+        }
     }
 
     private void wireUp2(Button button, final MissionDetail missionDetail) {

@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
@@ -13,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
+import com.brentdunklau.telepatriot_android.util.AppLog;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.auth.FirebaseAuth;
@@ -33,6 +36,7 @@ public class LauncherActivity extends BaseActivity
 //        implements AccountStatusEvent.Listener
 {
 
+    private final static String TAG = "LauncherActivity";
     private static final int RC_SIGN_IN = 1;
     private Button button_get_started;
 
@@ -81,6 +85,56 @@ public class LauncherActivity extends BaseActivity
     }
 
 
+    private boolean permittedToCall() {
+        try {
+            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "checking permission...");
+            int perm = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CALL_PHONE);
+            boolean isPermitted = perm == PackageManager.PERMISSION_GRANTED;
+            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "isPermitted: "+isPermitted);
+            return isPermitted;
+        }
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "permittedToCall", "Throwable: " + t.getMessage());
+            return false;
+        }
+    }
+
+    // Let's see if we really need this.  Maybe we can ask for permission right before making the first call
+//    @RequiresApi(api = Build.VERSION_CODES.M)
+//    private void requestPermissionToCall() {
+//        try {
+//            AppLog.debug(User.getInstance(), TAG, "requestPermissionToCall", "requesting permission to call...");
+//            this.requestPermissions(new String[]{android.Manifest.permission.CALL_PHONE}, 1);
+//            AppLog.debug(User.getInstance(), TAG, "requestPermissionToCall", "requesting permission to call - done");
+//        }
+//        catch(Throwable t) {
+//            AppLog.error(User.getInstance(), TAG, "requestPermissionToCall", "Throwable: "+t.getMessage());
+//        }
+//    }
+
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode,
+//                                           String permissions[], int[] grantResults) {
+//        try {
+//            if (!User.getInstance().isLoggedIn()) {
+//                return;
+//            }
+//
+//            if (permissions.length == 0) return;
+//            if (!permissions[0].equalsIgnoreCase(android.Manifest.permission.CALL_PHONE)) return;
+//            if (grantResults.length == 0) return;
+//            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                AppLog.debug(User.getInstance(), TAG, "onRequestPermissionsResult", "permission granted to make phone calls");
+//            } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+//                AppLog.debug(User.getInstance(), TAG, "onRequestPermissionsResult", "permission denied to make phone calls");
+//            }
+//        }
+//        catch(Throwable t) {
+//            AppLog.error(User.getInstance(), TAG, "onRequestPermissionsResult", "Throwable: "+t.getMessage());
+//        }
+//    }
+
+
     /* We don't even need to do this because the singleton constructor in User.java registers
     itself as a Firebase Auth state listener.  Go look at the queries we do in login() and see how
     we fire different events when the user is written and removed from the /no_roles node
@@ -93,9 +147,16 @@ public class LauncherActivity extends BaseActivity
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
 
-                // check for phone permission here because the app is crashing on the first phone
-                // call.  We are asking for permission too late.
-                checkPhoneCallPermission();
+
+                // Let's see if we really need this.  Maybe we can ask for permission right before making the first call
+//                // check for phone permission here because the app is crashing on the first phone
+//                // call.  We are asking for permission too late.
+//                if(permittedToCall()) {
+//                    AppLog.debug(User.getInstance(), TAG, "onActivityResult", "permission already granted to make phone calls");
+//                } else {
+//                    requestPermissionToCall();
+//                }
+
 
                 final String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 final String name = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
@@ -108,9 +169,6 @@ public class LauncherActivity extends BaseActivity
 //                        Map<String, Object> config = (Map<String, Object>) m.get("configuration");
                         Boolean simulate_missing_name = (Boolean) config.get("simulate_missing_name");
                         Boolean simulate_missing_email = (Boolean) config.get("simulate_missing_email");
-
-                        String environment = config.get("environment")+"";
-                        
 
                         boolean dataMissing = name==null || email==null || name.trim().equals("") || email.trim().equals("")
                                 || simulate_missing_name || simulate_missing_email;
@@ -173,35 +231,33 @@ public class LauncherActivity extends BaseActivity
         startActivity(new Intent(this, c));
     }
 
-    // https://developer.android.com/training/permissions/requesting.html
-    private void checkPhoneCallPermission() {
-        checkPermission(android.Manifest.permission.CALL_PHONE);
-    }
 
-    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(this, androidPermission)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) this, androidPermission)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-
-                // No explanation needed, we can request the permission.
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{androidPermission},
-                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        }
-    }
+//    // TODO fix this...
+//    //not sure where we do this but we have code dupe here
+//    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
+//        if (ContextCompat.checkSelfPermission(this, androidPermission)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//            // Should we show an explanation?
+//            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) this, androidPermission)) {
+//
+//                // Show an explanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//            } else {
+//
+//                // No explanation needed, we can request the permission.
+//
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{androidPermission},
+//                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
+//
+//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                // app-defined int constant. The callback method gets the
+//                // result of the request.
+//            }
+//        }
+//    }
 
 }

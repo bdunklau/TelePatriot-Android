@@ -65,7 +65,6 @@ public class MissionItemEventHolder extends RecyclerView.ViewHolder {
         mission_name.setText(missionItemEvent.getMission_name());
         phone.setText(missionItemEvent.getPhone());
         mission_event_supporter_name.setText(missionItemEvent.getSupporter_name());
-        mission_event_volunteer_phone.setText(missionItemEvent.getVolunteer_phone());
 
         // hack: set phone icon visibility to View.GONE because for some reason, the
         // FirebaseRecyclerAdapter is giving us a MissionItemEvent with no data in it

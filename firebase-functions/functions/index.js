@@ -394,3 +394,10 @@ const account_api = require('./telepatriot_api/account_api')
 exports.testAccountDisposition = account_api.testAccountDisposition
 exports.api_account_disposition = account_api.api_account_disposition
 
+
+// dev deploy: 12/25/18
+// prod deploy:
+const applog = require('./log')
+exports.testLog = applog.testLog
+exports.logByUser = applog.logByUser
+

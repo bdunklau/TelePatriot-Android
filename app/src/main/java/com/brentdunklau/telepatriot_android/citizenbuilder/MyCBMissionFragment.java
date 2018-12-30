@@ -188,7 +188,7 @@ public class MyCBMissionFragment extends BaseFragment
     }
 
     private boolean permittedToCall() {
-        return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
+        return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void placeCall(String phone) {

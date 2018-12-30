@@ -27,6 +27,7 @@ import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionDetail;
 import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionItemWrapUpFragment;
 import com.brentdunklau.telepatriot_android.citizenbuilder.MyCBMissionFragment;
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
+import com.brentdunklau.telepatriot_android.util.AppLog;
 import com.brentdunklau.telepatriot_android.util.Configuration;
 import com.brentdunklau.telepatriot_android.util.MissionCompletedListener;
 import com.brentdunklau.telepatriot_android.util.QuitListener;
@@ -289,11 +290,12 @@ public class MainActivity extends AppCompatActivity
         // functionality we want to put back in after the CB integration.  Integrating with CB means most/all of
         // the Director and Admin functions are being done through CB now.
 
-//        else if (id == R.id.nav_director_layout) {
-//            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
-//            Fragment fragment = new MissionsFragment();
-//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-//        } else if (id == R.id.nav_admin_layout) {
+        else if (id == R.id.nav_director_layout) {
+            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
+            Fragment fragment = new MissionsFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
+//        else if (id == R.id.nav_admin_layout) {
 //            Fragment fragment = new AdminFragment();
 //            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
 //        }
@@ -360,6 +362,7 @@ public class MainActivity extends AppCompatActivity
 
     private void signOut() {
         AuthUI aui = AuthUI.getInstance();
+        AppLog.debug(User.getInstance(), TAG, "signOut", "logging out");
         aui.signOut(this)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
