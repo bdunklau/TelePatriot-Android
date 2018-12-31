@@ -67,6 +67,7 @@ public class LauncherActivity extends BaseActivity
             startActivity(new Intent(this, MainActivity.class));
         }
         else {
+            // src:  https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md
             // gotta stick around and login
             AuthUI aui = AuthUI.getInstance();
             AuthUI.SignInIntentBuilder sib = aui.createSignInIntentBuilder()
@@ -81,58 +82,9 @@ public class LauncherActivity extends BaseActivity
 
             // NOTE:  FirebaseAuth.getInstance().getCurrentUser() = null  at this point
             startActivityForResult(intent, RC_SIGN_IN);
+
         }
     }
-
-
-    private boolean permittedToCall() {
-        try {
-            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "checking permission...");
-            int perm = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CALL_PHONE);
-            boolean isPermitted = perm == PackageManager.PERMISSION_GRANTED;
-            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "isPermitted: "+isPermitted);
-            return isPermitted;
-        }
-        catch(Throwable t) {
-            AppLog.error(User.getInstance(), TAG, "permittedToCall", "Throwable: " + t.getMessage());
-            return false;
-        }
-    }
-
-    // Let's see if we really need this.  Maybe we can ask for permission right before making the first call
-//    @RequiresApi(api = Build.VERSION_CODES.M)
-//    private void requestPermissionToCall() {
-//        try {
-//            AppLog.debug(User.getInstance(), TAG, "requestPermissionToCall", "requesting permission to call...");
-//            this.requestPermissions(new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-//            AppLog.debug(User.getInstance(), TAG, "requestPermissionToCall", "requesting permission to call - done");
-//        }
-//        catch(Throwable t) {
-//            AppLog.error(User.getInstance(), TAG, "requestPermissionToCall", "Throwable: "+t.getMessage());
-//        }
-//    }
-
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode,
-//                                           String permissions[], int[] grantResults) {
-//        try {
-//            if (!User.getInstance().isLoggedIn()) {
-//                return;
-//            }
-//
-//            if (permissions.length == 0) return;
-//            if (!permissions[0].equalsIgnoreCase(android.Manifest.permission.CALL_PHONE)) return;
-//            if (grantResults.length == 0) return;
-//            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                AppLog.debug(User.getInstance(), TAG, "onRequestPermissionsResult", "permission granted to make phone calls");
-//            } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
-//                AppLog.debug(User.getInstance(), TAG, "onRequestPermissionsResult", "permission denied to make phone calls");
-//            }
-//        }
-//        catch(Throwable t) {
-//            AppLog.error(User.getInstance(), TAG, "onRequestPermissionsResult", "Throwable: "+t.getMessage());
-//        }
-//    }
 
 
     /* We don't even need to do this because the singleton constructor in User.java registers
