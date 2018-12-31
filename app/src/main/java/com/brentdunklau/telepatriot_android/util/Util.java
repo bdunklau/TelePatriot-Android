@@ -41,6 +41,11 @@ public class Util {
     }
 
 
+    public static String getDate_yyyy_MM_dd_h_mm_ss_SSS_a_z() {
+        return getDate("yyyy-MM-dd h:mm:ss.SSS a z"); // i.e.  2018-12-26 12:38:03.573 AM CST
+    }
+
+
     private static String getDate(String withFormat) {
         return new SimpleDateFormat(withFormat).format(new Date());
     }

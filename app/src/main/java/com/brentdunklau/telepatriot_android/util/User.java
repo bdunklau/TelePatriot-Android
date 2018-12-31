@@ -31,9 +31,10 @@ import java.util.List;
 
 public class User implements FirebaseAuth.AuthStateListener {
 
+    private final static String TAG = "User";
+
     private FirebaseDatabase database;
     private DatabaseReference userRef;
-    //private List<String> teamNames = new ArrayList<String>();
     private Integer citizen_builder_id;
     private boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
     private String recruiter_id;
@@ -101,24 +102,6 @@ public class User implements FirebaseAuth.AuthStateListener {
         this.database = FirebaseDatabase.getInstance();
         childEventListener = new ChildEventAdapter();
         final String name = getName();
-
-//        database.getReference("/no_roles/"+getUid()).addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                // if dataSnapshot is null, then the user has been assigned to a role
-//                // if not null, then we need to send the user to LimboActivity
-//                Object o = dataSnapshot.getValue();
-//                if(o != null ) {
-//                    // send to LimboActivity
-//                    fireNoRolesEvent();
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//
-//            }
-//        });
 
         userRef = database.getReference("/users/"+getUid());
         // redundant because we're getting roles and topics below also
@@ -321,6 +304,8 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     }
 
+    // By this time, the user has already signed out.  The FirebaseUser object is already null.
+    // See MainActivity.signOut()
     private void onSignout() {
         if(userRef == null)
             return;
@@ -387,45 +372,64 @@ public class User implements FirebaseAuth.AuthStateListener {
     // TODO remove after CB integration is complete
     // called from MissionItemWrapUpFragment when the user submit the notes at the end of a call
     public void submitWrapUp(String outcome, String notes) {
-        String team = User.getInstance().getCurrentTeamName();
-        FirebaseDatabase.getInstance().getReference("teams/"+team+"/mission_items/"+missionItemId).removeValue();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/"+team+"/missions/"+missionId+"/mission_items/"+missionItemId);
+        try {
+            String team = User.getInstance().getCurrentTeamName();
+            FirebaseDatabase.getInstance().getReference("teams/" + team + "/mission_items/" + missionItemId).removeValue();
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/missions/" + missionId + "/mission_items/" + missionItemId);
 
-        // TODO this should be a multi-path update
-        ref.child("accomplished").setValue("complete");
-        ref.child("active").setValue(false);
-        ref.child("active_and_accomplished").setValue("false_complete");
-        ref.child("outcome").setValue(outcome);
-        ref.child("notes").setValue(notes);
-        ref.child("completed_by_uid").setValue(getUid());
-        ref.child("completed_by_name").setValue(getName());
-        ref.child("mission_complete_date").setValue(new SimpleDateFormat("MMM d, yyyy h:mm a z").format(new Date()));
-        ref.child("uid_and_active").setValue(getUid()+"_false");
-        missionItemId = null;
-        missionItem = null;
+            AppLog.debug(User.getInstance(), TAG, "submitWrapUp", "Mission: " + missionItem.getMission_name() + ", Name: " + missionItem.getName() + ", Phone: " + missionItem.getPhone() + " - submitted notes");
+
+            // TODO this should be a multi-path update
+            ref.child("accomplished").setValue("complete");
+            ref.child("active").setValue(false);
+            ref.child("active_and_accomplished").setValue("false_complete");
+            ref.child("outcome").setValue(outcome);
+            ref.child("notes").setValue(notes);
+            ref.child("completed_by_uid").setValue(getUid());
+            ref.child("completed_by_name").setValue(getName());
+            ref.child("mission_complete_date").setValue(new SimpleDateFormat("MMM d, yyyy h:mm a z").format(new Date()));
+            ref.child("uid_and_active").setValue(getUid() + "_false");
+            missionItemId = null;
+            missionItem = null;
+        }
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "submitWrapUp", "Throwable: "+t.getMessage());
+        }
     }
 
 
     // similar to AppDelegate.onCallEnded() on iOS
-    public void callEnded(String myPhone) {
+    public void callEnded() {
         // for "legacy" missions that are stored in the TelePatriot/Firebase db
         if(missionItem != null && missionItemId != null && !missionItem._isAccomplished()) {
-            missionItem.complete(missionItemId);
+            try {
+                AppLog.debug(User.getInstance(), TAG, "callEnded", "Mission: " + missionItem.getMission_name() + ", Name: " + missionItem.getName() + ", Phone: " + missionItem.getPhone() + " - ended call");
+                missionItem.complete(missionItemId);
 
-            String team = User.getInstance().getCurrentTeamName();
-            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
+                String team = User.getInstance().getCurrentTeamName();
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
 
-            String volunteerPhone = myPhone;
-            String supporterName = missionItem.getName();
-            MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), volunteerPhone, supporterName);
-            ref.child("all").push().setValue(m);
-            ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
+                String supporterName = missionItem.getName();
+                MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), /*volunteerPhone,*/ supporterName);
+                ref.child("all").push().setValue(m);
+                ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
+            }
+            catch(Throwable t) {
+                AppLog.error(User.getInstance(), TAG, "callEnded", "Throwable: "+t.getMessage()+" at Mission: " + missionItem.getMission_name() + ", Name: " + missionItem.getName() + ", Phone: " + missionItem.getPhone());
+            }
         }
 
         if(cbMissionItem != null) {
-            AccountStatusEvent.CallEnded evt = new AccountStatusEvent.CallEnded(cbMissionItem);
-            for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
-                l.fired(evt); // MainActivity is the listener we care about in this case
+            try {
+                AppLog.debug(User.getInstance(), TAG, "callEnded", "CitizenBuilder Mission: " + cbMissionItem.getMission_name() + ", Name: " + cbMissionItem.getName() + ", Phone: " + cbMissionItem.getPhone() + " - ended call");
+
+                AccountStatusEvent.CallEnded evt = new AccountStatusEvent.CallEnded(cbMissionItem);
+                for (AccountStatusEvent.Listener l : accountStatusEventListeners) {
+                    l.fired(evt); // MainActivity is the listener we care about in this case
+                }
+            }
+            catch(Throwable t) {
+                AppLog.error(User.getInstance(), TAG, "callEnded", "Throwable: "+t.getMessage()+" at CitizenBuilder Mission: " + cbMissionItem.getMission_name() + ", Name: " + cbMissionItem.getName() + ", Phone: " + cbMissionItem.getPhone());
             }
         }
     }
@@ -518,12 +522,19 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-        if(firebaseUser != null) {
-            login();
+        try {
+            FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+            if (firebaseUser != null) {
+                AppLog.info(firebaseUser.getUid(), firebaseUser.getDisplayName(), TAG, "onAuthStateChanged", "logged in");
+                login();
+            } else {
+                // this also gets called right after the listener has been registered
+                // Ref Firebase docs: https://firebase.google.com/docs/reference/android/com/google/firebase/auth/FirebaseAuth.AuthStateListener
+                onSignout();
+            }
         }
-        else {
-            onSignout();
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "onAuthStateChanged", "Throwable: "+t.getMessage());
         }
     }
 

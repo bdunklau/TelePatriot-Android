@@ -27,6 +27,7 @@ import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionDetail;
 import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionItemWrapUpFragment;
 import com.brentdunklau.telepatriot_android.citizenbuilder.MyCBMissionFragment;
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
+import com.brentdunklau.telepatriot_android.util.AppLog;
 import com.brentdunklau.telepatriot_android.util.Configuration;
 import com.brentdunklau.telepatriot_android.util.MissionCompletedListener;
 import com.brentdunklau.telepatriot_android.util.QuitListener;
@@ -147,6 +148,13 @@ public class MainActivity extends AppCompatActivity
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         VideoType.init();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+
+        System.out.println("MainActivity - onRequestPermissionsResult()");
     }
 
     private View.OnClickListener beginEditingMyAccount() {
@@ -278,15 +286,16 @@ public class MainActivity extends AppCompatActivity
         }
 
 
-        // TODO take this out for the time being (Dec 2018) until we decide what kind of Director and Admin
-        // functionality we want to put back in after the CB integration.  Integrating with CB means most/all of
-        // the Director and Admin functions are being done through CB now.
+        // Director and Admin menu items are commented out for the time being (Dec 2018)
+        // To put these back in, uncomment the blocks below AND THEN go to activity_main_drawer.xml
+        // and uncomment the menu items there also
 
 //        else if (id == R.id.nav_director_layout) {
 //            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
 //            Fragment fragment = new MissionsFragment();
 //            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-//        } else if (id == R.id.nav_admin_layout) {
+//        }
+//        else if (id == R.id.nav_admin_layout) {
 //            Fragment fragment = new AdminFragment();
 //            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
 //        }
@@ -353,6 +362,7 @@ public class MainActivity extends AppCompatActivity
 
     private void signOut() {
         AuthUI aui = AuthUI.getInstance();
+        AppLog.debug(User.getInstance(), TAG, "signOut", "logging out");
         aui.signOut(this)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override

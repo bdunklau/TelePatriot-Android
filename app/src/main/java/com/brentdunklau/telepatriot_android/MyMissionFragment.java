@@ -10,10 +10,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,6 +27,7 @@ import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.citizenbuilder.CBMissionDetail;
 import com.brentdunklau.telepatriot_android.citizenbuilder.CBTeam;
+import com.brentdunklau.telepatriot_android.util.AppLog;
 import com.brentdunklau.telepatriot_android.util.Configuration;
 import com.brentdunklau.telepatriot_android.util.Mission;
 import com.brentdunklau.telepatriot_android.util.MissionDetail;
@@ -133,10 +137,13 @@ public class MyMissionFragment extends BaseFragment {
                     return; // we should indicate no missions available for the user
                 }
 
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    missionItemId = child.getKey();
+                try {
+                    for (DataSnapshot child : dataSnapshot.getChildren()) {
+                        missionItemId = child.getKey();
 
-                    missionDetail = child.getValue(MissionDetail.class);
+                        missionDetail = child.getValue(MissionDetail.class);
+
+                        AppLog.debug(User.getInstance(), TAG, "onCreateView", "Mission: " + missionDetail.getMission_name() + ", Name: " + missionDetail.getName() + ", Phone: " + missionDetail.getPhone());
 
                         // if all we got was a 999999, then this item is being worked by someone else and
                         // there basically are no more missions for this user
@@ -145,60 +152,68 @@ public class MyMissionFragment extends BaseFragment {
                             return; // we should indicate no missions available for the user
                         }
 
-                    // Get progress info from mission object (have to query for that unfortunately)
-                    // TODO This is an expensive query too.  It returns all mission items for this mission because
-                    // we keep mission_items under each mission
-                    FirebaseDatabase.getInstance().getReference("teams/" + team + "/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
+                        // Get progress info from mission object (have to query for that unfortunately)
+                        // TODO This is an expensive query too.  It returns all mission items for this mission because
+                        // we keep mission_items under each mission
+                        FirebaseDatabase.getInstance().getReference("teams/" + team + "/missions/").orderByKey().equalTo(missionDetail.getMission_id()).limitToFirst(1).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                try {
+                                    for (DataSnapshot child : dataSnapshot.getChildren()) {
 
-                            for (DataSnapshot child : dataSnapshot.getChildren()) {
-
-                                Mission mission = child.getValue(Mission.class);
-                                Integer total_rows_completed = mission.getTotal_rows_completed();
-                                Integer total_rows_with_phone = mission.getTotal_rows_in_spreadsheet_with_phone();
-                                if (total_rows_completed != null && total_rows_with_phone != null) {
-                                    int calls_remaining = total_rows_with_phone - total_rows_completed;
-                                    Integer percent_complete = mission.getPercent_complete();
-                                    //  have to double up the % sign to escape it ----v
-                                    heading_mission_progress.setText(String.format("%d%% Complete (%d calls remaining)", percent_complete, calls_remaining));
+                                        Mission mission = child.getValue(Mission.class);
+                                        Integer total_rows_completed = mission.getTotal_rows_completed();
+                                        Integer total_rows_with_phone = mission.getTotal_rows_in_spreadsheet_with_phone();
+                                        if (total_rows_completed != null && total_rows_with_phone != null) {
+                                            int calls_remaining = total_rows_with_phone - total_rows_completed;
+                                            Integer percent_complete = mission.getPercent_complete();
+                                            //  have to double up the % sign to escape it ----v
+                                            heading_mission_progress.setText(String.format("%d%% Complete (%d calls remaining)", percent_complete, calls_remaining));
+                                        }
+                                    }
                                 }
+                                catch(Throwable t) {
+                                    AppLog.error(User.getInstance(), TAG, "getMission_fromTelePatriot().onDataChange().onDataChange()", "Throwable: " + t.getMessage());
+                                }
+
                             }
 
-                        }
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                            }
+                        });
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                        }
-                    });
+                        // set fields back to visible if they were previously set to View.GONE
+                        setFieldsVisible();
 
-                    // set fields back to visible if they were previously set to View.GONE
-                    setFieldsVisible();
+                        User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
 
-                    User.getInstance().setCurrentMissionItem(missionItemId, missionDetail);
+                        String missionName = missionDetail.getMission_name();
+                        String missionDescription = missionDetail.getDescription();
+                        String missionScript = missionDetail.getScript();
 
-                    String missionName = missionDetail.getMission_name();
-                    String missionDescription = missionDetail.getDescription();
-                    String missionScript = missionDetail.getScript();
+                        mission_name.setText(missionName);
+                        mission_description.setText(missionDescription);
+                        mission_script.setText(missionScript);
+                        button_call_person1.setVisibility(View.VISIBLE);
+                        button_call_person1.setText(missionDetail.getName() + " " + missionDetail.getPhone());
+                        wireUp(button_call_person1, missionDetail);
 
-                    mission_name.setText(missionName);
-                    mission_description.setText(missionDescription);
-                    mission_script.setText(missionScript);
-                    button_call_person1.setVisibility(View.VISIBLE);
-                    button_call_person1.setText(missionDetail.getName() + " " + missionDetail.getPhone());
-                    wireUp(button_call_person1, missionDetail);
+                        prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
 
-                    prepareFor3WayCallIfNecessary(missionDetail, button_call_person2);
+                        missionDetail.setAccomplished("in progress");
+                        missionDetail.setActive_and_accomplished("true_in progress");
 
-                    missionDetail.setAccomplished("in progress");
-                    missionDetail.setActive_and_accomplished("true_in progress");
+                        // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
+                        // and save the original value in group_number_was
+                        missionDetail.setGroup_number_was(missionDetail.getGroup_number());
+                        missionDetail.setGroup_number(999999);
 
-                    // kinda sneaky, kinda hacky - change the group_number to something really high so that it won't come up first in anyone's queue
-                    // and save the original value in group_number_was
-                    missionDetail.setGroup_number_was(missionDetail.getGroup_number());
-                    missionDetail.setGroup_number(999999);
-
-                    dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
+                        dataSnapshot.getRef().child(missionItemId).setValue(missionDetail);
+                    }
+                }
+                catch(Throwable t) {
+                    AppLog.error(User.getInstance(), TAG, "getMission_fromTelePatriot().onDataChange()", "Throwable: " + t.getMessage());
                 }
 
             }
@@ -210,23 +225,13 @@ public class MyMissionFragment extends BaseFragment {
         });
     }
 
-    private void workThis(MissionDetail missionItem) {
-
-        // set fields back to visible if they were previously set to View.GONE
-        setFieldsVisible();
-
-        String missionName = missionItem.getMission_name();
-        String missionDescription = missionItem.getDescription();
-        String missionScript = missionItem.getScript();
-
-        mission_name.setText(missionName);
-        mission_description.setText(missionDescription);
-        mission_script.setText(missionScript);
+    private void setFieldsVisible() {
         button_call_person1.setVisibility(View.VISIBLE);
-        button_call_person1.setText(missionItem.getName() + " " + missionItem.getPhone());
-        wireUp(button_call_person1, missionItem);
-
-        prepareFor3WayCallIfNecessary(missionItem, button_call_person2);
+        button_call_person2.setVisibility(View.VISIBLE);
+        mission_name.setVisibility(View.VISIBLE);
+        mission_script.setVisibility(View.VISIBLE);
+        myView.findViewById(R.id.heading_mission_description).setVisibility(View.VISIBLE);
+        myView.findViewById(R.id.heading_mission_script).setVisibility(View.VISIBLE);
     }
 
     private void indicateNoMissionsAvailable() {
@@ -248,13 +253,36 @@ public class MyMissionFragment extends BaseFragment {
         mission_description.setText("No missions found yet for this team...");
     }
 
-    private void setFieldsVisible() {
-        button_call_person1.setVisibility(View.VISIBLE);
-        button_call_person2.setVisibility(View.VISIBLE);
-        mission_name.setVisibility(View.VISIBLE);
-        mission_script.setVisibility(View.VISIBLE);
-        myView.findViewById(R.id.heading_mission_description).setVisibility(View.VISIBLE);
-        myView.findViewById(R.id.heading_mission_script).setVisibility(View.VISIBLE);
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+
+        try {
+            // only checking for CALL_PHONE permission
+            if (permissions.length == 0
+                    || !permissions[0].equalsIgnoreCase(android.Manifest.permission.CALL_PHONE)
+                    || grantResults.length == 0
+                    || grantResults[0] != PackageManager.PERMISSION_GRANTED
+                    || User.getInstance().getCurrentMissionItem() == null) {
+                AppLog.debug(User.getInstance(), TAG, "onRequestPermissionsResult", "permission denied to make phone calls");
+                return;
+            }
+
+            AppLog.debug(User.getInstance(), TAG, "onRequestPermissionsResult", "permission granted to make phone calls");
+            call(User.getInstance().getCurrentMissionItem());
+        }
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "onRequestPermissionsResult", "Throwable: " + t.getMessage());
+        }
+    }
+
+    private void wireUp(Button button, final MissionDetail missionDetail) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                call(missionDetail);
+            }
+        });
     }
 
     private void prepareFor3WayCallIfNecessary(MissionDetail missionDetail, Button button) {
@@ -266,6 +294,106 @@ public class MyMissionFragment extends BaseFragment {
             // not a 3way call scenario, so hide the second phone button
             button.setVisibility(View.GONE);
         }
+    }
+
+    private void call(MissionDetail missionDetail) {
+        call(missionDetail.getMission_name(), missionDetail.getName(), missionDetail.getPhone());
+    }
+
+    // call the name2/phone2 person
+    private void call2(MissionDetail missionDetail) {
+        call(missionDetail.getMission_name(), missionDetail.getName2(), missionDetail.getPhone2());
+    }
+
+    private void call(String mission_name, String name, String phone) {
+        if(permittedToCall()) {
+            placeCall(mission_name, name, phone);
+        }
+        else {
+            requestPermissionToCall();
+        }
+    }
+
+    private boolean permittedToCall() {
+        try {
+            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "checking permission...");
+            int perm1 = ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE);
+            int perm2 = ContextCompat.checkSelfPermission(myView.getContext(), Manifest.permission.PROCESS_OUTGOING_CALLS);
+            boolean isPermitted1 = perm1 == PackageManager.PERMISSION_GRANTED;
+            boolean isPermitted2 = perm2 == PackageManager.PERMISSION_GRANTED;
+            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "isPermitted1: "+isPermitted1);
+            AppLog.debug(User.getInstance(), TAG, "permittedToCall", "isPermitted2: "+isPermitted2);
+            return isPermitted1 && isPermitted2;
+        }
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "permittedToCall", "Throwable: " + t.getMessage());
+            return false;
+        }
+    }
+
+    private void placeCall(String mission_name, String name, String phone) {
+        try {
+            Uri uri = Uri.fromParts("tel", phone, null);
+            Bundle extras = new Bundle();
+            TelecomManager telephony = (TelecomManager)myView.getContext().getSystemService(Context.TELECOM_SERVICE);
+            try {
+                telephony.placeCall(uri, extras);
+            }
+            catch(SecurityException se) {
+                AppLog.error(User.getInstance(), TAG, "placeCall", se.getMessage());
+                return;
+            }
+
+            String team = User.getInstance().getCurrentTeamName();
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
+            String eventType = "is calling";
+            MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), mission_name, phone, /*volunteerPhone, */name);
+            ref.child("all").push().setValue(m);
+            AppLog.debug(User.getInstance(), TAG, "placeCall", "Mission: "+mission_name+", Name: "+name+", Phone: "+phone+" - started call");
+        } catch(Throwable t) {
+            System.out.println(t.getMessage());
+            AppLog.error(User.getInstance(), TAG, "placeCall", t.getMessage());
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void requestPermissionToCall() {
+        try {
+            AppLog.debug(User.getInstance(), TAG, "requestPermissionToCall", "requesting permission to call...");
+            this.requestPermissions(new String[]{android.Manifest.permission.CALL_PHONE, Manifest.permission.PROCESS_OUTGOING_CALLS}, 1);
+            AppLog.debug(User.getInstance(), TAG, "requestPermissionToCall", "requesting permission to call - done");
+        }
+        catch(Throwable t) {
+            AppLog.error(User.getInstance(), TAG, "requestPermissionToCall", "Throwable: "+t.getMessage());
+        }
+    }
+
+    private void wireUp2(Button button, final MissionDetail missionDetail) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                call2(missionDetail);
+            }
+        });
+    }
+
+    private void workThis(MissionDetail missionItem) {
+
+        // set fields back to visible if they were previously set to View.GONE
+        setFieldsVisible();
+
+        String missionName = missionItem.getMission_name();
+        String missionDescription = missionItem.getDescription();
+        String missionScript = missionItem.getScript();
+
+        mission_name.setText(missionName);
+        mission_description.setText(missionDescription);
+        mission_script.setText(missionScript);
+        button_call_person1.setVisibility(View.VISIBLE);
+        button_call_person1.setText(missionItem.getName() + " " + missionItem.getPhone());
+        wireUp(button_call_person1, missionItem);
+
+        prepareFor3WayCallIfNecessary(missionItem, button_call_person2);
     }
 
     // called when we come back from a call
@@ -320,150 +448,89 @@ public class MyMissionFragment extends BaseFragment {
         Log.d(TAG, "onDestroy");
     }
 
-    private void setMissionItemState(String state) {
-        missionDetail.setState(state, missionItemId);
-    }
-
-    private void wireUp(Button button, final MissionDetail missionDetail) {
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                call(missionDetail);
-            }
-        });
-    }
-
-    private void wireUp2(Button button, final MissionDetail missionDetail) {
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                call2(missionDetail);
-            }
-        });
-    }
-
-    private void call(MissionDetail missionDetail) {
-        checkPermission();
-        setMissionItemState("calling");
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + missionDetail.getPhone()));
-
-        //intent.putExtra("mission", missionDetail.getMission_name()); // don't need this
-        // WRITE THE BEGINNING OF THE CALL TO THE DATABASE HERE BECAUSE SOME CARRIERS LIKE
-        // SPRINT BLOCK INTERNET ACCESS WHILE THE PHONE
-        // IS OFFHOOK.
-        // Writing to the database here just gives the directors the cool visual of seeing the
-        // call start and then seeing it end
-
-        String team = User.getInstance().getCurrentTeamName();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
-        String eventType = "is calling";
-        String volunteerPhone = getVolunteerPhone();
-        String supporterName = missionDetail.getName();
-        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone(), volunteerPhone, supporterName);
-        ref.child("all").push().setValue(m);
-        ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
-
-        startActivity(intent);
-    }
-
-    // call the name2/phone2 person
-    private void call2(MissionDetail missionDetail) {
-        checkPermission();
-        //setMissionItemState("calling");
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + missionDetail.getPhone2()));
-
-        String team = User.getInstance().getCurrentTeamName();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
-        String eventType = "is calling";
-        String volunteerPhone = getVolunteerPhone();
-        String name2 = missionDetail.getName2();
-        MissionItemEvent m = new MissionItemEvent(eventType, User.getInstance().getUid(), User.getInstance().getName(), missionDetail.getMission_name(), missionDetail.getPhone2(), volunteerPhone, name2);
-        ref.child("all").push().setValue(m);
-        ref.child("by_phone_number").child(missionDetail.getPhone()).push().setValue(m);
-
-        startActivity(intent);
-    }
-
-    private String getVolunteerPhone() {
-
-        TelephonyManager mTelephonyMgr;
-        mTelephonyMgr = (TelephonyManager)
-                myView.getContext().getSystemService(Context.TELEPHONY_SERVICE);
+//    private void setMissionItemState(String state) {
+//        missionDetail.setState(state, missionItemId);
+//    }
 
 
-        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+//    private String getVolunteerPhone() {
+//
+//        TelephonyManager mTelephonyMgr;
+//        mTelephonyMgr = (TelephonyManager)
+//                myView.getContext().getSystemService(Context.TELEPHONY_SERVICE);
+//
+//
+//        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+//
+//                // Should we show an explanation?
+//                if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), readPhoneState)) {
+//
+//                    // Show an explanation to the user *asynchronously* -- don't block
+//                    // this thread waiting for the user's response! After the user
+//                    // sees the explanation, try again to request the permission.
+//
+//                } else {
+//
+//                    // No explanation needed, we can request the permission.
+//
+//                    ActivityCompat.requestPermissions((Activity) myView.getContext(),
+//                            new String[]{readPhoneState},
+//                            1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
+//
+//                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                    // app-defined int constant. The callback method gets the
+//                    // result of the request.
+//                }
+//            }
+//
+//            try {
+//                String tel = "Android Phone # n/a"; //mTelephonyMgr.getLine1Number();
+//                return tel;
+//            }catch (Throwable throwable ){
+//            return "phone # n/a";
+//            }
+//
+//
+//    }
 
-                // Should we show an explanation?
-                if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), readPhoneState)) {
 
-                    // Show an explanation to the user *asynchronously* -- don't block
-                    // this thread waiting for the user's response! After the user
-                    // sees the explanation, try again to request the permission.
-
-                } else {
-
-                    // No explanation needed, we can request the permission.
-
-                    ActivityCompat.requestPermissions((Activity) myView.getContext(),
-                            new String[]{readPhoneState},
-                            1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
-
-                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                    // app-defined int constant. The callback method gets the
-                    // result of the request.
-                }
-            }
-
-            try {
-                String tel = "Android Phone # n/a"; //mTelephonyMgr.getLine1Number();
-                return tel;
-            }catch (Throwable throwable ){
-            return "phone # n/a";
-            }
-
-
-    }
-
-
-    // Consider using the similar method in Util *************************
-    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
-    // an app crash on the very first phone call.  Thinking that I'm requesting permission
-    // too late ... ?
-    // https://developer.android.com/training/permissions/requesting.html
-    private void checkPermission() {
-        checkPermission(android.Manifest.permission.CALL_PHONE);
-    }
-
-    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
-    // an app crash on the very first phone call.  Thinking that I'm requesting permission
-    // too late ... ?
-    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(myView.getContext(), androidPermission)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), androidPermission)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-
-                // No explanation needed, we can request the permission.
-
-                ActivityCompat.requestPermissions((Activity) myView.getContext(),
-                        new String[]{androidPermission},
-                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        }
-    }
+//    // Consider using the similar method in Util *************************
+//    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
+//    // an app crash on the very first phone call.  Thinking that I'm requesting permission
+//    // too late ... ?
+//    // https://developer.android.com/training/permissions/requesting.html
+//    private void checkPermission() {
+//        checkPermission(android.Manifest.permission.CALL_PHONE);
+//    }
+//
+//    // I moved these 2 methods over to LauncherActivity because, in production, I'm getting
+//    // an app crash on the very first phone call.  Thinking that I'm requesting permission
+//    // too late ... ?
+//    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
+//        if (ContextCompat.checkSelfPermission(myView.getContext(), androidPermission)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//            // Should we show an explanation?
+//            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) myView.getContext(), androidPermission)) {
+//
+//                // Show an explanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//            } else {
+//
+//                // No explanation needed, we can request the permission.
+//
+//                ActivityCompat.requestPermissions((Activity) myView.getContext(),
+//                        new String[]{androidPermission},
+//                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
+//
+//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                // app-defined int constant. The callback method gets the
+//                // result of the request.
+//            }
+//        }
+//    }
 
 
 

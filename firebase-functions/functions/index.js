@@ -368,8 +368,8 @@ exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
 
-// dev deploy: 11/21/18
-// prod deploy: 12/12/18
+// dev deploy: 12/22/18
+// prod deploy: 12/22/18
 const configure = require('./configure')
 exports.testConfiguration = configure.testConfiguration
 
@@ -393,4 +393,11 @@ exports.api_remove_role = role_api.api_remove_role
 const account_api = require('./telepatriot_api/account_api')
 exports.testAccountDisposition = account_api.testAccountDisposition
 exports.api_account_disposition = account_api.api_account_disposition
+
+
+// dev deploy: 12/25/18
+// prod deploy:
+const applog = require('./log')
+exports.testLog = applog.testLog
+exports.logByUser = applog.logByUser
 

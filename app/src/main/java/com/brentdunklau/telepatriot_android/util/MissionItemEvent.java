@@ -12,7 +12,7 @@ import java.util.Date;
 public class MissionItemEvent {
 
     String event_date, event_type, volunteer_uid, volunteer_name, mission_name;
-    String volunteer_phone;
+//    String volunteer_phone;
     String supporter_name, phone; /*supporter phone*/
 
 
@@ -20,13 +20,13 @@ public class MissionItemEvent {
 
     }
 
-    public String getVolunteer_phone() {
-        return volunteer_phone;
-    }
-
-    public void setVolunteer_phone(String volunteer_phone) {
-        this.volunteer_phone = volunteer_phone;
-    }
+//    public String getVolunteer_phone() {
+//        return volunteer_phone;
+//    }
+//
+//    public void setVolunteer_phone(String volunteer_phone) {
+//        this.volunteer_phone = volunteer_phone;
+//    }
 
     public String getSupporter_name() {
         return supporter_name;
@@ -36,18 +36,18 @@ public class MissionItemEvent {
         this.supporter_name = supporter_name;
     }
 
-    public MissionItemEvent(String event_type, String volunteer_uid, String volunteer_name, String mission_name, String phone, String volunteer_phone, String supporter_name) {
-        this(new SimpleDateFormat("EEE MMM d, h:mm:ss a z yyyy").format(new Date()),event_type, volunteer_uid, volunteer_name, mission_name, phone, volunteer_phone, supporter_name);
+    public MissionItemEvent(String event_type, String volunteer_uid, String volunteer_name, String mission_name, String phone, /*String volunteer_phone,*/ String supporter_name) {
+        this(new SimpleDateFormat("EEE MMM d, h:mm:ss a z yyyy").format(new Date()),event_type, volunteer_uid, volunteer_name, mission_name, phone, /*volunteer_phone,*/ supporter_name);
     }
 
-    public MissionItemEvent(String event_date, String event_type, String volunteer_uid, String volunteer_name, String mission_name, String phone, String volunteer_phone, String supporter_name) {
+    public MissionItemEvent(String event_date, String event_type, String volunteer_uid, String volunteer_name, String mission_name, String phone, /*String volunteer_phone, */String supporter_name) {
         this.event_date = event_date;
         this.event_type = event_type;
         this.volunteer_uid = volunteer_uid;
         this.volunteer_name = volunteer_name;
         this.mission_name = mission_name;
         this.phone  = phone;
-        this.volunteer_phone = volunteer_phone;
+//        this.volunteer_phone = volunteer_phone;
         this.supporter_name = supporter_name;
     }
 
