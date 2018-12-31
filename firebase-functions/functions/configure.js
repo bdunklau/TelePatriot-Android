@@ -248,11 +248,11 @@ var configToHtml = function(stuff) {
                     {db_prop: "simulate_no_confidentiality_agreement", readable: 'Simulate user has not signed conf agreement'},
                     {db_prop: "simulate_banned", readable: 'Simulate user is banned'}]
     _.each(simprops, function(prop) {
-        var theVal = stuff.config[prop] == true || stuff.config[prop] == "true"
+        var theVal = stuff.config[prop.db_prop] == true || stuff.config[prop.db_prop] == "true"
 
-        if(stuff.req.body[prop]) {
-            theVal = stuff.req.body[prop] == true || stuff.req.body[prop] == "true"
-            updates[prop] = theVal
+        if(stuff.req.body[prop.db_prop]) {
+            theVal = stuff.req.body[prop.db_prop] == true || stuff.req.body[prop.db_prop] == "true"
+            updates[prop.db_prop] = theVal
         }
 
         var trueSelected = theVal==true || theVal=="true" ?  'checked' : ''
