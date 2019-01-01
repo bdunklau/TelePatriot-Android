@@ -235,62 +235,52 @@ exports.updateUser = function(uid, result) {
 
 
 
-// "event" will be the name of some node under administration/configuration like
-// on_user_created or on_user_login.  Whatever attribute we care about, we are going to
-// check the value of the attribute to make sure the value is "volunteers".  Because
-// if the value isn't "volunteers" then this function should return false
-exports.getUserInfoFromCB_byEmail = function(email, event, returnFn) {
-    return db.ref('administration/configuration').once('value').then(snapshot => {
-        var eventValue = snapshot.val()[event]
-        if(!eventValue || eventValue != "volunteers") {
-            console.log('eventValue = ', eventValue, ' : return early : not what we wanted')
-            returnFn({returnEarly : false})
+exports.getUserInfoFromCB_byEmail = function(email, returnFn, configuration) {
+
+    var environment = configuration.environment ? configuration.environment : "cb_production_environment"
+    var domain = configuration[environment].citizen_builder_domain
+    var apiKeyName = configuration[environment].citizen_builder_api_key_name
+    var apiKeyValue = configuration[environment].citizen_builder_api_key_value
+
+    var headers = {}
+    headers[apiKeyName] = apiKeyValue
+
+    var endpoint = 'https://'+domain+'/api/ios/v1/volunteers?email='+email
+
+    var options = {
+        url: endpoint,
+        headers: headers
+    }
+
+    // see above:   var request = require('request')
+    request.get(options, function(error, response, body){
+        console.log('volunteers:  body = ',body);
+        var ret = JSON.parse(body)
+
+//        // test/mock code...
+//        vol.petition_signed = true
+//        vol.volunteer_agreement_signed = true
+//        vol.is_banned = true
+//        // test/mock code...
+
+        if(error) {
+            //return res.status(200).send(thePage({error: error}))
+            console.log('return error = ',error,  ' not what we wanted')
+            returnFn({error: error})
         }
-        var environment = snapshot.val().environment ? snapshot.val().environment : "cb_production_environment"
-        var domain = snapshot.val()[environment].citizen_builder_domain
-        var apiKeyName = snapshot.val()[environment].citizen_builder_api_key_name
-        var apiKeyValue = snapshot.val()[environment].citizen_builder_api_key_value
-
-        var headers = {}
-        headers[apiKeyName] = apiKeyValue
-
-        var endpoint = 'https://'+domain+'/api/ios/v1/volunteers?email='+email
-
-        var options = {
-            url: endpoint,
-            headers: headers
+        else if(ret.error) {
+            console.log('notFound: true')
+            returnFn({notFound: true})
+        }
+        else {
+            console.log('found: ', email, ' in CB')
+            returnFn({vol: ret, configuration: configuration})
         }
 
-        // see above:   var request = require('request')
-        request.get(options, function(error, response, body){
-            console.log('volunteers:  body = ',body);
-            var ret = JSON.parse(body)
-
-    //        // test/mock code...
-    //        vol.petition_signed = true
-    //        vol.volunteer_agreement_signed = true
-    //        vol.is_banned = true
-    //        // test/mock code...
-
-            if(error) {
-                //return res.status(200).send(thePage({error: error}))
-                console.log('return error = ',error,  ' not what we wanted')
-                returnFn({error: error})
-            }
-            else if(ret.error) {
-                console.log('notFound: true')
-                returnFn({notFound: true})
-            }
-            else {
-                console.log('found: ', email, ' in CB')
-                returnFn({vol: ret, configuration: snapshot.val()})
-            }
-
-            // If there's no one in CB with this email, the API call will
-            // return {"error": "Not found"}
-        })
-
+        // If there's no one in CB with this email, the API call will
+        // return {"error": "Not found"}
     })
+
 }
 
 

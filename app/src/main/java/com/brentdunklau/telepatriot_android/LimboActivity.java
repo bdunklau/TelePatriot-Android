@@ -15,6 +15,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
+import com.brentdunklau.telepatriot_android.util.AppLog;
 import com.brentdunklau.telepatriot_android.util.CBAPIEvent;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
@@ -202,9 +203,15 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        for(DataSnapshot child : dataSnapshot.getChildren()) {
-                            Boolean valid = child.child("valid").getValue(Boolean.class);
-                            done_button.setText(Boolean.TRUE==valid ? "Good" : "Signatures Not Received Yet");
+                        AppLog.debug(User.getInstance(), TAG, "clickDone", "beginning of onDataChange()");
+                        try {
+                            for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                Boolean valid = child.child("valid").getValue(Boolean.class);
+                                done_button.setText(Boolean.TRUE == valid ? "Good" : "Signatures Not Received Yet");
+                            }
+                        }
+                        catch(Throwable t) {
+                            AppLog.error(User.getInstance(), TAG, "clickDone", "Throwable: "+t.getMessage());
                         }
                     }
 

@@ -82,66 +82,84 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
     var uid = event.data.val().uid
     var email = event.data.val().email
     var name = event.data.val().name
-    var event = "on_user_created" //  ref:  administration/configuration/on_user_created
-    var returnFn = function(result) {
-        if(result.returnEarly) return false
-        else if(result.error) {
-            // TODO what do we do with an error?
-            db.ref('cb_api_events/check-legal-responses/'+uid)
-                .push()
-                .set({uid: uid, name: name, email: email, valid: false})
-        }
-        else if(result.notFound) {
-            // TODO need to write a check-legal-response entry to the db indicating this person hasn't satisfied the legal requirements to use this app
 
-            db.ref('cb_api_events/check-legal-responses/'+uid)
-                .push()
-                .set({uid: uid, name: name, email: email, valid: false})
-        }
-        else if(result.vol) {
-            // This is what we want to happen: email was found in the CB db
-            volunteers.updateUser(uid, result)
-        }
-        else return false
-    }
+    // We have to determine HOW to check the user's legal status.  We could check the user's legal status via
+    // 1) /volunteer_validation/check?email= _______
+    // 2) /volunteers?email= ______
+    // The second way tells you what the user's petition signature status is and what the user's conf agreement signature status is
+    // The first way only tells you true/false depending on whether the user has signed both docs
+    // The second endpoint doesn't exist yet on the production server (Dec 2018).  But once this endpoint is published,
+    // we won't need to use the first one.
 
-    // "event" will be the name of some node under administration/configuration like
-    // on_user_created or on_user_login.  Whatever attribute we care about, we are going to
-    // check the value of the attribute to make sure the value is "volunteers".  Because
-    // if the value isn't "volunteers" then this function should return false
-    volunteers.getUserInfoFromCB_byEmail(email, event, returnFn)
+    return db.ref('administration/configuration').once('value').then(snapshot => {
+        var configuration = snapshot.val()
+        var simulate_passing_legal = configuration.simulate_passing_legal
+        if(configuration.on_user_created == "checkVolunteerStatus") {
+            // use option 1
+            var f = function(valid_actual) {
+                var valid = valid_actual
+                if(snapshot.val().simulate_passing_legal) {
+                    valid = snapshot.val().simulate_passing_legal
+                }
+                console.log("checkLegal: valid_actual: ", valid_actual, " valid: ", valid)
+
+                db.ref('cb_api_events/all-events').push().set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email,
+                                                event_type: 'check-legal-response', valid: valid})
+                // for users from the Limbo screens.  There is a "Done" button on that page that they can click that
+                // causes this event to get called.  The limbo screens monitor /cb_api_events/check-legal-responses
+                // in order to tell the client whether they have in fact satisfied all the legal requirements now
+                db.ref('cb_api_events/check-legal-responses/'+event.data.val().uid)
+                    .push()
+                    .set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email, valid: valid})
+            }
+
+            // now check legal status...
+            var allowed = function(valid) {
+                f(valid) // true under normal circumstances, set to false to simulate failing legal
+            }
+            var notAllowed = function(valid) {
+                f(valid) // false under normal circumstances, set to true to simulate passing legal
+            }
+            exports.checkVolunteerStatus(event.data.val().email, allowed, notAllowed)
+        }
+        else {
+            // otherwise use option 2
+            var returnFn = function(result) {
+                if(result.returnEarly) return false
+                else if(result.error) {
+                    // TODO what do we do with an error?
+                    db.ref('cb_api_events/check-legal-responses/'+uid)
+                        .push()
+                        .set({uid: uid, name: name, email: email, valid: false})
+                }
+                else if(result.notFound) {
+                    // TODO need to write a check-legal-response entry to the db indicating this person hasn't satisfied the legal requirements to use this app
+
+                    db.ref('cb_api_events/check-legal-responses/'+uid)
+                        .push()
+                        .set({uid: uid, name: name, email: email, valid: false})
+                }
+                else if(result.vol) {
+                    // This is what we want to happen: email was found in the CB db
+                    volunteers.updateUser(uid, result)
+                }
+                else return false
+            }
+
+            // "event" will be the name of some node under administration/configuration like
+            // on_user_created or on_user_login.  Whatever attribute we care about, we are going to
+            // check the value of the attribute to make sure the value is "volunteers".  Because
+            // if the value isn't "volunteers" then this function should return false
+            volunteers.getUserInfoFromCB_byEmail(email, returnFn, configuration)
+        }
+    })
+
+
     return true
 
 //    This worked at one time. But now we need to know what the user's CB ID is (if it exists)
 //    So we need to start calling the /volunteers endpoint
 
-//    var f = function(valid_actual) {
-//        event.data.adminRef.root.child('administration/configuration/simulate_passing_legal').once('value').then(snapshot => {
-//            var valid = valid_actual
-//            if(snapshot.val()) {
-//                valid = snapshot.val()
-//            }
-//            console.log("checkLegal: valid_actual: ", valid_actual, " valid: ", valid)
-//
-//            db.ref('cb_api_events/all-events').push().set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email,
-//                                            event_type: 'check-legal-response', valid: valid})
-//            // for users from the Limbo screens.  There is a "Done" button on that page that they can click that
-//            // causes this event to get called.  The limbo screens monitor /cb_api_events/check-legal-responses
-//            // in order to tell the client whether they have in fact satisfied all the legal requirements now
-//            db.ref('cb_api_events/check-legal-responses/'+event.data.val().uid)
-//                .push()
-//                .set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email, valid: valid})
-//        })
-//    }
-//
-//    // now check legal status...
-//    var allowed = function(valid) {
-//        f(valid) // true under normal circumstances, set to false to simulate failing legal
-//    }
-//    var notAllowed = function(valid) {
-//        f(valid) // false under normal circumstances, set to true to simulate passing legal
-//    }
-//    exports.checkVolunteerStatus(event.data.val().email, allowed, notAllowed)
 //    return true
 })
 

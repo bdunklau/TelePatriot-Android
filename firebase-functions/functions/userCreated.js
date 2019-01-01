@@ -18,7 +18,7 @@ const db = admin.database().ref()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:userCreated,functions:approveUserAccount,functions:onEmailEstablished,functions:onCitizenBuilerId,functions:onPetition,functions:onConfidentialityAgreement,functions:onBanned
+firebase deploy --only functions:userCreated,functions:approveUserAccount,functions:onEmailEstablished,functions:onCitizenBuilderId,functions:onPetition,functions:onConfidentialityAgreement,functions:onBanned
 
 ***/
 
@@ -72,27 +72,28 @@ exports.userCreated = functions.auth.user().onCreate(event => {
 exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreate(event => {
     var uid = event.params.uid
     var email = event.data.val()
-    var event = "on_user_created" //  ref:  administration/configuration/on_user_created
-    var returnFn = function(result) {
-        if(result.returnEarly) return false
-        else if(result.error) {
-            // TODO what do we do with an error?
-        }
-        else if(result.notFound) {
-            // TODO what to do when the user isn't in the CB db?
-        }
-        else if(result.vol) {
-            // This is what we want to happen: email was found in the CB db
-            volunteers.updateUser(uid, result)
-        }
-        else return false
-    }
+    return db.child('administration/configuration').once('value').then(snapshot => {
+        var configuration = snapshot.val()
+        if(configuration.on_user_created == 'volunteers') {
+            var returnFn = function(result) {
+                if(result.returnEarly) return false
+                else if(result.error) {
+                    // TODO what do we do with an error?
+                }
+                else if(result.notFound) {
+                    // TODO what to do when the user isn't in the CB db?
+                }
+                else if(result.vol) {
+                    // This is what we want to happen: email was found in the CB db
+                    volunteers.updateUser(uid, result)
+                }
+                else return false
+            }
 
-    // "event" will be the name of some node under administration/configuration like
-    // on_user_created or on_user_login.  Whatever attribute we care about, we are going to
-    // check the value of the attribute to make sure the value is "volunteers".  Because
-    // if the value isn't "volunteers" then this function should return false
-    volunteers.getUserInfoFromCB_byEmail(email, event, returnFn)
+            volunteers.getUserInfoFromCB_byEmail(email, returnFn, configuration)
+        }
+    })
+
     return true
 })
 
