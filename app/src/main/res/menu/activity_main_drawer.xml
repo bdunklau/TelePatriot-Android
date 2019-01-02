@@ -14,7 +14,7 @@
                     android:title="My Mission" />
                 <!-- To put the Director and Admin menu items back in, uncomment the lines below
                  and then go to MainActivity.onNavigationItemSelected() and uncomment the relevant code there also -->
-                <!--
+
                 <item
                     android:id="@+id/nav_director_layout"
                     android:icon="@drawable/ic_menu_slideshow"
@@ -22,7 +22,7 @@
                 <item
                     android:id="@+id/nav_admin_layout"
                     android:icon="@drawable/ic_menu_slideshow"
-                    android:title="Admins" /> -->
+                    android:title="Admins" />
             </group>
         </menu>
     </item>

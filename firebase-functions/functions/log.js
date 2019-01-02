@@ -96,6 +96,20 @@ exports.logByUser = functions.database.ref('log/all-logs/{key}').onCreate(event 
     return db.ref('/').update(updates);
 })
 
+exports.debug = function(uid, name, file, funcName, message) {
+    logit(uid, name, file, funcName, message, "debug")
+}
+
+exports.error = function(uid, name, file, funcName, message) {
+    logit(uid, name, file, funcName, message, "error")
+}
+
+var logit = function(uid, name, file, funcName, message, level) {
+    var entry = {class: file, date: date.asCentralTime(), date_ms: date.asMillis(), level: level, message: message,
+                method: funcName, name: name, uid: uid}
+    db.ref('log/all-logs').push().set(entry)
+}
+
 var page = function(stuff) {
     var orderNamesBy = stuff.orderNamesBy ? stuff.orderNamesBy : 'updated_ms'
     var limit = stuff.limit ? stuff.limit : 25

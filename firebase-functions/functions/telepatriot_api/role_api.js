@@ -5,6 +5,7 @@ const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const request = require('request')
+const log = require('../log')
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -75,6 +76,9 @@ exports.api_remove_role = functions.https.onRequest((req, res) => {
 })
 
 
+// This function only works if the user has a CitizenBuilder ID on his record
+// And the user won't have a CB ID if we are using the /volunteer_validation/check endpoint
+// Only the /volunteers endpoint will look up the user's CB ID
 var setRole = function(req, res, value) {
 
     var actualkey = req.headers['apikey']
@@ -86,6 +90,7 @@ var setRole = function(req, res, value) {
         else {
             var role_name = rolemapping[req.body.role_name]
 
+            // see the note at the top of this function
             return db.ref('users').orderByChild('citizen_builder_id').equalTo(parseInt(req.body.citizen_builder_id)).once('value').then(snapshot => {
                 // should only be one person with this cb id
                 var updates = {}
@@ -99,10 +104,13 @@ var setRole = function(req, res, value) {
                     uid = child.key
                 })
 
+                log.debug(uid, name, "role_api.js", "setRole", "check uid: "+uid)
+
                 return db.ref('/').update(updates).then(() => {
                     var msg = 'User '+req.body.citizen_builder_id+' is now a '+role_name
                     if(value != "true") msg = 'User '+req.body.citizen_builder_id+' is not a '+role_name+' anymore'
                     return db.ref('users/'+uid).once('value').then(snap3 => {
+                        log.debug(uid, name, "role_api.js", "setRole", snap3.val())
                         return res.status(200).send({response: msg,
                                                     citizen_builder_id: req.body.citizen_builder_id,
                                                     roles: snap3.val().roles,

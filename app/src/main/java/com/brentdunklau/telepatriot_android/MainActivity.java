@@ -290,15 +290,15 @@ public class MainActivity extends AppCompatActivity
         // To put these back in, uncomment the blocks below AND THEN go to activity_main_drawer.xml
         // and uncomment the menu items there also
 
-//        else if (id == R.id.nav_director_layout) {
-//            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
-//            Fragment fragment = new MissionsFragment();
-//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-//        }
-//        else if (id == R.id.nav_admin_layout) {
-//            Fragment fragment = new AdminFragment();
-//            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
-//        }
+        else if (id == R.id.nav_director_layout) {
+            //Fragment fragment = new DirectorFragment(); // maybe this will go back in at some point.  It shows "Missions" button and "Teams" button
+            Fragment fragment = new MissionsFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
+        else if (id == R.id.nav_admin_layout) {
+            Fragment fragment = new AdminFragment();
+            fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
         else if (id == R.id.vidyo_chat){
             Fragment fragment = new VidyoChatFragment();
             fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
