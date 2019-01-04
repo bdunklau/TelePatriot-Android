@@ -19,7 +19,7 @@ const db = admin.database().ref()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:userCreated,functions:approveUserAccount,functions:onEmailEstablished,functions:onCitizenBuilderId,functions:onPetition,functions:onConfidentialityAgreement,functions:onBanned
+firebase deploy --only functions:userCreated,functions:approveUserAccount,functions:onCitizenBuilderId,functions:onPetition,functions:onConfidentialityAgreement,functions:onBanned
 
 ***/
 
@@ -37,31 +37,26 @@ exports.userCreated = functions.auth.user().onCreate(event => {
     if(event.data.displayName) name = event.data.displayName
     var photoUrl = event.data.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
 
-    var updates = {}
-
     log.debug(uid, name, "userCreated.js", "userCreated", "begin func")
 
 //    When the user is created, we have to take his email and send it to CB,
 //    either to /volunteers?email=___________ or to /volunteer_validation/check?email=___________
 //    The endpoint we use depends on /administration/configuration/on_user_created
 
-
     // kinda sucky - this query just to simulate an error condition (not getting name and/or email from auth provider)
     return db.child('administration/configuration').once('value').then(snapshot => {
-        if(!snapshot.val().simulate_missing_name) {
-            updates['users/'+uid+'/name'] = name
-            updates['users/'+uid+'/name_lower'] = name.toLowerCase()
-        }
-        if(!snapshot.val().simulate_missing_email) {
-            updates['users/'+uid+'/email'] = email
-        }
-
+        var updates = {}
         updates['users/'+uid+'/photoUrl'] = photoUrl
         updates['users/'+uid+'/created'] = date.asCentralTime()
         updates['users/'+uid+'/created_ms'] = date.asMillis()
 
+        var emailMissing = !email || snapshot.val().simulate_missing_email
+        var nameMissing = !name || snapshot.val().simulate_missing_name
+        var emailPresent = !emailMissing
+        var namePresent = !nameMissing
+
         // email will be null from FB if the person hasn't verified their email with FB
-        if(updates['users/'+uid+'/email'] && updates['users/'+uid+'/name']) {
+        if(namePresent && emailPresent) {
             updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
                                                                      // leave COS but aren't banned
         }
@@ -69,53 +64,49 @@ exports.userCreated = functions.auth.user().onCreate(event => {
             updates['users/'+uid+'/account_disposition'] = 'disabled'
         }
 
-        return db.child('/').update(updates)
+        if(namePresent) {
+            updates['users/'+uid+'/name'] = name
+            updates['users/'+uid+'/name_lower'] = name.toLowerCase()
+        }
+        if(emailPresent) {
+            updates['users/'+uid+'/email'] = email
+            // As long as their email is present, we are going to send that email to CB and call
+            // either the /volunteer_validation/check endpoint or the /volunteers endpoint, depending on
+            // the value of /administration/configuration/on_user_created
 
-    }) // end:  return db.child('administration/configuration').once('value').then(snapshot => {
-})
-
-
-// fires when a user's email is first added to his record in the firebase db
-// When the user's email first becomes known, we take that email and call CB either at
-// /volunteers?email=___________ or at /volunteer_validation/check?email=___________
-// depending on the value of /administration/configuration/on_user_created
-exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreate(event => {
-    var uid = event.params.uid
-    var email = event.data.val()
-    return db.child('users/'+uid).once('value').then(snap2 => {
-        var name = snap2.val().name
-        return db.child('administration/configuration').once('value').then(snapshot => {
             var configuration = snapshot.val()
 
             if(configuration.on_user_created == 'volunteers') {
 
-                log.debug(uid, name, "userCreated.js", "onEmailEstablished", "calling /volunteers endpoint")
+                log.debug(uid, name, "userCreated.js", "userCreated", "calling /volunteers endpoint")
 
                 var returnFn = function(result) {
-                    if(result.returnEarly) return false
-                    else if(result.error) {
-                        log.error(uid, name, "userCreated.js", "onEmailEstablished", "result.error = "+result.error)
-                        // TODO what do we do with an error?
-                    }
-                    else if(result.notFound) {
-                        log.debug(uid, name, "userCreated.js", "onEmailEstablished", "result.notFound = "+result.notFound)
-                        // TODO what to do when the user isn't in the CB db?
-                    }
-                    else if(result.vol) {
-                        log.debug(uid, name, "userCreated.js", "onEmailEstablished", "OK: result.vol = "+result.vol)
+                    if(result.vol) {
+                        log.debug(uid, name, "userCreated.js", "userCreated", "OK: result.vol = "+result.vol)
                         // This is what we want to happen: email was found in the CB db
-                        volunteers.updateUser(uid, result)
+                        volunteers.updateUser({uid: uid, result: result, userInfo: updates})
                     }
                     else {
-                        log.error(uid, name, "userCreated.js", "onEmailEstablished", "NOT GOOD: unhandled 'else' clause")
-                        return false
+                        // If email not found in CB...
+                        return db.child('/').update(updates)
+                        if(result.error) {
+                            log.error(uid, name, "userCreated.js", "userCreated", "result.error = "+result.error)
+                            // TODO what do we do with an error?
+                        }
+                        else if(result.notFound) {
+                            log.debug(uid, name, "userCreated.js", "userCreated", "result.notFound = "+result.notFound)
+                            // TODO what to do when the user isn't in the CB db?
+                        }
+                        else {
+                            log.error(uid, name, "userCreated.js", "userCreated", "NOT GOOD: unhandled 'else' clause")
+                        }
                     }
                 }
 
                 volunteers.getUserInfoFromCB_byEmail(email, returnFn, configuration)
             }
-            else {
-                log.debug(uid, name, "userCreated.js", "onEmailEstablished", "calling /volunteer_validation/check endpoint")
+            else { // call the /volunteer_validation/check?email=_______  endpoint
+                log.debug(uid, name, "userCreated.js", "userCreated", "calling /volunteer_validation/check endpoint")
 
                 var updates = {}
 
@@ -126,7 +117,6 @@ exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreat
                     updates['users/'+uid+'/email'] = email
                 }
 
-                updates['users/'+uid+'/created'] = date.asCentralTime()
                 updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
                                                                          // leave COS but aren't banned
 
@@ -135,7 +125,7 @@ exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreat
                 citizen_builder_api.checkVolunteerStatus(email,
                     function(valid) {
                         citizen_builder_api.grantAccess(updates, uid, name, email)
-                        log.debug(uid, name, "userCreated.js", "onEmailEstablished", "granted access to "+name)
+                        log.debug(uid, name, "userCreated.js", "userCreated", "granted access to "+name)
 
                         var resp = {uid: uid,
                                    name: name,
@@ -148,7 +138,7 @@ exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreat
 
                     },
                     function(valid) {
-                        log.debug(uid, name, "userCreated.js", "onEmailEstablished", "access denied to "+name+" (valid: "+valid+")")
+                        log.debug(uid, name, "userCreated.js", "userCreated", "access denied to "+name+" (valid: "+valid+")")
                         // called when the user has NOT satisfied the legal requirements for access
                         // In this case, we still have to save the user to /users.  We just don't set
                         // the petition, conf agreement and banned flags like we do above.
@@ -168,10 +158,114 @@ exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreat
                     }
                 )
             }
-        })
-    })
 
+
+        } // end:  if(emailPresent)
+        else {
+            // error condition: email not present for this user
+            return db.child('/').update(updates)
+        }
+
+    }) // end:  return db.child('administration/configuration').once('value').then(snapshot => {
 })
+
+
+// fires when a user's email is first added to his record in the firebase db
+// When the user's email first becomes known, we take that email and call CB either at
+// /volunteers?email=___________ or at /volunteer_validation/check?email=___________
+// depending on the value of /administration/configuration/on_user_created
+//exports.onEmailEstablished = functions.database.ref('users/{uid}/email').onCreate(event => {
+//    var uid = event.params.uid
+//    var email = event.data.val()
+//    return db.child('users/'+uid).once('value').then(snap2 => {
+//        var name = snap2.val().name
+//        return db.child('administration/configuration').once('value').then(snapshot => {
+//            var configuration = snapshot.val()
+//
+//            if(configuration.on_user_created == 'volunteers') {
+//
+//                log.debug(uid, name, "userCreated.js", "onEmailEstablished", "calling /volunteers endpoint")
+//
+//                var returnFn = function(result) {
+//                    if(result.error) {
+//                        log.error(uid, name, "userCreated.js", "onEmailEstablished", "result.error = "+result.error)
+//                        // TODO what do we do with an error?
+//                    }
+//                    else if(result.notFound) {
+//                        log.debug(uid, name, "userCreated.js", "onEmailEstablished", "result.notFound = "+result.notFound)
+//                        // TODO what to do when the user isn't in the CB db?
+//                    }
+//                    else if(result.vol) {
+//                        log.debug(uid, name, "userCreated.js", "onEmailEstablished", "OK: result.vol = "+result.vol)
+//                        // This is what we want to happen: email was found in the CB db
+//                        volunteers.updateUser(uid, result)
+//                    }
+//                    else {
+//                        log.error(uid, name, "userCreated.js", "onEmailEstablished", "NOT GOOD: unhandled 'else' clause")
+//                        return false
+//                    }
+//                }
+//
+//                volunteers.getUserInfoFromCB_byEmail(email, returnFn, configuration)
+//            }
+//            else {
+//                log.debug(uid, name, "userCreated.js", "onEmailEstablished", "calling /volunteer_validation/check endpoint")
+//
+//                var updates = {}
+//
+//                if(!configuration.simulate_missing_name) {
+//                    updates['users/'+uid+'/name'] = name
+//                }
+//                if(!configuration.simulate_missing_email) {
+//                    updates['users/'+uid+'/email'] = email
+//                }
+//
+//                updates['users/'+uid+'/created'] = date.asCentralTime()
+//                updates['users/'+uid+'/account_disposition'] = 'enabled' // admins can disable if needed.  Useful for people that
+//                                                                         // leave COS but aren't banned
+//
+//
+//                // call the /volunteer_validation/check?email=___________ endpoint
+//                citizen_builder_api.checkVolunteerStatus(email,
+//                    function(valid) {
+//                        citizen_builder_api.grantAccess(updates, uid, name, email)
+//                        log.debug(uid, name, "userCreated.js", "onEmailEstablished", "granted access to "+name)
+//
+//                        var resp = {uid: uid,
+//                                   name: name,
+//                                   email: email,
+//                                   event_type: 'check-legal-response',
+//                                   valid: valid}
+//
+//                        db.child('cb_api_events/all-events').push().set(resp)
+//                        db.child('cb_api_events/check-legal-responses/'+uid).push().set(resp)
+//
+//                    },
+//                    function(valid) {
+//                        log.debug(uid, name, "userCreated.js", "onEmailEstablished", "access denied to "+name+" (valid: "+valid+")")
+//                        // called when the user has NOT satisfied the legal requirements for access
+//                        // In this case, we still have to save the user to /users.  We just don't set
+//                        // the petition, conf agreement and banned flags like we do above.
+//
+//                        var resp = {uid: uid,
+//                                   name: name,
+//                                   email: email,
+//                                   event_type: 'check-legal-response',
+//                                   valid: valid}
+//
+//                        db.child('cb_api_events/all-events').push().set(resp)
+//                        db.child('cb_api_events/check-legal-responses/'+uid).push().set(resp)
+//
+//                        return db.child('/').update(updates).then(() => {
+//                            return email_js.sendPetitionCAEmail(email, name)
+//                        })
+//                    }
+//                )
+//            }
+//        })
+//    })
+//
+//})
 
 
 // fires when a user's email is first added to his record in the firebase db

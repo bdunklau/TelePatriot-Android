@@ -137,7 +137,7 @@ public class LauncherActivity extends BaseActivity
                             return;
                         }
 
-                        if(!User.getInstance().isAllowed()) {
+                        if(User.getInstance().isNotAllowed()) {
                             startActivity(new Intent(LauncherActivity.this, LimboActivity.class));
                             return;
                         }

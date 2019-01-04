@@ -15,6 +15,11 @@ var tableheading = style + ';background-color:#ededed'
 const db = admin.database();
 
 
+/***
+firebase deploy --only functions:onUserAttributeDeleted,functions:updateLegal,functions:updateUser
+***/
+
+
 exports.updateUser = functions.https.onRequest((req, res) => {
     var stuff = '<html><head></head><body>'
     stuff += form()
@@ -144,34 +149,6 @@ exports.updateLegal = functions.https.onRequest((req, res) => {
 
     }
 
-})
-
-
-// keeps the user node under /no_roles in sync with the user node under /users
-exports.onUserUpdated = functions.database.ref('/users/{uid}/{attr}').onWrite(event => {
-
-    var uid = event.params.uid
-    var attr = event.params.attr
-    var value = event.data.val()
-
-    var ref = db.ref(`/no_roles`).child(uid)
-    return ref.once('value').then(snapshot => {
-        if(snapshot.numChildren() == 0)
-            return
-        return ref.child(attr).set(event.data.val())
-    })
-    .then(() => {
-        // Now let's see if the attribute is "account_disposition" and if it's changed
-        // because if it has, we are going to write an account_status_event entry
-        if(attr == "account_disposition") {
-            // only write this account_status_event if we are updating, not writing the account_disposition for the first time
-            if(event.data.val() && event.data.previous.val()) {
-                var datestr = date.asCentralTime()
-                var msg = "Admin has "+value+" your account"
-                event.data.adminRef.root.child(`/users/${uid}/account_status_events`).push({date: datestr, event: msg})
-            }
-        }
-    })
 })
 
 

@@ -44,9 +44,11 @@ public class User implements FirebaseAuth.AuthStateListener {
     private CBMissionDetail cbMissionItem; // new way of getting missions (Dec 2018)
     private String current_video_node_key;
     private String account_disposition;
-    private boolean has_signed_petition;
-    private boolean has_signed_confidentiality_agreement;
-    private boolean is_banned;
+    // these next 3 need to allow for tri-state so we don't confuse "not allowed into the app"
+    // with "not sure if they should be allowed in"
+    private Boolean has_signed_petition;
+    private Boolean has_signed_confidentiality_agreement;
+    private Boolean is_banned;
     private String phone;
     private String residential_address_line1;
     private String residential_address_line2;
@@ -122,10 +124,22 @@ public class User implements FirebaseAuth.AuthStateListener {
                     boolean inviterId_notnull_to_null = User.this.video_invitation_from != null && ub.getVideo_invitation_from()==null;
                     boolean nameChanged = ub.getVideo_invitation_from_name() != null && !ub.getVideo_invitation_from_name().equalsIgnoreCase(User.this.video_invitation_from_name);
 
-                    User.this.has_signed_petition = ub.getHas_signed_petition() == null ? false : ub.getHas_signed_petition();
-                    User.this.has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement() == null ? false : ub.getHas_signed_confidentiality_agreement();
-                    User.this.is_banned = ub.getIs_banned() == null ? false : ub.getIs_banned();
+                    User.this.has_signed_petition = ub.getHas_signed_petition();
+                    User.this.has_signed_confidentiality_agreement = ub.getHas_signed_confidentiality_agreement();
+                    User.this.is_banned = ub.getIs_banned();
                     User.this.citizen_builder_id = ub.getCitizen_builder_id();
+
+                    // The person's name in CB will overwrite whatever the user chose as his name when he created his TelePatriot account
+                    if(ub.getName() != null && !ub.getName().equals(User.this.getName())) {
+                        getFirebaseUser().updateProfile(new UserProfileChangeRequest.Builder().setDisplayName("Jane Q. User").build());
+                        fireNameChanged(ub.getName());
+                    }
+
+                    // If the user's email ever changes, we want to reflect that in the slide-out menu
+                    if(ub.getEmail() != null && !ub.getEmail().equals(User.this.getEmail())) {
+                        getFirebaseUser().updateEmail(ub.getEmail());
+                        fireEmailChanged(ub.getEmail());
+                    }
 
                     // PUT THIS BACK IN EVENTUALLY
                     // TODO seems weird to do this each time, but the User object
@@ -249,31 +263,42 @@ public class User implements FirebaseAuth.AuthStateListener {
     // doesn't consider account_disposition:enabled/disabled
     public boolean isAllowed() {
         // make sure the user should be allowed in
-        boolean allowed = has_signed_petition && has_signed_confidentiality_agreement && !is_banned;
+        boolean allowed = Boolean.TRUE.equals(has_signed_petition)
+                && Boolean.TRUE.equals(has_signed_confidentiality_agreement)
+                && Boolean.FALSE.equals(is_banned);
         return allowed;
     }
 
-    public boolean isHas_signed_petition() {
+    // doesn't consider account_disposition:enabled/disabled
+    public boolean isNotAllowed() {
+        // make sure the user should be allowed in
+        boolean notAllowed = Boolean.FALSE.equals(has_signed_petition)
+                || Boolean.FALSE.equals(has_signed_confidentiality_agreement)
+                || Boolean.TRUE.equals(is_banned);
+        return notAllowed;
+    }
+
+    public Boolean isHas_signed_petition() {
         return has_signed_petition;
     }
 
-    public void setHas_signed_petition(boolean has_signed_petition) {
+    public void setHas_signed_petition(Boolean has_signed_petition) {
         this.has_signed_petition = has_signed_petition;
     }
 
-    public boolean isHas_signed_confidentiality_agreement() {
+    public Boolean isHas_signed_confidentiality_agreement() {
         return has_signed_confidentiality_agreement;
     }
 
-    public void setHas_signed_confidentiality_agreement(boolean has_signed_confidentiality_agreement) {
+    public void setHas_signed_confidentiality_agreement(Boolean has_signed_confidentiality_agreement) {
         this.has_signed_confidentiality_agreement = has_signed_confidentiality_agreement;
     }
 
-    public boolean isIs_banned() {
+    public Boolean isIs_banned() {
         return is_banned;
     }
 
-    public void setIs_banned(boolean is_banned) {
+    public void setIs_banned(Boolean is_banned) {
         this.is_banned = is_banned;
     }
 
@@ -756,6 +781,20 @@ public class User implements FirebaseAuth.AuthStateListener {
 //            l.fired(nr);
 //        }
 //    }
+
+    private void fireNameChanged(String name) {
+        AccountStatusEvent.NameChanged ev = new AccountStatusEvent.NameChanged(name);
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(ev);
+        }
+    }
+
+    private void fireEmailChanged(String email) {
+        AccountStatusEvent.EmailChanged ev = new AccountStatusEvent.EmailChanged(email);
+        for(AccountStatusEvent.Listener l : accountStatusEventListeners) {
+            l.fired(ev);
+        }
+    }
 
     private void fireRoleAdded(String role) {
         AccountStatusEvent.RoleAdded nr = new AccountStatusEvent.RoleAdded(role);

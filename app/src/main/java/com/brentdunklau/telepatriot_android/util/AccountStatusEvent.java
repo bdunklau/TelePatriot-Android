@@ -52,6 +52,24 @@ public class AccountStatusEvent {
         }
     }
 
+    public static class NameChanged extends AccountStatusEvent {
+        String name;
+        NameChanged(String name) {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), name);
+            this.name = name;
+        }
+        public String getName() { return name; }
+    }
+
+    public static class EmailChanged extends AccountStatusEvent {
+        String email;
+        EmailChanged(String email) {
+            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), email);
+            this.email = email;
+        }
+        public String getEmail() { return email; }
+    }
+
     public static class RoleAdded extends AccountStatusEvent {
         RoleAdded(String role) {
             super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), role);

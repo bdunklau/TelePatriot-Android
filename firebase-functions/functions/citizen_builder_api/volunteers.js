@@ -174,8 +174,24 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
 
 
 // called from userCreated.js: onEmailEstablished()
-exports.updateUser = function(uid, result) {
+exports.updateUser = function(parameters) {
+    var uid = parameters.uid
+    var result = parameters.result
+    var userInfo = parameters.userInfo
+
     var r = {}
+
+    if(userInfo) {
+        if(userInfo['users/'+uid+'/photoUrl']) r.photoUrl = userInfo['users/'+uid+'/photoUrl']
+        if(userInfo['users/'+uid+'/created']) r.created = userInfo['users/'+uid+'/created']
+        if(userInfo['users/'+uid+'/created_ms']) r.created_ms = userInfo['users/'+uid+'/created_ms']
+        if(userInfo['users/'+uid+'/account_disposition']) r.account_disposition = userInfo['users/'+uid+'/account_disposition']
+        if(userInfo['users/'+uid+'/name']) r.name = userInfo['users/'+uid+'/name']
+        if(userInfo['users/'+uid+'/name_lower']) r.name_lower = userInfo['users/'+uid+'/name_lower']
+        if(userInfo['users/'+uid+'/email']) r.email = userInfo['users/'+uid+'/email']
+    }
+
+
     if(result.vol.id) r.citizen_builder_id = result.vol.id
     if(result.vol.roles) {
         var roles = {}

@@ -33,10 +33,12 @@ exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
 
+// dev deploy: 1/2/19
+// prod deploy: 1/3/19
 const createModule = require('./userCreated')
 exports.approveUserAccount = createModule.approveUserAccount
 exports.userCreated = createModule.userCreated
-exports.onEmailEstablished = createModule.onEmailEstablished
+//exports.onEmailEstablished = createModule.onEmailEstablished
 exports.onCitizenBuilderId = createModule.onCitizenBuilderId
 exports.onPetition = createModule.onPetition
 exports.onConfidentialityAgreement = createModule.onConfidentialityAgreement
@@ -112,9 +114,11 @@ exports.copyOverMissionItems = dbadmin.copyOverMissionItems
 const missionStats = require('./sheets/mission-stats')
 exports.percentComplete = missionStats.percentComplete
 
+// dev deploy: 1/2/19
+// prod deploy: 1/3/19
 const updateUser = require('./updateUser')
 exports.onUserAttributeDeleted = updateUser.onUserAttributeDeleted
-exports.onUserUpdated = updateUser.onUserUpdated
+//exports.onUserUpdated = updateUser.onUserUpdated
 exports.updateLegal = updateUser.updateLegal
 exports.updateUser = updateUser.updateUser
 
@@ -327,7 +331,8 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
-
+// dev deploy: 1/2/19
+// prod deploy: 1/3/19
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
@@ -335,7 +340,8 @@ exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
 exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
-
+// dev deploy: 1/2/19
+// prod deploy: 1/3/19
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
 exports.onLogin = volunteers.onLogin

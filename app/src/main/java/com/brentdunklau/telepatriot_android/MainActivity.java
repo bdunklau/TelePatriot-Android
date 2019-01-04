@@ -486,6 +486,14 @@ public class MainActivity extends AppCompatActivity
             CBMissionDetail m = ce.getCbMissionDetail();
             callEnded(m);
         }
+        else if(evt instanceof AccountStatusEvent.NameChanged) {
+            AccountStatusEvent.NameChanged e = (AccountStatusEvent.NameChanged)evt;
+            this.text_user_name.setText(e.getName());
+        }
+        else if(evt instanceof AccountStatusEvent.EmailChanged) {
+            AccountStatusEvent.EmailChanged e = (AccountStatusEvent.EmailChanged)evt;
+            this.text_user_email.setText(e.getEmail());
+        }
 //        else if(evt instanceof AccountStatusEvent.CBMissionCompleted) {
 //            AccountStatusEvent.CBMissionCompleted ce = (AccountStatusEvent.CBMissionCompleted)evt;
 //            CBMissionDetail m = ce.getCbMissionDetail();

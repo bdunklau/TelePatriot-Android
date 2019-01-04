@@ -125,8 +125,7 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
         else {
             // otherwise use option 2
             var returnFn = function(result) {
-                if(result.returnEarly) return false
-                else if(result.error) {
+                if(result.error) {
                     // TODO what do we do with an error?
                     db.ref('cb_api_events/check-legal-responses/'+uid)
                         .push()
@@ -141,7 +140,7 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
                 }
                 else if(result.vol) {
                     // This is what we want to happen: email was found in the CB db
-                    volunteers.updateUser(uid, result)
+                    volunteers.updateUser({uid: uid, result: result})
                 }
                 else return false
             }
