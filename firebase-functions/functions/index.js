@@ -132,6 +132,9 @@ const userList = require('./userList')
 exports.downloadUsers = userList.downloadUsers
 exports.manageUsers = userList.manageUsers
 exports.updateUser = userList.updateUser
+exports.temp_not_pop = userList.temp_not_pop
+exports.temp_not_pop2 = userList.temp_not_pop2
+exports.temp_call_volunteers = userList.temp_call_volunteers
 
 // prod deploy: 9/12/18, 9/20/18
 const email = require('./email')
@@ -331,7 +334,7 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
-// dev deploy: 1/2/19
+// dev deploy: 1/16/19
 // prod deploy: 1/3/19
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
@@ -340,7 +343,7 @@ exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
 exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
-// dev deploy: 1/2/19
+// dev deploy: 1/16/19
 // prod deploy: 1/3/19
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers

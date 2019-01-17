@@ -208,7 +208,7 @@ exports.copy = functions.https.onRequest((req, res) => {
     else {
         return db.ref(from).once('value').then(snapshot => {
             db.ref(to).set(snapshot.val())
-            res.status(200).send("no idea")
+            res.status(200).send("Copied this node: "+from+"<P/>To this node: "+to)
         })
     }
 
@@ -222,32 +222,15 @@ exports.deleteNodes = functions.https.onRequest((req, res) => {
     //      to
 
     var node = req.query.node
-    var lengthGreaterThan = req.query.lengthGreaterThan
-    var lengthLessThan = req.query.lengthLessThan
-    var where = req.query.where
-    var ok = node && (lengthGreaterThan || lengthLessThan)
 
-    if(!ok) {
-        return res.status(200).send("Request parms needed for this function: <P/> node (required) <P/> lengthGreaterThan -OR- lengthLessThan")
+    if(!node) {
+        return res.status(200).send("Request parms needed for this function: <P/> node")
     }
     else {
-        // ok, normal operation
-        var mref = db.ref(node)
-        return mref.once('value').then(snapshot => {
-            var childCount = snapshot.numChildren()
-            var deletedCount = 0
-            snapshot.forEach(function (child) {
-                if(lengthGreaterThan && child.key.length > lengthGreaterThan) {
-                    mref.child(child.key).remove()
-                    ++deletedCount
-                }
-                else if(lengthLessThan && child.key.length < lengthLessThan) {
-                    mref.child(child.key).remove()
-                    ++deletedCount
-                }
-            })
-
-            res.status(200).send("Deleted: "+deletedCount+" of the "+childCount+" child nodes of "+node)
+        var updates = {}
+        updates[node] = null
+        return db.ref('/').update(updates).then(() => {
+            res.status(200).send("Deleted node: "+node)
         })
 
     }

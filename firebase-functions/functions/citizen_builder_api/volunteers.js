@@ -5,6 +5,7 @@ const _ = require('lodash');
 const admin = require('firebase-admin')
 const functions = require('firebase-functions')
 const date = require('../dateformat')
+const log = require('../log')
 
 // for calling CitizenBuilder API
 var request = require('request')
@@ -77,13 +78,11 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
             if(result.vol.first_name) r.first_name = result.vol.first_name
             if(result.vol.last_name) r.last_name = result.vol.last_name
             if(result.vol.roles) {
-                var roles = []
+                var roles = {}
                 _.each(result.vol.roles, function(role) {
-                    var substrIndx = role.startsWith("TelePatriot") ? "TelePatriot".length : 0
+                    var substrIndx = role.startsWith("TelePatriot ") ? "TelePatriot ".length : 0
                     var rolename = role.substring(substrIndx)
-                    var rnode = {}
-                    rnode[rolename] = "true" // TODO really should be a boolean.  This is a "legacy" bug from way back
-                    roles.push(rnode)
+                    roles[rolename] = "true" // TODO really should be a boolean.  This is a "legacy" bug from way back
                 })
                 r.roles = roles
             }
