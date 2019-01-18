@@ -736,6 +736,7 @@ exports.updateTeamListUnderUsers = functions.database.ref('/teams/{team_name}/me
         var logmsg = 'Removed /users/'+uid+'/teams/'+team_name
         return event.data.adminRef.root.child('/templog').push().set({action: logmsg, date: date.asCentralTime()})
     }
+    else return false
 })
 
 

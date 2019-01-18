@@ -335,7 +335,7 @@ exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
 // dev deploy: 1/16/19
-// prod deploy: 1/3/19
+// prod deploy: 1/16/19
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
@@ -344,7 +344,7 @@ exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
 exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
 // dev deploy: 1/16/19
-// prod deploy: 1/3/19
+// prod deploy: 1/16/19
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
 exports.onLogin = volunteers.onLogin
