@@ -12,6 +12,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Created by bdunklau on 10/19/17.
@@ -19,12 +25,9 @@ import android.widget.Button;
 
 public class MissionsFragment extends DirectorFragment {
 
+    TextView removed;
+    TextView header_missions_list;
     Button btnNewPhoneCampaign;
-    /*****
-    Button btnMyActiveMissions;
-    Button btnAllActiveMissions;
-    Button btnAllMyMissions;
-     ******/
     Button btnAllMissions;
     Button btnAllActivity;
 
@@ -35,26 +38,67 @@ public class MissionsFragment extends DirectorFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.missions_fragment, container, false);
 
-        btnNewPhoneCampaign = myView.findViewById(R.id.button_new_phone_campaign);
-        /****
-        btnMyActiveMissions = myView.findViewById(R.id.button_my_active_missions);
-        btnAllActiveMissions = myView.findViewById(R.id.button_all_active_missions);
-        btnAllMyMissions = myView.findViewById(R.id.button_all_my_missions);
-         ****/
-        btnAllMissions = myView.findViewById(R.id.button_all_missions);
-        btnAllActivity = myView.findViewById(R.id.button_all_activity);
+        FirebaseDatabase.getInstance().getReference("administration/configuration/get_roles_from").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String get_roles_from = dataSnapshot.getValue(String.class);
+                if(get_roles_from == null || get_roles_from.equalsIgnoreCase("telepatriot")) {
+                    hideUI();
+                    showLegacyUI();
+                }
+                else {
+                    showUI();
+                    hideLegacyUI();
+                }
+            }
 
-        wireUp(btnNewPhoneCampaign, new ChooseSpreadsheetTypeFragment());
-        /********
-        wireUp(btnMyActiveMissions, new MyActiveMissionsFragment());
-        wireUp(btnAllActiveMissions, new AllActiveMissionsFragment());
-        wireUp(btnAllMyMissions, new AllMyMissionsFragment());
-         *********/
-        wireUp(btnAllMissions, new AllMissionsFragment());
-        wireUp(btnAllActivity, new AllActivityFragment());
+            @Override
+            public void onCancelled(DatabaseError databaseError) { }
+        });
+
 
         //setHasOptionsMenu(true);
         return myView;
+    }
+
+    private void showLegacyUI() {
+
+        header_missions_list = myView.findViewById(R.id.header_missions_list);
+        btnNewPhoneCampaign = myView.findViewById(R.id.button_new_phone_campaign);
+        btnAllMissions = myView.findViewById(R.id.button_all_missions);
+        btnAllActivity = myView.findViewById(R.id.button_all_activity);
+        header_missions_list.setVisibility(View.VISIBLE);
+        btnNewPhoneCampaign.setVisibility(View.VISIBLE);
+        btnAllMissions.setVisibility(View.VISIBLE);
+        btnAllActivity.setVisibility(View.VISIBLE);
+
+        wireUp(btnNewPhoneCampaign, new ChooseSpreadsheetTypeFragment());
+        wireUp(btnAllMissions, new AllMissionsFragment());
+        wireUp(btnAllActivity, new AllActivityFragment());
+    }
+
+    private void hideLegacyUI() {
+
+        header_missions_list = myView.findViewById(R.id.header_missions_list);
+        btnNewPhoneCampaign = myView.findViewById(R.id.button_new_phone_campaign);
+        btnAllMissions = myView.findViewById(R.id.button_all_missions);
+        btnAllActivity = myView.findViewById(R.id.button_all_activity);
+        header_missions_list.setVisibility(View.GONE);
+        btnNewPhoneCampaign.setVisibility(View.GONE);
+        btnAllMissions.setVisibility(View.GONE);
+        btnAllActivity.setVisibility(View.GONE);
+    }
+
+    private void showUI() {
+
+        removed = myView.findViewById(R.id.removed);
+        removed.setVisibility(View.VISIBLE);
+    }
+
+    private void hideUI() {
+
+        removed = myView.findViewById(R.id.removed);
+        removed.setVisibility(View.GONE);
     }
 
     private void wireUp(Button button, final Fragment fragment) {
@@ -65,18 +109,5 @@ public class MissionsFragment extends DirectorFragment {
             }
         });
     }
-
-//    private void showFragment(Fragment fragment) {
-//        FragmentManager fragmentManager = getFragmentManager();
-//        try {
-//            FragmentTransaction t = fragmentManager.beginTransaction();
-//            t.replace(R.id.content_frame, fragment);
-//            t.addToBackStack(fragment.getClass().getName());
-//            t.commit();
-//        } catch(Throwable t) {
-//            // TODO show alert dialog or  something - not this
-//            t.printStackTrace();
-//        }
-//    }
 
 }

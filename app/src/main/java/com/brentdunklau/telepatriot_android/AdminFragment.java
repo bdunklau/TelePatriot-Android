@@ -17,6 +17,10 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.util.UserBean;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Created by bdunklau on 10/11/17.
@@ -24,6 +28,8 @@ import com.brentdunklau.telepatriot_android.util.UserBean;
 
 public class AdminFragment extends BaseFragment {
 
+    TextView removed;
+    TextView header_admin_screen;
     protected UserBean user;
     Button button_unassigned_users, button_search_users;
     protected View myView;
@@ -33,6 +39,24 @@ public class AdminFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.admin_fragment, container, false);
 
+        FirebaseDatabase.getInstance().getReference("administration/configuration/get_roles_from").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String get_roles_from = dataSnapshot.getValue(String.class);
+                if(get_roles_from == null || get_roles_from.equalsIgnoreCase("telepatriot")) {
+                    hideUI();
+                    showLegacyUI();
+                }
+                else {
+                    showUI();
+                    hideLegacyUI();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) { }
+        });
+
         button_unassigned_users = myView.findViewById(R.id.button_unassigned_users);
         button_search_users = myView.findViewById(R.id.button_search_users);
 
@@ -41,6 +65,41 @@ public class AdminFragment extends BaseFragment {
 
         //setHasOptionsMenu(true);
         return myView;
+    }
+
+    private void showLegacyUI() {
+
+        header_admin_screen = myView.findViewById(R.id.header_admin_screen);
+        button_unassigned_users = myView.findViewById(R.id.button_unassigned_users);
+        button_search_users = myView.findViewById(R.id.button_search_users);
+        header_admin_screen.setVisibility(View.VISIBLE);
+        button_unassigned_users.setVisibility(View.VISIBLE);
+        button_search_users.setVisibility(View.VISIBLE);
+
+        wireUp(button_unassigned_users, new UnassignedUsersFragment());
+        wireUp(button_search_users, new SearchUsersFragment());
+    }
+
+    private void hideLegacyUI() {
+
+        header_admin_screen = myView.findViewById(R.id.header_admin_screen);
+        button_unassigned_users = myView.findViewById(R.id.button_unassigned_users);
+        button_search_users = myView.findViewById(R.id.button_search_users);
+        header_admin_screen.setVisibility(View.GONE);
+        button_unassigned_users.setVisibility(View.GONE);
+        button_search_users.setVisibility(View.GONE);
+    }
+
+    private void showUI() {
+
+        removed = myView.findViewById(R.id.removed);
+        removed.setVisibility(View.VISIBLE);
+    }
+
+    private void hideUI() {
+
+        removed = myView.findViewById(R.id.removed);
+        removed.setVisibility(View.GONE);
     }
 
     public void setUser(UserBean user) {
@@ -55,19 +114,6 @@ public class AdminFragment extends BaseFragment {
             }
         });
     }
-
-//    private void showFragment(Fragment fragment) {
-//        FragmentManager fragmentManager = getFragmentManager();
-//        try {
-//            FragmentTransaction t = fragmentManager.beginTransaction();
-//            t.replace(R.id.content_frame, fragment);
-//            t.addToBackStack(fragment.getClass().getName());
-//            t.commit();
-//        } catch(Throwable t) {
-//            // TODO show alert dialog or  something - not this
-//            t.printStackTrace();
-//        }
-//    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
