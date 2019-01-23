@@ -33,7 +33,7 @@ exports.testRoleApi = functions.https.onRequest((req, res) => {
     var action = 'api_add_role'
     if(req.body.action) action = req.body.action
 
-    var url = 'https://us-central1-telepatriot-dev.cloudfunctions.net/'+action
+    var url = "https://"+req.get('host')+"/"+action
     console.log('action = ', action)
 
     var formData = {citizen_builder_id: req.body.citizen_builder_id, role_name: req.body.role_name}

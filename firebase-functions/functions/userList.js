@@ -225,7 +225,7 @@ exports.temp_call_volunteers = functions.database.ref('users/{uid}/citizen_build
                 else {
                     // If email not found in CB, result.vol will be null
                     // do nothing in this case
-                    log.debug(event.params.uid, name, "userList.js", "callVolunteers", "EMAIL NOT FOUND IN CB: "+snapshot.val().email)
+                    log.debug(event.params.uid, snapshot.val().name, "userList.js", "callVolunteers", "EMAIL NOT FOUND IN CB: "+snapshot.val().email)
                 }
             }
 

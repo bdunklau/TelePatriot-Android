@@ -5,6 +5,7 @@ const _ = require('lodash');
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const request = require('request')
+const log = require('../log')
 
 // can only call this once globally and we already do that in index.js
 //admin.initializeApp(functions.config().firebase);
@@ -25,7 +26,7 @@ exports.testAccountDisposition = functions.https.onRequest((req, res) => {
         })
     }
 
-    var url = 'https://us-central1-telepatriot-dev.cloudfunctions.net/api_account_disposition'
+    var url = "https://"+req.get('host')+"/api_account_disposition"
 
     var formData = {citizen_builder_id: req.body.citizen_builder_id, account_disposition: req.body.account_disposition}
 
@@ -51,6 +52,7 @@ exports.testAccountDisposition = functions.https.onRequest((req, res) => {
 
 
 exports.api_account_disposition = functions.https.onRequest((req, res) => {
+
     if(!req.body.account_disposition)
         return false
 
@@ -60,6 +62,7 @@ exports.api_account_disposition = functions.https.onRequest((req, res) => {
 
     return db.ref('administration/configuration/telepatriot_api_key_value').once('value').then(snap2 => {
         if(snap2.val() != actualkey) {
+            log.debug("system", "system", "account_api.js", "api_account_disposition", "telepatriot_api_key_value = '"+snap2.val()+"' <br/>actualkey = '"+actualkey+"'")
             return res.status(403).send({response: 'bad key'})
         }
         else {
