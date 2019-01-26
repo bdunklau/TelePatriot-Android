@@ -16,7 +16,7 @@ const db = admin.database();
 
 
 /***
-firebase deploy --only functions:onUserAttributeDeleted,functions:updateLegal,functions:updateUser
+firebase deploy --only functions:updateLegal,functions:updateUser
 ***/
 
 
