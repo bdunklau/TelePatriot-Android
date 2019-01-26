@@ -25,7 +25,6 @@ firebase deploy --only functions:userCreated,functions:approveUserAccount,functi
 
 
 exports.userCreated = functions.auth.user().onCreate(event => {
-    console.log("userCreated.js: onCreate called")
     // UserRecord is created
     // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s
     // UserRecord contains: displayName, email, photoUrl, uid

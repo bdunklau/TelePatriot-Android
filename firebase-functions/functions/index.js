@@ -117,7 +117,6 @@ exports.percentComplete = missionStats.percentComplete
 // dev deploy: 1/2/19
 // prod deploy: 1/3/19
 const updateUser = require('./updateUser')
-exports.onUserAttributeDeleted = updateUser.onUserAttributeDeleted
 //exports.onUserUpdated = updateUser.onUserUpdated
 exports.updateLegal = updateUser.updateLegal
 exports.updateUser = updateUser.updateUser

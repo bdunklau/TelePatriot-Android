@@ -150,18 +150,3 @@ exports.updateLegal = functions.https.onRequest((req, res) => {
     }
 
 })
-
-
-// keeps the user node under /no_roles in sync with the user node under /users
-exports.onUserAttributeDeleted = functions.database.ref('/users/{uid}/{attr}').onDelete(event => {
-
-    var uid = event.params.uid
-    var attr = event.params.attr
-
-    var ref = db.ref(`/no_roles`).child(uid)
-    return ref.once('value').then(snapshot => {
-        if(snapshot.numChildren() == 0)
-            return
-        return ref.child(attr).remove()
-    })
-})
