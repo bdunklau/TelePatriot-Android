@@ -35,7 +35,7 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     private FirebaseDatabase database;
     private DatabaseReference userRef;
-    private Integer citizen_builder_id;
+    private Long citizen_builder_id;
     private boolean isAdmin, isDirector, isVolunteer, isVideoCreator;
     private String recruiter_id;
     private String missionItemId;  // no longer useful once we move to CB
@@ -131,7 +131,7 @@ public class User implements FirebaseAuth.AuthStateListener {
 
                     // The person's name in CB will overwrite whatever the user chose as his name when he created his TelePatriot account
                     if(ub.getName() != null && !ub.getName().equals(User.this.getName())) {
-                        getFirebaseUser().updateProfile(new UserProfileChangeRequest.Builder().setDisplayName("Jane Q. User").build());
+                        getFirebaseUser().updateProfile(new UserProfileChangeRequest.Builder().setDisplayName(ub.getName()).build());
                         fireNameChanged(ub.getName());
                     }
 
@@ -247,11 +247,11 @@ public class User implements FirebaseAuth.AuthStateListener {
 
     }
 
-    public Integer getCitizen_builder_id() {
+    public Long getCitizen_builder_id() {
         return citizen_builder_id;
     }
 
-    public void setCitizen_builder_id(Integer citizen_builder_id) {
+    public void setCitizen_builder_id(Long citizen_builder_id) {
         this.citizen_builder_id = citizen_builder_id;
     }
 

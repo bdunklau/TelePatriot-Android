@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class UserBean {
 
-    private Integer citizen_builder_id;
+    private String /*Integer*/ citizen_builder_id;
     private String name, email, uid, photoUrl, created, reviewed_by, recruiter_id;
     private Boolean has_signed_petition;
     private Boolean has_signed_confidentiality_agreement;
@@ -53,12 +53,20 @@ public class UserBean {
 
     }
 
-    public Integer getCitizen_builder_id() {
-        return citizen_builder_id;
+    public Long getCitizen_builder_id() {
+        try {
+            return new Long(citizen_builder_id);
+        } catch(Throwable t) {
+            return -1L;
+        }
     }
 
-    public void setCitizen_builder_id(Integer citizen_builder_id) {
-        this.citizen_builder_id = citizen_builder_id;
+    public void setCitizen_builder_id(Object citizen_builder_id) {
+        if(citizen_builder_id != null && citizen_builder_id instanceof Long)
+            this.citizen_builder_id = citizen_builder_id+"";
+        else if(citizen_builder_id != null)
+            this.citizen_builder_id = citizen_builder_id+"";
+        else this.citizen_builder_id = new Long(-1L).toString();
     }
 
     public void setName(String name) {

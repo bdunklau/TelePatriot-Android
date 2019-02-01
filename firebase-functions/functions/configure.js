@@ -162,6 +162,32 @@ var configToHtml = function(stuff) {
     html +=     '</tr>'
 
 
+    // when citizen_builder_id changes
+    var on_citizen_builder_id = stuff.config.on_citizen_builder_id
+    var sel1 = 'checked'
+    var sel2 = ''
+    if(on_citizen_builder_id == 'post_to_slack') {
+        sel1 = ''
+        sel2 = 'checked'
+    }
+    if(stuff.req.body.on_citizen_builder_id && stuff.req.body.on_citizen_builder_id == 'post_to_slack') {
+        sel1 = ''
+        sel2 = 'checked'
+        updates['on_citizen_builder_id'] = 'post_to_slack'
+    }
+    if(stuff.req.body.on_citizen_builder_id && stuff.req.body.on_citizen_builder_id == 'do_nothing') {
+        sel1 = 'checked'
+        sel2 = ''
+        updates['on_citizen_builder_id'] = 'do_nothing'
+    }
+    html +=     '<tr>'
+    html +=         '<td>When CitizenBuilder ID changes:</td>'
+    html +=         '<td><input type="radio" name="on_citizen_builder_id" value="post_to_slack" '+sel2+' onclick="document.getElementById(\'simulator-form\').submit()">Post to Slack</td>'
+    html +=         '<td><input type="radio" name="on_citizen_builder_id" value="do_nothing" '+sel1+' onclick="document.getElementById(\'simulator-form\').submit()">do nothing </td>'
+    html +=         '<td>on_user_login</td>'
+    html +=     '</tr>'
+
+
     // get_teams_from
     var get_teams_from = stuff.config.get_teams_from
     var tpSelected = ''

@@ -189,8 +189,10 @@ exports.onCitizenBuilderId = functions.database.ref('users/{uid}/citizen_builder
     ********/
     log.debug(event.params.uid, "(not known yet)", "userCreated.js", "onCitizenBuilderId", "begin func")
 
-    return db.child('administration/configuration/new_user_webhook').once('value').then(snapshot => {
-        var url = snapshot.val()
+    return db.child('administration/configuration').once('value').then(snapshot => {
+        if(snapshot.val().on_citizen_builder_id == 'do_nothing')
+            return false
+        var url = snapshot.val().new_user_webhook
         log.debug(event.params.uid, "(not known yet)", "userCreated.js", "onCitizenBuilderId", "new_user_webhook = "+url)
         return db.child('users/'+event.params.uid).once('value').then(snap2 => {
 
