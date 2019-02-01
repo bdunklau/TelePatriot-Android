@@ -36,13 +36,8 @@ exports.authgoogleapi = sheetReader.authgoogleapi
 // dev deploy: 1/2/19
 // prod deploy: 1/3/19
 const createModule = require('./userCreated')
-exports.approveUserAccount = createModule.approveUserAccount
 exports.userCreated = createModule.userCreated
-//exports.onEmailEstablished = createModule.onEmailEstablished
 exports.onCitizenBuilderId = createModule.onCitizenBuilderId
-exports.onPetition = createModule.onPetition
-exports.onConfidentialityAgreement = createModule.onConfidentialityAgreement
-exports.onBanned = createModule.onBanned
 
 
 const missions = require('./sheets/mission-activator')
