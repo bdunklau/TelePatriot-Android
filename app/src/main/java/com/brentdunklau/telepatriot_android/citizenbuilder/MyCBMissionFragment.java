@@ -193,6 +193,7 @@ public class MyCBMissionFragment extends BaseFragment
 
     private void placeCall(String phone) {
         Intent intent = new Intent(Intent.ACTION_CALL);
+        //phone = "2145550000";
         intent.setData(Uri.parse("tel:" + phone));
         startActivity(intent);
     }
