@@ -166,34 +166,38 @@ public class MyCBMissionFragment extends BaseFragment
      * logic is that fires when the call ends
      * @param missionDetail
      */
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    //@RequiresApi(api = Build.VERSION_CODES.M)
     private void call(CBMissionDetail missionDetail) {
         call(missionDetail.getPhone());
     }
 
     // call the name2/phone2 person
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    //@RequiresApi(api = Build.VERSION_CODES.M)
     private void call2(CBMissionDetail missionDetail) {
         String phone = get3WallCallPhone(missionDetail);
         call(phone);
     }
 
     private void call(String phone) {
-        if(permittedToCall()) {
-            placeCall(phone);
-        }
-        else {
-            requestPermissionToCall();
-        }
+        placeCall(phone);
+//        if(permittedToCall()) {
+//            placeCall(phone);
+//        }
+//        else {
+//            requestPermissionToCall();
+//        }
     }
 
     private boolean permittedToCall() {
         return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED;
     }
 
+    static int i = 1;
     private void placeCall(String phone) {
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        //phone = "2145550000";
+
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        if(i==1) { i=2; phone = "2145552222";}
+        else { i=1; phone = "2145551111"; }
         intent.setData(Uri.parse("tel:" + phone));
         startActivity(intent);
     }
