@@ -400,3 +400,6 @@ const applog = require('./log')
 exports.testLog = applog.testLog
 exports.logByUser = applog.logByUser
 
+const downloadApk = require('./download-apk')
+exports.downloadApk = downloadApk.downloadApk
+
