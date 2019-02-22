@@ -52,12 +52,12 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
         debug(method, "method begin");
 
     }
-    protected void onOutgoingCallEnded(String number, Date start, Date end) {
-        String method = "onOutgoingCallEnded(String number="+number+", Date start="+start+", Date end="+end+")";
-        debug(method, "method begin");
-        User.getInstance().callEnded();
-
-    }
+//    protected void onOutgoingCallEnded(String number, Date start, Date end) {
+//        String method = "onOutgoingCallEnded(String number="+number+", Date start="+start+", Date end="+end+")";
+//        debug(method, "method begin");
+//        User.getInstance().callEnded();
+//
+//    }
     protected void onMissedCall(String number, Date start) {
         String method = "onMissedCall(String number="+number+", Date start="+start+")";
         debug(method, "method begin");
@@ -117,7 +117,7 @@ public class PhoneBroadcastReceiver extends BroadcastReceiver {
                         onIncomingCallEnded(savedNumber, callStartTime, new Date());
                     }
                     else{
-                        onOutgoingCallEnded(savedNumber, callStartTime, new Date());
+//                        onOutgoingCallEnded(savedNumber, callStartTime, new Date());
                     }
                     break;
             }

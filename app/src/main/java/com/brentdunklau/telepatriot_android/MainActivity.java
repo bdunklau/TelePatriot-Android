@@ -413,31 +413,31 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * After the call is ended, send the user to the "Wrap Up" screen
-     * @param cbMissionDetail
-     */
-    private void callEnded(CBMissionDetail cbMissionDetail) {
-//        android.support.v4.app.Fragment my_cb_mission_fragment = getSupportFragmentManager().findFragmentById(R.id.my_cb_mission_fragment);
-        Fragment my_cb_mission_fragment = getFragmentManager().findFragmentByTag("mission_fragment");
-        if(my_cb_mission_fragment != null) {
-//            getSupportFragmentManager().beginTransaction().remove(my_cb_mission_fragment).commit();
-            getFragmentManager().beginTransaction().remove(my_cb_mission_fragment).commitAllowingStateLoss();
-        }
-
-        Bundle missionWrapUpBundle = new Bundle();
-        missionWrapUpBundle.putString("citizen_builder_domain", cbMissionDetail.getCitizen_builder_domain());
-        missionWrapUpBundle.putString("citizen_builder_api_key_name", cbMissionDetail.getCitizen_builder_api_key_name());
-        missionWrapUpBundle.putString("citizen_builder_api_key_value", cbMissionDetail.getCitizen_builder_api_key_value());
-        missionWrapUpBundle.putString("mission_person_id", cbMissionDetail.getPerson_id());
-        missionWrapUpBundle.putString("mission_id", cbMissionDetail.getMission_id());
-        missionWrapUpBundle.putString("mission_phone", cbMissionDetail.getPhone());
-
-        Fragment fragment = new CBMissionItemWrapUpFragment();
-        fragment.setArguments(missionWrapUpBundle);
-        getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, "mission_wrap_up_fragment").addToBackStack(fragment.getClass().getName()).commitAllowingStateLoss();
-
-    }
+//    /**
+//     * After the call is ended, send the user to the "Wrap Up" screen
+//     * @param cbMissionDetail
+//     */
+//    private void callEnded(CBMissionDetail cbMissionDetail) {
+////        android.support.v4.app.Fragment my_cb_mission_fragment = getSupportFragmentManager().findFragmentById(R.id.my_cb_mission_fragment);
+//        Fragment my_cb_mission_fragment = getFragmentManager().findFragmentByTag("mission_fragment");
+//        if(my_cb_mission_fragment != null) {
+////            getSupportFragmentManager().beginTransaction().remove(my_cb_mission_fragment).commit();
+//            getFragmentManager().beginTransaction().remove(my_cb_mission_fragment).commitAllowingStateLoss();
+//        }
+//
+//        Bundle missionWrapUpBundle = new Bundle();
+//        missionWrapUpBundle.putString("citizen_builder_domain", cbMissionDetail.getCitizen_builder_domain());
+//        missionWrapUpBundle.putString("citizen_builder_api_key_name", cbMissionDetail.getCitizen_builder_api_key_name());
+//        missionWrapUpBundle.putString("citizen_builder_api_key_value", cbMissionDetail.getCitizen_builder_api_key_value());
+//        missionWrapUpBundle.putString("mission_person_id", cbMissionDetail.getPerson_id());
+//        missionWrapUpBundle.putString("mission_id", cbMissionDetail.getMission_id());
+//        missionWrapUpBundle.putString("mission_phone", cbMissionDetail.getPhone());
+//
+//        Fragment fragment = new CBMissionItemWrapUpFragment();
+//        fragment.setArguments(missionWrapUpBundle);
+//        getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, "mission_wrap_up_fragment").addToBackStack(fragment.getClass().getName()).commitAllowingStateLoss();
+//
+//    }
 
     // per MissionCompletedListener
     public void missionCompleted(String citizen_builder_domain,
@@ -481,11 +481,11 @@ public class MainActivity extends AppCompatActivity
         else if(evt instanceof AccountStatusEvent.VideoInvitationRevoked) {
             signOut();
         }
-        else if(evt instanceof AccountStatusEvent.CallEnded) {
-            AccountStatusEvent.CallEnded ce = (AccountStatusEvent.CallEnded)evt;
-            CBMissionDetail m = ce.getCbMissionDetail();
-            callEnded(m);
-        }
+//        else if(evt instanceof AccountStatusEvent.CallEnded) {
+//            AccountStatusEvent.CallEnded ce = (AccountStatusEvent.CallEnded)evt;
+//            CBMissionDetail m = ce.getCbMissionDetail();
+//            callEnded(m);
+//        }
         else if(evt instanceof AccountStatusEvent.NameChanged) {
             AccountStatusEvent.NameChanged e = (AccountStatusEvent.NameChanged)evt;
             this.text_user_name.setText(e.getName());

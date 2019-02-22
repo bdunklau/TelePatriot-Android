@@ -33,12 +33,6 @@ public class VolunteerFragment extends BaseFragment {
 
         wireUp(button_get_a_mission, new MyMissionFragment());
 
-        /*****
-         * Probably should put this in a separate area just for developers
-         button_test_volunteer_screen = myView.findViewById(R.id.button_test_volunteer_screen);
-         wireUp(button_test_volunteer_screen, new TestVolunteerFragment());
-         *****/
-
         //setHasOptionsMenu(true);
         return myView;
     }

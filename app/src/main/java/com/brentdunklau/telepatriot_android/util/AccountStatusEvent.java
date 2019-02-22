@@ -126,17 +126,17 @@ public class AccountStatusEvent {
         }
     }
 
-    // not really an account status event
-    public static class CallEnded extends AccountStatusEvent {
-        CBMissionDetail cbMissionDetail;
-        CallEnded(CBMissionDetail cbMissionDetail) {
-            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "CitizenBuilder mission completed");
-            this.cbMissionDetail = cbMissionDetail;
-        }
-        public CBMissionDetail getCbMissionDetail() {
-            return cbMissionDetail;
-        }
-    }
+//    // not really an account status event
+//    public static class CallEnded extends AccountStatusEvent {
+//        CBMissionDetail cbMissionDetail;
+//        CallEnded(CBMissionDetail cbMissionDetail) {
+//            super(new SimpleDateFormat("EEE MMM d, yyyy h:mm a z").format(new Date()), "CitizenBuilder mission completed");
+//            this.cbMissionDetail = cbMissionDetail;
+//        }
+//        public CBMissionDetail getCbMissionDetail() {
+//            return cbMissionDetail;
+//        }
+//    }
 
     public static class VideoInvitationExtended extends AccountStatusEvent {
         public VideoInvitationExtended() {

@@ -51,12 +51,14 @@ public class MyCBMissionFragment extends BaseFragment
     private TextView heading_mission_progress;
     private Button button_call_person1;
     private Button button_call_person2;
+    private Button button_leave_notes;
     private String citizen_builder_domain;
     private String citizen_builder_api_key_name;
     private String citizen_builder_api_key_value;
     private String mission_person_id;
     private String mission_id;
     private String mission_phone;
+    private CBMissionDetail missionItem;
 
     View myView;
 
@@ -71,7 +73,15 @@ public class MyCBMissionFragment extends BaseFragment
         mission_script = myView.findViewById(R.id.mission_script);
         button_call_person1 = myView.findViewById(R.id.button_call_person1);
         button_call_person2 = myView.findViewById(R.id.button_call_person2);
+        button_leave_notes = myView.findViewById(R.id.button_leave_notes);
         heading_mission_progress = myView.findViewById(R.id.heading_mission_progress);
+
+        button_leave_notes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gotoLeaveNotesScreen();
+            }
+        });
 
         citizen_builder_domain = this.getArguments().getString("citizen_builder_domain");
         citizen_builder_api_key_name = this.getArguments().getString("citizen_builder_api_key_name");
@@ -86,6 +96,23 @@ public class MyCBMissionFragment extends BaseFragment
         return myView;
     }
 
+    private void gotoLeaveNotesScreen() {
+        if(missionItem == null) return;
+
+        Bundle missionWrapUpBundle = new Bundle();
+        missionWrapUpBundle.putString("citizen_builder_domain", missionItem.getCitizen_builder_domain());
+        missionWrapUpBundle.putString("citizen_builder_api_key_name", missionItem.getCitizen_builder_api_key_name());
+        missionWrapUpBundle.putString("citizen_builder_api_key_value", missionItem.getCitizen_builder_api_key_value());
+        missionWrapUpBundle.putString("mission_person_id", missionItem.getPerson_id());
+        missionWrapUpBundle.putString("mission_id", missionItem.getMission_id());
+        missionWrapUpBundle.putString("mission_phone", missionItem.getPhone());
+
+        Fragment fragment = new CBMissionItemWrapUpFragment();
+        fragment.setArguments(missionWrapUpBundle);
+        getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, "mission_wrap_up_fragment").addToBackStack(fragment.getClass().getName()).commitAllowingStateLoss();
+
+    }
+
     private void getMission_fromCitizenBuilder() {
         TeamIF team = User.getInstance().getCurrentTeam();
         if(team == null) return;
@@ -96,6 +123,7 @@ public class MyCBMissionFragment extends BaseFragment
     private void setFieldsVisible() {
         button_call_person1.setVisibility(View.VISIBLE);
         button_call_person2.setVisibility(View.VISIBLE);
+        button_leave_notes.setVisibility(View.VISIBLE);
         mission_name.setVisibility(View.VISIBLE);
         mission_script.setVisibility(View.VISIBLE);
         myView.findViewById(R.id.heading_mission_description).setVisibility(View.VISIBLE);
@@ -106,6 +134,7 @@ public class MyCBMissionFragment extends BaseFragment
         // hide the call buttons
         button_call_person1.setVisibility(View.GONE);
         button_call_person2.setVisibility(View.GONE);
+        button_leave_notes.setVisibility(View.GONE);
         // hide the description and the script fields
         mission_name.setVisibility(View.GONE);
         mission_script.setVisibility(View.GONE);
@@ -166,13 +195,13 @@ public class MyCBMissionFragment extends BaseFragment
      * logic is that fires when the call ends
      * @param missionDetail
      */
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    //@RequiresApi(api = Build.VERSION_CODES.M)
     private void call(CBMissionDetail missionDetail) {
         call(missionDetail.getPhone());
     }
 
     // call the name2/phone2 person
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    //@RequiresApi(api = Build.VERSION_CODES.M)
     private void call2(CBMissionDetail missionDetail) {
         String phone = get3WallCallPhone(missionDetail);
         call(phone);
@@ -191,9 +220,15 @@ public class MyCBMissionFragment extends BaseFragment
         return ContextCompat.checkSelfPermission(myView.getContext(), android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED;
     }
 
+    static int i = 1;
+    static boolean fakePhone = false;
     private void placeCall(String phone) {
+
         Intent intent = new Intent(Intent.ACTION_CALL);
-        //phone = "2145550000";
+        if(fakePhone) {
+            if (i == 1) { i = 2; phone = "8009505555"; }
+            else { i = 1;  phone = "2146325613"; }
+        }
         intent.setData(Uri.parse("tel:" + phone));
         startActivity(intent);
     }
@@ -213,6 +248,8 @@ public class MyCBMissionFragment extends BaseFragment
     }
 
     private void workThis(CBMissionDetail missionItem) {
+
+        this.missionItem = missionItem;
 
         // set fields back to visible if they were previously set to View.GONE
         setFieldsVisible();

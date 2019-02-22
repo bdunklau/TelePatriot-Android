@@ -123,6 +123,18 @@
                 android:text="call person2"
                 android:textColor="#ffffff" />
 
+            <Button
+                android:id="@+id/button_leave_notes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="72dp"
+                android:background="@color/com_facebook_blue"
+                android:drawablePadding="-8dp"
+                android:gravity="center"
+                android:paddingLeft="8dp"
+                android:text="LEAVE NOTES"
+                android:textColor="#ffffff" />
+
 
         </LinearLayout>
     </ScrollView>

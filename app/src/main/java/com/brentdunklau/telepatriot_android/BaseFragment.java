@@ -76,7 +76,10 @@ public class BaseFragment extends Fragment {
 
     // TODO what's the difference between gotoFragment() and showFragment() !?!?!
     protected void gotoFragment(Fragment fragment) {
-        getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment).commit();
+        getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.content_frame, fragment)
+                .commit();
     }
 
     // TODO what's the difference between gotoFragment() and showFragment() !?!?!
