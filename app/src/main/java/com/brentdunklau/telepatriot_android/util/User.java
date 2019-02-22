@@ -423,41 +423,41 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
 
-    // similar to AppDelegate.onCallEnded() on iOS
-    public void callEnded() {
-        // for "legacy" missions that are stored in the TelePatriot/Firebase db
-        if(missionItem != null && missionItemId != null && !missionItem._isAccomplished()) {
-            try {
-                AppLog.debug(User.getInstance(), TAG, "callEnded", "Mission: " + missionItem.getMission_name() + ", Name: " + missionItem.getName() + ", Phone: " + missionItem.getPhone() + " - ended call");
-                missionItem.complete(missionItemId);
-
-                String team = User.getInstance().getCurrentTeamName();
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
-
-                String supporterName = missionItem.getName();
-                MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), /*volunteerPhone,*/ supporterName);
-                ref.child("all").push().setValue(m);
-                ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
-            }
-            catch(Throwable t) {
-                AppLog.error(User.getInstance(), TAG, "callEnded", "Throwable: "+t.getMessage()+" at Mission: " + missionItem.getMission_name() + ", Name: " + missionItem.getName() + ", Phone: " + missionItem.getPhone());
-            }
-        }
-
-        if(cbMissionItem != null) {
-            try {
-                AppLog.debug(User.getInstance(), TAG, "callEnded", "CitizenBuilder Mission: " + cbMissionItem.getMission_name() + ", Name: " + cbMissionItem.getName() + ", Phone: " + cbMissionItem.getPhone() + " - ended call");
-
-                AccountStatusEvent.CallEnded evt = new AccountStatusEvent.CallEnded(cbMissionItem);
-                for (AccountStatusEvent.Listener l : accountStatusEventListeners) {
-                    l.fired(evt); // MainActivity is the listener we care about in this case
-                }
-            }
-            catch(Throwable t) {
-                AppLog.error(User.getInstance(), TAG, "callEnded", "Throwable: "+t.getMessage()+" at CitizenBuilder Mission: " + cbMissionItem.getMission_name() + ", Name: " + cbMissionItem.getName() + ", Phone: " + cbMissionItem.getPhone());
-            }
-        }
-    }
+//    // similar to AppDelegate.onCallEnded() on iOS
+//    public void callEnded() {
+//        // for "legacy" missions that are stored in the TelePatriot/Firebase db
+//        if(missionItem != null && missionItemId != null && !missionItem._isAccomplished()) {
+//            try {
+//                AppLog.debug(User.getInstance(), TAG, "callEnded", "Mission: " + missionItem.getMission_name() + ", Name: " + missionItem.getName() + ", Phone: " + missionItem.getPhone() + " - ended call");
+//                missionItem.complete(missionItemId);
+//
+//                String team = User.getInstance().getCurrentTeamName();
+//                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("teams/" + team + "/activity");
+//
+//                String supporterName = missionItem.getName();
+//                MissionItemEvent m = new MissionItemEvent("ended call to", getUid(), getName(), missionItem.getMission_name(), missionItem.getPhone(), /*volunteerPhone,*/ supporterName);
+//                ref.child("all").push().setValue(m);
+//                ref.child("by_phone_number").child(missionItem.getPhone()).push().setValue(m);
+//            }
+//            catch(Throwable t) {
+//                AppLog.error(User.getInstance(), TAG, "callEnded", "Throwable: "+t.getMessage()+" at Mission: " + missionItem.getMission_name() + ", Name: " + missionItem.getName() + ", Phone: " + missionItem.getPhone());
+//            }
+//        }
+//
+//        if(cbMissionItem != null) {
+//            try {
+//                AppLog.debug(User.getInstance(), TAG, "callEnded", "CitizenBuilder Mission: " + cbMissionItem.getMission_name() + ", Name: " + cbMissionItem.getName() + ", Phone: " + cbMissionItem.getPhone() + " - ended call");
+//
+//                AccountStatusEvent.CallEnded evt = new AccountStatusEvent.CallEnded(cbMissionItem);
+//                for (AccountStatusEvent.Listener l : accountStatusEventListeners) {
+//                    l.fired(evt); // MainActivity is the listener we care about in this case
+//                }
+//            }
+//            catch(Throwable t) {
+//                AppLog.error(User.getInstance(), TAG, "callEnded", "Throwable: "+t.getMessage()+" at CitizenBuilder Mission: " + cbMissionItem.getMission_name() + ", Name: " + cbMissionItem.getName() + ", Phone: " + cbMissionItem.getPhone());
+//            }
+//        }
+//    }
 
     public String getName() {
         return getFirebaseUser()!=null ? getFirebaseUser().getDisplayName() : "name not available";
