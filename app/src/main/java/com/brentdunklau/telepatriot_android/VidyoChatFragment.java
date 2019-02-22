@@ -99,16 +99,16 @@ public class VidyoChatFragment extends BaseFragment
     // ref  https://stackoverflow.com/a/19162753/2570305
     public final static String FRAGMENT_TAG = BuildConfig.APPLICATION_ID+"."+TAG;
 
-    // Helps check whether app has permission to access what is declared in its manifest.
-    // - Permissions from app's manifest that have a "protection level" of "dangerous".
-    private static final String[] mPermissions = new String[] {
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
-    // - This arbitrary, app-internal constant represents a group of requested permissions.
-    // - For simplicity, this app treats all desired permissions as part of a single group.
-    private final int PERMISSIONS_REQUEST_ALL = 1988;
+//     Helps check whether app has permission to access what is declared in its manifest.
+//     - Permissions from app's manifest that have a "protection level" of "dangerous".
+//    private static final String[] mPermissions = new String[] {
+//            Manifest.permission.CAMERA,
+//            Manifest.permission.RECORD_AUDIO,
+//            Manifest.permission.WRITE_EXTERNAL_STORAGE
+//    };
+//    // - This arbitrary, app-internal constant represents a group of requested permissions.
+//    // - For simplicity, this app treats all desired permissions as part of a single group.
+//    private final int PERMISSIONS_REQUEST_ALL = 1988;
 
     private TextView record_label;
     private VideoView local_camera_view;
