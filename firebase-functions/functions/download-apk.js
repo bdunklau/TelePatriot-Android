@@ -30,7 +30,7 @@ var thePage = function() {
     html += '</center>'
     html += '<P>&nbsp;'
     html += '<center>'
-    html += '    <a class="heading" href="https://drive.google.com/file/d/1Dnu3eoIQ9ooWYzIuS3_vWK8w_ro7CL70/view?usp=sharing">Download v81</a>'
+    html += '    <a class="heading" href="https://drive.google.com/open?id=1chZRr8e5SzxPDNGZCBNp6NF0gd_N6HW1">Download v82</a>'
     html += '</center>'
 
     html += '<P>&nbsp;<P>&nbsp;'

@@ -31,7 +31,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
 
@@ -39,50 +39,104 @@
                 android:id="@+id/text_mission_accomplished"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
                 android:layout_marginLeft="8dp"
                 android:layout_marginRight="8dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:text="Mission Accomplished"
                 android:textColor="#232323"
                 android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp" />
+                android:textStyle="bold" />
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/mission_person_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#232323"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/mission_person_phone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#232323"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/mission_person_name2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#232323"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/mission_person_phone2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#232323"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
 
             <TextView
                 android:id="@+id/text_outcome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:text="Outcome"
                 android:textColor="#232323"
                 android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginLeft="8dp"
-                android:layout_marginStart="8dp" />
+                android:textStyle="bold" />
 
 
             <RelativeLayout
                 android:id="@+id/rel_layout"
                 android:layout_width="352dp"
                 android:layout_height="50dp"
+                android:layout_marginEnd="8dp"
                 android:layout_marginLeft="8dp"
-                android:layout_marginStart="8dp"
-                android:background="#ffffff"
                 android:layout_marginRight="8dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginEnd="8dp">
+                android:background="#ffffff">
 
                 <Spinner
                     android:id="@+id/mission_item_outcome"
                     android:layout_width="368dp"
                     android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
                     android:entries="@array/outcome_array"
                     tools:layout_editor_absoluteX="8dp"
-                    tools:layout_editor_absoluteY="93dp"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentStart="true" />
+                    tools:layout_editor_absoluteY="93dp" />
             </RelativeLayout>
 
 
@@ -90,13 +144,12 @@
                 android:id="@+id/text_notes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:text="Notes"
                 android:textColor="#232323"
-                android:textStyle="bold"
-                android:layout_marginLeft="8dp"
-                android:layout_marginStart="8dp" />
-
+                android:textStyle="bold" />
 
 
             <EditText
@@ -117,27 +170,27 @@
                 android:id="@+id/button_submit_get_another"
                 android:layout_width="352dp"
                 android:layout_height="48dp"
-                android:background="@color/com_facebook_blue"
-                android:gravity="center"
-                android:text="Submit and Get Another Mission"
-                android:textColor="#ffffff"
-                android:layout_marginTop="24dp"
+                android:layout_marginEnd="8dp"
                 android:layout_marginLeft="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginTop="24dp"
+                android:background="@color/com_facebook_blue"
+                android:gravity="center"
+                android:text="Submit and Get Another Mission"
+                android:textColor="#ffffff" />
 
             <Button
                 android:id="@+id/button_submit_and_quit"
                 android:layout_width="354dp"
                 android:layout_height="43dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
                 android:layout_marginTop="48dp"
                 android:background="@color/com_facebook_blue"
                 android:gravity="center"
                 android:text="Submit and Logout"
-                android:textColor="#ffffff"
-                android:layout_marginRight="8dp"
-                android:layout_marginLeft="8dp" />
+                android:textColor="#ffffff" />
 
 
         </LinearLayout>

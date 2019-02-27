@@ -103,9 +103,16 @@ public class MyCBMissionFragment extends BaseFragment
         missionWrapUpBundle.putString("citizen_builder_domain", missionItem.getCitizen_builder_domain());
         missionWrapUpBundle.putString("citizen_builder_api_key_name", missionItem.getCitizen_builder_api_key_name());
         missionWrapUpBundle.putString("citizen_builder_api_key_value", missionItem.getCitizen_builder_api_key_value());
+        missionWrapUpBundle.putString("mission_person_name", missionItem.getName());
         missionWrapUpBundle.putString("mission_person_id", missionItem.getPerson_id());
         missionWrapUpBundle.putString("mission_id", missionItem.getMission_id());
         missionWrapUpBundle.putString("mission_phone", missionItem.getPhone());
+        String _3WayName = get3WallCallName(missionItem);
+        String _3WayPhone = get3WallCallPhone(missionItem);
+        if(_3WayName != null && _3WayPhone != null) {
+            missionWrapUpBundle.putString("mission_person_name2", _3WayName);
+            missionWrapUpBundle.putString("mission_phone2", _3WayPhone);
+        }
 
         Fragment fragment = new CBMissionItemWrapUpFragment();
         fragment.setArguments(missionWrapUpBundle);

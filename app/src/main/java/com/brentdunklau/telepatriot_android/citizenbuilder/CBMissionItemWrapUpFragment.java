@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.brentdunklau.telepatriot_android.BaseFragment;
 import com.brentdunklau.telepatriot_android.R;
@@ -39,6 +40,7 @@ public class CBMissionItemWrapUpFragment extends BaseFragment {
 
 //    private QuitListener quitListener;
     private MissionCompletedListener missionCompletedListener;
+    private TextView mission_person_name, mission_person_phone, mission_person_name2, mission_person_phone2;
     private EditText edit_text_notes;
     private Button button_submit_get_another, button_submit_and_quit;
     private Spinner mission_item_outcome;// see outcome_array in strings.xml
@@ -67,6 +69,10 @@ public class CBMissionItemWrapUpFragment extends BaseFragment {
         button_submit_get_another = myView.findViewById(R.id.button_submit_get_another);
         button_submit_and_quit = myView.findViewById(R.id.button_submit_and_quit);
         mission_item_outcome = myView.findViewById(R.id.mission_item_outcome);
+        mission_person_name = myView.findViewById(R.id.mission_person_name);
+        mission_person_phone = myView.findViewById(R.id.mission_person_phone);
+        mission_person_name2 = myView.findViewById(R.id.mission_person_name2);
+        mission_person_phone2 = myView.findViewById(R.id.mission_person_phone2);
 
         citizen_builder_domain = this.getArguments().getString("citizen_builder_domain");
         citizen_builder_api_key_name = this.getArguments().getString("citizen_builder_api_key_name");
@@ -74,7 +80,14 @@ public class CBMissionItemWrapUpFragment extends BaseFragment {
         mission_person_id = this.getArguments().getString("mission_person_id");
         mission_id = this.getArguments().getString("mission_id");
         mission_phone = this.getArguments().getString("mission_phone");
-
+        mission_person_name.setText(this.getArguments().getString("mission_person_name"));
+        mission_person_phone.setText(this.getArguments().getString("mission_phone"));
+        if(this.getArguments().getString("mission_person_name2") != null) {
+            mission_person_name2.setText(this.getArguments().getString("mission_person_name2"));
+        }
+        if(this.getArguments().getString("mission_phone2") != null) {
+            mission_person_phone2.setText(this.getArguments().getString("mission_phone2"));
+        }
 
         button_submit_get_another.setOnClickListener(new View.OnClickListener() {
             @Override
