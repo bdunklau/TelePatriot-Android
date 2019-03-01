@@ -181,7 +181,7 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
 
     private void clickSignConfidentialityAgreement() {
         // TODO should get from database
-        openUrl("https://esign.coslms.com:8443/S/COS/Transaction/Volunteer_Agreement_Manual");
+        openUrl("https://legal.conventionofstates.com/S/COS/Transaction/Volunteer_Agreement_Manual");
     }
 
     private void clickDone() {
