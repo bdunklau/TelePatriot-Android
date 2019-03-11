@@ -489,7 +489,8 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public String getUid() {
-        return getFirebaseUser()!=null ? getFirebaseUser().getUid() : "uid not available";
+        String theid = getFirebaseUser()!=null ? getFirebaseUser().getUid() : "uid not available";
+        return theid;
     }
 
     public String getEmail() {

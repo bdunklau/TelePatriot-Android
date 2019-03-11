@@ -162,6 +162,7 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
 //    return true
 })
 
+
 // update the petition, conf agreement and banned flags on the user record...
 exports.onResponseFromLegal = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
     if(event.data.val().event_type != 'check-legal-response')

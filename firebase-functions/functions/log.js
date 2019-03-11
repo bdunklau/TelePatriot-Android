@@ -83,15 +83,21 @@ exports.logByUser = functions.database.ref('log/all-logs/{key}').onCreate(event 
     var key = db.ref('log/by-user').child(event.data.val().uid).push().getKey()
     var updates = {}
     updates['log/by-user/'+event.data.val().uid+'/'+key+'/uid'] = event.data.val().uid
-    updates['log/by-user/'+event.data.val().uid+'/'+key+'/name'] = event.data.val().name
     updates['log/by-user/'+event.data.val().uid+'/'+key+'/class'] = event.data.val().class
     updates['log/by-user/'+event.data.val().uid+'/'+key+'/method'] = event.data.val().method
     updates['log/by-user/'+event.data.val().uid+'/'+key+'/message'] = event.data.val().message
     updates['log/by-user/'+event.data.val().uid+'/'+key+'/level'] = event.data.val().level
     updates['log/by-user/'+event.data.val().uid+'/'+key+'/date'] = event.data.val().date
     updates['log/by-user/'+event.data.val().uid+'/'+key+'/date_ms'] = event.data.val().date_ms
-    updates['log/user-list/'+event.data.val().uid+'/name'] = event.data.val().name
-    updates['log/user-list/'+event.data.val().uid+'/name_lower'] = event.data.val().name.toLowerCase()
+    if(event.data.val().name) {
+        updates['log/by-user/'+event.data.val().uid+'/'+key+'/name'] = event.data.val().name
+        updates['log/user-list/'+event.data.val().uid+'/name'] = event.data.val().name
+        updates['log/user-list/'+event.data.val().uid+'/name_lower'] = event.data.val().name.toLowerCase()
+    } else {
+        updates['log/by-user/'+event.data.val().uid+'/'+key+'/name'] = 'undefined'
+        updates['log/user-list/'+event.data.val().uid+'/name'] = 'undefined'
+        updates['log/user-list/'+event.data.val().uid+'/name_lower'] = 'undefined'
+    }
     updates['log/user-list/'+event.data.val().uid+'/updated_ms'] = event.data.val().date_ms
     return db.ref('/').update(updates);
 })
