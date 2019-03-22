@@ -403,3 +403,8 @@ exports.logByUser = applog.logByUser
 const downloadApk = require('./download-apk')
 exports.downloadApk = downloadApk.downloadApk
 
+// dev deploy:  3/20/19
+// prod deploy: 3/21/19
+const call_notes = require('./call_notes')
+exports.onCallNotesCreated = call_notes.onCallNotesCreated
+
