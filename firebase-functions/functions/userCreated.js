@@ -84,6 +84,8 @@ exports.userCreated = functions.auth.user().onCreate(event => {
                         log.debug(uid, name, "userCreated.js", "userCreated", "OK: result.vol = "+result.vol)
                         // This is what we want to happen: email was found in the CB db
                         volunteers.updateUser({uid: uid, result: result, userInfo: updates})
+                        if(result.vol.petition_signed && result.vol.volunteer_agreement_signed && !result.vol.is_banned)
+                            return email_js.sendWelcomeEmail(email, name)
                     }
                     else {
                         if(result.error) {
@@ -271,6 +273,7 @@ var formatPhone = function(str) {
 }
 
 
+// return email_js.sendWelcomeEmail(email, name)
 
 var sendEmail2 = function(emailType, email, name) {
 
