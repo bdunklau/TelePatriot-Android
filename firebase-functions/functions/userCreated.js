@@ -113,6 +113,8 @@ exports.userCreated = functions.auth.user().onCreate(event => {
 
                 volunteers.getUserInfoFromCB_byEmail(email, returnFn, configuration)
             }
+            ///////////////////////////////////////////////////////////////////////////
+            // WE CAN GET RID OF THIS ELSE BLOCK NOW.  THIS WILL NEVER BE CALLED
             else { // call the /volunteer_validation/check?email=_______  endpoint
                 log.debug(uid, name, "userCreated.js", "userCreated", "calling /volunteer_validation/check endpoint")
 
