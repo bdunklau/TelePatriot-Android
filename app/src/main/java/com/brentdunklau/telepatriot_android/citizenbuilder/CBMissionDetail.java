@@ -150,8 +150,25 @@ public class CBMissionDetail {
                 mission_id, person_id);
     }
 
+    public String getName2() {
+        // TODO Once CB officially supports 3way calling, we will refactor this
+        return getPart(getScript(), "start 3way call name", "end 3way call name");
+    }
 
+    public String getPhone2() {
+        // TODO Once CB officially supports 3way calling, we will refactor this
+        return getPart(getScript(), "start 3way call phone", "end 3way call phone");
+    }
 
+    // TODO Once CB officially supports 3way calling, this method won't even be needed
+    private String getPart(String whole, String begin, String end) {
+        if(whole.indexOf(begin) == -1 || whole.indexOf(end) == -1) return null;
+        int idx1 = whole.indexOf(begin) + begin.length();
+        int idx2 = whole.indexOf(end);
+        String part = whole.substring(idx1, idx2).trim();
+        if(part.equals("")) return null;
+        else return part;
+    }
 
     ProgressDialog pd;
 

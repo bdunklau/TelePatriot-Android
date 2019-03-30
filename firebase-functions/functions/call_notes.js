@@ -14,7 +14,8 @@ firebase deploy --only functions:onCallNotesCreated
 exports.onCallNotesCreated = functions.database.ref('call_notes/{key}').onCreate(event => {
 
     var call_notes = event.data.val()
-    var msg = 'Mission ID '+call_notes.mission_id+': '+call_notes.mission_name+' is '+call_notes.percent_complete+'% Complete, '+call_notes.calls_made+' of '+call_notes.total+' calls made\n'
+    var msg = '=============================\n'
+        +'Mission ID '+call_notes.mission_id+': '+call_notes.mission_name+' is '+call_notes.percent_complete+'% Complete, '+call_notes.calls_made+' of '+call_notes.total+' calls made\n'
         +call_notes.outcome+': '+call_notes.author_name+' CB ID: '+call_notes.author_id+' just called '
         +call_notes.first_name+' '+call_notes.last_name+' CB ID: '+call_notes.person_id+' at '+call_notes.phone_number+'\n'
 

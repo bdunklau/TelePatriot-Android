@@ -20,11 +20,13 @@ import com.brentdunklau.telepatriot_android.R;
 import com.brentdunklau.telepatriot_android.util.MissionCompletedListener;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.Util;
+import com.google.firebase.database.FirebaseDatabase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -51,6 +53,7 @@ public class CBMissionItemWrapUpFragment extends BaseFragment {
     private String mission_id;
     private String mission_phone;
     private boolean getAnother; // get another mission after this one, or logout/quit?
+    private CBMissionDetail cbMissionDetail;
     View myView;
 
     @Nullable
@@ -104,7 +107,7 @@ public class CBMissionItemWrapUpFragment extends BaseFragment {
         });
 
 
-        CBMissionDetail cbMissionDetail = User.getInstance().getCurrentCBMissionItem();
+        cbMissionDetail = User.getInstance().getCurrentCBMissionItem();
 
         setHasOptionsMenu(true);
         return myView;
@@ -168,10 +171,32 @@ public class CBMissionItemWrapUpFragment extends BaseFragment {
     }
 
     private void submitWrapUp() {
-//        CBMissionDetail cbMissionDetail = User.getInstance().getCurrentCBMissionItem();
-//        if(cbMissionDetail == null) {
-//            System.out.println("oops - cbMissionDetail is null");
-//        }
+        HashMap<String, Object> call_notes = new HashMap<String, Object>();
+        call_notes.put("first_name", cbMissionDetail.getName());// this sucks - the person called
+        call_notes.put("last_name", "");                        // this sucks - the person called
+        call_notes.put("person_id", cbMissionDetail.getPerson_id()); // the person called CB ID
+        call_notes.put("phone_number", cbMissionDetail.getPhone());  // the person called
+        call_notes.put("author_name", User.getInstance().getName());             // the volunteer
+        call_notes.put("author_id", User.getInstance().getCitizen_builder_id()); // the volunteer
+        call_notes.put("outcome", mission_item_outcome.getSelectedItem()+"");
+        call_notes.put("notes", edit_text_notes.getText()+"");
+        call_notes.put("call_date", Util.getDate_MMM_d_yyyy_hmm_am_z());
+        call_notes.put("call_date_ms", Util.getDate_as_millis());
+        call_notes.put("mission_name", cbMissionDetail.getMission_name());
+        call_notes.put("mission_id", cbMissionDetail.getMission_id());
+        call_notes.put("calls_made", cbMissionDetail.getCalls_made());
+        call_notes.put("percent_complete", cbMissionDetail.getPercent_complete());
+        call_notes.put("total", cbMissionDetail.getTotal());
+        call_notes.put("status", "active"); // should be attribute in the object, but it isn't used, and really HAS to be active
+        if(cbMissionDetail.getName2() != null) {
+            call_notes.put("name2", cbMissionDetail.getName2());
+        }
+        if(cbMissionDetail.getPhone2() != null) {
+            call_notes.put("phone2", cbMissionDetail.getPhone2());
+        }
+
+        FirebaseDatabase.getInstance().getReference("call_notes").push().setValue(call_notes);
+
         new SubmitCallNotesTask().execute(citizen_builder_domain,
                 citizen_builder_api_key_name,
                 citizen_builder_api_key_value,
