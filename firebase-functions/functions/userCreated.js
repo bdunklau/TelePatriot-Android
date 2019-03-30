@@ -88,18 +88,25 @@ exports.userCreated = functions.auth.user().onCreate(event => {
                             return email_js.sendWelcomeEmail(email, name)
                     }
                     else {
-                        // If email not found in CB...
-                        return db.child('/').update(updates)
                         if(result.error) {
                             log.error(uid, name, "userCreated.js", "userCreated", "result.error = "+result.error)
                             // TODO what do we do with an error?
+                            return db.child('/').update(updates)
                         }
                         else if(result.notFound) {
                             log.debug(uid, name, "userCreated.js", "userCreated", "result.notFound = "+result.notFound)
-                            // TODO what to do when the user isn't in the CB db?
+                            updates['users/'+uid+'/citizen_builder_id'] = 'No CB Account'
+                            updates['users/'+uid+'/has_signed_petition'] = false
+                            updates['users/'+uid+'/has_signed_confidentiality_agreement'] = false
+                            updates['users/'+uid+'/is_banned'] = false
+                            db.child('/').update(updates).then(() => {
+                                // this ---v probably works but hasn't been tested yet.
+                                //return email_js.sendPetitionCAEmail(email, name)
+                            })
                         }
                         else {
                             log.error(uid, name, "userCreated.js", "userCreated", "NOT GOOD: unhandled 'else' clause")
+                            return db.child('/').update(updates)
                         }
                     }
                 }

@@ -93,6 +93,34 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/show_me_how_button" />
 
+            <Button
+                android:id="@+id/show_me_how_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="16dp"
+                android:background="@color/com_facebook_blue"
+                android:text="SHOW ME HOW"
+                android:textColor="#ffffff"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/access_limited_description" />
+
+            <Button
+                android:id="@+id/video_invitation_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:background="@android:color/holo_green_dark"
+                android:text="Video Call - You're Invited!"
+                android:textColor="#ffffff"
+                android:visibility="invisible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/show_me_how_button" />
+
             <TextView
                 android:id="@+id/full_access_description"
                 android:layout_width="0dp"
@@ -225,35 +253,51 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/when_finished" />
+                app:layout_constraintTop_toBottomOf="@+id/when_finished"
+                app:layout_constraintVertical_bias="0.0" />
 
-            <Button
-                android:id="@+id/show_me_how_button"
+            <TextView
+                android:id="@+id/nevermind_heading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="Nevermind"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@+id/when_finished_heading"
+                app:layout_constraintTop_toBottomOf="@+id/done_button" />
+
+            <TextView
+                android:id="@+id/nevermind"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:text="Mis-typed your email?  Need to start over?  Maybe you just decided you don't want this app after all.  No biggie.  Just touch NEVER MIND below and we'll forget you were ever here"
+                android:textColor="@android:color/black"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/nevermind_heading" />
+
+            <Button
+                android:id="@+id/nevermind_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="16dp"
                 android:background="@color/com_facebook_blue"
-                android:text="SHOW ME HOW"
+                android:text="NEVER MIND"
                 android:textColor="#ffffff"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/access_limited_description" />
+                app:layout_constraintTop_toBottomOf="@+id/nevermind" />
 
-            <Button
-                android:id="@+id/video_invitation_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                android:background="@android:color/holo_green_dark"
-                android:text="Video Call - You're Invited!"
-                android:textColor="#ffffff"
-                android:visibility="invisible"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/show_me_how_button" />
+
         </android.support.constraint.ConstraintLayout>
     </ScrollView>
 

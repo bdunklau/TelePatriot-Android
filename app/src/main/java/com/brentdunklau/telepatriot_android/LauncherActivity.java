@@ -99,17 +99,6 @@ public class LauncherActivity extends BaseActivity
         if(requestCode == RC_SIGN_IN) {
             if(resultCode == RESULT_OK) {
 
-
-                // Let's see if we really need this.  Maybe we can ask for permission right before making the first call
-//                // check for phone permission here because the app is crashing on the first phone
-//                // call.  We are asking for permission too late.
-//                if(permittedToCall()) {
-//                    AppLog.debug(User.getInstance(), TAG, "onActivityResult", "permission already granted to make phone calls");
-//                } else {
-//                    requestPermissionToCall();
-//                }
-
-
                 final String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 final String name = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
                 final String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
@@ -156,60 +145,9 @@ public class LauncherActivity extends BaseActivity
         }
     }
 
-    // per AccountStatusEvent.Listener
-    // This is what gets called by virtue of this call
-    //    above: User.getInstance().addAccountStatusEventListener(this);
-//    @Override
-//    public void fired(AccountStatusEvent evt) {
-//        // Having or not having roles is not what determines if the user is sent to the limbo screen anymore...
-////        if(evt instanceof AccountStatusEvent.NoRoles)
-////            startActivity(new Intent(this, LimboActivity.class));
-//
-//        // Now what determines where a person goes is whether they are "allowed" or not...
-//        if(evt instanceof AccountStatusEvent.AccountDisabled) {
-//            gotoScreen(DisabledActivity.class);
-//        }
-//        else if(evt instanceof AccountStatusEvent.NotAllowed)
-//            gotoScreen(LimboActivity.class);
-//        else if(evt instanceof AccountStatusEvent.Allowed)
-//            gotoScreen(MainActivity.class);
-//        else if(evt instanceof AccountStatusEvent.AccountEnabled)
-//            gotoScreen(MainActivity.class);
-//
-//        // TODO add clauses for enabled and disabled
-//    }
-
     private void gotoScreen(Class c) {
         startActivity(new Intent(this, c));
     }
 
-
-//    // TODO fix this...
-//    //not sure where we do this but we have code dupe here
-//    private void checkPermission(String androidPermission) {// Here, thisActivity is the current activity
-//        if (ContextCompat.checkSelfPermission(this, androidPermission)
-//                != PackageManager.PERMISSION_GRANTED) {
-//
-//            // Should we show an explanation?
-//            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) this, androidPermission)) {
-//
-//                // Show an explanation to the user *asynchronously* -- don't block
-//                // this thread waiting for the user's response! After the user
-//                // sees the explanation, try again to request the permission.
-//
-//            } else {
-//
-//                // No explanation needed, we can request the permission.
-//
-//                ActivityCompat.requestPermissions(this,
-//                        new String[]{androidPermission},
-//                        1 /*MY_PERMISSIONS_REQUEST_READ_CONTACTS*/);
-//
-//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-//                // app-defined int constant. The callback method gets the
-//                // result of the request.
-//            }
-//        }
-//    }
 
 }

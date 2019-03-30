@@ -60,7 +60,7 @@ var what = function(stuff) {
     html += 'where the use is required to enter this mission information before they can go any further.  Since it is difficult to reproduce this error, '
     html += 'I instead created a parameter that simulates either a missing name or missing email when the corresponding parameter is true.'
     html += '<P/><b>Prod CitizenBuilder API: <a href="https://api.conventionofstates.com/swagger/docs/ios#/ios" target="api">https://api.conventionofstates.com/swagger/docs/ios#/ios</a></b><br/>'
-    html += '<b>QA CitizenBuilder API: <a href="https://api.qacos.com/swagger/docs/ios#/ios" target="api">https://api.qacos.com/swagger/docs/ios#/ios</a></b><br/>'
+    html += '<b>QA CitizenBuilder API: <a href="https://api.qacos.com/swagger/swagger_docs/ios#/ios" target="api">https://api.qacos.com/swagger/swagger_docs/ios#/ios</a></b><br/>'
     html += 'Prod '+stuff.config.cb_production_environment.citizen_builder_api_key_name+' = '+stuff.config.cb_production_environment.citizen_builder_api_key_value+'<br/>'
     html += 'QA '+stuff.config.cb_qa_environment.citizen_builder_api_key_name+' = '+stuff.config.cb_qa_environment.citizen_builder_api_key_value+'<br/>'
     return html

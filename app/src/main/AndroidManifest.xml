@@ -69,6 +69,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".NevermindActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".ShowMeHowActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait">

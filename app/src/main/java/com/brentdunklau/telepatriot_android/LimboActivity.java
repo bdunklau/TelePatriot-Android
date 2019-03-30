@@ -13,19 +13,28 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.AppLog;
 import com.brentdunklau.telepatriot_android.util.CBAPIEvent;
+import com.brentdunklau.telepatriot_android.NevermindActivity;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
 import com.brentdunklau.telepatriot_android.util.VideoParticipant;
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.Arrays;
 
 /**
  * Created by bdunklau on 10/1/17.
@@ -52,6 +61,7 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
     private TextView when_finished_heading;
     private TextView when_finished;
     private Button done_button;
+    private Button nevermind_button;
 
     private String name, email;
 
@@ -89,6 +99,7 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
         when_finished_heading = findViewById(R.id.when_finished_heading);
         when_finished = findViewById(R.id.when_finished);
         done_button = findViewById(R.id.done_button);
+        nevermind_button = findViewById(R.id.nevermind_button);
 
         limboExplanation.setText(name+", welcome to TelePatriot. This app is a powerful tool for " +
                 "supporters of the Convention of States Project.");
@@ -120,6 +131,13 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
             @Override
             public void onClick(View v) {
                 clickDone();
+            }
+        });
+
+        nevermind_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickNevermind();
             }
         });
 
@@ -182,6 +200,24 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
     private void clickSignConfidentialityAgreement() {
         // TODO should get from database
         openUrl("https://legal.conventionofstates.com/S/COS/Transaction/Volunteer_Agreement_Manual");
+    }
+
+    private void clickNevermind() {
+
+        AuthUI aui = AuthUI.getInstance();
+        aui.signOut(this)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        startActivity(new Intent(LimboActivity.this, NevermindActivity.class));
+                        LimboActivity.this.finish();
+//                        if (task.isSuccessful()) {
+//                            Toast.makeText(LimboActivity.this, "Feel free to start over", Toast.LENGTH_SHORT).show();
+//                        } else {
+//                            Toast.makeText(LimboActivity.this, "Problem resetting your account", Toast.LENGTH_SHORT).show();
+//                        }
+                    }
+                });
     }
 
     private void clickDone() {
