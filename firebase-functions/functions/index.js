@@ -33,8 +33,8 @@ exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
 
-// dev deploy: 3/8/19,
-// prod deploy: 1/3/19
+// dev deploy: 3/29/19,
+// prod deploy: 3/29/19
 const createModule = require('./userCreated')
 exports.userCreated = createModule.userCreated
 exports.onCitizenBuilderId = createModule.onCitizenBuilderId
