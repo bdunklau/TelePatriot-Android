@@ -702,7 +702,7 @@ public class User implements FirebaseAuth.AuthStateListener {
     }
 
     public String getCurrentTeamName() {
-        return currentTeam != null ? currentTeam.getTeam_name() : "None";
+        return currentTeam != null ? currentTeam.getTeam_name() : "(tap to choose)";
     }
 
     public Integer getCurrentTeamId() {
