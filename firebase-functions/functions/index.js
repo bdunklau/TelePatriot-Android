@@ -399,6 +399,7 @@ exports.api_account_disposition = account_api.api_account_disposition
 const applog = require('./log')
 exports.testLog = applog.testLog
 exports.logByUser = applog.logByUser
+exports.propTaxRally = applog.propTaxRally
 
 const downloadApk = require('./download-apk')
 exports.downloadApk = downloadApk.downloadApk
