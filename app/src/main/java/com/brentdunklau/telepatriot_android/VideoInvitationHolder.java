@@ -6,8 +6,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.brentdunklau.telepatriot_android.util.MissionItemEventHolder;
-
 /**
  * Created by bdunklau on 6/10/18.
  */

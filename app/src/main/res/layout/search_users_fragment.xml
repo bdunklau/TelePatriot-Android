@@ -1,48 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-
-
-    <android.support.v7.widget.SearchView
-        android:id="@+id/search_users"
-        android:background="#ddffffff"
-        app:queryHint="Search by name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true" />
-
-
-    <ScrollView
-        android:id="@+id/search_users_results"
-        android:layout_below="@+id/search_users"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:background="#ddffffff">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/user_list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="10dp"
-                android:layout_marginLeft="10dp"
-                android:scrollbars="vertical"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true" />
-
-        </LinearLayout>
-    </ScrollView>
-
-
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>

@@ -263,20 +263,14 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Configuration conf = dataSnapshot.getValue(Configuration.class);
-                    if(conf.getMissionsFromCB()) {
-                        Fragment fragment = new MyCBMissionFragment();
-                        Bundle bundle = new Bundle();
-                        bundle.putString("citizen_builder_domain", conf.getCitizenBuilderDomain());
-                        bundle.putString("citizen_builder_api_key_name", conf.getCitizenBuilderApiKeyName());
-                        bundle.putString("citizen_builder_api_key_value", conf.getCitizenBuilderApiKeyValue());
+                    Fragment fragment = new MyCBMissionFragment();
+                    Bundle bundle = new Bundle();
+                    bundle.putString("citizen_builder_domain", conf.getCitizenBuilderDomain());
+                    bundle.putString("citizen_builder_api_key_name", conf.getCitizenBuilderApiKeyName());
+                    bundle.putString("citizen_builder_api_key_value", conf.getCitizenBuilderApiKeyValue());
 
-                        fragment.setArguments(bundle);
-                        getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, "mission_fragment").addToBackStack(fragment.getClass().getName()).commit();
-                    }
-                    else {
-                        Fragment fragment = new MyMissionFragment();
-                        getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, "mission_fragment").addToBackStack(fragment.getClass().getName()).commit();
-                    }
+                    fragment.setArguments(bundle);
+                    getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, "mission_fragment").addToBackStack(fragment.getClass().getName()).commit();
                 }
 
                 @Override
@@ -324,34 +318,6 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    /**
-     * This method figures out which chat screen we should go to.  If the user is a
-     * volunteer, we send them to ChatFragment.  If the user is a director or admin,
-     * we send them to ChatAllFragment.  ChatAllFragment is where we show a list of users
-     * that the admin/director can then choose from to engage.
-     */
-    private void doChat() {
-
-        FragmentManager fragmentManager = getFragmentManager();
-        if(User.getInstance().isVolunteerOnly()) {
-            ChatFragment chatFragment = new ChatFragment();
-            chatFragment.userNeedsHelp();
-            FragmentTransaction transaction = fragmentManager.beginTransaction();
-            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
-            transaction.replace(R.id.content_frame, chatFragment);
-            transaction.addToBackStack(chatFragment.getClass().getName());
-            transaction.commit();
-        }
-        else {
-            ChatAllFragment chatAllFragment = new ChatAllFragment();
-            FragmentTransaction transaction = fragmentManager.beginTransaction();
-            transaction.setCustomAnimations(R.animator.slide_from_right, R.animator.slide_to_left);
-            transaction.replace(R.id.content_frame, chatAllFragment);
-            transaction.addToBackStack(chatAllFragment.getClass().getName());
-            transaction.commit();
-        }
     }
 
 
