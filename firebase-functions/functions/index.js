@@ -33,8 +33,8 @@ exports.testMergeMissions = sheetReader.testMergeMissions
 exports.oauthcallback = sheetReader.oauthcallback
 exports.authgoogleapi = sheetReader.authgoogleapi
 
-// dev deploy: 3/8/19,
-// prod deploy: 1/3/19
+// dev deploy: 3/29/19,
+// prod deploy: 3/29/19
 const createModule = require('./userCreated')
 exports.userCreated = createModule.userCreated
 exports.onCitizenBuilderId = createModule.onCitizenBuilderId
@@ -399,6 +399,7 @@ exports.api_account_disposition = account_api.api_account_disposition
 const applog = require('./log')
 exports.testLog = applog.testLog
 exports.logByUser = applog.logByUser
+exports.propTaxRally = applog.propTaxRally
 
 const downloadApk = require('./download-apk')
 exports.downloadApk = downloadApk.downloadApk
