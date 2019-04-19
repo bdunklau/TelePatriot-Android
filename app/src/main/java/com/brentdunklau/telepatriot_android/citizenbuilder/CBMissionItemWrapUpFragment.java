@@ -151,23 +151,6 @@ public class CBMissionItemWrapUpFragment extends BaseFragment {
                 citizen_builder_api_key_name,
                 citizen_builder_api_key_value,
                 getAnother);
-//        if(quitAfterSaving) {
-//            quitListener.quit();
-//        } else {
-//
-//            new Handler().post(new Runnable() {
-//                public void run() {
-//                    Fragment fragment = new MyCBMissionFragment();
-//                    Bundle bundle = new Bundle();
-//                    bundle.putString("citizen_builder_domain", citizen_builder_domain);
-//                    bundle.putString("citizen_builder_api_key_name", citizen_builder_api_key_name);
-//                    bundle.putString("citizen_builder_api_key_value", citizen_builder_api_key_value);
-//                    fragment.setArguments(bundle);
-//                    FragmentManager fragmentManager = CBMissionItemWrapUpFragment.this.getFragmentManager();
-//                    fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commitAllowingStateLoss();
-//                }
-//            });
-//        }
     }
 
     private void submitWrapUp() {
