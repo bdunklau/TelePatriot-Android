@@ -170,3 +170,64 @@ var logentries = function(stuff) {
     html += '</table>'
     return html
 }
+
+
+exports.propTaxRally = functions.https.onRequest((req, res) => {
+    var html = ''
+    html += '<html><head>'
+    html += '<style>'
+    html += '.a1 {font-family: Verdana; font-size: 32pt; font-weight:bold}\n'
+    html += '.a2 {font-family: Verdana; font-size: 32pt; font-weight:normal}\n'
+    html += '.s1 {margin-top:64; margin-bottom:128; margin-left:18; margin-right:18}\n'
+    html += '.s2 {margin-top:120; margin-bottom:2; margin-left:18; margin-right:18}\n'
+    html += '.s3 {margin-top:0; margin-bottom:0; margin-left:18; margin-right:18}\n'
+    html += '.s4 {margin-top:300; margin-bottom:0; margin-left:18; margin-right:18}\n'
+    html += '.s5 {margin-top:128; margin-bottom:2; margin-left:18; margin-right:18}\n'
+    html += '.s6 {margin-top:16; margin-bottom:2; margin-left:18; margin-right:18}\n'
+    html += '.last {margin-top:16; margin-bottom:64; margin-left:18; margin-right:18}\n'
+    html += '</style>\n'
+    html += '</head>\n'
+    html += '<body>\n'
+    html += '<img src="https://i.imgur.com/HYOMYhI.png" width="100%"><P/>&nbsp;<P/>&nbsp;\n'
+    html += '<center><span class="a1">The Eyes of Texas are Upon <del>You</del> <span style="color:#ff0000"><i>Them</i></span></span> </center>\n'
+    html += '<div class="a1 s1">Welcome to the Grassroots Property Tax Rally!</div>\n'
+
+    html += '<div class="a1 s2"><a class="a1" href="https://wrm.capitol.texas.gov/home" target="wrm">Who Represents Me?</a></div>\n'
+    html += '<div class="a2 s3">Enter your address to look up your Rep and Senator</div>\n'
+
+    html += '<div class="a1 s2"><a class="a1" href="https://capitol.texas.gov/Members/Members.aspx?Chamber=H" target="house">House Directory</a></div>\n'
+    html += '<div class="a2 s3">Find your Representative\'s office and phone number here</div>\n'
+
+    html += '<div class="a1 s2"><a class="a1" href="https://capitol.texas.gov/Members/Members.aspx?Chamber=S" target="senate">Senate Directory</a></div>\n'
+    html += '<div class="a2 s3">Find your Senator\'s office and phone number here</div>\n'
+
+    html += '<div class="a1 s2"><a class="a1" href="https://www.youtube.com/playlist?list=PLjKLuNPsBt4oPPdh7tVxbcdv8KlbI3P9I" target="senate">Video: <span class="a2">How to Send a Note to Your Legislators When They are on the House or Senate Floor</span></a></div>\n'
+    html += '<div class="a2 s3">This video shows you how to send a hand written note to your Rep or Senator while they are in session.  This is a <b>powerful way to get their attention</b></div>\n'
+
+
+    html += '<div class="a1 s2"><a class="a1" href="https://www.youtube.com/watch?v=P7bMQQLXGSQ&t=159s" target="tour">Video: <span class="a2">Texas Capitol Virtual Tour</span></a></div>\n'
+    html += ' <div class="a2 s3">This video...\n'
+    html += ' 	<ul class="a2">\n'
+    html += ' 	<li class="a2">shows you how to look up your representatives on the Capitol Directory (North entrance)</li>\n'
+    html += ' 	<li class="a2">shows you where the elevators are (North entrance)</li>\n'
+    html += ' 	<li class="a2">shows you how to get to the Capitol Extension, where most legislator offices and committee rooms are</li>\n'
+    html += ' 	<li class="a2">shows you how to register support or opposition on bills being heard by committees</li>\n'
+    html += ' 	</ul>\n'
+    html += ' </div>\n'
+
+
+
+    html += '<div class="a1 s4">Brought to you by...</div>\n'
+    html += '<div class="a2 s3">This awesome page is brought to you by the <a href="https://www.conventionofstates.com" target="cos">Convention of States</a></div>\n'
+
+    html += '<div class="a1 s2">Join the Convention of States <a href="https://www.conventionofstates.com/take_action/volunteer" target="vol">Grassroots Army</a></div>\n'
+
+    html += '<div class="a1 s5">Follow the Convention of States on...</div>\n'
+    html += '<div class="a2 s6"><a href="https://www.facebook.com/conventionofstates/" target="cosfb">Facebook</a> | <a href="https://www.twitter.com/COSProject/" target="costw">Twitter</a> | <a href="https://www.youtube.com/channel/UCC0eXtGEMvjxpdYQl2LUiVw" target="cosyt">YouTube</a></div>\n'
+
+    html += '<div class="a1 s5">Follow the Convention of States <i>Texas</i> on...</div>\n'
+    html += '<div class="a2 last"><a href="https://www.facebook.com/COSProjectTX/" target="costxfb">Facebook</a> | <a href="https://www.twitter.com/COSProjectTX/" target="costxtw">Twitter</a></div>\n'
+
+    html += '</body></html>'
+    return res.status(200).send(html);
+})
