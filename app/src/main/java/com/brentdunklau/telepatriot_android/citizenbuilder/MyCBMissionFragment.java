@@ -107,8 +107,8 @@ public class MyCBMissionFragment extends BaseFragment
         missionWrapUpBundle.putString("mission_person_id", missionItem.getPerson_id());
         missionWrapUpBundle.putString("mission_id", missionItem.getMission_id());
         missionWrapUpBundle.putString("mission_phone", missionItem.getPhone());
-        String _3WayName = get3WallCallName(missionItem);
-        String _3WayPhone = get3WallCallPhone(missionItem);
+        String _3WayName = missionItem.getName2();
+        String _3WayPhone = missionItem.getPhone2();
         if(_3WayName != null && _3WayPhone != null) {
             missionWrapUpBundle.putString("mission_person_name2", _3WayName);
             missionWrapUpBundle.putString("mission_phone2", _3WayPhone);
@@ -182,8 +182,8 @@ public class MyCBMissionFragment extends BaseFragment
     }
 
     private void prepareFor3WayCallIfNecessary(CBMissionDetail missionDetail, Button button) {
-        String _3WayCallName = get3WallCallName(missionDetail);
-        String _3WayCallPhone = get3WallCallPhone(missionDetail);
+        String _3WayCallName = missionDetail.getName2();
+        String _3WayCallPhone = missionDetail.getPhone2();
         boolean is3WayCallMission = _3WayCallName != null && _3WayCallPhone != null;
         if(is3WayCallMission) {
             // we have a 3way call scenario
@@ -210,7 +210,7 @@ public class MyCBMissionFragment extends BaseFragment
     // call the name2/phone2 person
     //@RequiresApi(api = Build.VERSION_CODES.M)
     private void call2(CBMissionDetail missionDetail) {
-        String phone = get3WallCallPhone(missionDetail);
+        String phone = missionDetail.getPhone2();
         call(phone);
     }
 
@@ -428,34 +428,6 @@ public class MyCBMissionFragment extends BaseFragment
             MyCBMissionFragment.this.workThis(m);
             User.getInstance().setCurrentCBMissionItem(m);
         }
-    }
-
-    private String get3WallCallName(CBMissionDetail missionDetail) {
-
-        // TODO Once CB officially supports 3way calling, we will get rid of this line
-        return getPart(missionDetail.getScript(), "start 3way call name", "end 3way call name");
-
-        // TODO Once CB officially supports 3way calling, we will uncomment the line below and implement getName2()
-//        return missionDetail.getName2();
-    }
-
-    private String get3WallCallPhone(CBMissionDetail missionDetail) {
-
-        // TODO Once CB officially supports 3way calling, we will get rid of this line
-        return getPart(missionDetail.getScript(), "start 3way call phone", "end 3way call phone");
-
-        // TODO Once CB officially supports 3way calling, we will uncomment the line below and implement getPhone2()
-//        return missionDetail.getPhone2();
-    }
-
-    // TODO Once CB officially supports 3way calling, this method won't even be needed
-    private String getPart(String whole, String begin, String end) {
-        if(whole.indexOf(begin) == -1 || whole.indexOf(end) == -1) return null;
-        int idx1 = whole.indexOf(begin) + begin.length();
-        int idx2 = whole.indexOf(end);
-        String part = whole.substring(idx1, idx2).trim();
-        if(part.equals("")) return null;
-        else return part;
     }
 
 }
