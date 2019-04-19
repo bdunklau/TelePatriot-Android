@@ -13,73 +13,11 @@ exports.notifyUserCreated = notifications.notifyUserCreated
 exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
 
-const roles = require('./roles')
-exports.roleAssigned = roles.roleAssigned
-exports.roleUnassigned = roles.roleUnassigned
-
-const sheetsDemo = require('./sheets/demo-google-sheet-write')
-exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet
-//exports.updatespreadsheet = sheetsDemo.updatespreadsheet
-exports.testsheetwrite = sheetsDemo.testsheetwrite
-
-// dev deploy: 11/3/18
-// prod deploy: 11/3/18
-const sheetReader = require('./sheets/import-sheet')
-exports.testsheetImport = sheetReader.testsheetImport
-exports.readSpreadsheet = sheetReader.readSpreadsheet
-exports.deleteMissionItems = sheetReader.deleteMissionItems
-exports.testReadSpreadsheet = sheetReader.testReadSpreadsheet
-exports.testMergeMissions = sheetReader.testMergeMissions
-exports.oauthcallback = sheetReader.oauthcallback
-exports.authgoogleapi = sheetReader.authgoogleapi
-
 // dev deploy: 3/29/19,
 // prod deploy: 3/29/19
 const createModule = require('./userCreated')
 exports.userCreated = createModule.userCreated
 exports.onCitizenBuilderId = createModule.onCitizenBuilderId
-
-
-const missions = require('./sheets/mission-activator')
-exports.missionActivation = missions.missionActivation
-
-const missionDeleter = require('./sheets/mission-deleter')
-exports.missionDeletion = missionDeleter.missionDeletion
-
-const masterSpreadsheetReader = require('./sheets/import-master-sheet')
-exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet
-exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet
-
-// dev deploy:  11/18/18, 12/10/18
-// prod deploy: 12/12/18
-const teams = require('./teams')
-exports.manageTeams = teams.manageTeams // contains links to all the other team functions
-exports.copyTeam = teams.copyTeam
-exports.copyMembers = teams.copyMembers
-exports.createTeam = teams.createTeam
-exports.deleteMissionItem = teams.deleteMissionItem
-exports.deleteTeam = teams.deleteTeam
-// Not part of the /manageTeams page at the moment (12/27/17)
-//exports.createTeam = teams.createTeam
-// DANGEROUS - because missions and activity are under a team's node
-//exports.deleteTeam = teams.deleteTeam
-exports.addPeopleToTeam = teams.addPeopleToTeam
-exports.downloadMissionReport = teams.downloadMissionReport
-exports.downloadTeamRoster = teams.downloadTeamRoster
-exports.removePeopleFromTeam = teams.removePeopleFromTeam
-exports.viewMembers = teams.viewMembers
-exports.viewMissions = teams.viewMissions
-exports.viewQueue = teams.viewQueue
-exports.setCurrentTeam = teams.setCurrentTeam
-exports.resetCurrentTeam = teams.resetCurrentTeam
-exports.updateMemberListUnderTeams = teams.updateMemberListUnderTeams
-exports.updateTeamListUnderUsers = teams.updateTeamListUnderUsers
-exports.viewMissionReport = teams.viewMissionReport
-exports.cullTrainingTeam = teams.cullTrainingTeam
-exports.removeFromTrainingTeam = teams.removeFromTrainingTeam
-exports.teamlist = teams.teamlist
-exports.addToTeamList = teams.addToTeamList
-exports.removeTeamFromList = teams.removeTeamFromList
 
 
 // prod deploy: 9/12/18, 9/20/18
@@ -97,17 +35,6 @@ exports.copy = dbadmin.copy
 exports.deleteNodes = dbadmin.deleteNodes
 exports.deleteAttributes = dbadmin.deleteAttributes
 
-/***********/
-// To tidy things up, we could either get rid of these functions, or move them to fixstuff.js
-exports.prepareDevDatabaseToTestMigration = dbadmin.prepareDevDatabaseToTestMigration
-exports.migrateMissions = dbadmin.migrateMissions
-exports.deleteMissionItems = dbadmin.deleteMissionItems
-exports.copyOverMissionItems = dbadmin.copyOverMissionItems
-/*********/
-
-
-const missionStats = require('./sheets/mission-stats')
-exports.percentComplete = missionStats.percentComplete
 
 // dev deploy: 1/2/19
 // prod deploy: 1/3/19
@@ -115,10 +42,6 @@ const updateUser = require('./updateUser')
 //exports.onUserUpdated = updateUser.onUserUpdated
 exports.updateLegal = updateUser.updateLegal
 exports.updateUser = updateUser.updateUser
-
-const fixstuff = require('./fixstuff')
-exports.correctPhoneCallOutcomes = fixstuff.correctPhoneCallOutcomes
-exports.fixBadMissionItemRecords = fixstuff.fixBadMissionItemRecords
 
 // dev deploy: 11/8/18, 12/1/18
 // prod deploy: 11/8/18, 12/1/18
@@ -198,20 +121,8 @@ exports.tryLoadingOfficialsAgain = officialMapper.tryLoadingOfficialsAgain
 const testing = require('./test/testing')
 exports.testApi = testing.testApi
 
-const vidyo = require('./vidyo')
-exports.generateVidyoToken = vidyo.generateVidyoToken
-exports.askForVidyoToken = vidyo.askForVidyoToken
-
 const amiready = require('./user-amiready')
 exports.amiready = amiready.amiready
-
-// prod deploy: 99/20/18
-const youtube_playlists = require('./youtube-playlists')
-exports.youtube_playlists = youtube_playlists.youtube_playlists
-exports.testSavePlaylist = youtube_playlists.testSavePlaylist
-exports.testDeletePlaylist = youtube_playlists.testDeletePlaylist
-exports.testEditPlaylist = youtube_playlists.testEditPlaylist
-exports.handlePlaylistRequest = youtube_playlists.handlePlaylistRequest
 
 // prod deploy: 9/12/18, 9/20/18
 const youtube_subscribe = require('./youtube-subscribe')
@@ -235,52 +146,6 @@ exports.testPostFacebook = facebook.testPostFacebook
 exports.handleFacebookRequest = facebook.handleFacebookRequest
 exports.triggerComment = facebook.triggerComment
 exports.onFacebookPostId = facebook.onFacebookPostId
-
-const videoManager = require('./video')
-exports.video = videoManager.video
-//exports.newStorageItem = videoManager.newStorageItem
-exports.uploadToYouTube4 = videoManager.uploadToYouTube4
-exports.setFirebaseStorageRecord = videoManager.setFirebaseStorageRecord
-exports.unsetFirebaseStorageRecord = videoManager.unsetFirebaseStorageRecord
-exports.markForPublishVideo = videoManager.markForPublishVideo
-exports.publishVideo = videoManager.publishVideo
-exports.youtubewebhook1 = videoManager.youtubewebhook1
-exports.getAdditionalYouTubeInfo = videoManager.getAdditionalYouTubeInfo
-
-// prod deploy: 9/12/18, 9/20/18
-const googleCloud = require('./google-cloud')
-exports.cloud = googleCloud.cloud
-exports.listImages = googleCloud.listImages
-exports.sendToVirtualMachines = googleCloud.sendToVirtualMachines
-exports.dockers = googleCloud.dockers
-exports.testStartDocker = googleCloud.testStartDocker
-exports.testStopDocker = googleCloud.testStopDocker
-exports.testStopAndRemoveDocker = googleCloud.testStopAndRemoveDocker
-exports.testCreateAnotherDocker = googleCloud.testCreateAnotherDocker
-exports.testStartRecording = googleCloud.testStartRecording
-exports.testStartRecording2 = googleCloud.testStartRecording2
-exports.testStopRecording = googleCloud.testStopRecording
-exports.testStopRecording2 = googleCloud.testStopRecording2
-exports.testPublish = googleCloud.testPublish
-exports.listRecordings = googleCloud.listRecordings
-exports.removeRecording = googleCloud.removeRecording
-exports.dockerRequest = googleCloud.dockerRequest
-exports.testCreateVideoNode = googleCloud.testCreateVideoNode
-exports.setRoom_id = googleCloud.setRoom_id
-exports.recording_has_started = googleCloud.recording_has_started
-exports.monitor_video_processing = googleCloud.monitor_video_processing
-exports.whenVideoIdIsCreated = googleCloud.whenVideoIdIsCreated
-exports.video_title = googleCloud.video_title
-exports.youtubeVideoDescription = googleCloud.youtubeVideoDescription
-exports.socialMediaPostsCreated = googleCloud.socialMediaPostsCreated
-exports.onLegislatorChosen = googleCloud.onLegislatorChosen
-exports.onParticipantAdded = googleCloud.onParticipantAdded
-exports.onParticipantRemoved = googleCloud.onParticipantRemoved
-
-
-// prod deploy: 9/20/18
-const googleAuth = require('./google-auth')
-exports.getAuthorizedClient = googleAuth.getAuthorizedClient
 
 const debug = require('./debug')
 exports.dbg = debug.dbg
@@ -409,3 +274,125 @@ exports.downloadApk = downloadApk.downloadApk
 const call_notes = require('./call_notes')
 exports.onCallNotesCreated = call_notes.onCallNotesCreated
 
+
+// MIGHT KEEP SOME OF THIS...
+const googleCloud = require('./google-cloud')
+exports.recording_has_started = googleCloud.recording_has_started
+exports.whenVideoIdIsCreated = googleCloud.whenVideoIdIsCreated
+exports.socialMediaPostsCreated = googleCloud.socialMediaPostsCreated
+exports.onLegislatorChosen = googleCloud.onLegislatorChosen
+exports.onParticipantAdded = googleCloud.onParticipantAdded
+exports.onParticipantRemoved = googleCloud.onParticipantRemoved
+//exports.cloud = googleCloud.cloud                                       X   X
+//exports.listImages = googleCloud.listImages                             X   X
+//exports.sendToVirtualMachines = googleCloud.sendToVirtualMachines       X   X
+//exports.dockers = googleCloud.dockers                                   X   X
+//exports.testStartDocker = googleCloud.testStartDocker                   X   X
+//exports.testStopDocker = googleCloud.testStopDocker                     X   X
+//exports.testStopAndRemoveDocker = googleCloud.testStopAndRemoveDocker   X   X
+//exports.testCreateAnotherDocker = googleCloud.testCreateAnotherDocker   X   X
+//exports.testStartRecording = googleCloud.testStartRecording             X   X
+//exports.testStartRecording2 = googleCloud.testStartRecording2           X   X
+//exports.testStopRecording = googleCloud.testStopRecording               X   X
+//exports.testStopRecording2 = googleCloud.testStopRecording2             X   X
+//exports.testPublish = googleCloud.testPublish                           X   X
+//exports.listRecordings = googleCloud.listRecordings                     X   X
+//exports.removeRecording = googleCloud.removeRecording                   X   X
+//exports.dockerRequest = googleCloud.dockerRequest                       X   X
+//exports.testCreateVideoNode = googleCloud.testCreateVideoNode           X   X
+//exports.setRoom_id = googleCloud.setRoom_id                             X   X
+//exports.monitor_video_processing = googleCloud.monitor_video_proces     X   X
+//exports.video_title = googleCloud.video_title                           X   X
+//exports.youtubeVideoDescription = googleCloud.youtubeVideoDescription   X   X
+
+
+
+// PRUNING ALL THIS STUFF...
+// DELETE FROM TelePatriot-Dev first then TelePatriot
+//
+//const sheetsDemo = require('./sheets/demo-google-sheet-write')
+//exports.updateSpreadsheet = sheetsDemo.updateSpreadsheet          X       X
+//exports.testsheetwrite = sheetsDemo.testsheetwrite                X       X
+//
+//
+//const sheetReader = require('./sheets/import-sheet')
+//exports.testsheetImport = sheetReader.testsheetImport               X       X
+//exports.readSpreadsheet = sheetReader.readSpreadsheet               X       X
+//exports.deleteMissionItems = sheetReader.deleteMissionItems         X       X
+//exports.testReadSpreadsheet = sheetReader.testReadSpreadsheet       X       X
+//exports.testMergeMissions = sheetReader.testMergeMissions           X       X
+//exports.oauthcallback = sheetReader.oauthcallback                   X       X
+//exports.authgoogleapi = sheetReader.authgoogleapi                   X       X
+//
+//
+//const masterSpreadsheetReader = require('./sheets/import-master-sheet')
+//exports.readMasterSpreadsheet = masterSpreadsheetReader.readMasterSpreadsheet           X   X
+//exports.testReadMasterSpreadsheet = masterSpreadsheetReader.testReadMasterSpreadsheet   X   X
+//
+//
+//const missions = require('./sheets/mission-activator')
+//exports.missionActivation = missions.missionActivation          X   X
+//
+//const missionDeleter = require('./sheets/mission-deleter')
+//exports.missionDeletion = missionDeleter.missionDeletion        X   X
+//
+//const missionStats = require('./sheets/mission-stats')
+//exports.percentComplete = missionStats.percentComplete          X   X
+//
+//const roles = require('./roles')
+//exports.roleAssigned = roles.roleAssigned                       X   X
+//exports.roleUnassigned = roles.roleUnassigned                   X   X
+//
+//
+//const teams = require('./teams')
+//exports.manageTeams = teams.manageTeams                 X   X
+//exports.copyTeam = teams.copyTeam                       X   X
+//exports.copyMembers = teams.copyMembers                 X   X
+//exports.createTeam = teams.createTeam                   X   X
+//exports.deleteMissionItem = teams.deleteMissionItem     X   X
+//exports.deleteTeam = teams.deleteTeam                   X   X
+//exports.addPeopleToTeam = teams.addPeopleToTeam         X   X
+//exports.addToTeamList = teams.addToTeamList             X   X
+//exports.cullTrainingTeam = teams.cullTrainingTeam       X   X
+//exports.downloadMissionReport = teams.downloadMiss      X   X
+//exports.downloadTeamRoster = teams.downloadTeamRoster   X   X
+//exports.removeFromTrainingTeam = teams.removeFromT      X   X
+//exports.removePeopleFromTeam = teams.removePeopleF      X   X
+//exports.removeTeamFromList = teams.removeTeamFromList   X   X
+//exports.resetCurrentTeam = teams.resetCurrentTeam       X   X
+//exports.setCurrentTeam = teams.setCurrentTeam           X   X
+//exports.teamlist = teams.teamlist                       X   X
+//exports.updateMemberListUnderTeams = teams.update       X   X
+//exports.updateTeamListUnderUsers = teams.updateTe       X   X
+//exports.viewMembers = teams.viewMembers                 X   X
+//exports.viewMissions = teams.viewMissions               X   X
+//exports.viewQueue = teams.viewQueue                     X   X
+//exports.viewMissionReport = teams.viewMissionReport     X   X
+//
+//
+//const videoManager = require('./video')
+//exports.video = videoManager.video                                              X   X
+//exports.newStorageItem = videoManager.newStorageItem                            X   X
+//exports.uploadToYouTube4 = videoManager.uploadToYouTube4                        X   X
+//exports.setFirebaseStorageRecord = videoManager.setFirebaseStorageRecord        X   X
+//exports.unsetFirebaseStorageRecord = videoManager.unsetFirebaseStorageRecord    X   X
+//exports.markForPublishVideo = videoManager.markForPublishVideo                  X   X
+//exports.publishVideo = videoManager.publishVideo                                X   X
+//
+//
+//const vidyo = require('./vidyo')
+//exports.generateVidyoToken = vidyo.generateVidyoToken       X   X
+//exports.askForVidyoToken = vidyo.askForVidyoToken           X   X
+//
+//
+//const youtube_playlists = require('./youtube-playlists')
+//exports.youtube_playlists = youtube_playlists.youtube_playlists         X   X
+//exports.testSavePlaylist = youtube_playlists.testSavePlaylist           X   X
+//exports.testDeletePlaylist = youtube_playlists.testDeletePlaylist       X   X
+//exports.testEditPlaylist = youtube_playlists.testEditPlaylist           X   X
+//exports.handlePlaylistRequest = youtube_playlists.handlePlaylistRequest X   X
+//
+//
+//const fixstuff = require('./fixstuff')
+//exports.correctPhoneCallOutcomes = fixstuff.correctPhoneCallOutcomes    X   X
+//exports.fixBadMissionItemRecords = fixstuff.fixBadMissionItemRecords    X   X
