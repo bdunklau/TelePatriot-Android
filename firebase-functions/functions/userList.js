@@ -17,7 +17,7 @@ const db = admin.database();
 
 
 /**
-firebase deploy --only functions:manageUsers,functions:downloadUsers,functions:updateUser
+firebase deploy --only functions:manageUsers,functions:downloadUsers,functions:updateUser,functions:temp_call_volunteers,functions:temp_not_pop,,functions:temp_not_pop2
 **/
 
 
@@ -210,22 +210,23 @@ exports.temp_not_pop2 = functions.https.onRequest((req, res) => {
 
 // Called whenever the citizen_builder_id node is written to.  And if the value of the node is "not populated yet",
 // this function will call the /volunteers endpoint at CB and get the user's info.
-exports.temp_call_volunteers = functions.database.ref('users/{uid}/citizen_builder_id').onWrite(event => {
-    if(event.data.val() != 'not populated yet')
+exports.temp_call_volunteers = functions.database.ref('users/{uid}/citizen_builder_id').onWrite((change, context) => {
+    var params = context.params
+    if(change.after.val() != 'not populated yet')
         return false
-    return event.data.adminRef.root.child('users/'+event.params.uid).once('value').then(snapshot => {
-        return event.data.adminRef.root.child('administration/configuration').once('value').then(snap2 => {
+    return db.ref().child('users/'+params.uid).once('value').then(snapshot => {
+        return db.ref().child('administration/configuration').once('value').then(snap2 => {
             var configuration = snap2.val()
             var returnFn = function(result) {
                 if(result.vol) {
-                    log.debug(event.params.uid, snapshot.val().name, "userList.js", "callVolunteers", "OK: citizen_builder_id = "+result.vol.id)
+                    log.debug(params.uid, snapshot.val().name, "userList.js", "callVolunteers", "OK: citizen_builder_id = "+result.vol.id)
                     // This is what we want to happen: email was found in the CB db
-                    volunteers.updateUser({uid: event.params.uid, result: result, userInfo: {}})
+                    volunteers.updateUser({uid: params.uid, result: result, userInfo: {}})
                 }
                 else {
                     // If email not found in CB, result.vol will be null
                     // do nothing in this case
-                    log.debug(event.params.uid, snapshot.val().name, "userList.js", "callVolunteers", "EMAIL NOT FOUND IN CB: "+snapshot.val().email)
+                    log.debug(params.uid, snapshot.val().name, "userList.js", "callVolunteers", "EMAIL NOT FOUND IN CB: "+snapshot.val().email)
                 }
             }
 

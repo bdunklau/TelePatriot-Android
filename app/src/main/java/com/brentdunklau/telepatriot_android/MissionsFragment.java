@@ -23,7 +23,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by bdunklau on 10/19/17.
  */
 
-public class MissionsFragment extends DirectorFragment {
+public class MissionsFragment extends BaseFragment {
 
     TextView removed;
     TextView header_missions_list;
@@ -38,43 +38,11 @@ public class MissionsFragment extends DirectorFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.missions_fragment, container, false);
 
-        FirebaseDatabase.getInstance().getReference("administration/configuration/get_roles_from").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String get_roles_from = dataSnapshot.getValue(String.class);
-                if(get_roles_from == null || get_roles_from.equalsIgnoreCase("telepatriot")) {
-                    hideUI();
-                    showLegacyUI();
-                }
-                else {
-                    showUI();
-                    hideLegacyUI();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) { }
-        });
-
+        showUI();
+        hideLegacyUI();
 
         //setHasOptionsMenu(true);
         return myView;
-    }
-
-    private void showLegacyUI() {
-
-        header_missions_list = myView.findViewById(R.id.header_missions_list);
-        btnNewPhoneCampaign = myView.findViewById(R.id.button_new_phone_campaign);
-        btnAllMissions = myView.findViewById(R.id.button_all_missions);
-        btnAllActivity = myView.findViewById(R.id.button_all_activity);
-        header_missions_list.setVisibility(View.VISIBLE);
-        btnNewPhoneCampaign.setVisibility(View.VISIBLE);
-        btnAllMissions.setVisibility(View.VISIBLE);
-        btnAllActivity.setVisibility(View.VISIBLE);
-
-        wireUp(btnNewPhoneCampaign, new ChooseSpreadsheetTypeFragment());
-        wireUp(btnAllMissions, new AllMissionsFragment());
-        wireUp(btnAllActivity, new AllActivityFragment());
     }
 
     private void hideLegacyUI() {

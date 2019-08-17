@@ -1251,6 +1251,7 @@ public class VidyoChatFragment extends BaseFragment
                 FirebaseDatabase.getInstance().getReference("video/list/" + videoNodeKey).addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        Log.i(TAG+ "$onDataChange()]", "video/list/"+videoNodeKey);
                         VideoNode vnode = dataSnapshot.getValue(VideoNode.class);
                         if (vnode == null) return;
                         currentVideoNode = vnode;
@@ -1372,6 +1373,7 @@ public class VidyoChatFragment extends BaseFragment
     private void boomNotify1() {
         if(currentVideoNode == null) return;
         boolean videoLifecycleComplete = currentVideoNode.getEmail_to_participant_send_date() != null;
+        Log.i(TAG+ ".boomNotify1()]", "currentVideoNode: "+currentVideoNode.getKey());
         if(videoLifecycleComplete && !notifiedOfEnd) {
 
             notifiedOfEnd = true;
@@ -1508,17 +1510,17 @@ public class VidyoChatFragment extends BaseFragment
 
         System.out.println(TAG+ "]  ------------------------------------------------------------");
         System.out.println(TAG+ "]  RoomId IS: "+currentRoomId+"   -- CHANGING TO: "+currentVideoNode.getRoom_id());
-        System.out.println(TAG+ "]      connected: "+connected);
-        System.out.println(TAG+ "]      shouldBeConnected: "+shouldBeConnected);
-        System.out.println(TAG+ "]      shouldBeDisconnected: "+shouldBeDisconnected);
-        System.out.println(TAG+ "]      connectedToTheWrongRoom: "+connectedToTheWrongRoom);
-        System.out.println(TAG+ "]      iAmAbleToConect: "+iAmAbleToConect);
-        System.out.println(TAG+ "]      doINeedToConnect: "+doINeedToConnect);
-        System.out.println(TAG+ "]      iAmAboutToConnect: "+iAmAboutToConnect);
-        System.out.println(TAG+ "]      doINeedToDisconnect: "+doINeedToDisconnect);
-        System.out.println(TAG+ "]      iAmAboutToDisconnect: "+iAmAboutToDisconnect);
-        System.out.println(TAG+ "]      doINeedToSwitchRooms: "+doINeedToSwitchRooms);
-        System.out.println(TAG+ "]      iAmAboutToSwitchRooms: "+iAmAboutToSwitchRooms);
+//        System.out.println(TAG+ "]      connected: "+connected);
+//        System.out.println(TAG+ "]      shouldBeConnected: "+shouldBeConnected);
+//        System.out.println(TAG+ "]      shouldBeDisconnected: "+shouldBeDisconnected);
+//        System.out.println(TAG+ "]      connectedToTheWrongRoom: "+connectedToTheWrongRoom);
+//        System.out.println(TAG+ "]      iAmAbleToConect: "+iAmAbleToConect);
+//        System.out.println(TAG+ "]      doINeedToConnect: "+doINeedToConnect);
+//        System.out.println(TAG+ "]      iAmAboutToConnect: "+iAmAboutToConnect);
+//        System.out.println(TAG+ "]      doINeedToDisconnect: "+doINeedToDisconnect);
+//        System.out.println(TAG+ "]      iAmAboutToDisconnect: "+iAmAboutToDisconnect);
+//        System.out.println(TAG+ "]      doINeedToSwitchRooms: "+doINeedToSwitchRooms);
+//        System.out.println(TAG+ "]      iAmAboutToSwitchRooms: "+iAmAboutToSwitchRooms);
 
         if(iAmAboutToConnect) {
             System.out.println(TAG+ "]  connecting...");

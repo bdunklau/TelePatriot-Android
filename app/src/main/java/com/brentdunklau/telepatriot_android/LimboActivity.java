@@ -40,13 +40,12 @@ import java.util.Arrays;
  * Created by bdunklau on 10/1/17.
  */
 
-public class LimboActivity extends BaseActivity implements AccountStatusEvent.Listener /*RoleAssignedListener, OneTime*/ {
+public class LimboActivity extends BaseActivity implements AccountStatusEvent.Listener {
 
     protected String TAG = "LimboActivity";
 //    private FirebaseRecyclerAdapter<AccountStatusEvent, AccountStatusEventHolder> mAdapter;
 //    private RecyclerView accountStatusEvents;
 
-    private TextView welcome_heading;
     private TextView limboExplanation;
     private TextView access_limited_description;
     private Button show_me_how_button;      // hidden when a video invitation has been extended to this person
@@ -82,7 +81,6 @@ public class LimboActivity extends BaseActivity implements AccountStatusEvent.Li
         if(name == null) name = User.getInstance().getName();
         if(email == null) email = User.getInstance().getEmail();
 
-        welcome_heading = findViewById(R.id.welcome_heading);
         limboExplanation = findViewById(R.id.limboExplanation);
         access_limited_description = findViewById(R.id.access_limited_description);
         show_me_how_button = findViewById(R.id.show_me_how_button);

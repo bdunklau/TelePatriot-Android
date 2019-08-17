@@ -118,16 +118,6 @@
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/usflag" />
 
-        <receiver android:name=".util.PhoneBroadcastReceiver"  android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.PHONE_STATE"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.NEW_OUTGOING_CALL" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </receiver>
-
     </application>
 
 </manifest>

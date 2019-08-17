@@ -197,12 +197,6 @@ public class MyCBMissionFragment extends BaseFragment
     }
 
 
-    /**
-     * @see com.brentdunklau.telepatriot_android.util.PhoneBroadcastReceiver.handleCall() - that's where the
-     * logic is that fires when the call ends
-     * @param missionDetail
-     */
-    //@RequiresApi(api = Build.VERSION_CODES.M)
     private void call(CBMissionDetail missionDetail) {
         call(missionDetail.getPhone());
     }

@@ -74,13 +74,6 @@ public class SwitchTeamsFragment extends BaseFragment {
         FirebaseDatabase.getInstance().getReference("administration/configuration").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-//                Map<String, Object> config = (Map<String, Object>) dataSnapshot.getValue();
-//                String get_teams_from = "citizenbuilder";
-//                if(config.get("get_teams_from") != null)
-//                    get_teams_from = config.get("get_teams_from")+"";
-//
-//                String environment = config.get("environment")+"";
-//                Map<String, String> env = (Map<String, String>) config.get(environment);
 
                 Configuration conf = dataSnapshot.getValue(Configuration.class);
                 if(conf.getTeamsFromCB()) {

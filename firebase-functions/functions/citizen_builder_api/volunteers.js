@@ -49,8 +49,9 @@ exports.testVolunteers = functions.https.onRequest((req, res) => {
 
 
 // See in XCode CenterViewController.checkLoggedIn()
-exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
-    if(event.data.val().event_type != 'login')
+exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCreate((snapshot2, context) => {
+    var data = snapshot2.val()
+    if(data.event_type != 'login')
         return false
 
     return db.ref('administration/configuration').once('value').then(snapshot => {
@@ -127,22 +128,22 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
             }
 
             r.event_type = 'login-response'
-            if(event.data.val().name) r.name = result.vol.first_name && result.vol.last_name ? result.vol.first_name+' '+result.vol.last_name : event.data.val().name
-            if(event.data.val().uid) r.uid = event.data.val().uid
+            if(data.name) r.name = result.vol.first_name && result.vol.last_name ? result.vol.first_name+' '+result.vol.last_name : data.name
+            if(data.uid) r.uid = data.uid
 
             // timestamping is done by triggers in checkVolunteerStatus.js
             db.ref('cb_api_events/all-events').push().set(r)  // really just for record keeping
-            db.ref('cb_api_events/login-responses/'+event.data.val().uid).push().set(r) // really just for record keeping
+            db.ref('cb_api_events/login-responses/'+data.uid).push().set(r) // really just for record keeping
 
             var userUpdate = {}
             if(r.citizen_builder_id) userUpdate['citizen_builder_id'] = r.citizen_builder_id
             if(r.name) userUpdate['name'] = r.name
-            else userUpdate['name'] = event.data.val().name
+            else userUpdate['name'] = data.name
             if(r.roles) userUpdate['roles'] = r.roles
             if(r.address) userUpdate['residential_address_line1'] = r.address
             if(r.city) userUpdate['residential_address_city'] = r.city
             if(r.state) userUpdate['residential_address_state'] = r.state
-            if(event.data.val().email) userUpdate['email'] = event.data.val().email
+            if(data.email) userUpdate['email'] = data.email
             if(r.phone) userUpdate['phone'] = r.phone
             if(r.is_banned) userUpdate['is_banned'] = r.is_banned
             if(r.is_banned) userUpdate.account_disposition = 'disabled'
@@ -152,16 +153,16 @@ exports.onLogin = functions.database.ref('cb_api_events/all-events/{key}').onCre
             if(r.legislative_house_district) userUpdate['legislative_house_district'] = r.legislative_house_district
             if(r.legislative_senate_district) userUpdate['legislative_senate_district'] = r.legislative_senate_district
 
-            db.ref('users/'+event.data.val().uid).update(userUpdate)
+            db.ref('users/'+data.uid).update(userUpdate)
 
         }
         var errorFn = function(result) { /*TODO what here if error? */ }
 
-        console.log('event.data.val().email = ', event.data.val().email)
+        console.log('data.email = ', data.email)
         var input = {citizen_builder_api_key_name: snapshot.val()[environment].citizen_builder_api_key_name,
                     citizen_builder_api_key_value: snapshot.val()[environment].citizen_builder_api_key_value,
                     domain: snapshot.val()[environment].citizen_builder_domain,
-                    email: event.data.val().email,
+                    email: data.email,
                     successFn: successFn,
                     errorFn: errorFn
                     }

@@ -30,7 +30,7 @@ exports.civic = functions.https.onRequest((req, res) => {
 
 
 var listStates = function() {
-    return db.ref(`states/list`).once('value').then(snapshot => {
+    return db.ref('states/list').once('value').then(snapshot => {
         var states = []
         snapshot.forEach(function(child) {
             var stateNode = child.val()
@@ -251,7 +251,7 @@ var missingOfficialsListHtml = function(stuff) {
 exports.listOfficials = functions.https.onRequest((req, res) => {
     var state_abbrev = req.query.state
 
-    return db.ref(`google_civic_data/officials`).orderByChild('state_abbrev').equalTo(state_abbrev).once('value').then(snapshot => {
+    return db.ref('google_civic_data/officials').orderByChild('state_abbrev').equalTo(state_abbrev).once('value').then(snapshot => {
         // get hd_loaded and sd_loaded and update the database...
         var allLoadedStateOfficials = []
         snapshot.forEach(function(child) {
@@ -263,9 +263,9 @@ exports.listOfficials = functions.https.onRequest((req, res) => {
         var allLoadedSenators = _.filter(allLoadedStateOfficials, {'chamber': 'sldu'})
 
         var updates = {}
-        updates[`states/list/${state_abbrev}/hd_loaded`] = allLoadedReps.length
-        updates[`states/list/${state_abbrev}/sd_loaded`] = allLoadedSenators.length
-        updates[`states/list/${state_abbrev}/civic_officials_loaded`] = snapshot.numChildren()
+        updates['states/list/'+state_abbrev+'/hd_loaded'] = allLoadedReps.length
+        updates['states/list/'+state_abbrev+'/sd_loaded'] = allLoadedSenators.length
+        updates['states/list/'+state_abbrev+'/civic_officials_loaded'] = snapshot.numChildren()
         return snapshot.ref.root.update(updates)
     })
     .then(() => {
@@ -276,7 +276,7 @@ exports.listOfficials = functions.https.onRequest((req, res) => {
 // also queries for those districts where officials didn't get loaded for some reason (like google throttling)
 var officials = function(stuff) {
 
-    return db.ref(`google_civic_data/officials`).orderByChild('state_abbrev').equalTo(stuff.state_abbrev).once('value').then(snapshot => {
+    return db.ref('google_civic_data/officials').orderByChild('state_abbrev').equalTo(stuff.state_abbrev).once('value').then(snapshot => {
         var officials = []
         snapshot.forEach(function(child) {
             //var officialNode = {state_abbrev: child.val().state_abbrev, chamber: child.val().chamber, district: child.val().district, division: child.val().division, load_date: date.asCentralTime(), load_date_ms: date.asMillis()}
@@ -287,12 +287,12 @@ var officials = function(stuff) {
     })
     .then(stuff => {
         const channels_loaded = _.sumBy(stuff.officials, function(o) { return o.channels && o.channels.length > 0 ? 1 : 0 })
-        db.ref(`states/list/${stuff.state_abbrev}/channels_loaded`).set(channels_loaded)
+        db.ref('states/list/'+stuff.state_abbrev+'/channels_loaded').set(channels_loaded)
         return  stuff
     })
     .then(stuff => {
-        db.ref(`google_civic_data/officials`).orderByChild('state_abbrev').equalTo(stuff.state_abbrev).once('value').then(snapshot => {
-            return snapshot.ref.root.child(`states/list/${stuff.state_abbrev}/civic_officials_loaded`).set(snapshot.numChildren())
+        db.ref('google_civic_data/officials').orderByChild('state_abbrev').equalTo(stuff.state_abbrev).once('value').then(snapshot => {
+            return snapshot.ref.root.child('states/list/'+stuff.state_abbrev+'/civic_officials_loaded').set(snapshot.numChildren())
         })
         return stuff
     })
@@ -313,7 +313,7 @@ var officials = function(stuff) {
 var getDivisionsNotLoaded = function(stuff) {
     // get the divisions/districts that didn't get loaded...
     console.log('getDivisionsNotLoaded(): stuff.state_abbrev = ', stuff.state_abbrev)
-    return db.ref(`google_civic_data/divisions`).orderByChild('state_abbrev').equalTo(stuff.state_abbrev).once('value').then(snapshot => {
+    return db.ref('google_civic_data/divisions').orderByChild('state_abbrev').equalTo(stuff.state_abbrev).once('value').then(snapshot => {
         var missing = []
         snapshot.forEach(function(child) {
             var findThisDivision = child.val().division
@@ -336,13 +336,13 @@ exports.loadOfficials = functions.https.onRequest((req, res) => {
     var stuff = {}
     stuff.state_abbrev = state_abbrev
 
-    return db.ref(`api_tokens/google_cloud_api_key`).once('value').then(snapshot => {
+    return db.ref('api_tokens/google_cloud_api_key').once('value').then(snapshot => {
         stuff.apikey = snapshot.val()
         stuff.ref = snapshot.ref
         return stuff
     })
     .then(stuff => {
-        return db.ref(`google_civic_data/officials`).orderByChild('state_abbrev').equalTo(stuff.state_abbrev).once('value').then(snapshot => {
+        return db.ref('google_civic_data/officials').orderByChild('state_abbrev').equalTo(stuff.state_abbrev).once('value').then(snapshot => {
             var officials = []
             snapshot.forEach(function(child) {
                 officials.push(child.val())
@@ -364,7 +364,7 @@ exports.loadOfficials = functions.https.onRequest((req, res) => {
 
             var deletes = {} //triggers reload for officials that need reloading
             for(var i=0; i < stuff.missing_officials.length; i++) {
-                deletes[`google_civic_data/divisions/${stuff.missing_officials[i].key}/official_url`] = null
+                deletes['google_civic_data/divisions/'+stuff.missing_officials[i].key+'/official_url'] = null
             }
             return stuff.ref.root.update(deletes).then(() => {// delete the official_url here then re-insert below to make the onOfficialUrl trigger fire again
                 return stuff
@@ -380,7 +380,7 @@ exports.loadOfficials = functions.https.onRequest((req, res) => {
                     var civicApiUrl = "https://www.googleapis.com/civicinfo/v2/representatives/"+encodedDiv+"?fields=officials&key="+stuff.apikey
 
                     // we have a trigger that listens for writes to this node...
-                    updates[`google_civic_data/divisions/${stuff.missing_officials[i].key}/official_url`] = civicApiUrl
+                    updates['google_civic_data/divisions/'+stuff.missing_officials[i].key+'/official_url'] = civicApiUrl
                 }
                 return stuff.ref.root.update(updates).then(() => {
                     return officials(stuff)
@@ -394,19 +394,21 @@ exports.loadOfficials = functions.https.onRequest((req, res) => {
 
 
 // Trigger that gets the Officials in a district (civic division)
-exports.onOfficialUrl = functions.database.ref("google_civic_data/divisions/{key}").onWrite(event => {
+exports.onOfficialUrl = functions.database.ref("google_civic_data/divisions/{key}").onWrite((change, context) => {
 
     // if mission was deleted, just return
-    if(!event.data.exists() && event.data.previous.exists()) {
+    if(!change.after.exists() && change.before.exists()) {
         return false
     }
 
-    if(!event.data.val().official_url)
+    var data = change.after.val()
+
+    if(!data.official_url)
         return false // only care when the 'official_url' node is written
 
-    var divKey = event.params.key
-    var civicApiUrl = event.data.val().official_url
-    var state_abbrev = event.data.val().state_abbrev
+    var divKey = context.params.key
+    var civicApiUrl = data.official_url
+    var state_abbrev = data.state_abbrev
 
     return request(civicApiUrl, function (error, response, body) {
         if(error)
@@ -419,26 +421,26 @@ exports.onOfficialUrl = functions.database.ref("google_civic_data/divisions/{key
             var ms = date.asMillis()
             var key = divKey+'-'+o
             var official = offs[o]
-            official.state_abbrev = event.data.val().state_abbrev
-            official.chamber = event.data.val().chamber
-            official.district = event.data.val().district
+            official.state_abbrev = data.state_abbrev
+            official.chamber = data.chamber
+            official.district = data.district
             official.state_chamber_district = official.state_abbrev+'-'+official.chamber+'-'+official.district
-            official.division = event.data.val().division
+            official.division = data.division
             official.load_date = date.asCentralTime()
             official.load_date_ms = date.asMillis()
             official.openstates_match_date = ''    // the date that we matched this official with a legislator from OpenStates
             official.openstates_match_date_ms = ''
-            updates[`google_civic_data/officials/${key}`] = official
-            event.data.adminRef.root.child(`states/list/${state_abbrev}/civic_officials_loaded`).transaction(current => {
+            updates['google_civic_data/officials/'+key] = official
+            db.ref().child('states/list/'+state_abbrev+'/civic_officials_loaded').transaction(current => {
                 return (current || 0) + 1;
             })
             if(official.channels && official.channels.length > 0) {
-                event.data.adminRef.root.child(`states/list/${state_abbrev}/channels_loaded`).transaction(current => {
+                db.ref().child('states/list/'+state_abbrev+'/channels_loaded').transaction(current => {
                     return (current || 0) + 1;
                 })
             }
         }
-        return event.data.adminRef.root.update(updates)
+        return db.ref().update(updates)
     })
 })
 
@@ -450,7 +452,7 @@ exports.unloadOfficials = functions.https.onRequest((req, res) => {
     var stuff = {}
     stuff.state_abbrev = state_abbrev
 
-    return db.ref(`google_civic_data/officials`).orderByChild('state_abbrev').equalTo(state_abbrev).once('value').then(snapshot => {
+    return db.ref('google_civic_data/officials').orderByChild('state_abbrev').equalTo(state_abbrev).once('value').then(snapshot => {
         // should  record the number of rows in query that were deleted - would be good to know
         snapshot.forEach(function(child) {
             child.ref.remove()
@@ -460,8 +462,8 @@ exports.unloadOfficials = functions.https.onRequest((req, res) => {
     })
     .then(stuff => {
         var updates = {}
-        updates[`states/list/${state_abbrev}/channels_loaded`] = 0
-        updates[`states/list/${state_abbrev}/civic_officials_loaded`] = 0
+        updates['states/list/'+state_abbrev+'/channels_loaded'] = 0
+        updates['states/list/'+state_abbrev+'/civic_officials_loaded'] = 0
         return stuff.ref.root.update(updates).then(() => {
             return listStates().then(states => {
                 stuff.res = res
@@ -477,7 +479,7 @@ exports.unloadOfficials = functions.https.onRequest((req, res) => {
 exports.listDivisions = functions.https.onRequest((req, res) => {
     var state_abbrev = req.query.state
 
-    return db.ref(`google_civic_data/divisions`).orderByChild('state_abbrev').equalTo(state_abbrev).once('value').then(snapshot => {
+    return db.ref('google_civic_data/divisions').orderByChild('state_abbrev').equalTo(state_abbrev).once('value').then(snapshot => {
         var divisions = []
         snapshot.forEach(function(child) {
             divisions.push(child.val())
@@ -485,7 +487,7 @@ exports.listDivisions = functions.https.onRequest((req, res) => {
         return {divisions: divisions, ref: snapshot.ref}
     })
     .then(stuff => {
-        return db.ref(`states/list/${state_abbrev}/civic_divisions_loaded`).set(stuff.divisions.length).then(() => {
+        return db.ref('states/list/'+state_abbrev+'/civic_divisions_loaded').set(stuff.divisions.length).then(() => {
             return stuff
         })
     })
@@ -509,7 +511,7 @@ exports.listDivisions = functions.https.onRequest((req, res) => {
 // this function triggers loadDivisionsTrigger defined below
 exports.loadDivisionsAllStates = functions.https.onRequest((req, res) => {
     return listStates().then(states => {
-        return db.ref(`api_tokens/google_cloud_api_key`).once('value').then(snapshot => {
+        return db.ref('api_tokens/google_cloud_api_key').once('value').then(snapshot => {
             return {apikey: snapshot.val(), ref: snapshot.ref}
         })
         .then(vals => {
@@ -520,7 +522,7 @@ exports.loadDivisionsAllStates = functions.https.onRequest((req, res) => {
                 // example:  https://www.googleapis.com/civicinfo/v2/representatives/ocd-division%2Fcountry%3Aus%2Fstate%3Ama?levels=administrativeArea1&recursive=true&roles=legislatorLowerBody&roles=legislatorUpperBody&fields=divisions&key=apikey
                 // returns all the districts in Mass, but not the officials
                 var url = "https://www.googleapis.com/civicinfo/v2/representatives/ocd-division%2Fcountry%3Aus%2Fstate%3A"+states[i].state_abbrev+"?levels=administrativeArea1&recursive=true&roles=legislatorLowerBody&roles=legislatorUpperBody&fields=divisions&key="+apikey
-                updates[`google_civic_data/states/${states[i].state_abbrev}/division_list_url`] = url
+                updates['google_civic_data/states/'+states[i].state_abbrev+'/division_list_url'] = url
             }
             return vals.ref.root.update(updates).then(() => {
                 return showPage({res: res, states: states})
@@ -536,13 +538,13 @@ exports.unloadDivisions = functions.https.onRequest((req, res) => {
 
     // first, get rid of this node.  It may have had division_list_url underneath.  Deleting then re-adding will
     // cause the l
-    return db.ref(`google_civic_data/divisions/`).orderByChild('state_abbrev').equalTo(state_abbrev).once('value').then(snapshot => {
+    return db.ref('google_civic_data/divisions/').orderByChild('state_abbrev').equalTo(state_abbrev).once('value').then(snapshot => {
         var deletes = {}
         snapshot.forEach(function(child) {
-            deletes[`google_civic_data/divisions/${child.key}`] = null
+            deletes['google_civic_data/divisions/'+child.key] = null
         })
-        deletes[`google_civic_data/states/${state_abbrev}`] = null
-        return snapshot.ref.root.child(`/`).update(deletes)
+        deletes['google_civic_data/states/'+state_abbrev] = null
+        return snapshot.ref.root.child('/').update(deletes)
     })
     .then(() => {
         return listStates().then(states => {
@@ -564,9 +566,9 @@ exports.loadDivisions = functions.https.onRequest((req, res) => {
 
     // first, get rid of this node.  It may have had division_list_url underneath.  Deleting then re-adding will
     // cause the l
-    return db.ref(`google_civic_data/states/${state_abbrev}`).remove().then(() => {
+    return db.ref('google_civic_data/states/'+state_abbrev).remove().then(() => {
 
-        return db.ref(`api_tokens/google_cloud_api_key`).once('value').then(snapshot => {
+        return db.ref('api_tokens/google_cloud_api_key').once('value').then(snapshot => {
             var stuff = {}
             stuff.apikey = snapshot.val()
             stuff.ref = snapshot.ref
@@ -575,7 +577,7 @@ exports.loadDivisions = functions.https.onRequest((req, res) => {
         .then(stuff => {
             var division_list_url = "https://www.googleapis.com/civicinfo/v2/representatives/ocd-division%2Fcountry%3Aus%2Fstate%3A"+state_abbrev+"?levels=administrativeArea1&recursive=true&roles=legislatorLowerBody&roles=legislatorUpperBody&fields=divisions&key="+stuff.apikey
             // this 'set' will cause trigger to fire: loadDivisionsTrigger
-            return stuff.ref.root.child(`google_civic_data/states/${state_abbrev}`).set({'division_list_url': division_list_url})
+            return stuff.ref.root.child('google_civic_data/states/'+state_abbrev).set({'division_list_url': division_list_url})
             .then(() => {
                 return listStates().then(states => {
                     stuff.res = res
@@ -598,7 +600,7 @@ exports.loadDivisions = functions.https.onRequest((req, res) => {
 // OH House: 99,  Senate: 33
 
 exports.loadDivisionsTrigger = functions.database.ref("google_civic_data/states/{state_abbrev}/division_list_url").onWrite(
-    event => {
+    (change, context) => {
 
     // We only use the division_list_url for those states with 'special_load':true  (see legislators.js)
     // For all the other states, we know how many districts they have.  We don't have to do a google civic query
@@ -612,9 +614,9 @@ exports.loadDivisionsTrigger = functions.database.ref("google_civic_data/states/
 
     var url = event.data.val()
     console.log('url = ', url)
-    var state_abbrev = event.params.state_abbrev
+    var state_abbrev = context.params.state_abbrev
 
-    return event.data.adminRef.root.child(`states/list/${state_abbrev}`).once('value').then(snapshot => {
+    return db.ref().child('states/list/'+state_abbrev).once('value').then(snapshot => {
         var stateNode = snapshot.val()
         if(stateNode.special_load) {
             // special load means we have to go to google and do a civic api query to get all the divisions for this
@@ -640,8 +642,8 @@ exports.loadDivisionsTrigger = functions.database.ref("google_civic_data/states/
 
                             var key = state_abbrev+'-'+chamber+'-'+district
                             var updates = {}
-                            updates[`google_civic_data/divisions/${key}`] = divisionNode
-                            event.data.adminRef.root.update(updates)
+                            updates['google_civic_data/divisions/'+key] = divisionNode
+                            db.ref().update(updates)
                         }
 
                     }
@@ -671,10 +673,10 @@ exports.loadDivisionsTrigger = functions.database.ref("google_civic_data/states/
                         var key = state.state_abbrev+'-'+civic_designator+'-'+district
                         var division = 'ocd-division/country:us/state:'+state.state_abbrev+'/'+civic_designator+':'+district // "ocd-division/country:us/state:tn/sldl:30"
                         var divisionNode = {state_abbrev: state.state_abbrev, chamber: civic_designator, district: district, division, load_date: date.asCentralTime(), load_date_ms: date.asMillis()}
-                        updates[`google_civic_data/divisions/${key}`] = divisionNode
+                        updates['google_civic_data/divisions/'+key] = divisionNode
                     })
                 })
-                return snapshot.ref.root.child(`/`).update(updates)
+                return snapshot.ref.root.child('/').update(updates)
             })
 
         }

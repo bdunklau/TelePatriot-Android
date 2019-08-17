@@ -32,7 +32,7 @@ exports.testPing = functions.https.onRequest((req, res) => {
     if(parm)
         val.parm = parm
     val['date'] = date.asCentralTime()
-    return db.ref(`templog2/ping`).set(val).then(() => {
+    return db.ref('templog2/ping').set(val).then(() => {
         return res.status(200).send('Receive: '+parm+' at '+date.asCentralTime())
     })
 })

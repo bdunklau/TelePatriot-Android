@@ -26,7 +26,7 @@ var dbg = function(stuff) {
     if(stuff.value && typeof stuff.value != "function" )
         logEntry.value = stuff.value
     debugs.push(logEntry)
-    //db.ref(`templog2`).push().set(logEntry)
+    //db.ref('templog2').push().set(logEntry)
     return debugs
 }
 
@@ -39,7 +39,7 @@ exports.dbgKeys = function(descr, obj) {
     _.each(keys, function(key) {
         exports.dbg({name:'key of '+descr, key:key})
     })
-    return db.ref(`templog2`).update(debugs)
+    return db.ref('templog2').update(debugs)
 }
 
 exports.dbgKeyValues = function(what, obj) {
@@ -56,7 +56,7 @@ exports.dbgKeyValues = function(what, obj) {
         exports.dbg(logEntry)
     })
 
-    return db.ref(`templog2`).update(debugs)
+    return db.ref('templog2').update(debugs)
 }
 
 exports.dbgList = function(what, list) {
@@ -77,5 +77,5 @@ exports.dbgList = function(what, list) {
 
     })
 
-    return db.ref(`templog2`).update(debugs)
+    return db.ref('templog2').update(debugs)
 }

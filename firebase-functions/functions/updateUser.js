@@ -86,7 +86,7 @@ exports.updateLegal = functions.https.onRequest((req, res) => {
 
 
         //query by email
-        var ref = db.ref(`/users`)
+        var ref = db.ref('/users')
         return ref.orderByChild('email').equalTo(email).limitToFirst(1).once('value').then(snapshot => {
             var updates = {}
             snapshot.forEach(function(child) {

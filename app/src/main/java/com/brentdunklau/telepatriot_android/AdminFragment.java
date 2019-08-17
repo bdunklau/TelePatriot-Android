@@ -39,45 +39,11 @@ public class AdminFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.admin_fragment, container, false);
 
-        FirebaseDatabase.getInstance().getReference("administration/configuration/get_roles_from").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String get_roles_from = dataSnapshot.getValue(String.class);
-                if(get_roles_from == null || get_roles_from.equalsIgnoreCase("telepatriot")) {
-                    hideUI();
-                    showLegacyUI();
-                }
-                else {
-                    showUI();
-                    hideLegacyUI();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) { }
-        });
-
-        button_unassigned_users = myView.findViewById(R.id.button_unassigned_users);
-        button_search_users = myView.findViewById(R.id.button_search_users);
-
-        wireUp(button_unassigned_users, new UnassignedUsersFragment());
-        wireUp(button_search_users, new SearchUsersFragment());
+        showUI();
+        hideLegacyUI();
 
         //setHasOptionsMenu(true);
         return myView;
-    }
-
-    private void showLegacyUI() {
-
-        header_admin_screen = myView.findViewById(R.id.header_admin_screen);
-        button_unassigned_users = myView.findViewById(R.id.button_unassigned_users);
-        button_search_users = myView.findViewById(R.id.button_search_users);
-        header_admin_screen.setVisibility(View.VISIBLE);
-        button_unassigned_users.setVisibility(View.VISIBLE);
-        button_search_users.setVisibility(View.VISIBLE);
-
-        wireUp(button_unassigned_users, new UnassignedUsersFragment());
-        wireUp(button_search_users, new SearchUsersFragment());
     }
 
     private void hideLegacyUI() {
@@ -96,57 +62,8 @@ public class AdminFragment extends BaseFragment {
         removed.setVisibility(View.VISIBLE);
     }
 
-    private void hideUI() {
-
-        removed = myView.findViewById(R.id.removed);
-        removed.setVisibility(View.GONE);
-    }
-
     public void setUser(UserBean user) {
         this.user = user;
-    }
-
-    private void wireUp(Button button, final Fragment fragment) {
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showFragment(fragment);
-            }
-        });
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.admin_menu, menu);  // Use filter.xml from step 1
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        FragmentManager fragmentManager = getFragmentManager();
-        switch(item.getItemId()) {
-            case(R.id.list_unassigned_users):
-                Fragment fragment = new UnassignedUsersFragment();
-                fragmentManager.beginTransaction()
-                        .replace(R.id.content_frame, fragment)
-                        .addToBackStack(fragment.getClass().getName())
-                        .commit();
-                return true;
-            case(R.id.list_users):
-                fragment = new ListUsersFragment();
-                fragmentManager.beginTransaction()
-                        .replace(R.id.content_frame, fragment)
-                        .addToBackStack(fragment.getClass().getName())
-                        .commit();
-                return true;
-            case(R.id.search_users):
-                fragment = new SearchUsersFragment();
-                fragmentManager.beginTransaction()
-                        .replace(R.id.content_frame, fragment)
-                        .addToBackStack(fragment.getClass().getName())
-                        .commit();
-                return true;
-            default: return super.onOptionsItemSelected(item);
-        }
     }
 
     protected void updateLabel(final int Rid, final String text) {

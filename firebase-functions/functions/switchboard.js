@@ -12,7 +12,7 @@ const date = require('./dateformat')
 const twilio_telepatriot = require('./twilio-telepatriot')
 
 // can only call this once globally and we already do that in index.js
-//admin.initializeApp(functions.config().firebase);
+//admin.initializeApp();
 const db = admin.database()
 
 /***
@@ -21,13 +21,16 @@ firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,fun
 ***/
 
 // When one person connects, connect the other person also.  It's one less thing we have to train people to do.
-exports.onConnectRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
-    if(!event.data.val().request_type)
+exports.onConnectRequest = functions.database.ref('video/video_events/{key}').onCreate((snapshot, context) => {
+    var data = snapshot.val()
+    if(!data.request_type)
         return false //ignore malformed
 
-    if(event.data.val().request_type != 'connect request') return false //ignore, not a connect request
+    var params = context.params
 
-    return connect(event.params.key, event.data.val().video_node_key, event.data.val().uid, event.data.val().name, event.data.val().room_id, event.data.val().RoomSid)
+    if(data.request_type != 'connect request') return false //ignore, not a connect request
+
+    return connect(params.key, data.video_node_key, data.uid, data.name, data.room_id, data.RoomSid)
 })
 
 var connect = function(video_event_key, video_node_key, uid, name, room_id, RoomSid) {
@@ -109,31 +112,32 @@ would end up 'complete'-ing both the pre-interview room AND the recorded intervi
 on observations I made of the video/video_events table.  I actually saw both rooms closed one right on top of
 the other.
 ***************/
-exports.onStartRecordingRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
-    if(event.data.val().request_type && event.data.val().request_type == "start recording") {
-
+exports.onStartRecordingRequest = functions.database.ref('video/video_events/{key}').onCreate((snapshot2, context) => {
+    var data = snapshot2.val()
+    if(data.request_type && data.request_type == "start recording") {
+        var params = context.params
         var updates = {}
-        updates['video/video_events/'+event.params.key+'/date'] = date.asCentralTime()  // housekeeping: timestamp the event
-        updates['video/video_events/'+event.params.key+'/date_ms'] = date.asMillis()
+        updates['video/video_events/'+params.key+'/date'] = date.asCentralTime()  // housekeeping: timestamp the event
+        updates['video/video_events/'+params.key+'/date_ms'] = date.asMillis()
 
         // disconnect all(both) clients, then 'complete' the room
         // then create the recordable room
         // then connect all(both) clients to the recordable room
-        return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
+        return db.ref().child('video/list/'+data.video_node_key).once('value').then(snapshot => {
             var participants = snapshot.val().video_participants
             _.each(participants, function(p) {
-                updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = date.asCentralTime()
-                updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = date.asMillis()
+                updates['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = date.asCentralTime()
+                updates['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = date.asMillis()
             })
             // clear out any info from a
-            return event.data.adminRef.root.child('/').update(updates).then(() => {
-                return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
+            return db.ref().update(updates).then(() => {
+                return db.ref().child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
                     var host
                     snapshot.forEach(function(child) {host = child.val().host})
-                    twilio_telepatriot.completeRoom(event.data.val().RoomSid,               //  COMPLETE THE CURRENT ROOM....
+                    twilio_telepatriot.completeRoom(data.RoomSid,               //  COMPLETE THE CURRENT ROOM....
                         function(stuff) {
 
-                            var newroom_id = event.data.val().room_id
+                            var newroom_id = data.room_id
                             if(!newroom_id.startsWith('record'))
                                 newroom_id = 'record'+newroom_id
 
@@ -142,33 +146,33 @@ exports.onStartRecordingRequest = functions.database.ref('video/video_events/{ke
                                 // update the video node to reflect recording has started
                                 var up2 = {}
                                 _.each(participants, function(p) {
-                                    up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/connect_date'] = date.asCentralTime()
-                                    up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/connect_date_ms'] = date.asMillis()
-                                    up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = null
-                                    up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = null
+                                    up2['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/connect_date'] = date.asCentralTime()
+                                    up2['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/connect_date_ms'] = date.asMillis()
+                                    up2['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = null
+                                    up2['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = null
                                 })
-                                up2['video/list/'+event.data.val().video_node_key+'/CompositionSid'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/CompositionUri'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/composition_PercentageDone'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/composition_SecondsRemaining'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/composition_Size'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/composition_MediaUri'] = null
+                                up2['video/list/'+data.video_node_key+'/CompositionSid'] = null
+                                up2['video/list/'+data.video_node_key+'/CompositionUri'] = null
+                                up2['video/list/'+data.video_node_key+'/composition_PercentageDone'] = null
+                                up2['video/list/'+data.video_node_key+'/composition_SecondsRemaining'] = null
+                                up2['video/list/'+data.video_node_key+'/composition_Size'] = null
+                                up2['video/list/'+data.video_node_key+'/composition_MediaUri'] = null
 
-                                up2['video/list/'+event.data.val().video_node_key+'/publishing_completed'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/publishing_started'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/publishing_started_ms'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/publishing_stopped'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/publishing_stopped_ms'] = null
+                                up2['video/list/'+data.video_node_key+'/publishing_completed'] = null
+                                up2['video/list/'+data.video_node_key+'/publishing_started'] = null
+                                up2['video/list/'+data.video_node_key+'/publishing_started_ms'] = null
+                                up2['video/list/'+data.video_node_key+'/publishing_stopped'] = null
+                                up2['video/list/'+data.video_node_key+'/publishing_stopped_ms'] = null
 
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_completed'] = null // see also twilio-telepatriot.js:twilioCallback()
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_started'] = date.asCentralTime()
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_started_ms'] = date.asMillis()
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = null
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_stopped_ms'] = null
+                                up2['video/list/'+data.video_node_key+'/recording_completed'] = null // see also twilio-telepatriot.js:twilioCallback()
+                                up2['video/list/'+data.video_node_key+'/recording_started'] = date.asCentralTime()
+                                up2['video/list/'+data.video_node_key+'/recording_started_ms'] = date.asMillis()
+                                up2['video/list/'+data.video_node_key+'/recording_stopped'] = null
+                                up2['video/list/'+data.video_node_key+'/recording_stopped_ms'] = null
 
                                 // this attribute in particular gets picked up by the clients in their figureOutConnectivity() method
-                                up2['video/list/'+event.data.val().video_node_key+'/room_id'] = newroom_id
-                                return event.data.adminRef.root.child('/').update(up2)
+                                up2['video/list/'+data.video_node_key+'/room_id'] = newroom_id
+                                return db.ref().update(up2)
 
                             })
                         }
@@ -186,30 +190,31 @@ exports.onStartRecordingRequest = functions.database.ref('video/video_events/{ke
 
 // "stop recording" = disconnect all participants from the current room and RE-connect them
 // to the room they were in before the recording started.
-exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
-    if(event.data.val().request_type && event.data.val().request_type == "stop recording") {
-
+exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key}').onCreate((snapshot2, context) => {
+    var data = snapshot2.val()
+    if(data.request_type && data.request_type == "stop recording") {
+        var params = context.params
         var updates = {}
-        updates['video/video_events/'+event.params.key+'/date'] = date.asCentralTime()  // housekeeping: timestamp the event
-        updates['video/video_events/'+event.params.key+'/date_ms'] = date.asMillis()
+        updates['video/video_events/'+params.key+'/date'] = date.asCentralTime()  // housekeeping: timestamp the event
+        updates['video/video_events/'+params.key+'/date_ms'] = date.asMillis()
 
         // disconnect all(both) clients, then 'complete' the room
         // then go back to the non-recordable room
         // then connect all(both) clients to the non-recordable room
-        return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snapshot => {
+        return db.ref().child('video/list/'+data.video_node_key).once('value').then(snapshot => {
             var participants = snapshot.val().video_participants
             _.each(participants, function(p) {
-                updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = date.asCentralTime()
-                updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = date.asMillis()
+                updates['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = date.asCentralTime()
+                updates['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = date.asMillis()
             })
-            return event.data.adminRef.root.child('/').update(updates).then(() => {
-                return event.data.adminRef.root.child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
+            return db.ref().update(updates).then(() => {
+                return db.ref().child('administration/hosts').orderByChild('type').equalTo('firebase functions').once('value').then(snapshot => {
                     var host
                     snapshot.forEach(function(child) {host = child.val().host})
-                    twilio_telepatriot.completeRoom(event.data.val().RoomSid,               //  COMPLETE THE CURRENT ROOM....
+                    twilio_telepatriot.completeRoom(data.RoomSid,               //  COMPLETE THE CURRENT ROOM....
                         function(stuff) {
 
-                            var newroom_id = event.data.val().room_id
+                            var newroom_id = data.room_id
                             if(newroom_id.startsWith('record'))
                                 newroom_id = newroom_id.substring('record'.length)
 
@@ -217,19 +222,19 @@ exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key
 
                                 var up2 = {}
                                 _.each(participants, function(p) {
-                                    up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/connect_date'] = date.asCentralTime()
-                                    up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/connect_date_ms'] = date.asMillis()
-                                    up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = null
-                                    up2['video/list/'+event.data.val().video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = null
+                                    up2['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/connect_date'] = date.asCentralTime()
+                                    up2['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/connect_date_ms'] = date.asMillis()
+                                    up2['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/disconnect_date'] = null
+                                    up2['video/list/'+data.video_node_key+'/video_participants/'+p.uid+'/disconnect_date_ms'] = null
                                 })
                                 // update the video node to reflect recording has stopped
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_stopped'] = date.asCentralTime()
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_stopped_ms'] = date.asMillis()
+                                up2['video/list/'+data.video_node_key+'/recording_stopped'] = date.asCentralTime()
+                                up2['video/list/'+data.video_node_key+'/recording_stopped_ms'] = date.asMillis()
 
                                 // this attribute in particular gets picked up by the clients in their figureOutConnectivity() method
-                                up2['video/list/'+event.data.val().video_node_key+'/room_id'] = newroom_id
-                                up2['video/list/'+event.data.val().video_node_key+'/recording_completed'] = true // see also twilio-telepatriot.js:twilioCallback()
-                                return event.data.adminRef.root.child('/').update(up2)
+                                up2['video/list/'+data.video_node_key+'/room_id'] = newroom_id
+                                up2['video/list/'+data.video_node_key+'/recording_completed'] = true // see also twilio-telepatriot.js:twilioCallback()
+                                return db.ref().update(up2)
 
                                 // don't mess with the connect and disconnect date on the video_participants.  Those values make the mobile
                                 // clients connect and disconnect to rooms.  But in the case of recordings, we have another way of making the disconnect/connect
@@ -253,18 +258,19 @@ exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key
 // TODO soon we'll decouple the composition from the publishing because we now capture the details of the composed media file
 // in twilio-telepatriot.js:twilioCallback "composition-available" block
 // TODO make VideoEvent pass in composition_MediaUri if it's available
-exports.onPublishRequested = functions.database.ref('video/video_events/{key}').onCreate(event => {
-    if(event.data.val().request_type && event.data.val().request_type == "start publishing") {
+exports.onPublishRequested = functions.database.ref('video/video_events/{key}').onCreate((snapshot2, context) => {
+    var data = snapshot2.val()
+    if(data.request_type && data.request_type == "start publishing") {
 
         // housekeeping: timestamp the event and clear out "ready_to_send_emails" because onReadyToSendEmails()
         // only fires when ready_to_send_emails is created
         var upd = {}
         upd['video/video_events/date'] = date.asCentralTime()
         upd['video/video_events/date_ms'] = date.asMillis()
-        upd['video/list/'+event.data.val().video_node_key+'/ready_to_send_emails'] = null
-        event.data.adminRef.root.child('/').update(upd)
+        upd['video/list/'+data.video_node_key+'/ready_to_send_emails'] = null
+        db.ref().update(upd)
 
-        return event.data.adminRef.root.child('administration/hosts').once('value').then(snapshot => {
+        return db.ref().child('administration/hosts').once('value').then(snapshot => {
             var vmHost
             var vmPort
             var firebaseServer
@@ -279,16 +285,16 @@ exports.onPublishRequested = functions.database.ref('video/video_events/{key}').
             })
 
             // means the composed file has already been created
-            if(event.data.val().MediaUri) {
+            if(data.MediaUri) {
                 console.log('PUBLISHING A MEDIA FILE THAT HAS ALREADY BEEN COMPOSED :)')
-                return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key).once('value').then(snap4 => {
+                return db.ref().child('video/list/'+data.video_node_key).once('value').then(snap4 => {
 
-                    return event.data.adminRef.root.child('api_tokens').once('value').then(snap2 => {
+                    return db.ref().child('api_tokens').once('value').then(snap2 => {
                         var formData = {
                            twilio_account_sid: snap2.val().twilio_account_sid,
                            twilio_auth_token: snap2.val().twilio_auth_token,
                            domain: 'video.twilio.com',
-                           MediaUri: event.data.val().MediaUri,
+                           MediaUri: data.MediaUri,
                            CompositionSid: snap4.val().CompositionSid,
                            Ttl: 6000,
                            firebaseServer: firebaseServer,
@@ -297,8 +303,8 @@ exports.onPublishRequested = functions.database.ref('video/video_events/{key}').
                            youtube_video_description: snap4.val().youtube_video_description,
                            keywords: 'Convention of States Project',
                            privacyStatus: 'unlisted',
-                           video_node_key: event.data.val().video_node_key,
-                           uid: event.data.val().uid
+                           video_node_key: data.video_node_key,
+                           uid: data.uid
                         };
 
                         twilio_telepatriot.publish({host: vmHost, port: vmPort, formData: formData})
@@ -314,7 +320,7 @@ exports.onPublishRequested = functions.database.ref('video/video_events/{key}').
                 */ }
 
                 return twilio_telepatriot.compose({
-                    room_sid: event.data.val().RoomSid, // In the VideoNode class, this is actuall room_sid_record
+                    room_sid: data.RoomSid, // In the VideoNode class, this is actuall room_sid_record
                     host: firebaseServer,
                     callback: callback
                 })
@@ -328,26 +334,29 @@ exports.onPublishRequested = functions.database.ref('video/video_events/{key}').
 })
 
 
-exports.onRevokeInvitation = functions.database.ref('video/video_events/{key}').onCreate(event => {
-    if(event.data.val().request_type && event.data.val().request_type == "revoke invitation") {
+exports.onRevokeInvitation = functions.database.ref('video/video_events/{key}').onCreate((snapshot2, context) => {
+    var data = snapshot2.val()
+    if(data.request_type && data.request_type == "revoke invitation") {
         var updates = {}
-        var guest_id = event.data.val().video_invitation_key.substring(event.data.val().video_invitation_key.indexOf('guest')+'guest'.length)
-        updates['video/list/'+event.data.val().video_node_key+'/video_invitation_key'] = null
-        updates['video/list/'+event.data.val().video_node_key+'/video_participants/'+guest_id] = null
-        updates['video/list/'+event.data.val().video_node_key+'/video_invitation_extended_to'] = null
-        updates['video/invitations/'+event.data.val().video_invitation_key] = null
+        var guest_id = data.video_invitation_key.substring(data.video_invitation_key.indexOf('guest')+'guest'.length)
+        updates['video/list/'+data.video_node_key+'/video_invitation_key'] = null
+        updates['video/list/'+data.video_node_key+'/video_participants/'+guest_id] = null
+        updates['video/list/'+data.video_node_key+'/video_invitation_extended_to'] = null
+        updates['video/invitations/'+data.video_invitation_key] = null
         updates['users/'+guest_id+'/current_video_node_key'] = null
-        return event.data.adminRef.root.child('/').update(updates)
+        return db.ref().update(updates)
     }
     else return false
 })
 
 
 
-exports.onDisconnectRequest = functions.database.ref('video/video_events/{key}').onCreate(event => {
-    if(!event.data.val().request_type) return false //ignore malformed
-    if(event.data.val().request_type != 'disconnect request') return false //ignore, not a connect request
-    return disconnect(event.data.adminRef, event.params.key, event.data.val().video_node_key, event.data.val().uid, event.data.val().room_id)
+exports.onDisconnectRequest = functions.database.ref('video/video_events/{key}').onCreate((snapshot2, context) => {
+    var data = snapshot2.val()
+    if(!data.request_type) return false //ignore malformed
+    if(data.request_type != 'disconnect request') return false //ignore, not a connect request
+    var params = context.params
+    return disconnect(db.ref(), params.key, data.video_node_key, data.uid, data.room_id)
 })
 
 var disconnect = function(adminRef, video_event_key, video_node_key, uid, room_id) {
@@ -360,7 +369,7 @@ var disconnect = function(adminRef, video_event_key, video_node_key, uid, room_i
 
 
     // first, query for all video_participants under the video_node_key.  We will disconnect them all right here
-    return adminRef.root.child('video/list/'+video_node_key).once('value').then(snapshot => {
+    return adminRef.child('video/list/'+video_node_key).once('value').then(snapshot => {
         var wasRecording = snapshot.val().recording_started && !snapshot.val().recording_stopped
         if(wasRecording) {
             // Also need to figure out if we were recording so we can stop the recording...
@@ -388,7 +397,7 @@ var disconnect = function(adminRef, video_event_key, video_node_key, uid, room_i
         var room_sid = snapshot.val().room_sid
 
         // the mobile client will detect 'disconnect_date' which causes the client to actually disconnect from the room
-        return adminRef.root.child('/').update(updates).then(() => {
+        return adminRef.update(updates).then(() => {
             // now 'complete' the room...
             twilio_telepatriot.completeRoom(room_sid, function(stuff) {/*do anything?*/})
             // return the participants because onStartRecording needs them so that function can automatically
@@ -400,14 +409,14 @@ var disconnect = function(adminRef, video_event_key, video_node_key, uid, room_i
 }
 
 
-exports.onTwilioEvent = functions.database.ref('video/video_events/{key}').onCreate(event => {
-    if(!event.data.val().StatusCallbackEvent)
+exports.onTwilioEvent = functions.database.ref('video/video_events/{key}').onCreate((snapshot2, context) => {
+    if(!snapshot2.val().StatusCallbackEvent)
         return false //ignore malformed
-
+    var params = context.params
     var updates = {}
-    updates['video/video_events/'+event.params.key+'/date'] = date.asCentralTime()
-    updates['video/video_events/'+event.params.key+'/date_ms'] = date.asMillis()
-    return event.data.adminRef.root.child('/').update(updates)
+    updates['video/video_events/'+params.key+'/date'] = date.asCentralTime()
+    updates['video/video_events/'+params.key+'/date_ms'] = date.asMillis()
+    return db.ref().update(updates)
 })
 
 
@@ -422,13 +431,14 @@ exports.testViewVideoEvents = functions.https.onRequest((req, res) => {
 // WHENEVER A TWILIO ROOM IS CREATED, We have to associate our room_id with twilio's room_sid so that
 // when we need to 'complete' the room later, we will be able to look up the room_sid having only the room_id available
 // We delete the room_sid in twilioCallback:the "room-ended" else-if block
-exports.onRoomCreated = functions.database.ref('video/video_events/{key}/StatusCallbackEvent').onWrite(event => {
-    if(event.data.val() && event.data.val() == 'room-created') {
-        return event.data.adminRef.root.child('video/video_events/'+event.params.key).once('value').then(snapshot => {
+exports.onRoomCreated = functions.database.ref('video/video_events/{key}/StatusCallbackEvent').onWrite((change, context) => {
+    if(change.after.val() && change.after.val() == 'room-created') {
+        var params = context.params
+        return db.ref().child('video/video_events/'+params.key).once('value').then(snapshot => {
             var room_id = snapshot.val().RoomName
             var room_sid = snapshot.val().RoomSid
             var video_node_key = room_id.startsWith('record') ? room_id.substring('record'.length) : room_id
-            return event.data.adminRef.root.child('video/list/'+video_node_key+'/room_sid').set(room_sid)
+            return db.ref().child('video/list/'+video_node_key+'/room_sid').set(room_sid)
         })
     }
     else return false
@@ -436,10 +446,11 @@ exports.onRoomCreated = functions.database.ref('video/video_events/{key}/StatusC
 
 
 // re-calc the twilio token when the room_id changes
-exports.onRoomIdChange = functions.database.ref('video/list/{key}/room_id').onWrite(event => {
+exports.onRoomIdChange = functions.database.ref('video/list/{key}/room_id').onWrite((change, context) => {
     // only care when room_id changes...
-    if(event.data.val() && event.data.previous.val() && event.data.val() != event.data.previous.val()) {
-        return event.data.adminRef.root.child('video/list/'+event.params.key+'/video_participants').once('value').then(snapshot => {
+    if(change.after.val() && change.before.val() && change.after.val() != change.before.val()) {
+        var params = context.params
+        return db.ref().child('video/list/'+params.key+'/video_participants').once('value').then(snapshot => {
 
             // Need to keep 2 separate tokens - one for the recordable room, the other for the non-recordable room
             // Why?  Because of trigger timing.  Observed during stop recording that the user was disconnected from
@@ -448,25 +459,14 @@ exports.onRoomIdChange = functions.database.ref('video/list/{key}/room_id').onWr
             // This trigger here hadn't updated the 'twilio_token' attribute by the time we needed it.  -what a hassle,
             // because this filters all the way down to the clients and they have to figure out in their doConnect()
             // methods: are they connecting to a recordable room or a non-recordable room
-            var attr = event.data.val().startsWith('record') ? 'twilio_token_record' : 'twilio_token'
+            var attr = change.after.val().startsWith('record') ? 'twilio_token_record' : 'twilio_token'
             var updates = {}
             snapshot.forEach(function(child) {
 
                 // we put this attribute on each participant because this is really the only way to generate
                 // several twilio tokens.  This attribute causes another trigger to fire - onTokenRequested (below)
-                child.ref.update({token_requested: {token_name: attr, room_id: event.data.val(), name: child.val().name}})
+                child.ref.update({token_requested: {token_name: attr, room_id: change.after.val(), name: child.val().name}})
 
-//                var stuff = {name: child.val().name, room_id: event.data.val()}
-//
-//                twilio_telepatriot.generateTwilioToken(stuff).then(token => {
-//                    var updates = {}
-//                    // needed by doConnect in VidyoChatFragment and VideoChatVC
-//                    /****
-//                    YOU CAN'T HAVE A CALLBACK INSIDE A LOOP !!!!!!!!!
-//                    ****/
-//                    updates['video/list/'+event.params.key+'/video_participants/'+child.val().uid+'/'+attr] = token
-//                    db.ref('/').update(updates)
-//                })
             })
 
         })
@@ -477,17 +477,19 @@ exports.onRoomIdChange = functions.database.ref('video/list/{key}/room_id').onWr
 
 
 // triggered by onRoomIdChange()
-exports.onTokenRequested = functions.database.ref('video/list/{key}/video_participants/{uid}/token_requested').onCreate(event => {
+exports.onTokenRequested = functions.database.ref('video/list/{key}/video_participants/{uid}/token_requested').onCreate((snapshot, context) => {
 
-    var stuff = {room_id: event.data.val().room_id,
-                 name: event.data.val().name}
+    var stuff = {room_id: snapshot.val().room_id,
+                 name: snapshot.val().name}
+
+    var params = context.params
 
     return twilio_telepatriot.generateTwilioToken(stuff).then(token => {
         var updates = {}
         // needed by doConnect in VidyoChatFragment and VideoChatVC
-        updates['video/list/'+event.params.key+'/video_participants/'+event.params.uid+'/'+event.data.val().token_name] = token
+        updates['video/list/'+params.key+'/video_participants/'+params.uid+'/'+snapshot.val().token_name] = token
         // erase the request now that it's been fulfilled
-        updates['video/list/'+event.params.key+'/video_participants/'+event.params.uid+'/token_requested'] = null
+        updates['video/list/'+params.key+'/video_participants/'+params.uid+'/token_requested'] = null
         return db.ref('/').update(updates)
     })
 })
