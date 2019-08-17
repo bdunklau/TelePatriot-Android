@@ -56,9 +56,10 @@ exports.testTweet = functions.https.onRequest((req, res) => {
 
 // just doing onCreate to try to make the logic simpler
 // facebook.js has a corresponding trigger: onFacebookPostId()
-exports.onTwitterPostId = functions.database.ref('video/list/{video_node_key}/twitter_post_id').onCreate(event => {
+exports.onTwitterPostId = functions.database.ref('video/list/{video_node_key}/twitter_post_id').onCreate((snap, context) => {
     // now see if we're supposed to post to FB also, and if we are, do we have the FB post id yet?...
-    return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
+    var params = context.params
+    return db.ref().child('video/list/'+params.video_node_key).once('value').then(snapshot => {
         var fbPostExists = snapshot.val().facebook_post_id
         var fbPostNotRequired = !snapshot.val().post_to_facebook
         var readyToSendEmails = fbPostExists || fbPostNotRequired
@@ -70,9 +71,9 @@ exports.onTwitterPostId = functions.database.ref('video/list/{video_node_key}/tw
 
 
 // This is the function that actually does the tweeting
-exports.handleTweetRequest = functions.database.ref('tweet_requests/{key}').onWrite(event => {
-    if(!event.data.val() && event.data.previous.val()) return false // ignore deleted rows
-    return tweet({tweet_request: event.data.val(), video_node_key: event.data.val().video_node_key})
+exports.handleTweetRequest = functions.database.ref('tweet_requests/{key}').onWrite((change, context) => {
+    if(!change.after.val() && change.before.val()) return false // ignore deleted rows
+    return tweet({tweet_request: change.after.val(), video_node_key: change.after.val().video_node_key})
 })
 
 

@@ -67,38 +67,39 @@ var getUserList = function(stuff) {
 // Otherwise, we would have to write a "compound key" node containing user id and date_ms
 // But sorting on user_id-date_ms isn't guaranteed to preserve the chronological order of the
 // log entries
-exports.logByUser = functions.database.ref('log/all-logs/{key}').onCreate(event => {
-    if(!event.data.val().uid || event.data.val().uid == 'uid not available')
+exports.logByUser = functions.database.ref('log/all-logs/{key}').onCreate((snapshot, context) => {
+    var data = snapshot.val()
+    if(!data.uid || data.uid == 'uid not available')
         return false    // See User.getUid() and TPUser.getUid() for 'uid not available'
 
-    var entry = {uid: event.data.val().uid,
-                name: event.data.val().name,
-                class: event.data.val().class,
-                method: event.data.val().method,
-                message: event.data.val().message,
-                level: event.data.val().level,
-                date_ms: event.data.val().date_ms,
-                date: event.data.val().date  }
+    var entry = {uid: data.uid,
+                name: data.name,
+                class: data.class,
+                method: data.method,
+                message: data.message,
+                level: data.level,
+                date_ms: data.date_ms,
+                date: data.date  }
 
-    var key = db.ref('log/by-user').child(event.data.val().uid).push().getKey()
+    var key = db.ref('log/by-user').child(data.uid).push().getKey()
     var updates = {}
-    updates['log/by-user/'+event.data.val().uid+'/'+key+'/uid'] = event.data.val().uid
-    updates['log/by-user/'+event.data.val().uid+'/'+key+'/class'] = event.data.val().class
-    updates['log/by-user/'+event.data.val().uid+'/'+key+'/method'] = event.data.val().method
-    updates['log/by-user/'+event.data.val().uid+'/'+key+'/message'] = event.data.val().message
-    updates['log/by-user/'+event.data.val().uid+'/'+key+'/level'] = event.data.val().level
-    updates['log/by-user/'+event.data.val().uid+'/'+key+'/date'] = event.data.val().date
-    updates['log/by-user/'+event.data.val().uid+'/'+key+'/date_ms'] = event.data.val().date_ms
-    if(event.data.val().name) {
-        updates['log/by-user/'+event.data.val().uid+'/'+key+'/name'] = event.data.val().name
-        updates['log/user-list/'+event.data.val().uid+'/name'] = event.data.val().name
-        updates['log/user-list/'+event.data.val().uid+'/name_lower'] = event.data.val().name.toLowerCase()
+    updates['log/by-user/'+data.uid+'/'+key+'/uid'] = data.uid
+    updates['log/by-user/'+data.uid+'/'+key+'/class'] = data.class
+    updates['log/by-user/'+data.uid+'/'+key+'/method'] = data.method
+    updates['log/by-user/'+data.uid+'/'+key+'/message'] = data.message
+    updates['log/by-user/'+data.uid+'/'+key+'/level'] = data.level
+    updates['log/by-user/'+data.uid+'/'+key+'/date'] = data.date
+    updates['log/by-user/'+data.uid+'/'+key+'/date_ms'] = data.date_ms
+    if(data.name) {
+        updates['log/by-user/'+data.uid+'/'+key+'/name'] = data.name
+        updates['log/user-list/'+data.uid+'/name'] = data.name
+        updates['log/user-list/'+data.uid+'/name_lower'] = data.name.toLowerCase()
     } else {
-        updates['log/by-user/'+event.data.val().uid+'/'+key+'/name'] = 'undefined'
-        updates['log/user-list/'+event.data.val().uid+'/name'] = 'undefined'
-        updates['log/user-list/'+event.data.val().uid+'/name_lower'] = 'undefined'
+        updates['log/by-user/'+data.uid+'/'+key+'/name'] = 'undefined'
+        updates['log/user-list/'+data.uid+'/name'] = 'undefined'
+        updates['log/user-list/'+data.uid+'/name_lower'] = 'undefined'
     }
-    updates['log/user-list/'+event.data.val().uid+'/updated_ms'] = event.data.val().date_ms
+    updates['log/user-list/'+data.uid+'/updated_ms'] = data.date_ms
     return db.ref('/').update(updates);
 })
 

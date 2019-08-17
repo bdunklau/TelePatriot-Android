@@ -1,24 +1,41 @@
+
+// https://firebase.google.com/docs/functions/beta-v1-diff
+
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
-admin.initializeApp(functions.config().firebase)
+admin.initializeApp()
 
 const onmessage = require('./onMessage')
-const deleteModule = require('./userDeleted')
-const notifications = require('./notifications')
-const topics = require('./topics')
+exports.pushMessages = onmessage.pushMessages
 
-exports.messagestuff = onmessage.pushMessages
-exports.userDeleted = deleteModule.deleteUserAccount
+const userDeleted = require('./userDeleted')
+exports.userDeleted = userDeleted.deleteUserAccount
+
+const notifications = require('./notifications')
 exports.notifyUserCreated = notifications.notifyUserCreated
+
+const topics = require('./topics')
 exports.topicCreated = topics.topicCreated
 exports.topicDeleted = topics.topicDeleted
 
 // dev deploy: 3/29/19,
 // prod deploy: 3/29/19
-const createModule = require('./userCreated')
-exports.userCreated = createModule.userCreated
-exports.onCitizenBuilderId = createModule.onCitizenBuilderId
+const userCreated = require('./userCreated')
+exports.userCreated = userCreated.userCreated
+exports.onCitizenBuilderId = userCreated.onCitizenBuilderId
 
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:pushMessages,functions:userDeleted,functions:notifyUserCreated,functions:topicCreated,functions:topicDeleted,functions:userCreated,functions:onCitizenBuilderId
+
+****/
+
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:addAttributeToChildren,functions:archive,functions:checkUsers,functions:insert,functions:update,functions:selectDistinct,functions:query,functions:queryActive,functions:queryInactive,functions:copy,functions:deleteNodes,functions:deleteAttributes
+
+****/
 
 // prod deploy: 9/12/18, 9/20/18
 const dbadmin = require('./dbadmin')
@@ -36,12 +53,24 @@ exports.deleteNodes = dbadmin.deleteNodes
 exports.deleteAttributes = dbadmin.deleteAttributes
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:updateLegal,functions:updateUser
+****/
+
 // dev deploy: 1/2/19
 // prod deploy: 1/3/19
 const updateUser = require('./updateUser')
 //exports.onUserUpdated = updateUser.onUserUpdated
 exports.updateLegal = updateUser.updateLegal
 exports.updateUser = updateUser.updateUser
+
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:downloadUsers,functions:manageUsers,functions:updateUser,functions:temp_not_pop,functions:temp_not_pop2,functions:temp_call_volunteers
+****/
 
 // dev deploy: 11/8/18, 12/1/18
 // prod deploy: 11/8/18, 12/1/18
@@ -53,6 +82,11 @@ exports.temp_not_pop = userList.temp_not_pop
 exports.temp_not_pop2 = userList.temp_not_pop2
 exports.temp_call_volunteers = userList.temp_call_volunteers
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testEmail,functions:testEmail2,functions:renderEmail,functions:renderEmail2,functions:saveEmail,functions:saveEmail2,functions:testSendEmail,functions:testSendEmail2,functions:chooseEmailType,functions:chooseEmailType2,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
+****/
 // prod deploy: 9/12/18, 9/20/18
 const email = require('./email')
 exports.testEmail = email.testEmail
@@ -69,6 +103,11 @@ exports.onReadyToSendEmails = email.onReadyToSendEmails
 exports.testOnReadyToSendEmails = email.testOnReadyToSendEmails
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:downloadFromOpenStates,functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData
+****/
 // prod deploy: 9/12/18, 9/20/18
 const legislators = require('./legislators')
 exports.downloadFromOpenStates = legislators.downloadFromOpenStates
@@ -91,6 +130,11 @@ exports.testUpdateSocialMedia = legislators.testUpdateSocialMedia
 exports.overwriteBadWithGoodData = legislators.overwriteBadWithGoodData
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:civic,functions:loadDivisions,functions:loadDivisionsTrigger,functions:loadDivisionsAllStates,functions:listDivisions,functions:listOfficials,functions:loadOfficials,functions:unloadOfficials,functions:unloadDivisions,functions:onOfficialUrl
+****/
 // prod deploy: 9/12/18, 9/20/18
 const civic = require('./google-civic')
 exports.civic = civic.civic
@@ -104,6 +148,11 @@ exports.unloadOfficials = civic.unloadOfficials
 exports.unloadDivisions = civic.unloadDivisions
 exports.onOfficialUrl = civic.onOfficialUrl
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:districtMapper,functions:mapOpenStatesToGoogleCivic,functions:mapGoogleCivicToOpenStates,functions:checkGoogleCivicDivision
+****/
 // prod deploy: 9/12/18, 9/20/18
 const districtMapper = require('./map-districts')
 exports.districtMapper = districtMapper.districtMapper
@@ -111,6 +160,11 @@ exports.mapOpenStatesToGoogleCivic = districtMapper.mapOpenStatesToGoogleCivic
 exports.mapGoogleCivicToOpenStates = districtMapper.mapGoogleCivicToOpenStates
 exports.checkGoogleCivicDivision = districtMapper.checkGoogleCivicDivision
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:officialMapper,functions:osToCivicOfficials,functions:tryLoadingOfficialsAgain
+****/
 // prod deploy: 9/12/18, 9/20/18
 const officialMapper = require('./map-officials')
 exports.officialMapper = officialMapper.officialMapper
@@ -118,18 +172,38 @@ exports.osToCivicOfficials = officialMapper.osToCivicOfficials
 exports.tryLoadingOfficialsAgain = officialMapper.tryLoadingOfficialsAgain
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testApi
+****/
 const testing = require('./test/testing')
 exports.testApi = testing.testApi
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:amiready
+****/
 const amiready = require('./user-amiready')
 exports.amiready = amiready.amiready
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:video_processing_callback,functions:video_processing_complete
+****/
 // prod deploy: 9/12/18, 9/20/18
 const youtube_subscribe = require('./youtube-subscribe')
 exports.video_processing_callback = youtube_subscribe.video_processing_callback
 exports.video_processing_complete = youtube_subscribe.video_processing_complete
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:twitter,functions:testTweet,functions:callback_from_twitter,functions:handleTweetRequest,functions:onTwitterPostId
+****/
 // prod deploy: 9/12/18, 9/20/18
 const twitter = require('./twitter')
 exports.twitter = twitter.twitter
@@ -139,6 +213,11 @@ exports.handleTweetRequest = twitter.handleTweetRequest
 exports.onTwitterPostId = twitter.onTwitterPostId
 //exports.deleteTweet = twitter.deleteTweet  // not supported, don't think
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:facebook,functions:testPostFacebook,functions:handleFacebookRequest,functions:triggerComment,functions:onFacebookPostId
+****/
 // prod deploy: 9/12/18, 9/20/18
 const facebook = require('./facebook')
 exports.facebook = facebook.facebook
@@ -147,11 +226,21 @@ exports.handleFacebookRequest = facebook.handleFacebookRequest
 exports.triggerComment = facebook.triggerComment
 exports.onFacebookPostId = facebook.onFacebookPostId
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:dbg,functions:dbgKeys,functions:dbgKeyValues
+****/
 const debug = require('./debug')
 exports.dbg = debug.dbg
 exports.dbgKeys = debug.dbgKeys
 exports.dbgKeyValues = debug.dbgKeyValues
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:listVideoTypes,functions:testSaveVideoType,functions:testSendLegislatorEmail,functions:testPreviewLegislatorEmail
+****/
 // prod deploy: 9/12/18, 9/20/18
 const videoTypes = require('./video-types')
 exports.listVideoTypes = videoTypes.listVideoTypes
@@ -159,6 +248,11 @@ exports.testSaveVideoType = videoTypes.testSaveVideoType
 exports.testSendLegislatorEmail = videoTypes.testSendLegislatorEmail
 exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:onConnectRequest,functions:onDisconnectRequest,functions:testViewVideoEvents,functions:onTwilioEvent,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
+****/
 // prod deploy: 9/12/18, 9/20/18, 10/29/18
 const switchboard = require('./switchboard')
 exports.onConnectRequest = switchboard.onConnectRequest
@@ -174,6 +268,11 @@ exports.onTokenRequested = switchboard.onTokenRequested
 exports.onPublishRequested = switchboard.onPublishRequested
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testTwilioToken,functions:twilioCallback,functions:testCreateRoom,functions:testListRooms,functions:testRetrieveRoom,functions:testCompleteRoom,functions:testListParticipants,functions:testCompose
+****/
 // prod deploy: 12/12/18
 const twilio = require('./twilio-telepatriot')
 exports.testTwilioToken = twilio.testTwilioToken
@@ -185,6 +284,11 @@ exports.testCompleteRoom = twilio.testCompleteRoom
 exports.testListParticipants = twilio.testListParticipants
 exports.testCompose = twilio.testCompose
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:videoListMain,functions:testSelectVideoNode,functions:testSaveEmailTemplates,functions:testReevaluateEmailAttributes
+****/
 // prod deploy: 9/12/18, 9/20/18
 // prod deploy: 12/12/18
 const videoList = require('./video-list')
@@ -193,6 +297,11 @@ exports.testSelectVideoNode = videoList.testSelectVideoNode
 exports.testSaveEmailTemplates = videoList.testSaveEmailTemplates
 exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:checkLegal,functions:timestampCbApiEvent,functions:onResponseFromLegal,functions:timestampLegalResponses,functions:timestampLoginResponses
+****/
 // dev deploy: 1/16/19
 // prod deploy: 1/16/19
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
@@ -202,17 +311,32 @@ exports.onResponseFromLegal = checkVolunteerStatus.onResponseFromLegal
 exports.timestampLegalResponses = checkVolunteerStatus.timestampLegalResponses
 exports.timestampLoginResponses = checkVolunteerStatus.timestampLoginResponses
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testVolunteers,functions:onLogin
+****/
 // dev deploy: 1/16/19
 // prod deploy: 1/16/19
 const volunteers = require('./citizen_builder_api/volunteers')
 exports.testVolunteers = volunteers.testVolunteers
 exports.onLogin = volunteers.onLogin
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testPersonTeams
+****/
 // dev deploy: 11/3/18
 // prod deploy: 12/12/18
 const person_teams = require('./citizen_builder_api/teams-person_teams')
 exports.testPersonTeams = person_teams.testPersonTeams
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testTeamMissions,functions:createMission
+****/
 // dev deploy: 11/3/18
 // prod deploy: 12/12/18
 const cb_missions = require('./citizen_builder_api/missions')
@@ -220,11 +344,21 @@ exports.testTeamMissions = cb_missions.testTeamMissions
 exports.createMission = cb_missions.createMission
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:onVideoOffer
+****/
 // prod deploy: 9/12/18, 9/20/18
 // prod deploy: 12/12/18
 const videoOffers = require('./video-offers')
 exports.onVideoOffer = videoOffers.onVideoOffer
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:geocodeMain,functions:testLookupLatLong,functions:testLookupDistrict
+****/
 // prod deploy: 9/12/18, 9/20/18
 // prod deploy: 12/12/18
 const geocode = require('./geocode')
@@ -232,17 +366,32 @@ exports.geocodeMain = geocode.geocodeMain
 exports.testLookupLatLong = geocode.testLookupLatLong
 exports.testLookupDistrict = geocode.testLookupDistrict
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testConfiguration
+****/
 // dev deploy: 12/22/18
 // prod deploy: 12/22/18
 const configure = require('./configure')
 exports.testConfiguration = configure.testConfiguration
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testViewCBAPIEvents
+****/
 // dev deploy:  11/4/18
 // prod deploy: 12/12/18
 const cb_api_events = require('./citizen_builder_api/cb_api_events')
 exports.testViewCBAPIEvents = cb_api_events.testViewCBAPIEvents
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testRoleApiForm,functions:testRoleApi,functions:api_add_role,functions:api_remove_role
+****/
 // dev deploy: 12/11/18
 // prod deploy: 12/12/18
 const role_api = require('./telepatriot_api/role_api')
@@ -252,6 +401,11 @@ exports.api_add_role = role_api.api_add_role
 exports.api_remove_role = role_api.api_remove_role
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testAccountDisposition,functions:api_account_disposition
+****/
 // dev deploy: 12/11/18
 // prod deploy: 12/12/18
 const account_api = require('./telepatriot_api/account_api')
@@ -259,6 +413,11 @@ exports.testAccountDisposition = account_api.testAccountDisposition
 exports.api_account_disposition = account_api.api_account_disposition
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:testLog,functions:logByUser,functions:propTaxRally
+****/
 // dev deploy: 3/8/19
 // prod deploy: 3/8/19
 const applog = require('./log')
@@ -269,12 +428,22 @@ exports.propTaxRally = applog.propTaxRally
 const downloadApk = require('./download-apk')
 exports.downloadApk = downloadApk.downloadApk
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:onCallNotesCreated
+****/
 // dev deploy:  3/20/19
 // prod deploy: 3/21/19
 const call_notes = require('./call_notes')
 exports.onCallNotesCreated = call_notes.onCallNotesCreated
 
 
+
+/***
+dev deploy 4/22/19
+// firebase deploy --only functions:recording_has_started,functions:whenVideoIdIsCreated,functions:socialMediaPostsCreated,functions:onLegislatorChosen,functions:onParticipantAdded,functions:onParticipantRemoved
+****/
 // MIGHT KEEP SOME OF THIS...
 const googleCloud = require('./google-cloud')
 exports.recording_has_started = googleCloud.recording_has_started

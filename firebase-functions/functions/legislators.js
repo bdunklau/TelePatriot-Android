@@ -670,16 +670,15 @@ exports.loadOpenStatesDistricts = functions.https.onRequest((req, res) => {
 // so that we can grab the stuff from there that OpenStates doesn't capture like social media channels
 // and photo url
 // OBVIOUSLY, GOOGLE CIVIC DATA HAS TO BE LOADED FIRST IN ORDER FOR THIS FUNCTION TO DO ANYTHING
-exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").onWrite(
-    event => {
+exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").onWrite((change, context) => {
 
-    if(event.data.previous.exists())
+    if(change.before.exists())
         return false // we write to this node below, so we don't want to recursively trigger this function
 
     // have to take the leg_id and query /states/districts/[key]/legislators for the same leg_id
 
-    var key = event.params.key // TXL0000033
-    var legislatorNode = event.data.val()
+    var key = context.params.key // TXL0000033
+    var legislatorNode = change.after.val()
             //db.ref('templog2').push().set({'state_chamber_district':legislatorNode.state_chamber_district})
 
     return db.ref('states/districts/'+legislatorNode.state_chamber_district).once('value').then(snapshot => {
@@ -756,26 +755,26 @@ For iOS and maybe Android too, to open the FB app directly to the legislator's p
 the legislator's FB ID.  The username is not enough.  The only way I've found so far (5/18/18) to look up someone's
 FB ID is to do an http get on their page and then look through the response for either: 'fb://page/?id='  or 'fb://profile/'
 *******************************************/
-exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/channels/{idx}').onWrite(event => {
-    var legId = event.params.legId // TXL0000033
+exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/channels/{idx}').onWrite((change, context) => {
+    var legId = context.params.legId // TXL0000033
 
     //quit early when this node is deleted
-    if(!event.data.exists()) {
-        if(legId == 'TXL000690') event.data.adminRef.root.child('templog2').set({facebook_lookup_error: event.data.val()})
+    if(!change.after.exists()) {
+        if(legId == 'TXL000690') db.ref().child('templog2').set({facebook_lookup_error: change.after.val()})
         return false
     }
 
-    if(!event.data.val().type || event.data.val().type.toLowerCase() != 'facebook')
+    if(!change.after.val().type || change.after.val().type.toLowerCase() != 'facebook')
         return false
 
-    var channelIdx = event.params.idx  // i.e.  0, 1, 2,...
-    var channelNode = event.data.val()
+    var channelIdx = context.params.idx  // i.e.  0, 1, 2,...
+    var channelNode = change.after.val()
     if(!channelNode.type || channelNode.type.toLowerCase() != 'facebook') {
-        event.data.adminRef.root.child('templog2').set({facebook_lookup_error: channelNode})
+        db.ref().child('templog2').set({facebook_lookup_error: channelNode})
         return false
     }
     if(channelNode.facebook_id || channelNode.facebook_lookup_error) {
-        if(legId == 'TXL000690') event.data.adminRef.root.child('templog2').set({facebook_lookup_error: 'channelNode.facebook_id || channelNode.facebook_lookup_error'})
+        if(legId == 'TXL000690') db.ref().child('templog2').set({facebook_lookup_error: 'channelNode.facebook_id || channelNode.facebook_lookup_error'})
         return false // if it already exists, quit.  Otherwise, we'll cause infinite recursive trigger
     }
     var fbname = channelNode.id
@@ -790,7 +789,7 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
 
     return request(options, function(error, response, body) {
         if(error)
-            return event.data.adminRef.root.child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_lookup_error').set(error)
+            return db.ref().child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_lookup_error').set(error)
         var lookfor = ['fb://page/?id=', 'fb://profile/']
         var findings = _.map(lookfor, function(str) {
             return {'item': str, 'index': body.indexOf(str)}
@@ -802,7 +801,7 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
             // good chance the page is invalid
             var thisStuff = _.join(lookfor, ' and ')
             var err = 'This page: '+url+' is does not appear to be valid.  We searched the content for '+thisStuff+' but did not find instances of either.'
-            return event.data.adminRef.root.child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_lookup_error').set({'err': err, 'body': body})
+            return db.ref().child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_lookup_error').set({'err': err, 'body': body})
         }
         else {
             var magicString = xxx.item
@@ -812,8 +811,8 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
             var fbId = chop.substring(0, magicIndex2)
             console.log('legId: ', legId, 'channelIdx', channelIdx, 'FB ID: ', fbId)
             // If you ever want to see exactly what Facebook is returning in their html...
-            //event.data.adminRef.root.child('states/legislators/'+legId+'/channels/'+channelIdx+'/check_body').set(body)
-            return event.data.adminRef.root.child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_id').set(fbId)
+            //db.ref().child('states/legislators/'+legId+'/channels/'+channelIdx+'/check_body').set(body)
+            return db.ref().child('states/legislators/'+legId+'/channels/'+channelIdx+'/facebook_id').set(fbId)
         }
     })
 
@@ -821,17 +820,17 @@ exports.lookupFacebookId = functions.database.ref('states/legislators/{legId}/ch
 
 
 // When the facebook_id is created or changes, we need to update the legislator_facebook_id under /video/list
-exports.facebookIdUpdated = functions.database.ref('states/legislators/{leg_id}/channels/{idx}/facebook_id').onWrite(event => {
-    if(event.data.val() == event.data.previous.val())
+exports.facebookIdUpdated = functions.database.ref('states/legislators/{leg_id}/channels/{idx}/facebook_id').onWrite((change, context) => {
+    if(change.after.val() == change.before.val())
         return false
-    if(!event.data.val())
+    if(!change.after.val())
         return false
 
-    var fbId = event.data.val()
+    var fbId = change.after.val()
 
-    return event.data.adminRef.root.child('states/legislators/'+event.params.leg_id+'/channels/'+event.params.idx).once('value').then(snapshot => {
+    return db.ref().child('states/legislators/'+context.params.leg_id+'/channels/'+context.params.idx).once('value').then(snapshot => {
         var facebookHandle = snapshot.val().id
-        return event.data.adminRef.root.child('video/list').orderByChild('leg_id').equalTo(event.params.leg_id).once('value').then(snapshot => {
+        return db.ref().child('video/list').orderByChild('leg_id').equalTo(context.params.leg_id).once('value').then(snapshot => {
             var updates = {}
             snapshot.forEach(function(child) {
                 var videoListKey = child.key
@@ -946,15 +945,15 @@ exports.peopleWithoutCivicData = functions.https.onRequest((req, res) => {
  And because all this is done with triggers, all we have to do in the mobile code is do one write to
  social_media/user_updates and the triggers do all the rest.  We can even test this just using the firebase database client
  ******************************************************/
-exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
+exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite((change, context) => {
     // This function is "Step 2a" described above
 
-    if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
+    if(!change.after.exists() && change.before.exists()) return false; // if node deleted -> ignore
 
-    var channel = {id: event.data.val().id, type: event.data.val().type, user_update: event.params.key}
+    var channel = {id: change.after.val().id, type: change.after.val().type, user_update: context.params.key}
 
-    // query states/legislators/{event.data.val().leg_id}
-    return db.ref('states/legislators/'+event.data.val().leg_id).once('value').then(snapshot => {
+    // query states/legislators/{change.after.val().leg_id}
+    return db.ref('states/legislators/'+change.after.val().leg_id).once('value').then(snapshot => {
         if(!snapshot.val().channels) {
             // no channels is ok.  We just add one
             var channels = [channel]
@@ -963,7 +962,7 @@ exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_
         else {
             var idx = snapshot.val().channels.length
             for(var i=0; i < snapshot.val().channels.length; i++) {
-                if(snapshot.val().channels[i].type.toLowerCase() == event.data.val().type.toLowerCase()) {
+                if(snapshot.val().channels[i].type.toLowerCase() == change.after.val().type.toLowerCase()) {
                     idx = i
                 }
             }
@@ -976,17 +975,17 @@ exports.updateLegislatorSocialMedia = functions.database.ref('social_media/user_
 
 
 // This function is "Step 2b" described above
-exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite(event => {
+exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_updates/{key}').onWrite((change, context) => {
 
-    if(!event.data.exists() && event.data.previous.exists()) return false; // if node deleted -> ignore
+    if(!change.after.exists() && change.before.exists()) return false; // if node deleted -> ignore
 
-    var which_handle = event.data.val().type.toLowerCase() == 'facebook' ? 'legislator_facebook' : 'legislator_twitter'
+    var which_handle = change.after.val().type.toLowerCase() == 'facebook' ? 'legislator_facebook' : 'legislator_twitter'
 
-    return db.ref('video/list').orderByChild('leg_id').equalTo(event.data.val().leg_id).once('value').then(snapshot => {
+    return db.ref('video/list').orderByChild('leg_id').equalTo(change.after.val().leg_id).once('value').then(snapshot => {
         var updates = {}
         snapshot.forEach(function(child) {
             // get each node/path that needs to be updated...
-            updates['video/list/'+child.key+'/'+which_handle] = event.data.val().id
+            updates['video/list/'+child.key+'/'+which_handle] = change.after.val().id
         })
         // multi-path update
         return db.ref('/').update(updates)
@@ -994,25 +993,25 @@ exports.updateVideoNodeSocialMedia = functions.database.ref('social_media/user_u
 })
 
 // see if we accidentally overwrote good data with bad data and correct if we did
-exports.overwriteBadWithGoodData = functions.database.ref('states/legislators/{leg_id}/channels/{idx}').onWrite(event => {
-    if(!event.data.exists() && event.data.previous.exists())
+exports.overwriteBadWithGoodData = functions.database.ref('states/legislators/{leg_id}/channels/{idx}').onWrite((change, context) => {
+    if(!change.after.exists() && change.before.exists())
         return false;  // ignore the case where the node is deleted
 
-    if(!event.data.val().user_update)
+    if(!change.after.val().user_update)
         return false  // ignore the case where this node has no "user_update" attribute
 
-    if(event.data.val().id == event.data.previous.val().id)
+    if(change.after.val().id == change.before.val().id)
         return false  // the value we care about didn't change
 
-    var leg_id = event.params.leg_id
-    var idx = event.params.idx
+    var leg_id = context.params.leg_id
+    var idx = context.params.idx
 
-    return db.ref('social_media/user_updates/'+event.data.val().user_update).once('value').then(snapshot => {
+    return db.ref('social_media/user_updates/'+change.after.val().user_update).once('value').then(snapshot => {
         // check this social_media/user_updates/aSDfsdfaSDfwE/id  node and see if it's the same
         // as the states/legislators/leg_id/channels/{idx}/id node
         // If it's not -> that's a problem and needs to be corrected
         var goodHandle = snapshot.val().id
-        if(event.data.val().id != goodHandle) {
+        if(change.after.val().id != goodHandle) {
             return db.ref('states/legislators/'+leg_id+'/channels/'+idx+'/id').set(goodHandle)
         }
     })

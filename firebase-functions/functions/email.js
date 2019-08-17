@@ -112,7 +112,7 @@ var isSelected = function(val1, val2) {
 exports.chooseEmailType = functions.https.onRequest((req, res) => {
     var emailType = req.query.emailType
 
-    return db.ref(`administration/${emailType}`).once('value').then(snapshot => {
+    return db.ref('administration/'+emailType).once('value').then(snapshot => {
 
         var formParams = {title: snapshot.val().title,
                         host: snapshot.val().host,
@@ -405,15 +405,16 @@ exports.testOnReadyToSendEmails = functions.https.onRequest((req, res) => {
 
 
 // facebook.js:onFacebookPostId and twitter.js:onTwitterPostId both trigger this function
-exports.onReadyToSendEmails = functions.database.ref('video/list/{video_node_key}/ready_to_send_emails').onCreate(event => {
+exports.onReadyToSendEmails = functions.database.ref('video/list/{video_node_key}/ready_to_send_emails').onCreate((snap2, context) => {
 
+    var params = context.params
 
-    if(event.data.val()) {
+    if(snap2.val()) {
         // We need to evaluate the 2 emails and the youtube video title and description one last time
         // before the emails go out...
-        return exports.evaluate_video_and_email(event.params.video_node_key).then(() => {
+        return exports.evaluate_video_and_email(params.video_node_key).then(() => {
 
-            return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
+            return db.ref().child('video/list/'+params.video_node_key).once('value').then(snapshot => {
                 if(snapshot.val().email_to_legislator) {
                     // send one email to legislator and cc the two participants and I guess telepatriot@cosaction.com also
                     var legemail = emailToLegislator(snapshot.val())

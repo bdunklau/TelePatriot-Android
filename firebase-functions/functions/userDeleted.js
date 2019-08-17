@@ -4,9 +4,9 @@ const admin = require('firebase-admin')
 // create reference to root of the database
 const db = admin.database()
 
-exports.deleteUserAccount = functions.auth.user().onDelete(event => {
+exports.deleteUserAccount = functions.auth.user().onDelete(user => {
     var updates = {}
-    updates['/no_roles/'+event.data.uid] = null
-    updates['/users/'+event.data.uid] = null
+    updates['/no_roles/'+user.uid] = null
+    updates['/users/'+user.uid] = null
     return db.ref('/').update(updates)
 })

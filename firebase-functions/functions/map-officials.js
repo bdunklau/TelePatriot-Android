@@ -67,7 +67,7 @@ var showPage = function(stuff) {
 // for the purpose of doing a "try again" load.  Because we know the officials exist.  They just failed to load
 // for these districts for some reason
 var getDistrictsToReload = function(res) {
-    return db.ref(`google_civic_data/divisions`).once('value').then(snapshot => {
+    return db.ref('google_civic_data/divisions').once('value').then(snapshot => {
         var divisions = []
         snapshot.forEach(function(child) {
             var division = child.val()
@@ -77,7 +77,7 @@ var getDistrictsToReload = function(res) {
         return {res: res, divisions: divisions}
     })
     .then(stuff => {
-        return db.ref(`google_civic_data/officials`).once('value').then(snapshot => {
+        return db.ref('google_civic_data/officials').once('value').then(snapshot => {
             var officials = []
             snapshot.forEach(function(child) {
                 var official = child.val()
@@ -127,7 +127,7 @@ var getDistrictsToReload = function(res) {
 
 exports.tryLoadingOfficialsAgain = functions.https.onRequest((req, res) => {
     return getDistrictsToReload(res).then(stuff => {
-        return db.ref(`api_tokens/google_cloud_api_key`).once('value').then(snapshot => {
+        return db.ref('api_tokens/google_cloud_api_key').once('value').then(snapshot => {
             var apikey = snapshot.val()
             stuff.apikey = apikey
             stuff.ref = snapshot.ref
@@ -162,12 +162,12 @@ exports.tryLoadingOfficialsAgain = functions.https.onRequest((req, res) => {
                     official.division = districtToReload.division
                     official.load_date = date.asCentralTime()
                     official.load_date_ms = date.asMillis()
-                    updates[`google_civic_data/officials/${key}`] = official
-                    stuff.ref.root.child(`states/list/${state_abbrev}/civic_officials_loaded`).transaction(current => {
+                    updates['google_civic_data/officials/'+key] = official
+                    stuff.ref.root.child('states/list/'+state_abbrev+'/civic_officials_loaded').transaction(current => {
                         return (current || 0) + 1;
                     })
                     if(official.channels && official.channels.length > 0) {
-                        stuff.ref.root.child(`states/list/${state_abbrev}/channels_loaded`).transaction(current => {
+                        stuff.ref.root.child('states/list/'+state_abbrev+'/channels_loaded').transaction(current => {
                             return (current || 0) + 1;
                         })
                     }
@@ -188,7 +188,7 @@ exports.tryLoadingOfficialsAgain = functions.https.onRequest((req, res) => {
 
 exports.osToCivicOfficials = functions.https.onRequest((req, res) => {
     // reads all the officials from OpenStates and display a form
-    return db.ref(`states/legislators`).orderByChild('civic_data_loaded_date_ms').equalTo('').once('value').then(snapshot => { // for now, get all districts
+    return db.ref('states/legislators').orderByChild('civic_data_loaded_date_ms').equalTo('').once('value').then(snapshot => { // for now, get all districts
         var unfilteredOfficials = []
         snapshot.forEach(function(child) {
             var osData = child.val()
@@ -198,7 +198,7 @@ exports.osToCivicOfficials = functions.https.onRequest((req, res) => {
         return {res: res, openStatesOfficials: unfilteredOfficials}
     })
     .then(stuff => {
-        return db.ref(`google_civic_data/officials`).orderByChild('openstates_match_date_ms').once('value').then(snapshot => {
+        return db.ref('google_civic_data/officials').orderByChild('openstates_match_date_ms').once('value').then(snapshot => {
             var civicOfficials = []
             snapshot.forEach(function(child) {
                 var civicData = child.val()
@@ -206,7 +206,7 @@ exports.osToCivicOfficials = functions.https.onRequest((req, res) => {
                 civicOfficials.push(civicData)
             })
             stuff.civic_officials = civicOfficials
-            db.ref(`templog`).push({number_of_officials: snapshot.numChildren(), date: date.asCentralTime()})
+            db.ref('templog').push({number_of_officials: snapshot.numChildren(), date: date.asCentralTime()})
             return stuff
         })
         .then(stuff => {
@@ -249,7 +249,7 @@ exports.osToCivicOfficials = functions.https.onRequest((req, res) => {
                     result = civicOfficial
                     found = true
                     stuff.openStatesOfficials[i].civicOfficial = civicOfficial
-                        db.ref(`templog`).push({found_civic_official: civicOfficial,
+                        db.ref('templog').push({found_civic_official: civicOfficial,
                                                 state: stuff.openStatesOfficials[i].state,
                                                 chamber: stuff.openStatesOfficials[i].chamber,
                                                 division: stuff.openStatesOfficials[i].division,
@@ -275,7 +275,7 @@ exports.osToCivicOfficials = functions.https.onRequest((req, res) => {
                         // error condition that has been known to happen even though I don't understand why
                         // Ex: Alabama HD 59 was in google_civic_data/divisions but not in google_civic_data/officials
                         // There should always be a node in google_civic_data/officials for every node in google_civic_data/divisions
-                        db.ref(`templog`).push({woops: 'civicOfficials was null - did not handle this case',
+                        db.ref('templog').push({woops: 'civicOfficials was null - did not handle this case',
                                                 state: stuff.openStatesOfficials[i].state,
                                                 chamber: stuff.openStatesOfficials[i].chamber,
                                                 division: stuff.openStatesOfficials[i].division,
@@ -283,7 +283,7 @@ exports.osToCivicOfficials = functions.https.onRequest((req, res) => {
                     }
                     else {
                         stuff.openStatesOfficials[i].civicOfficials = civicOfficials
-                        db.ref(`templog`).push({message: 'found '+civicOfficials.length+' civic officials',
+                        db.ref('templog').push({message: 'found '+civicOfficials.length+' civic officials',
                                                 state: stuff.openStatesOfficials[i].state,
                                                 chamber: stuff.openStatesOfficials[i].chamber,
                                                 division: stuff.openStatesOfficials[i].division,

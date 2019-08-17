@@ -21,37 +21,39 @@ firebase deploy --only functions:onVideoOffer
 
 // When a video offer comes in, make sure the user's record is updated with the phone number
  // and residential address info from their offer
-exports.onVideoOffer = functions.database.ref('video/offers/{uid}').onWrite(event => {
+exports.onVideoOffer = functions.database.ref('video/offers/{uid}').onWrite((change, context) => {
+    var data = change.after.val()
+    var params = context.params
     var updates = {}
-    updates['users/'+event.params.uid+'/phone'] = event.data.val().phone
-    updates['users/'+event.params.uid+'/residential_address_line1'] = event.data.val().residential_address_line1
-    updates['users/'+event.params.uid+'/residential_address_line2'] = event.data.val().residential_address_line2
-    updates['users/'+event.params.uid+'/residential_address_city'] = event.data.val().residential_address_city
-    updates['users/'+event.params.uid+'/residential_address_state_abbrev'] = event.data.val().residential_address_state_abbrev
-    updates['users/'+event.params.uid+'/residential_address_zip'] = event.data.val().residential_address_zip
+    updates['users/'+params.uid+'/phone'] = data.phone
+    updates['users/'+params.uid+'/residential_address_line1'] = data.residential_address_line1
+    updates['users/'+params.uid+'/residential_address_line2'] = data.residential_address_line2
+    updates['users/'+params.uid+'/residential_address_city'] = data.residential_address_city
+    updates['users/'+params.uid+'/residential_address_state_abbrev'] = data.residential_address_state_abbrev
+    updates['users/'+params.uid+'/residential_address_zip'] = data.residential_address_zip
 
-    var validAddress = event.data.val().residential_address_line1 && event.data.val().residential_address_city
-                        && event.data.val().residential_address_state_abbrev
+    var validAddress = data.residential_address_line1 && data.residential_address_city
+                        && data.residential_address_state_abbrev
 
     if(validAddress) {
         var handleResponse = function(result) {
-            updates['users/'+event.params.uid+'/state_upper_district'] = result.state_upper_district
-            updates['video/offers/'+event.params.uid+'/state_upper_district'] = result.state_upper_district
+            updates['users/'+params.uid+'/state_upper_district'] = result.state_upper_district
+            updates['video/offers/'+params.uid+'/state_upper_district'] = result.state_upper_district
             if(result.state_lower_district) {
-                updates['users/'+event.params.uid+'/state_lower_district'] = result.state_lower_district
-                updates['video/offers/'+event.params.uid+'/state_lower_district'] = result.state_lower_district
+                updates['users/'+params.uid+'/state_lower_district'] = result.state_lower_district
+                updates['video/offers/'+params.uid+'/state_lower_district'] = result.state_lower_district
             }
             return db.ref('/').update(updates)
         }
 
         geocode.lookupDistrict({
-            residential_address_line1: event.data.val().residential_address_line1,
-            residential_address_city: event.data.val().residential_address_city,
-            residential_address_state_abbrev: event.data.val().residential_address_state_abbrev,
+            residential_address_line1: data.residential_address_line1,
+            residential_address_city: data.residential_address_city,
+            residential_address_state_abbrev: data.residential_address_state_abbrev,
             callback: handleResponse
         })
         return true
     }
     else
-        return event.data.adminRef.root.child('users/'+event.params.uid).update(updates)
+        return db.ref().child('users/'+params.uid).update(updates)
 })

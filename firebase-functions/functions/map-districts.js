@@ -74,7 +74,7 @@ var showPage = function(stuff) {
 
 exports.mapOpenStatesToGoogleCivic = functions.https.onRequest((req, res) => {
     // reads all the districts from OpenStates and display a form
-    return db.ref(`states/districts`).once('value').then(snapshot => { // for now, get all districts
+    return db.ref('states/districts').once('value').then(snapshot => { // for now, get all districts
         var unfilteredOpenStatesDistricts = []
         snapshot.forEach(function(child) {
             var osData = child.val()
@@ -84,7 +84,7 @@ exports.mapOpenStatesToGoogleCivic = functions.https.onRequest((req, res) => {
         return {res: res, openStatesDistricts: unfilteredOpenStatesDistricts}
     })
     .then(stuff => {
-        return db.ref(`google_civic_data/divisions`).once('value').then(snapshot => {
+        return db.ref('google_civic_data/divisions').once('value').then(snapshot => {
             var civicDivisions = []
             snapshot.forEach(function(child) {
                 var civicData = child.val()
@@ -173,7 +173,7 @@ exports.checkGoogleCivicDivision = functions.https.onRequest((req, res) => {
     division = division.replace(/[/]/g, "%2F")
     division = division.replace(/:/g, "%3A")
 
-    return db.ref(`api_tokens/google_cloud_api_key`).once('value').then(snapshot => {
+    return db.ref('api_tokens/google_cloud_api_key').once('value').then(snapshot => {
         var apikey = snapshot.val()
         var civicApiUrl = "https://www.googleapis.com/civicinfo/v2/representatives/"+division+"?fields=officials&key="+apikey
         return res.redirect(civicApiUrl)

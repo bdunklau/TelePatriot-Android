@@ -24,17 +24,17 @@ firebase deploy --only functions:userCreated,functions:onCitizenBuilderId
 ***/
 
 
-exports.userCreated = functions.auth.user().onCreate(event => {
+exports.userCreated = functions.auth.user().onCreate(user => {
     // UserRecord is created
     // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s
     // UserRecord contains: displayName, email, photoUrl, uid
-    // all of this is accessible via event.data
+    // all of this is accessible via user
 
-    var uid = event.data.uid
-    var email = event.data.email
+    var uid = user.uid
+    var email = user.email
     var name = email // default value if name not present
-    if(event.data.displayName) name = event.data.displayName
-    var photoUrl = event.data.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
+    if(user.displayName) name = user.displayName
+    var photoUrl = user.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
 
     log.debug(uid, name, "userCreated.js", "userCreated", "begin func")
 
@@ -185,10 +185,10 @@ exports.userCreated = functions.auth.user().onCreate(event => {
 /**
 Calls the webhook into the TelePatriot slack team.  Messages the new-users channel
 **/
-exports.onCitizenBuilderId = functions.database.ref('users/{uid}/citizen_builder_id').onWrite(event => {
+exports.onCitizenBuilderId = functions.database.ref('users/{uid}/citizen_builder_id').onWrite((change, context) => {
 
-    if(!event.data.val()) return false
-    if(event.data.val() == 'not populated yet') return false
+    if(!change.after.exists()) return false
+    if(change.after.val() == 'not populated yet') return false
 
     /********
     Example post to new-dev-users
@@ -198,16 +198,18 @@ exports.onCitizenBuilderId = functions.database.ref('users/{uid}/citizen_builder
     Example post to new-users
     curl -X POST -H 'Content-type: application/json' --data '{"text":"<!channel> Hello, World!"}' (get url from administration/configuration/new_user_webhook)
     ********/
-    log.debug(event.params.uid, "(not known yet)", "userCreated.js", "onCitizenBuilderId", "begin func")
+    var params = context.params
+
+    log.debug(params.uid, "(not known yet)", "userCreated.js", "onCitizenBuilderId", "begin func")
 
     return db.child('administration/configuration').once('value').then(snapshot => {
         if(snapshot.val().on_citizen_builder_id == 'do_nothing')
             return false
         var url = snapshot.val().new_user_webhook
-        log.debug(event.params.uid, "(not known yet)", "userCreated.js", "onCitizenBuilderId", "new_user_webhook = "+url)
-        return db.child('users/'+event.params.uid).once('value').then(snap2 => {
+        log.debug(params.uid, "(not known yet)", "userCreated.js", "onCitizenBuilderId", "new_user_webhook = "+url)
+        return db.child('users/'+params.uid).once('value').then(snap2 => {
 
-            log.debug(event.params.uid, snap2.val().name, "userCreated.js", "onCitizenBuilderId", "event.params.uid = "+event.params.uid)
+            log.debug(params.uid, snap2.val().name, "userCreated.js", "onCitizenBuilderId", "params.uid = "+params.uid)
 
             var bannedWarning = snap2.val().is_banned && snap2.val().is_banned == true ?
                         "\n================================\n"
@@ -225,7 +227,7 @@ exports.onCitizenBuilderId = functions.database.ref('users/{uid}/citizen_builder
                        +"This person should have already received an email with a link to the Volunteer Agreement.  We only need to send them this link if they say they never got the email.\n"
                        +"================================\n" : ""
 
-            var msg = snap2.val().name+' CB ID: '+event.data.val()+' just downloaded TelePatriot '
+            var msg = snap2.val().name+' CB ID: '+change.after.val()+' just downloaded TelePatriot '
                         +(snap2.val().phone ? '\nPhone: '+formatPhone(snap2.val().phone)+'   ' : '')
                         +(snap2.val().email ? snap2.val().email : '')
                         +(snap2.val().residential_address_line1 ? '\n'+snap2.val().residential_address_line1 : '')
@@ -251,8 +253,8 @@ exports.onCitizenBuilderId = functions.database.ref('users/{uid}/citizen_builder
                 },
                 function (err, httpResponse, body) {
                     // should just get a simple 'ok'
-                    if(err) log.error(event.params.uid, snap2.val().name, "userCreated.js", "onCitizenBuilderId", "error = "+err)
-                    else log.debug(event.params.uid, snap2.val().name, "userCreated.js", "onCitizenBuilderId", "body = "+body)
+                    if(err) log.error(params.uid, snap2.val().name, "userCreated.js", "onCitizenBuilderId", "error = "+err)
+                    else log.debug(params.uid, snap2.val().name, "userCreated.js", "onCitizenBuilderId", "body = "+body)
                 }
             );
 

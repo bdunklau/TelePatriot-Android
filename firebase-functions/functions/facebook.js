@@ -52,8 +52,8 @@ exports.testPostFacebook = functions.https.onRequest((req, res) => {
 })
 
 
-exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{key}').onWrite(event => {
-    if(!event.data.val() && event.data.previous.val()) return false // ignore deleted nodes
+exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{key}').onWrite((change, context) => {
+    if(!change.after.val() && change.before.val()) return false // ignore deleted nodes
     // this is where we actually post to FB
 
     /**
@@ -61,7 +61,7 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
     We record the post_id at the bottom of this function.  This 'if' condition here prevents
     infinite triggering
     **/
-    if(event.data.val().post_id && !event.data.previous.val().post_id)
+    if(change.after.val().post_id && !change.before.val().post_id)
         return false
 
     /****************
@@ -81,11 +81,11 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
         var facebook_page_access_token = snapshot.val().facebook_page_access_token
         FB.setAccessToken(facebook_page_access_token);
 
-        var body = event.data.val().text
+        var body = change.after.val().text
         var postThis = {}
         postThis['message'] = body
-        if(event.data.val().link)
-            postThis['link'] = event.data.val().link
+        if(change.after.val().link)
+            postThis['link'] = change.after.val().link
 
         FB.api(facebook_page_id+'/feed', 'post', postThis, function (res) {
             //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
@@ -96,9 +96,9 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
             }
             // TODO probably should write this to the db somewhere
             console.log('Post Id: ' + res.id);
-            event.data.ref.child('post_id').set(res.id) // not even sure if we NEED the post_id written here
+            change.after.ref.child('post_id').set(res.id) // not even sure if we NEED the post_id written here
 
-            if(event.data.val().video_node_key) { // may not exist in testing classes
+            if(change.after.val().video_node_key) { // may not exist in testing classes
                 // There's a trigger (not created yet) that listens for writes to this node and also to
                 // twitter_post_id.  The trigger then examines the values of post_to_facebook, post_to_twitter and
                 // email_to_legislator to figure out what the text of the emails should be.  There are two emails:
@@ -106,7 +106,7 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
                 // The email to the legislator is addressed to him.  Whereas the other one is a congratulatory email to
                 // the participants
                 // SEE google-cloud:socialMediaPostsCreated()
-                return event.data.adminRef.root.child('video/list/'+event.data.val().video_node_key+'/facebook_post_id').set(res.id)
+                return db.ref().child('video/list/'+change.after.val().video_node_key+'/facebook_post_id').set(res.id)
             }
             else {
                 console.log("WHY ARE WE GETTING TO THIS BLOCK ?????")
@@ -118,10 +118,10 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
 
 
 // add a comment whenever a post is created...
-exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/post_id').onWrite(event => {
-    if(!event.data.val() && event.data.previous.val()) return false // ignore deleted nodes
+exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/post_id').onWrite((change, context) => {
+    if(!change.after.val() && change.before.val()) return false // ignore deleted nodes
 
-    var post_id = event.data.val()
+    var post_id = change.after.val()
 
     return db.ref('api_tokens').once('value').then(snapshot => {
 
@@ -131,11 +131,11 @@ exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/po
 
         var postThis = {}
 
-        return event.data.adminRef.root.child('facebook_post_requests/'+event.params.key+'/video_node_key').once('value').then(snap2 => {
+        return db.ref().child('facebook_post_requests/'+context.params.key+'/video_node_key').once('value').then(snap2 => {
             var video_node_key = snap2.val()
-            return event.data.adminRef.root.child('video/list/'+video_node_key).once('value').then(snap3 => {
+            return db.ref().child('video/list/'+video_node_key).once('value').then(snap3 => {
                 if(snap3.val().legislator_facebook) {
-                    return event.data.adminRef.root.child('social_media/cos_accounts/'+snap3.val().legislator_state_abbrev+'/facebook').once('value').then(snap4 => {
+                    return db.ref().child('social_media/cos_accounts/'+snap3.val().legislator_state_abbrev+'/facebook').once('value').then(snap4 => {
                         /********* This works but I don't know what I want the comment to be yet  *********/
     //                    FB doesn't let you tag people and pages without permission
 
@@ -165,9 +165,9 @@ exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/po
 
 // just doing onCreate to try to make the logic simpler
 // twitter.js has a corresponding trigger: onTwitterPostId()
-exports.onFacebookPostId = functions.database.ref('video/list/{video_node_key}/facebook_post_id').onCreate(event => {
+exports.onFacebookPostId = functions.database.ref('video/list/{video_node_key}/facebook_post_id').onCreate((snap, context) => {
     // now see if we're supposed to tweet also, and if we are, do we have the tweet post id_str yet?...
-    return event.data.adminRef.root.child('video/list/'+event.params.video_node_key).once('value').then(snapshot => {
+    return db.ref().child('video/list/'+context.params.video_node_key).once('value').then(snapshot => {
         var tweetExists = snapshot.val().twitter_post_id
         var tweetNotRequired = !snapshot.val().post_to_twitter
         var readyToSendEmails = tweetExists || tweetNotRequired

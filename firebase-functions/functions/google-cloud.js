@@ -67,9 +67,9 @@ when leg_id changes, re-evaluate the node's:
 
 Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
-exports.onLegislatorChosen = functions.database.ref('video/list/{video_node_key}/leg_id').onWrite(event => {
+exports.onLegislatorChosen = functions.database.ref('video/list/{video_node_key}/leg_id').onWrite((change, context) => {
     // leg_id should never go from non-null back to null
-    return email.evaluate_video_and_email(event.params.video_node_key)
+    return email.evaluate_video_and_email(context.params.video_node_key)
 })
 
 
@@ -87,8 +87,8 @@ is in these attributes.  The constituent is always the person added most recentl
 
 Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
-exports.onParticipantAdded = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}/{uid}').onCreate(event => {
-    return email.evaluate_video_and_email(event.params.video_node_key)
+exports.onParticipantAdded = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}/{uid}').onCreate((snapshot, context) => {
+    return email.evaluate_video_and_email(context.params.video_node_key)
 })
 
 
@@ -105,8 +105,8 @@ is in these attributes.  The constituent is always the person added most recentl
 
 Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
-exports.onParticipantRemoved = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}').onDelete(event => {
-    return email.evaluate_video_and_email(event.params.video_node_key)
+exports.onParticipantRemoved = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}').onDelete((snapshot, context) => {
+    return email.evaluate_video_and_email(context.params.video_node_key)
 })
 
 
@@ -120,41 +120,44 @@ So whenVideoIdIsCreated() isn't the greatest name.  But in whenVideoIdIsCreated(
 creating the video_url and then we're posting to FB and TW and then we're sending out an email with
 links to YT, FB and TW
 **********************************/
-exports.whenVideoIdIsCreated = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
-    if(!event.data.val() && event.data.previous.val())
+exports.whenVideoIdIsCreated = functions.database.ref('video/list/{video_node_key}').onWrite((change, context) => {
+    var data = change.after.val()
+    var previous = change.before.val()
+    if(!data && previous)
         return false //ignore deleted nodes
-    if(!event.data.val().video_id)
+    if(!data.video_id)
         return false // only listen when video/list/{video_node_key}/video_id is written
-    if(event.data.previous.val().video_id && event.data.val().video_id == event.data.previous.val().video_id)
+    if(previous.video_id && data.video_id == previous.video_id)
         return false // ignore if video/list/{video_node_key}/video_id didn't actually change
 
     // What are we going to do with this video?  Email it to the legislator?  Post it to FB? Post it to TW?
     // Look at these attributes on the video node: email_to_legislator, post_to_facebook, post_to_twitter
     // They will be either be true or false
 
-    var video_url = 'https://www.youtube.com/watch?v='+event.data.val().video_id
+    var params = context.params
+    var video_url = 'https://www.youtube.com/watch?v='+data.video_id
     var updates = {}
-    updates['video/list/'+event.params.video_node_key+'/video_url'] = video_url
-    var dontPostToFB = !event.data.val().post_to_facebook
-    var dontPostToTwitter = !event.data.val().post_to_twitter
+    updates['video/list/'+params.video_node_key+'/video_url'] = video_url
+    var dontPostToFB = !data.post_to_facebook
+    var dontPostToTwitter = !data.post_to_twitter
 
     if(dontPostToFB && dontPostToTwitter) {
 //        If this is true, then this write will trigger onReadyToSendEmails()
 //        onReadyToSendEmails() is what actually sends then emails to the legislator and the participants
-        updates['video/list/'+event.params.video_node_key+'/ready_to_send_emails'] = true
+        updates['video/list/'+params.video_node_key+'/ready_to_send_emails'] = true
     }
 
-    return event.data.adminRef.root.child('/').update(updates).then(() => {
+    return db.ref().update(updates).then(() => {
 
         // construct the email that gets sent to the participants
-        if(event.data.val().post_to_facebook) {
+        if(data.post_to_facebook) {
             // post to FB
             var facebook_request = {
                 //uid: req.query.uid, // do we care what the uid is?
-                video_node_key: event.params.video_node_key,
+                video_node_key: params.video_node_key,
                 date: date.asCentralTime(),
                 date_ms: date.asMillis(),
-                text: event.data.val().youtube_video_description, // Make the FB post the same as the YT video description
+                text: data.youtube_video_description, // Make the FB post the same as the YT video description
                 link: video_url  // i.e. YouTube video link
             }
 
@@ -163,14 +166,14 @@ exports.whenVideoIdIsCreated = functions.database.ref('video/list/{video_node_ke
         }
 
         // Sample code: twitter.js:testTweet()
-        if(event.data.val().post_to_twitter) {
-            return event.data.adminRef.root.child('social_media/cos_accounts/'+event.data.val().legislator_state_abbrev+'/twitter').once('value').then(snapshot => {
+        if(data.post_to_twitter) {
+            return db.ref().child('social_media/cos_accounts/'+data.legislator_state_abbrev+'/twitter').once('value').then(snapshot => {
                 var tweetRequest = {
                     //uid: req.body.uid, // do we care?
-                    video_node_key: event.params.video_node_key,
+                    video_node_key: params.video_node_key,
                     date: date.asCentralTime(),
                     date_ms: date.asMillis(),
-                    text: getTweetText(event.data.val(), video_url, snapshot.val() /*state-specific twitter page*/)
+                    text: getTweetText(data, video_url, snapshot.val() /*state-specific twitter page*/)
                 }
                 return db.ref('tweet_requests').push().set(tweetRequest).then(() => {
                     // twitter.js:handleTweetRequest() is what actually sends the tweet
@@ -190,20 +193,21 @@ exports.whenVideoIdIsCreated = functions.database.ref('video/list/{video_node_ke
 // Basically, if we're supposed to post to facebook and twitter and we have both post id's, then the email(s)
 // can go out.  If we're only supposed to send to facebook OR twitter and we have THAT post id, the email can also
 // go out.
-exports.socialMediaPostsCreated = functions.database.ref('video/list/{video_node_key}').onWrite(event => {
-    if(!event.data.val()) return false // ignore deletes
+exports.socialMediaPostsCreated = functions.database.ref('video/list/{video_node_key}').onWrite((change, context) => {
+    var data = change.after.val()
+    if(!data) return false // ignore deletes
     var socialMediaPostsReady = false
-    var facebookReady = !event.data.val().post_to_facebook || (event.data.val().post_to_facebook && event.data.val().facebook_post_id)
-    var twitterReady = !event.data.val().post_to_twitter || (event.data.val().post_to_twitter && event.data.val().twitter_post_id)
+    var facebookReady = !data.post_to_facebook || (data.post_to_facebook && data.facebook_post_id)
+    var twitterReady = !data.post_to_twitter || (data.post_to_twitter && data.twitter_post_id)
 
     if(socialMediaPostsReady) {
-        if(event.data.val().email_to_legislator) {
+        if(data.email_to_legislator) {
             // construct the email that goes to legislators
-            email.sendLegislatorEmailRegardingVideo(event.data.val())
+            email.sendLegislatorEmailRegardingVideo(data)
         }
 
         // send congratulatory email to participants as soon as social media posts are ready
-        email.sendCongratulatoryEmailRegardingVideo(event.data.val())
+        email.sendCongratulatoryEmailRegardingVideo(data)
     }
     return true
 })

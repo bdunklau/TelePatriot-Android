@@ -29,6 +29,10 @@ var request = require('request')
 const db = admin.database();
 
 
+/***
+paste this on the command line...
+firebase deploy --only functions:amiready
+***/
 exports.amiready = functions.https.onRequest((req, res) => {
 
     var allinfo = false
@@ -62,6 +66,9 @@ exports.amiready = functions.https.onRequest((req, res) => {
 })
 
 var thePage = function(stuff) {
+    var petitionLink = '<a href="https://conventionofstates.com/?ref=1930" target="petition">COS petition</a>'
+    var caLink = '<a href="https://legal.conventionofstates.com/S/COS/Transaction/Volunteer_Agreement_Manual" target="ca">COS volunteer agreement</a>'
+
     var html = ''
     html += '<html><head>'
     html += '<title>Am I Ready for TelePatriot?</title>'
@@ -84,6 +91,13 @@ var thePage = function(stuff) {
             html += coloredVal(stuff.vol.petition_signed, "Yes")+', '
             html += 'Volunteer Agreement Signed: '
             html += coloredVal(stuff.vol.volunteer_agreement_signed, "Yes")+', '
+            var needToSignCA = !stuff.vol.volunteer_agreement_signed // will be either true or false
+                            || (stuff.vol.volunteer_agreement_signed+'').toLowerCase() == 'no'
+                            || (stuff.vol.volunteer_agreement_signed+'').toLowerCase() == 'false'
+            if(needToSignCA) {
+                html += '<P/><b>In order to use TelePatriot, you must sign the '+caLink+' using the email address '+stuff.email+'</b>'
+            }
+
 //            html += 'Banned: '
 //            html += coloredVal(stuff.vol.is_banned, "No")
             if(stuff.allinfo) {
@@ -103,8 +117,9 @@ var thePage = function(stuff) {
             }
         }
         else {
-            html += '<P/><b>'+stuff.email+' not found in CitizenBuilder</b>'
-            html += '<br/>If you are certain this email address belongs to a COS supporter, ask that person to add this address to '
+            html += '<P/><b>'+stuff.email+' has not signed the '+petitionLink+' or the '+caLink+'</b>'
+            html += '<P/>Please sign each by clicking the links above. <b>You must sign each document using the email address '+stuff.email+'</b>'
+            html += '<P/>If you are certain this email address belongs to a COS supporter, ask that person to add this address to '
             html += 'his/her CB profile and then resubmit this form.'
         }
     }

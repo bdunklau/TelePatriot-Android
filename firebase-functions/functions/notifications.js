@@ -6,21 +6,21 @@ const date = require('./dateformat')
 // create reference to root of the database
 const ref = admin.database().ref()
 
-exports.notifyUserCreated = functions.auth.user().onCreate(event => {
+exports.notifyUserCreated = functions.auth.user().onCreate((user) => {
     console.log("notifications.js: notifyUserCreated called")
     // UserRecord is created
     // according to: https://www.youtube.com/watch?v=pADTJA3BoxE&t=31s
     // UserRecord contains: displayName, email, photoUrl, uid
-    // all of this is accessible via event.data
-    const uid = event.data.uid
-    const email = event.data.email
+    // all of this is accessible via user
+    const uid = user.uid
+    const email = user.email
 
-    console.log("notifications.js: event.data = ", event.data)
-    console.log("notifications.js: event.data.uid = ", event.data.uid)
+    console.log("notifications.js: user = ", user)
+    console.log("notifications.js: uid = ", uid)
 
 
     var newuser = email
-    if(event.data.displayName) newuser = event.data.displayName
+    if(user.displayName) newuser = user.displayName
     var body = newuser+" just joined. Assign to group after vetting."
     var message = newuser+" just joined "+strings.strings.appname+".  Confirm that this person "+
     "should be allowed in.  If so, assign this person to a group"
@@ -48,7 +48,7 @@ exports.notifyUserCreated = functions.auth.user().onCreate(event => {
 
     // see  https://firebase.google.com/docs/reference/admin/node/admin.messaging
     return admin.messaging().sendToTopic("AccountEvents", payload, options).then(function(response) {
-        return ref.child(`/users/${uid}/account_status_events`).push(
+        return ref.child('/users/'+uid+'/account_status_events').push(
             {date: date.asCentralTime(), event: "Admins have been notified..."})
     }).catch(function(response) { console.log("CAUGHT ERROR: ", response) });
 });
