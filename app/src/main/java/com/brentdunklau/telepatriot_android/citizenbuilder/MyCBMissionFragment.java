@@ -56,7 +56,7 @@ public class MyCBMissionFragment extends BaseFragment
     private String citizen_builder_api_key_name;
     private String citizen_builder_api_key_value;
     private String mission_person_id;
-    private String mission_id;
+    private Integer mission_id;
     private String mission_phone;
     private CBMissionDetail missionItem;
 
@@ -105,7 +105,7 @@ public class MyCBMissionFragment extends BaseFragment
         missionWrapUpBundle.putString("citizen_builder_api_key_value", missionItem.getCitizen_builder_api_key_value());
         missionWrapUpBundle.putString("mission_person_name", missionItem.getName());
         missionWrapUpBundle.putString("mission_person_id", missionItem.getPerson_id());
-        missionWrapUpBundle.putString("mission_id", missionItem.getMission_id());
+        missionWrapUpBundle.putString("mission_id", missionItem.getMission_id()+"");
         missionWrapUpBundle.putString("mission_phone", missionItem.getPhone());
         String _3WayName = missionItem.getName2();
         String _3WayPhone = missionItem.getPhone2();

@@ -20,7 +20,7 @@ import okhttp3.Response;
 
 public class CBMissionDetail {
 
-    private String mission_id;
+    private Integer mission_id;
     private String mission_name;
     private String description;
     private String script;
@@ -37,12 +37,12 @@ public class CBMissionDetail {
 
 //    private boolean completed;
 
-    public String getMission_id() {
+    public Integer getMission_id() {
         return mission_id;
     }
 
     public void setMission_id(Integer mission_id) {
-        this.mission_id = mission_id+"";
+        this.mission_id = mission_id;
     }
 
     public String getMission_name() {
@@ -85,9 +85,9 @@ public class CBMissionDetail {
         this.phone = phone;
     }
 
-    public void setMission_id(String mission_id) {
-        this.mission_id = mission_id;
-    }
+//    public void setMission_id(String mission_id) {
+//        this.mission_id = mission_id;
+//    }
 
     public String getPerson_id() {
         return person_id;
@@ -147,7 +147,7 @@ public class CBMissionDetail {
 
     public void unassign() {
         new UnassignMissionTask().execute(citizen_builder_domain, citizen_builder_api_key_name, citizen_builder_api_key_value,
-                mission_id, person_id);
+                mission_id+"", person_id);
     }
 
     public String getName2() {
