@@ -49,7 +49,7 @@ exports.query = dbadmin.query
 exports.queryActive = dbadmin.queryActive
 exports.queryInactive = dbadmin.queryInactive
 exports.copy = dbadmin.copy
-exports.deleteNodes = dbadmin.deleteNodes
+exports.deleteNodes = dbadmin.deleteNodes //dev: 8/25/19  prod: 8/25/19
 exports.deleteAttributes = dbadmin.deleteAttributes
 
 
@@ -290,7 +290,7 @@ dev deploy 4/22/19
 // firebase deploy --only functions:videoListMain,functions:testSelectVideoNode,functions:testSaveEmailTemplates,functions:testReevaluateEmailAttributes
 ****/
 // prod deploy: 9/12/18, 9/20/18
-// prod deploy: 12/12/18
+// prod deploy: 12/12/18, 8/26/19
 const videoList = require('./video-list')
 exports.videoListMain = videoList.videoListMain
 exports.testSelectVideoNode = videoList.testSelectVideoNode

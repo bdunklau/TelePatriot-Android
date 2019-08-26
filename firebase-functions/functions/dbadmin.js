@@ -222,6 +222,9 @@ exports.deleteNodes = functions.https.onRequest((req, res) => {
     //      to
 
     var node = req.query.node
+    var limit = 200
+
+    if(req.query.limit) limit = parseInt(req.query.limit);
 
     if(!node) {
         return res.status(200).send("Request parms needed for this function: <P/> node")
@@ -229,8 +232,11 @@ exports.deleteNodes = functions.https.onRequest((req, res) => {
     else {
         var updates = {}
         updates[node] = null
-        return db.ref('/').update(updates).then(() => {
-            res.status(200).send("Deleted node: "+node)
+        return db.ref(node).limitToFirst(limit).once('value').then(snapshot => {
+            snapshot.forEach(function(child) {
+                child.ref.remove();
+            })
+            res.status(200).send("Deleted "+limit+" records from: "+node)
         })
 
     }
