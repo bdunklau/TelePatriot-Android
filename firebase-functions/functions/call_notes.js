@@ -13,6 +13,10 @@ const db = admin.database().ref()
 firebase deploy --only functions:callNotes,functions:editCallNotes,functions:saveCallNotes,functions:onCallNotesCreated,functions:missions,functions:updateMissionsOnCallNotesCreated
 **/
 
+/**
+This pulls up the call_notes nodes for a specific mission
+This is how we see who got called on a mission
+**/
 exports.callNotes = functions.https.onRequest((req, res) => {
     if(!req.query.mission_id) {
         return res.status(200).send('Need ?mission_id=[number]');
@@ -22,7 +26,9 @@ exports.callNotes = functions.https.onRequest((req, res) => {
     })
 })
 
-
+/**
+This is the html of the /callNotes page
+**/
 var callNotesPage = function(mission_id, mission_name) {
 
     return db.child('call_notes').orderByChild('mission_id').equalTo(parseInt(mission_id)).once('value').then(snapshot => {
@@ -66,7 +72,10 @@ var callNotesPage = function(mission_id, mission_name) {
 }
 
 
-// Useful when we call someone and then need to update the call notes later on
+/**
+This is the "edit" link when you click "edit" next on a particular call_notes entry
+Useful when we call someone and then need to update the call notes later on
+**/
 exports.editCallNotes = functions.https.onRequest((req, res) => {
     if(!req.query.key) {
         return res.status(200).send('missing "key" parameter');
@@ -94,6 +103,11 @@ exports.editCallNotes = functions.https.onRequest((req, res) => {
 })
 
 
+/**
+This is the submit action when you click Save on /editCallNotes
+This action will save the updated call notes for a particular call and then send you back to the
+/callNotes page for whatever mission you are looking at
+**/
 exports.saveCallNotes = functions.https.onRequest((req, res) => {
     if(!req.body.key) {
         return res.status(200).send('missing "key" form parameter');
