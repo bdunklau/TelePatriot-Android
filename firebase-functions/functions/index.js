@@ -431,12 +431,14 @@ exports.downloadApk = downloadApk.downloadApk
 
 /***
 dev deploy 4/22/19
-// firebase deploy --only functions:callNotes,functions:missions,functions:onCallNotesCreated
+// firebase deploy --only functions:callNotes,functions:editCallNotes,functions:saveCallNotes,functions:onCallNotesCreated,functions:missions,functions:updateMissionsOnCallNotesCreated
 ****/
 // dev deploy:  3/20/19
-// prod deploy: 3/21/19
+// prod deploy: 3/21/19, 8/28/19
 const call_notes = require('./call_notes')
 exports.callNotes = call_notes.callNotes
+exports.editCallNotes = call_notes.editCallNotes
+exports.saveCallNotes = call_notes.saveCallNotes
 exports.missions = call_notes.missions
 exports.onCallNotesCreated = call_notes.onCallNotesCreated
 exports.tempNotes = call_notes.tempNotes

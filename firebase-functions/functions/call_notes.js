@@ -10,16 +10,28 @@ const _ = require('lodash');
 const db = admin.database().ref()
 
 /**
-firebase deploy --only functions:callNotes,functions:onCallNotesCreated,functions:missions,functions:updateMissionsOnCallNotesCreated
+firebase deploy --only functions:callNotes,functions:editCallNotes,functions:saveCallNotes,functions:onCallNotesCreated,functions:missions,functions:updateMissionsOnCallNotesCreated
 **/
 
+/**
+This pulls up the call_notes nodes for a specific mission
+This is how we see who got called on a mission
+**/
 exports.callNotes = functions.https.onRequest((req, res) => {
     if(!req.query.mission_id) {
         return res.status(200).send('Need ?mission_id=[number]');
     }
+    return callNotesPage(req.query.mission_id, req.query.mission_name).then(html => {
+        return res.status(200).send(html);
+    })
+})
 
-//    var limit = req.query.limit ? parseInt(req.query.limit) : 50;
-    return db.child('call_notes').orderByChild('mission_id').equalTo(parseInt(req.query.mission_id))/*.limitToFirst(limit)*/.once('value').then(snapshot => {
+/**
+This is the html of the /callNotes page
+**/
+var callNotesPage = function(mission_id, mission_name) {
+
+    return db.child('call_notes').orderByChild('mission_id').equalTo(parseInt(mission_id)).once('value').then(snapshot => {
         var html = '<html><head>';
         html += '<style>';
         html += 'td { border-bottom: 1pt solid #cccccc; font-family:Tahoma }'
@@ -33,7 +45,7 @@ exports.callNotes = functions.https.onRequest((req, res) => {
         html += '<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>';
         html += '<script type="text/javascript">google.charts.load(\'current\', {\'packages\':[\'corechart\']});</script>';
 
-        html += '<h3><a href="/missions">All Missions</a> > '+req.query.mission_name+'</h3>'
+        html += '<h3><a href="/missions">All Missions</a> > '+mission_name+'</h3>'
         html += '<table cellspacing="0" cellpadding="5">';
         snapshot.forEach(function(child) {
             html += '<tr>';
@@ -50,12 +62,69 @@ exports.callNotes = functions.https.onRequest((req, res) => {
             html +=         '<br/><span  class="small"> (ID: '+child.val().person_id+')</span>';
             html +=     '</td>';
             html +=     '<td valign="top" nowrap><a href="tel://'+child.val().phone_number+'" target="call">'+child.val().phone_number+'</a></td>';
-            html +=     '<td valign="top">'+child.val().notes+'</td>';
+            var parms = 'key='+child.key+'&mission_name='+mission_name+'&mission_id='+mission_id+'&notes='+child.val().notes;
+            html +=     '<td valign="top">'+child.val().notes+' <a href="/editCallNotes?'+parms+'">edit</a></td>';
             html += '</tr>';
         })
         html += '</table></body></html>';
+        return html;
+    })
+}
 
-        return res.status(200).send(html);
+
+/**
+This is the "edit" link when you click "edit" next on a particular call_notes entry
+Useful when we call someone and then need to update the call notes later on
+**/
+exports.editCallNotes = functions.https.onRequest((req, res) => {
+    if(!req.query.key) {
+        return res.status(200).send('missing "key" parameter');
+    }
+    if(!req.query.notes) {
+        return res.status(200).send('missing "notes" parameter');
+    }
+    if(!req.query.mission_name) {
+        return res.status(200).send('missing "mission_name" parameter');
+    }
+    if(!req.query.mission_id) {
+        return res.status(200).send('missing "mission_id" parameter');
+    }
+    var html = '<html><head></head>';
+    html += '<body>';
+    html += '<form method="post" action="/saveCallNotes">';
+    html += '<input type="hidden" name="key" value="'+req.query.key+'">'
+    html += '<input type="hidden" name="mission_name" value="'+req.query.mission_name+'">'
+    html += '<input type="hidden" name="mission_id" value="'+req.query.mission_id+'">'
+    html += '<textarea rows="10" cols="50" name="notes">'+req.query.notes+'</textarea>'
+    html += '<P/><input type="submit" value="save" formaction="/saveCallNotes"> &nbsp;&nbsp; <a href="/callNotes?mission_id='+req.query.mission_id+'&mission_name='+req.query.mission_name+'">Cancel</a>'
+    html += '</form>'
+    html += '</body></html>';
+    return res.status(200).send(html);
+})
+
+
+/**
+This is the submit action when you click Save on /editCallNotes
+This action will save the updated call notes for a particular call and then send you back to the
+/callNotes page for whatever mission you are looking at
+**/
+exports.saveCallNotes = functions.https.onRequest((req, res) => {
+    if(!req.body.key) {
+        return res.status(200).send('missing "key" form parameter');
+    }
+    if(!req.body.notes) {
+        return res.status(200).send('missing "notes" form parameter');
+    }
+    if(!req.body.mission_name) {
+        return res.status(200).send('missing "mission_name" form parameter');
+    }
+    if(!req.body.mission_id) {
+        return res.status(200).send('missing "mission_id" form parameter');
+    }
+    return db.child('call_notes/'+req.body.key).update({notes: req.body.notes}).then(() => {
+        return callNotesPage(req.body.mission_id, req.body.mission_name).then(html => {
+            return res.status(200).send(html);
+        })
     })
 })
 
