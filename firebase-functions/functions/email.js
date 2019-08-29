@@ -739,8 +739,12 @@ var getVideoNode = function(video_node_key) {
 
 exports.evaluate_video_and_email = function(video_node_key) {
     return getVideoNode(video_node_key).then(videoNode => {
-        if(!videoNode || !videoNode.video_participants || videoNode.video_participants.length == 0)
+        if(!videoNode || !videoNode.video_participants || videoNode.video_participants.length == 0) {
+            console.log('videoNode=',videoNode);
+            console.log('videoNode.video_participants=',videoNode.video_participants);
+            console.log('videoNode.video_participants.length=',videoNode.video_participants.length);
             return false
+        }
 
         var updates = {}
         updates['video/list/'+video_node_key+'/email_to_legislator_body'] = evaluate_email_to_legislator_body(videoNode)

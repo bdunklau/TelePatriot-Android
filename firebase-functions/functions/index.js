@@ -251,6 +251,7 @@ exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
 /***
 dev deploy 4/22/19
+prod deploy 8/26/19
 // firebase deploy --only functions:onConnectRequest,functions:onDisconnectRequest,functions:testViewVideoEvents,functions:onTwilioEvent,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
 ****/
 // prod deploy: 9/12/18, 9/20/18, 10/29/18
@@ -445,6 +446,7 @@ exports.updateMissionsOnCallNotesCreated = call_notes.updateMissionsOnCallNotesC
 
 /***
 dev deploy 4/22/19
+prod deploy 8/26/19
 // firebase deploy --only functions:recording_has_started,functions:whenVideoIdIsCreated,functions:socialMediaPostsCreated,functions:onLegislatorChosen,functions:onParticipantAdded,functions:onParticipantRemoved
 ****/
 // MIGHT KEEP SOME OF THIS...
