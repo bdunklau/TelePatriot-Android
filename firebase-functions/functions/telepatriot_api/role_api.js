@@ -75,6 +75,18 @@ exports.api_remove_role = functions.https.onRequest((req, res) => {
     return setRole(req, res, null)
 })
 
+// a "short-term" fix function
+// CB does not recognize the TelePatriot Video Creator role.  So we can set this role for a user through
+// the TP API, but every time the user logs back in, CB overwrites the user's roles and deletes the
+// TelePatriot Video Creator role.  So this trigger watches for that and restores the role for anyone that has
+// that role.
+exports.restoreVideoCreator = functions.database.ref('/users/{uid}/roles/Video Creator').onDelete( (snap, context) => {
+    return db.ref().child('/users/'+context.params.uid+'/roles/Video Creator').set("true");
+});
+
+
+
+
 
 // This function only works if the user has a CitizenBuilder ID on his record
 // And the user won't have a CB ID if we are using the /volunteer_validation/check endpoint

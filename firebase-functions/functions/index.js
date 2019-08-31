@@ -390,7 +390,7 @@ exports.testViewCBAPIEvents = cb_api_events.testViewCBAPIEvents
 
 /***
 dev deploy 4/22/19
-// firebase deploy --only functions:testRoleApiForm,functions:testRoleApi,functions:api_add_role,functions:api_remove_role
+// firebase deploy --only functions:testRoleApiForm,functions:testRoleApi,functions:api_add_role,functions:api_remove_role,functions:restoreVideoCreator
 ****/
 // dev deploy: 12/11/18
 // prod deploy: 12/12/18
@@ -399,6 +399,7 @@ exports.testRoleApiForm = role_api.testRoleApiForm
 exports.testRoleApi = role_api.testRoleApi
 exports.api_add_role = role_api.api_add_role
 exports.api_remove_role = role_api.api_remove_role
+exports.restoreVideoCreator = role_api.restoreVideoCreator // prod: 8/30/19
 
 
 
