@@ -399,7 +399,7 @@ exports.testRoleApiForm = role_api.testRoleApiForm
 exports.testRoleApi = role_api.testRoleApi
 exports.api_add_role = role_api.api_add_role
 exports.api_remove_role = role_api.api_remove_role
-exports.restoreVideoCreator = role_api.restoreVideoCreator // prod: 8/30/19
+exports.restoreVideoCreator = role_api.restoreVideoCreator // dev and prod: 8/30/19
 
 
 
