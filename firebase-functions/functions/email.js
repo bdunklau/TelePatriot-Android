@@ -453,7 +453,9 @@ exports.onReadyToSendEmails = functions.database.ref('video/list/{video_node_key
         })
 
     }
-    else return false
+    else {
+        return false
+    }
 })
 
 

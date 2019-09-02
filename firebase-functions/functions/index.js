@@ -250,10 +250,10 @@ exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
 
 /***
-dev deploy 4/22/19
+dev deploy  8/31/19
 // firebase deploy --only functions:onConnectRequest,functions:onDisconnectRequest,functions:testViewVideoEvents,functions:onTwilioEvent,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
 ****/
-// prod deploy: 9/12/18, 9/20/18, 10/29/18
+// prod deploy:  8/31/19
 const switchboard = require('./switchboard')
 exports.onConnectRequest = switchboard.onConnectRequest
 exports.onDisconnectRequest = switchboard.onDisconnectRequest
@@ -270,10 +270,10 @@ exports.onPublishRequested = switchboard.onPublishRequested
 
 
 /***
-dev deploy 4/22/19
+dev deploy 8/31/19
+prod:  8/31/19
 // firebase deploy --only functions:testTwilioToken,functions:twilioCallback,functions:testCreateRoom,functions:testListRooms,functions:testRetrieveRoom,functions:testCompleteRoom,functions:testListParticipants,functions:testCompose
 ****/
-// prod deploy: 12/12/18
 const twilio = require('./twilio-telepatriot')
 exports.testTwilioToken = twilio.testTwilioToken
 exports.twilioCallback = twilio.twilioCallback
