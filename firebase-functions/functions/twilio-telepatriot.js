@@ -177,8 +177,6 @@ exports.publish = function(input) {
     var port = input.port
     var formData = input.formData
 
-    db.ref('log3').set(formData)
-
     // go see ~/nodejs/index.js and the app.get('/publish') route
     var vmUrl = 'http://'+host+':'+port+'/publish'
     request.post(
