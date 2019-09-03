@@ -60,7 +60,9 @@ var getTableOfMessages = function(smsMessages) {
 exports.displaySms = functions.https.onRequest((req, res) => {
     var limit = 50
     if(req.query.limit) limit = parseInt(req.query.limit)
-    return res.status(200).send(thePage({limit: limit}))
+    return thePage({limit: limit}).then(html => {
+        return res.status(200).send(html)
+    })
 })
 
 
@@ -108,7 +110,9 @@ exports.sendSms = functions.https.onRequest((req, res) => {
                })
               .then(message => console.log(message.sid));
         })
-        return res.status(200).send(thePage({}))
+        return thePage({limit: limit}).then(html => {
+            return res.status(200).send(html)
+        })
     })
 })
 
