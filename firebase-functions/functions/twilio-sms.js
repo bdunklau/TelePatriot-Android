@@ -110,7 +110,7 @@ exports.sendSms = functions.https.onRequest((req, res) => {
                })
               .then(message => console.log(message.sid));
         })
-        return thePage({limit: limit}).then(html => {
+        return thePage({}).then(html => {
             return res.status(200).send(html)
         })
     })
