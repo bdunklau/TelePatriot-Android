@@ -96,7 +96,7 @@ var sendMessageArea = function() {
 This is the function that sends the text blast
 **/
 exports.sendSms = functions.https.onRequest((req, res) => {
-    var phones = _.split(req.body.phone, '\n')
+    var phones = _.split(req.body.phones, '\n')
     return db.ref('/api_tokens').once('value').then(snapshot => {
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token);
         _.each(phones, function(phone) {
