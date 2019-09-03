@@ -432,7 +432,7 @@ exports.downloadApk = downloadApk.downloadApk
 
 /***
 dev deploy 4/22/19
-// firebase deploy --only functions:callNotes,functions:editCallNotes,functions:saveCallNotes,functions:onCallNotesCreated,functions:missions,functions:updateMissionsOnCallNotesCreated
+// firebase deploy --only functions:callNotes,functions:editCallNotes,functions:saveCallNotes,functions:onCallNotesCreated,functions:missions,functions:updateMissionsOnCallNotesCreated,functions:downloadCallNotes
 ****/
 // dev deploy:  3/20/19
 // prod deploy: 3/21/19, 8/28/19
@@ -444,6 +444,8 @@ exports.missions = call_notes.missions
 exports.onCallNotesCreated = call_notes.onCallNotesCreated
 exports.tempNotes = call_notes.tempNotes
 exports.updateMissionsOnCallNotesCreated = call_notes.updateMissionsOnCallNotesCreated
+exports.downloadCallNotes = call_notes.downloadCallNotes
+
 
 
 /***
