@@ -48,7 +48,7 @@ exports.selectDistinct = dbadmin.selectDistinct
 exports.query = dbadmin.query
 exports.queryActive = dbadmin.queryActive
 exports.queryInactive = dbadmin.queryInactive
-exports.copy = dbadmin.copy
+exports.copy = dbadmin.copy  // prod 9/2/19
 exports.deleteNodes = dbadmin.deleteNodes
 exports.deleteAttributes = dbadmin.deleteAttributes
 
@@ -106,11 +106,11 @@ exports.testOnReadyToSendEmails = email.testOnReadyToSendEmails
 
 /***
 dev deploy 4/22/19
-// firebase deploy --only functions:downloadFromOpenStates,functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData
+// firebase deploy --only functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData
 ****/
 // prod deploy: 9/12/18, 9/20/18
 const legislators = require('./legislators')
-exports.downloadFromOpenStates = legislators.downloadFromOpenStates
+//exports.downloadFromOpenStates = legislators.downloadFromOpenStates //where did this function go?
 exports.loadStates = legislators.loadStates
 exports.loadOpenStatesDistricts = legislators.loadOpenStatesDistricts
 exports.loadOpenStatesLegislators = legislators.loadOpenStatesLegislators
@@ -128,6 +128,8 @@ exports.updateLegislatorSocialMedia = legislators.updateLegislatorSocialMedia
 exports.updateVideoNodeSocialMedia = legislators.updateVideoNodeSocialMedia
 exports.testUpdateSocialMedia = legislators.testUpdateSocialMedia
 exports.overwriteBadWithGoodData = legislators.overwriteBadWithGoodData
+exports.json = legislators.json
+exports.readjson = legislators.readjson
 
 
 
@@ -139,14 +141,14 @@ dev deploy 4/22/19
 const civic = require('./google-civic')
 exports.civic = civic.civic
 exports.loadDivisions = civic.loadDivisions
-exports.loadDivisionsTrigger = civic.loadDivisionsTrigger
+exports.loadDivisionsTrigger = civic.loadDivisionsTrigger // dev, prod 9/2/19
 exports.loadDivisionsAllStates = civic.loadDivisionsAllStates
 exports.listDivisions = civic.listDivisions
 exports.listOfficials = civic.listOfficials
 exports.loadOfficials = civic.loadOfficials
 exports.unloadOfficials = civic.unloadOfficials
 exports.unloadDivisions = civic.unloadDivisions
-exports.onOfficialUrl = civic.onOfficialUrl
+exports.onOfficialUrl = civic.onOfficialUrl  // dev, prod 9/2/19
 
 
 /***

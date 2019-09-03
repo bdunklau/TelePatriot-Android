@@ -113,6 +113,66 @@ exports.loadStates = functions.https.onRequest((req, res) => {
 })
 
 
+/**
+This is just a temp function to get all the /states info, stream it to JSON from the dev db so that it can
+be read by the prod db
+
+MUST HAVE: req.query.node
+OPTIONAL: req.query.attribute
+OPTIONAL: req.query.value
+**/
+exports.json = functions.https.onRequest((req, res) => {
+
+    if(req.query.attribute && req.query.value) {
+        return db.ref(req.query.node).orderByChild(req.query.attribute).equalTo(req.query.value).once('value').then(snapshot => {
+            return res.status(200).send(JSON.stringify(snapshot.val()))
+        })
+    }
+    else {
+        return db.ref(req.query.node).once('value').then(snapshot => {
+            return res.status(200).send(JSON.stringify(snapshot.val()))
+        })
+    }
+})
+
+
+/**
+this is just a temp function so we can read /states data from dev and write to prod
+
+MUST HAVE: req.query.node
+OPTIONAL: req.query.attribute
+OPTIONAL: req.query.value
+**/
+exports.readjson = functions.https.onRequest((req, res) => {
+    var headers = {}
+
+    var url = 'https://us-central1-telepatriot-dev.cloudfunctions.net/json?node='+req.query.node
+    if(req.query.attribute && req.query.value) {
+        url += '&attribute='+req.query.attribute+'&value='+req.query.value
+    }
+
+    var options = {
+        url: url,
+        headers: headers
+    };
+
+    // see above:   var request = require('request')
+    request.get(options, function(error, response, body){
+        //console.log(body);
+        var json = JSON.parse(body)
+        if(error) {
+            return res.status(200).send({error: error})
+        }
+        else {
+            return db.ref(req.query.node).update(json).then(() => {
+                return res.status(200).send(json)
+            })
+        }
+    })
+})
+
+
+
 var listStates = function(res, stuff) {
     return db.ref('states/list').once('value').then(snapshot => {
         var statelist = []
@@ -436,7 +496,6 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
                             var legislators = []
                             snapshot.forEach(function(child) {
                                 var legislator = child.val()
-                                var key = legislator.id  //i.e.  NHL000037
                                 // some officials like Lt Gov and maybe Speaker are returned by OpenStates with no "chamber"
                                 // value.  Ignore these guys
                                 if(legislator.chamber) {
@@ -445,6 +504,7 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
                                     legislator.state_chamber_district = legislator.state_chamber+'-'+legislator.district
                                     legislator.civic_data_loaded_date = '(not loaded)'
                                     legislator.civic_data_loaded_date_ms = -1
+                                    var key = legislator.id == "~not available~" ? legislator.state_chamber_district : legislator.id  //i.e.  NHL000037
                                     updates['states/legislators/'+key] = legislator
                                     legislators.push(legislator)
                                 }
@@ -707,14 +767,14 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
             // snapshot.val() is a list of legislators (though usually the list only has 1 person in it)
             var found = _.find(snapshot.val(), function(official) {
                 var debug = false
-                if(legislatorNode.leg_id == 'TXL000690') debug = true
+                if(legislatorNode.leg_id == 'WAL000152') debug = true
                 var sameName = (official.name.toLowerCase() == legislatorNode.full_name.toLowerCase()) ||
                             (official.name.toLowerCase() == legislatorNode.first_name.toLowerCase()+' '+legislatorNode.last_name.toLowerCase())
                 var officialEmails = _.map(official.emails, function(o) {return o.toLowerCase()})
                 var emailFound = _.find(officialEmails, function(email) {
                         return email && legislatorNode.email && email.toLowerCase() == legislatorNode.email.toLowerCase()
                 })
-                //if(debug) db.ref('templog2').push().set({official: official, legislator: legislatorNode, sameName: sameName, emailFound: (emailFound ? emailFound : 'no email found')})
+                if(debug) db.ref('templog2').push().set({official: official, legislator: legislatorNode, sameName: sameName, emailFound: (emailFound ? emailFound : 'no email found')})
                 return sameName || emailFound
             })
 
@@ -723,7 +783,9 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
                 if(found.channels)
                     updates['states/legislators/'+key+'/channels'] = found.channels
                 if(found.emails) {
-                    var alreadyContains = _.find(found.emails, function(email) { return email.toLowerCase() == legislatorNode.email.toLowerCase()} )
+                    var alreadyContains = _.find(found.emails, function(email) {
+                        return legislatorNode.email && email.toLowerCase() == legislatorNode.email.toLowerCase()
+                    } )
                     if(legislatorNode.email && !alreadyContains)  found.emails.push(legislatorNode.email)
                     updates['states/legislators/'+key+'/emails'] = found.emails
                 }
@@ -733,8 +795,14 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
                 if(found.photoUrl) {
                     updates['states/legislators/'+key+'/photoUrl'] = found.photoUrl
                 }
+                if(found.photo_url) {
+                    updates['states/legislators/'+key+'/photoUrl'] = found.photo_url
+                }
                 if(found.urls) {
                     updates['states/legislators/'+key+'/urls'] = found.urls
+                }
+                if(found.division) {
+                    updates['states/legislators/'+key+'/division'] = found.division
                 }
                 // now add some timestamps
                 updates['states/legislators/'+key+'/civic_data_loaded_date'] = date.asCentralTime()
