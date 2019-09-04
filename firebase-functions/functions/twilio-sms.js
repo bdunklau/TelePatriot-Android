@@ -169,7 +169,7 @@ var sendMessageArea = function(numbers) {
     html += '<input type="hidden" size="15" name="twilio_sms_number" value="'+numbers.twilio_sms_number+'" placeholder="from phone #">'
     html += '<p/>'
     html += '<b>Send text blast to these numbers</b><br/>'
-    html += '<textarea name="phones" rows=20 cols=40 placeholder="Phone #s here\nOne number per line">'
+    html += '<textarea name="phones" rows=20 cols=40 placeholder="Copy names and numbers from Excel or Google Docs\n\nFormat:\nLastName[tab]FirstName[tab]Phone number">'
     html += '</textarea>'
     html += '<p/>'
     html += '<textarea name="message" rows=20 cols=40 placeholder="Text message blast goes here">'
@@ -189,19 +189,28 @@ var sendMessageArea = function(numbers) {
 This is the function that sends the text blast
 **/
 exports.sendSms = functions.https.onRequest((req, res) => {
-    var phones = _.split(req.body.phones, '\n')
+    var lines = _.split(req.body.phones, '\n')
+    var data = _.map(lines, function(line) {
+        var pieces = _.split(line, '\t')
+        return {last: pieces[0], first: pieces[1], phone: pieces[2]}
+    })
+
     return db.ref('/api_tokens').once('value').then(snapshot => {
         const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token);
-        _.each(phones, function(phone) {
-            if(!phone.startsWith('+1')) phone = '+1'+phone
+        _.each(data, function(datum) {
+            var phone = datum.phone
+            if(phone && datum.first) {
+                var message = req.body.message.replace(/\(first\)/, datum.first)
+                if(!phone.startsWith('+1')) phone = '+1'+phone
 
-            client.messages
-              .create({
-                 body: req.body.message,
-                 from: req.body.twilio_sms_number,
-                 to: phone
-               })
-              .then(message => console.log(message.sid));
+                client.messages
+                  .create({
+                     body: message,
+                     from: req.body.twilio_sms_number,
+                     to: phone
+                   })
+                  .then(message => console.log(message.sid));
+            }
         })
         return thePage({twilio_sms_number: req.body.twilio_sms_number}).then(html => {
             return res.status(200).send(html)
