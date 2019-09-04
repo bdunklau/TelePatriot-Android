@@ -455,6 +455,8 @@ exports.displaySms = twilio_sms.displaySms
 exports.onSmsReceived = twilio_sms.onSmsReceived
 exports.receiveSms = twilio_sms.receiveSms
 exports.sendSms = twilio_sms.sendSms
+//exports.onNameResolved = twilio_sms.onNameResolved
+
 
 
 /***

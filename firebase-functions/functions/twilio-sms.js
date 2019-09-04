@@ -20,6 +20,8 @@ const db = admin.database();
 
 var getTableOfMessages = function(smsMessages) {
     var html = ''
+    html += '<h3>Replies</h3>'
+    html += 'These are all the replies to the text blast'
     html += '<table border="0" cellspacing="2" cellpadding="2">'
     html += '<tr>'
     html +=     '<th>Date</th>'
@@ -66,6 +68,7 @@ var getSmsNumbers = function(args) {
                 numbers.forward_to_numbers = []
                 console.log('child.child(forward_to_numbers) = ', child.child('forward_to_numbers'))
                 child.child('forward_to_numbers').forEach(function(num) {
+//                    console.log('numbers.forward_to_numbers.push('+num.val()+')')
                     numbers.forward_to_numbers.push(num.val())
                 })
             })
@@ -92,45 +95,54 @@ var getSmsMessages = function(limit) {
 Fired when a record is written (when an SMS message is received) at /sms/messages
 This function does a CB lookup by phone number to get the name of the person that replied to our text message
 so that we can display this person's name in /displaySms
+
+THIS FUNCTION TRIGGERS ANOTHER FUNCTION: onNameResolved
 **/
 exports.onSmsReceived = functions.database.ref('/sms/messages/{key}').onCreate((snapshot, context) => {
     var phone = snapshot.val().From
     console.log('phone = ', phone)
     if(phone.startsWith('+1')) phone = phone.substring(2, phone.length);
 
-    return getUserInfoFromCB_byPhone(context.params.key, phone).then(result => {
-        var addThis = {}
-        var name = result.vol ? result.vol.first_name + ' ' + result.vol.last_name : 'No CB Account'
-        var cbid = result.vol ? result.vol.id : 'No CB Account'
-        addThis.FromName = name;
-        addThis.FromId = cbid
-        // add the recipient's name and CB ID to the /sms/messages record
-        return db.ref('sms/messages/'+context.params.key).update(addThis).then(() => {
-            // now kick ass and send this back as an SMS message to each of the "forward_to_numbers"
-            return getSmsNumbers({}).then(numbers => {
-                var body = 'Reply from '+snapshot.val().FromName+' at '+snapshot.val().From+'\n\n'+snapshot.val().body+'\n\n'+snapshot.val().FromName+'\'s profile in CB:\nhttps://dashboard.conventionofstates.com/admin/people/'+snapshot.val().FromId
-                var from = snapshot.val().To // the "to" in the reply message is now the "from" in the forwarded text
+    return new Promise((resolve, reject) => {
+        var whenDone = function(result) {
+            var addThis = {}
+            var name = result.vol ? result.vol.first_name + ' ' + result.vol.last_name : 'No CB Account'
+            var printedName = result.vol ? result.vol.first_name + ' ' + result.vol.last_name : ''
+            var cbProfile = result.vol ? name+'\'s profile in CB:\nhttps://dashboard.conventionofstates.com/admin/people/'+cbid : '(This person is not in CitizenBuilder)'
+            var cbid = result.vol ? result.vol.id : 'No CB Account'
+            addThis.FromName = name;
+            addThis.FromId = cbid
+            // add the recipient's name and CB ID to the /sms/messages record
+            db.ref('sms/messages/'+context.params.key).update(addThis).then(() => {
+                // now kick ass and send this back as an SMS message to each of the "forward_to_numbers"
+                getSmsNumbers({}).then(numbers => {
+                    var body = 'Reply from '+printedName+' '+snapshot.val().From+'\n\n'+snapshot.val().Body+'\n\n'+cbProfile
+                    var from = snapshot.val().To // the "to" in the reply message is now the "from" in the forwarded text
 
-                console.log('numbers.forward_to_numbers: ', numbers.forward_to_numbers);
-                return db.ref('/api_tokens').once('value').then(snapshot => {
-                    const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token);
-                    _.each(numbers.forward_to_numbers, function(phone) {
-                        if(!phone.startsWith('+1')) phone = '+1'+phone
-                        console.log('forwarding to: ', phone);
-                        client.messages
-                          .create({
-                             body: body,
-                             from: from,
-                             to: phone
-                           })
-                          .then(message => console.log(message.sid));
+                    console.log('numbers.forward_to_numbers: ', numbers.forward_to_numbers);
+                    db.ref('/api_tokens').once('value').then(snapshot => {
+                        const client = twilio(snapshot.val().twilio_account_sid, snapshot.val().twilio_auth_token);
+                        _.each(numbers.forward_to_numbers, function(phone) {
+                            if(!phone.startsWith('+1')) phone = '+1'+phone
+                            console.log('forwarding to: ', phone);
+                            client.messages
+                              .create({
+                                 body: body,
+                                 from: from,
+                                 to: phone
+                               })
+                              .then(message => console.log(message.sid));
+                        })
+
+                        result.resolve(true)
                     })
+
                 })
+            });
+        }
 
-
-            })
-        });
-    });
+        getUserInfoFromCB_byPhone(context.params.key, phone, whenDone, resolve)
+    })
 })
 
 
@@ -152,18 +164,20 @@ exports.receiveSms = functions.https.onRequest((req, res) => {
 
 
 var sendMessageArea = function(numbers) {
-    var html = ''
+    var html = '<P/>'
     html += '<form method="post">'
-    html += '<input type="text" size="15" name="twilio_sms_number" value="'+numbers.twilio_sms_number+'" placeholder="from phone #">'
+    html += '<input type="hidden" size="15" name="twilio_sms_number" value="'+numbers.twilio_sms_number+'" placeholder="from phone #">'
     html += '<p/>'
-    html += '<textarea name="forward_to_numbers" rows=10 cols=40 placeholder="Send replies back to these numbers\nOne number per line">'
-    html += _.join(numbers.forward_to_numbers, '\n')
-    html += '</textarea>'
-    html += '<p/>'
+    html += '<b>Send text blast to these numbers</b><br/>'
     html += '<textarea name="phones" rows=20 cols=40 placeholder="Phone #s here\nOne number per line">'
     html += '</textarea>'
     html += '<p/>'
     html += '<textarea name="message" rows=20 cols=40 placeholder="Text message blast goes here">'
+    html += '</textarea>'
+    html += '<p/>'
+    html += '<b>Forward replies to these numbers</b><br/>'
+    html += '<textarea name="forward_to_numbers" rows=10 cols=40 placeholder="Send replies back to these numbers\nOne number per line">'
+    html += _.join(numbers.forward_to_numbers, '\n')
     html += '</textarea>'
     html += '<P/><input type="submit" value="Send SMS" formAction="/sendSms">'
     html += '</form>'
@@ -205,6 +219,8 @@ var thePage = function(args) {
             var html = ''
             html += '<html><head></head>'
             html += '<body><a href="/displaySms">Refresh</a>'
+            html += '<P/>'
+            html += '<b>This page will send a text blast from this number: '+numbers.twilio_sms_number+'</b>'
             html += '<table border="0" cellspacing="2" cellpadding="2">'
             html += '<tr><td>' + sendMessageArea(numbers) + '</td><td valign="top">' + getTableOfMessages(smsMessages) + '</td></tr>'
             html += '</table>'
@@ -217,7 +233,7 @@ var thePage = function(args) {
 }
 
 
-var getUserInfoFromCB_byPhone = function(key, phone) {
+var getUserInfoFromCB_byPhone = function(key, phone, whenDone, resolve) {
 
     return db.ref().child('administration/configuration').once('value').then(snap2 => {
         var configuration = snap2.val()
@@ -237,31 +253,29 @@ var getUserInfoFromCB_byPhone = function(key, phone) {
             headers: headers
         }
 
-        return new Promise((resolve, reject) => {
-            // see above:   var request = require('request')
-            request.get(options, function(error, response, body){
-                var ret = JSON.parse(body)
+        // see above:   var request = require('request')
+        request.get(options, function(error, response, body){
+            var ret = JSON.parse(body)
 
-                if(error) {
-                    //return res.status(200).send(thePage({error: error}))
-                    console.log('return error = ',error,  ' not what we wanted')
+            if(error) {
+                //return res.status(200).send(thePage({error: error}))
+                console.log('return error = ',error,  ' not what we wanted')
 //                    returnFn({error: error})
-                    resolve({error: error})
-                }
-                else if(ret.error) {
-                    console.log('notFound: true')
+                whenDone({error: error, resolve: resolve})
+            }
+            else if(ret.error) {
+                console.log('notFound: true')
 //                    returnFn({notFound: true})
-                    resolve({notFound: true})
-                }
-                else {
-                    console.log('found: ', phone, ' in CB')
+                whenDone({notFound: true, resolve: resolve})
+            }
+            else {
+                console.log('found: ', phone, ' in CB')
 //                    returnFn({vol: ret, configuration: configuration})
-                    resolve({vol: ret, configuration: configuration})
-                }
+                whenDone({vol: ret, configuration: configuration, resolve: resolve})
+            }
 
-                // If there's no one in CB with this email, the API call will
-                // return {"error": "Not found"}
-            })
+            // If there's no one in CB with this email, the API call will
+            // return {"error": "Not found"}
         })
 
 
