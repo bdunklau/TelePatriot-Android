@@ -106,7 +106,7 @@ exports.testOnReadyToSendEmails = email.testOnReadyToSendEmails
 
 /***
 dev deploy 4/22/19
-// firebase deploy --only functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData
+// firebase deploy --only functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData,functions:editLegislator,functions:saveLegislator
 ****/
 // prod deploy: 9/12/18, 9/20/18
 const legislators = require('./legislators')
@@ -130,6 +130,8 @@ exports.testUpdateSocialMedia = legislators.testUpdateSocialMedia
 exports.overwriteBadWithGoodData = legislators.overwriteBadWithGoodData
 exports.json = legislators.json
 exports.readjson = legislators.readjson
+exports.editLegislator = legislators.editLegislator
+exports.saveLegislator = legislators.saveLegislator
 
 
 
