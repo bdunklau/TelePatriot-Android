@@ -31,7 +31,7 @@ This is the html of the /callNotes page
 **/
 var callNotesPage = function(mission_id, mission_name) {
 
-    return db.child('call_notes').orderByChild('mission_id').equalTo(parseInt(mission_id)).once('value').then(snapshot => {
+    return getCallNotes(mission_id, mission_name).then(call_notes => {
         var html = '<html><head>';
         html += '<style>';
         html += 'td { border-bottom: 1pt solid #cccccc; font-family:Tahoma }'
@@ -46,30 +46,120 @@ var callNotesPage = function(mission_id, mission_name) {
         html += '<script type="text/javascript">google.charts.load(\'current\', {\'packages\':[\'corechart\']});</script>';
 
         html += '<h3><a href="/missions">All Missions</a> > '+mission_name+'</h3>'
+        html += '<p/><a href="/downloadCallNotes?mission_id='+mission_id+'&mission_name='+mission_name+'">Download these notes to Excel</a>'
         html += '<table cellspacing="0" cellpadding="5">';
-        snapshot.forEach(function(child) {
+        _.each(call_notes, function(child) {
             html += '<tr>';
-            html +=     '<td colspan="3" class="small">'+child.val().call_date+'</td>';
+            html +=     '<td colspan="3" class="small">'+child.call_date+'</td>';
             html += '</tr>';
             html += '<tr>';
             html +=     '<td valign="top" nowrap>'
-            html +=         '<a href="https://dashboard.conventionofstates.com/admin/people/'+child.val().author_id+'" target="cos" title="see '+child.val().author_name+' in CitizenBuilder">'+child.val().author_name+'</a>';
-            html +=         '<br/><span  class="small"> (ID: '+child.val().author_id+')</span>'
+            html +=         '<a href="https://dashboard.conventionofstates.com/admin/people/'+child.author_id+'" target="cos" title="see '+child.author_name+' in CitizenBuilder">'+child.author_name+'</a>';
+            html +=         '<br/><span  class="small"> (ID: '+child.author_id+')</span>'
             html +=     '</td>';
-            html +=     '<td valign="top" nowrap>'+child.val().outcome+'</td>';
+            html +=     '<td valign="top" nowrap>'+child.outcome+'</td>';
             html +=     '<td valign="top" nowrap>';
-            html +=         '<a href="https://dashboard.conventionofstates.com/admin/people/'+child.val().person_id+'" target="cos" title="see '+child.val().first_name+' '+child.val().last_name+' in CitizenBuilder">'+child.val().first_name+' '+child.val().last_name+'</a>';
-            html +=         '<br/><span  class="small"> (ID: '+child.val().person_id+')</span>';
+            html +=         '<a href="https://dashboard.conventionofstates.com/admin/people/'+child.person_id+'" target="cos" title="see '+child.first_name+' '+child.last_name+' in CitizenBuilder">'+child.first_name+' '+child.last_name+'</a>';
+            html +=         '<br/><span  class="small"> (ID: '+child.person_id+')</span>';
             html +=     '</td>';
-            html +=     '<td valign="top" nowrap><a href="tel://'+child.val().phone_number+'" target="call">'+child.val().phone_number+'</a></td>';
-            var parms = 'key='+child.key+'&mission_name='+mission_name+'&mission_id='+mission_id+'&notes='+child.val().notes;
-            html +=     '<td valign="top">'+child.val().notes+' <a href="/editCallNotes?'+parms+'">edit</a></td>';
+            html +=     '<td valign="top" nowrap><a href="tel://'+child.phone_number+'" target="call">'+child.phone_number+'</a></td>';
+            var parms = 'key='+child.key+'&mission_name='+mission_name+'&mission_id='+mission_id+'&notes='+child.notes;
+            html +=     '<td valign="top">'+child.notes+' <a href="/editCallNotes?'+parms+'">edit</a></td>';
             html += '</tr>';
         })
         html += '</table></body></html>';
         return html;
     })
+
+//    return db.child('call_notes').orderByChild('mission_id').equalTo(parseInt(mission_id)).once('value').then(snapshot => {
+//        var html = '<html><head>';
+//        html += '<style>';
+//        html += 'td { border-bottom: 1pt solid #cccccc; font-family:Tahoma }'
+//        html += 'th, h3 { font-family:Tahoma }'
+//        html += '.small {color:#aaaaaa;font-size:11px;border: 0 solid #ffffff}'
+//        html += '</style>';
+//        html += '</head>';
+//        html += '<body>';
+//
+//        // google charts :)
+//        html += '<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>';
+//        html += '<script type="text/javascript">google.charts.load(\'current\', {\'packages\':[\'corechart\']});</script>';
+//
+//        html += '<h3><a href="/missions">All Missions</a> > '+mission_name+'</h3>'
+//        html += '<p/><a href="/downloadCallNotes">Download these notes to Excel</a>'
+//        html += '<table cellspacing="0" cellpadding="5">';
+//        snapshot.forEach(function(child) {
+//            html += '<tr>';
+//            html +=     '<td colspan="3" class="small">'+child.val().call_date+'</td>';
+//            html += '</tr>';
+//            html += '<tr>';
+//            html +=     '<td valign="top" nowrap>'
+//            html +=         '<a href="https://dashboard.conventionofstates.com/admin/people/'+child.val().author_id+'" target="cos" title="see '+child.val().author_name+' in CitizenBuilder">'+child.val().author_name+'</a>';
+//            html +=         '<br/><span  class="small"> (ID: '+child.val().author_id+')</span>'
+//            html +=     '</td>';
+//            html +=     '<td valign="top" nowrap>'+child.val().outcome+'</td>';
+//            html +=     '<td valign="top" nowrap>';
+//            html +=         '<a href="https://dashboard.conventionofstates.com/admin/people/'+child.val().person_id+'" target="cos" title="see '+child.val().first_name+' '+child.val().last_name+' in CitizenBuilder">'+child.val().first_name+' '+child.val().last_name+'</a>';
+//            html +=         '<br/><span  class="small"> (ID: '+child.val().person_id+')</span>';
+//            html +=     '</td>';
+//            html +=     '<td valign="top" nowrap><a href="tel://'+child.val().phone_number+'" target="call">'+child.val().phone_number+'</a></td>';
+//            var parms = 'key='+child.key+'&mission_name='+mission_name+'&mission_id='+mission_id+'&notes='+child.val().notes;
+//            html +=     '<td valign="top">'+child.val().notes+' <a href="/editCallNotes?'+parms+'">edit</a></td>';
+//            html += '</tr>';
+//        })
+//        html += '</table></body></html>';
+//        return html;
+//    })
 }
+
+
+var getCallNotes = function(mission_id, mission_name){
+    return db.child('call_notes').orderByChild('mission_id').equalTo(parseInt(mission_id)).once('value').then(snapshot => {
+        var call_notes = []
+        snapshot.forEach(function(child) {
+            var call_note = child.val()
+            call_note.key = child.key
+            call_notes.push(call_note);
+        })
+        return call_notes;
+    })
+}
+
+
+/**
+Downloads call note for a single mission to Excel
+REQUIRED:  req.query.mission_id
+REQUIRED:  req.query.mission_name
+**/
+exports.downloadCallNotes = functions.https.onRequest((req, res) => {
+    var filename = 'CallNotes' // just a default value, expect this to be overwritten below
+
+    var stuff = {res: res}
+    if(req.query.mission_name) {
+        stuff.mission_name = req.query.mission_name
+        filename = 'CallNotes for '+stuff.mission_name;
+    }
+
+    return getCallNotes(req.query.mission_id, req.query.mission_name).then(call_notes => {
+        var stuff = '' // csv data, really tab-delimited
+        stuff = 'Date\tCaller\tCB Link\tOutcome\tPerson Called\tCB Link\tPhone\tNotes\tRecord ID\n'
+        _.each(call_notes, function(call_note) {
+            stuff += call_note.call_date+'\t'
+            stuff += call_note.author_name+'\t'
+            stuff += 'https://dashboard.conventionofstates.com/admin/people/'+call_note.author_id+'\t'
+            stuff += call_note.outcome+'\t'
+            stuff += call_note.first_name+' '+call_note.last_name+'\t'
+            stuff += 'https://dashboard.conventionofstates.com/admin/people/'+call_note.person_id+'\t'
+            stuff += call_note.phone_number+'\t'
+            stuff += call_note.notes+'\t'
+            stuff += '\''+call_note.key+'\t'
+            stuff += '\n'
+        })
+
+        return res.set({'Content-Type': 'application/vnd.ms-excel', 'Content-Disposition': 'attachment;filename='+filename+'.xls'}).status(200).send(stuff)
+
+    })
+})
 
 
 /**
