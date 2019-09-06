@@ -179,35 +179,66 @@ exports.editLegislator = functions.https.onRequest((req, res) => {
         html += '<html><head>'
         html += '<style>'
         html += 'input {margin:10 10 0 10; height: 30px; width:300px; font-size:12pt}'
+        html += 'textarea {margin: 10 10 0 10; font-size:12pt}'
         html += '</style>'
-        html += '</head><body>'
+        html += '</head><body><h2>Edit Legislator</h2>'
         html += '<form method="post">'
-        html += '<br/><input type="hidden" name="leg_id" value="'+req.query.leg_id+'">'
-        html += '<br/><input type="text" name="first_name" value="'+snapshot.val().first_name+'" placeholder="first">'
+        html += '<input type="hidden" name="leg_id" value="'+req.query.leg_id+'">'
+        html += '<input type="text" name="first_name" value="'+snapshot.val().first_name+'" placeholder="first">'
         html += '<br/><input type="text" name="last_name" value="'+snapshot.val().last_name+'" placeholder="last">'
         html += '<br/><input type="text" name="full_name" value="'+snapshot.val().full_name+'" placeholder="full name">'
         html += '<br/><input type="text" name="chamber" value="'+snapshot.val().chamber+'" placeholder="chamber">'
         html += '<br/><input type="text" name="district" value="'+snapshot.val().district+'" placeholder="district">'
         html += '<br/><input type="text" name="email" value="'+snapshot.val().email+'" placeholder="email">'
-        html += '<br/><input type="text" name="party" value="'+snapshot.val().party+'" placeholder="party">'
-        var photo = snapshot.val().photo_url ? snapshot.val().photo_url : snapshot.val().photoUrl ? snapshot.val().photo_url : ''
-        html += '<br/><input type="text" name="photo_url" value="'+photo+'" placeholder="photo url">'
-        html += '<br/><input type="text" name="state" value="'+snapshot.val().state+'" placeholder="state">'
-        html += '<input type="hidden" name="channel_count" value="'+snapshot.val().channels.length+'">'
-        html += '<input type="hidden" name="office_count" value="'+snapshot.val().offices.length+'">'
-        // offices
-        for(var i=0; i < snapshot.val().channels.length; i++) {
-            html += '<br/><b>Channel #'+(i+1)+'</b>'
-            html += '<br/><input type="text" name="channel_type'+i+'" value="'+snapshot.val().channels[i].type+'" placeholder="social media type">'
-            html += '<br/><input type="text" name="id'+i+'" value="'+snapshot.val().channels[i].id+'" placeholder="handle">'
+
+        html += '<P/><B>Other Emails</B>'
+        if(snapshot.val().emails && snapshot.val().emails.length > 0) {
+            html += '<br/><textarea rows="5" cols="40" name="emails">'
+            html += _.join(snapshot.val().emails, '\n')
+            html += '</textarea>'
         }
+        html += '<br/><input type="text" name="party" value="'+snapshot.val().party+'" placeholder="party">'
+        if(snapshot.val().photo_url && snapshot.val().photo_url != '') {
+            html += '<br/><input type="text" name="photo_url" value="'+snapshot.val().photo_url+'" placeholder="photo url">'
+        }
+        if(snapshot.val().photoUrl && snapshot.val().photoUrl != '') {
+            html += '<br/><input type="text" name="photoUrl" value="'+snapshot.val().photoUrl+'" placeholder="photo url">'
+        }
+        html += '<br/><input type="text" name="state" value="'+snapshot.val().state+'" placeholder="state">'
+
+        // channels
+        var channels = []
+        if(snapshot.val().channels) {
+            channels = snapshot.val().channels
+            // create a \n-delimited string of channels with this format:
+            // Twitter:twitterhandle
+            // Facebook:facebookhandle
+            var typeAndHandles = _.map(channels, function(ch) {
+              return ch.type+':'+ch.id
+            })
+            var formattedChannelString = _.join(typeAndHandles, '\n')
+            html += '<p/><b>Channels</b>'
+            html += '<P/><textarea rows="5" cols="40" name="channels">'+formattedChannelString+'</textarea>'
+        }
+//        html += '<input type="hidden" name="channel_count" value="'+snapshot.val().channels.length+'">'
+
+        html += '<input type="hidden" name="office_count" value="'+snapshot.val().offices.length+'">'
+
         // offices
         for(var i=0; i < snapshot.val().offices.length; i++) {
-            html += '<br/><b>Office #'+(i+1)+'</b>'
-            html += '<br/><input type="text" name="address'+i+'" value="'+snapshot.val().offices[i].address+'" placeholder="Office Address">'
-            html += '<br/><input type="text" name="email'+i+'" value="'+snapshot.val().offices[i].email+'" placeholder="Email">'
+            html += '<p/><b>Office #'+(i+1)+'</b>'
+            html += '<P/><textarea rows="5" cols="40" name="address'+i+'" placeholder="Office Address">'+snapshot.val().offices[i].address+'</textarea>'
+            var em = ''
+            if(snapshot.val().offices[i].email) {
+                em = snapshot.val().offices[i].email
+            }
+            html += '<br/><input type="text" name="email'+i+'" value="'+em+'" placeholder="Email">'
             html += '<br/><input type="text" name="name'+i+'" value="'+snapshot.val().offices[i].name+'" placeholder="Office Name">'
-            html += '<br/><input type="text" name="phone'+i+'" value="'+snapshot.val().offices[i].phone+'" placeholder="Office Phone">'
+            var ph = ''
+            if(snapshot.val().offices[i].phone) {
+                ph = snapshot.val().offices[i].phone
+            }
+            html += '<br/><input type="text" name="phone'+i+'" value="'+ph+'" placeholder="Office Phone">'
             html += '<br/><input type="text" name="type'+i+'" value="'+snapshot.val().offices[i].type+'" placeholder="Office type">'
         }
         html += '<p/><input type="submit" value="Submit" formAction="/saveLegislator"> &nbsp;&nbsp;&nbsp;'
@@ -227,21 +258,38 @@ exports.saveLegislator = functions.https.onRequest((req, res) => {
     update[root+'full_name'] = req.body.full_name
     update[root+'district'] = req.body.district
     update[root+'email'] = req.body.email
-    update[root+'party'] = req.body.party
-    update[root+'photo_url'] = req.body.photo_url
-    update[root+'state'] = req.body.state
-    var office_count = parseInt(req.body.office_count)
-    var channel_count = parseInt(req.body.channel_count)
-    for(var i=0; i < channel_count; i++) {
-        if(req.body['channel_type'+i]) update[root+'channels/'+i+'/type'] = req.body['channel_type'+i]
-        if(req.body['id'+i]) update[root+'channels/'+i+'/id'] = req.body['id'+i]
+    if(req.body.emails) {
+        var emails = _.split(req.body.emails, '\n')
+        update[root+'emails'] = emails
     }
+    update[root+'party'] = req.body.party
+    if(req.body.photo_url) {
+        update[root+'photo_url'] = req.body.photo_url
+    }
+    if(req.body.photoUrl) {
+        update[root+'photoUrl'] = req.body.photoUrl
+    }
+    update[root+'state'] = req.body.state.toLowerCase()
+    var office_count = parseInt(req.body.office_count)
+
+//    var channel_count = parseInt(req.body.channel_count)
+    if(req.body.channels) {
+        var typeAndHandles = _.split(req.body.channels, '\n')
+        var channels = _.map(typeAndHandles, function(pair) {
+            var typeAndId = _.split(pair, ":")
+            var entry = {type: typeAndId[0].trim(), id: typeAndId[1].trim()}
+            if(entry.type == 'Facebook') entry.facebook_id = null
+            return entry
+        })
+        update[root+'channels'] = channels
+    }
+
     for(var i=0; i < office_count; i++) {
         if(req.body['address'+i]) update[root+'offices/'+i+'/address'] = req.body['address'+i]
-        if(req.body['email'+i]) update[root+'offices/'+i+'/email'] = req.body['email'+i]
         if(req.body['name'+i]) update[root+'offices/'+i+'/name'] = req.body['name'+i]
-        if(req.body['phone'+i]) update[root+'offices/'+i+'/phone'] = req.body['phone'+i]
         if(req.body['type'+i]) update[root+'offices/'+i+'/type'] = req.body['type'+i]
+        if(req.body['email'+i] && req.body['email'+i] != '') update[root+'offices/'+i+'/email'] = req.body['email'+i]
+        if(req.body['phone'+i] && req.body['phone'+i] != '') update[root+'offices/'+i+'/phone'] = req.body['phone'+i]
     }
     return db.ref('/').update(update).then(() => {
         return listStates(res, {state_abbrev: req.body.state})
