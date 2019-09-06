@@ -857,23 +857,33 @@ exports.loadOpenStatesDistricts = functions.https.onRequest((req, res) => {
 // and photo url
 // OBVIOUSLY, GOOGLE CIVIC DATA HAS TO BE LOADED FIRST IN ORDER FOR THIS FUNCTION TO DO ANYTHING
 exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").onWrite((change, context) => {
+    // log just for this legislator
+    var leglog = []
+    var updates = {}
+    var key = context.params.key // TXL0000033
 
-    if(change.before.exists())
+    if(change.before.exists()) {
+//        leglog.push('return early because change.before.exists()')
+//        updates['states/legislators/'+key+'/log'] = leglog
+//        db.ref('/').update(updates)
         return false // we write to this node below, so we don't want to recursively trigger this function
+    }
 
     // have to take the leg_id and query /states/districts/[key]/legislators for the same leg_id
 
-    var key = context.params.key // TXL0000033
     var legislatorNode = change.after.val()
-            //db.ref('templog2').push().set({'state_chamber_district':legislatorNode.state_chamber_district})
 
     return db.ref('states/districts/'+legislatorNode.state_chamber_district).once('value').then(snapshot => {
         if(!snapshot.val()) {
-            //db.ref('templog2/null_snapshot').set({'key': key, 'thing': 'null snapshot.val() for'+legislatorNode.state_chamber_district})
+//            leglog.push('return early because no /states/districts/'+legislatorNode.state_chamber_district+' node')
+//            updates['states/legislators/'+key+'/log'] = leglog
+//            snapshot.ref.root.update(updates)
             return {}
         }
         if(!snapshot.val().division_id) {
-            //db.ref('templog2/null_division_id').set({'key': key, 'thing': 'null division_id for'+legislatorNode.state_chamber_district})
+//            leglog.push('return early because no /states/districts/'+legislatorNode.state_chamber_district+'/division_id node')
+//            updates['states/legislators/'+key+'/log'] = leglog
+//            snapshot.ref.root.update(updates)
             return {}
         }
         var division = snapshot.val().division_id
@@ -884,30 +894,41 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
     })
     .then(stuff => {
         if(!stuff.division) {
-            //db.ref('templog2/'+date.asMillis()).set(legislatorNode.state_chamber_district)
             return false
         }
         var division = stuff.division
-        //db.ref('templog2').push().set({lookfor: division})
+
+        var watch = key == 'NJL000001'
+
+        /**
+        So take the division from the /states/legislators/{key}/division and query /google_civic_data/officials for nodes having division=/states/legislators/{key}/division
+        PROBLEM STATES:  AZ, NJ
+        NJ - /states/legislators/NJL000001       -> ocd-division/country:us/state:nj/sldu:1    THIS RECORD...
+        /google_civic_data/officials/nj-sldu-1-0 -> ocd-division/country:us/state:nj/sldu:1    POINTS TO ALL 3 OF THESE
+        /google_civic_data/officials/nj-sldu-1-1 -> ocd-division/country:us/state:nj/sldu:1
+        /google_civic_data/officials/nj-sldu-1-2 -> ocd-division/country:us/state:nj/sldu:1
+        **/
         return stuff.ref.root.child('google_civic_data/officials/').orderByChild('division').equalTo(division).once('value').then(snapshot => {
             // snapshot.val() is a list of legislators (though usually the list only has 1 person in it)
             var found = _.find(snapshot.val(), function(official) {
-                var debug = false
-                if(legislatorNode.leg_id == 'WAL000152') debug = true
                 var sameName = (official.name.toLowerCase() == legislatorNode.full_name.toLowerCase()) ||
                             (official.name.toLowerCase() == legislatorNode.first_name.toLowerCase()+' '+legislatorNode.last_name.toLowerCase())
                 var officialEmails = _.map(official.emails, function(o) {return o.toLowerCase()})
                 var emailFound = _.find(officialEmails, function(email) {
                         return email && legislatorNode.email && email.toLowerCase() == legislatorNode.email.toLowerCase()
                 })
-                if(debug) db.ref('templog2').push().set({official: official, legislator: legislatorNode, sameName: sameName, emailFound: (emailFound ? emailFound : 'no email found')})
+                if(watch) db.ref('templog3').set({begin: 'ok'}).then(() =>{ db.ref('templog3').push().set('for '+official.name+': sameName='+sameName+' and emailFound='+emailFound+' so found='+(sameName || emailFound)) })
                 return sameName || emailFound
             })
 
             if(found) {
-                var updates = {}
-                if(found.channels)
+                if(found.channels) {
                     updates['states/legislators/'+key+'/channels'] = found.channels
+                    if(watch) db.ref('templog3').push().set({evt: 'found channels'})
+                }
+                else {
+                    if(watch) db.ref('templog3').push().set({evt: 'did not find any channels', found: found})
+                }
                 if(found.emails) {
                     var alreadyContains = _.find(found.emails, function(email) {
                         return legislatorNode.email && email.toLowerCase() == legislatorNode.email.toLowerCase()
@@ -935,8 +956,11 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
                 updates['states/legislators/'+key+'/civic_data_loaded_date_ms'] = date.asMillis()
                 updates['google_civic_data/officials/'+found.key+'/openstates_match_date'] = date.asCentralTime()
                 updates['google_civic_data/officials/'+found.key+'/openstates_match_date_ms'] = date.asMillis()
-                return stuff.ref.root.update(updates)
             }
+            else {
+                if(watch) db.ref('templog3').push().set({evt: 'never found the official'})
+            }
+            return stuff.ref.root.update(updates)
 
         })
     })

@@ -136,7 +136,7 @@ exports.saveLegislator = legislators.saveLegislator
 
 
 /***
-dev deploy 4/22/19
+dev deploy 4/22/19, 9/6/19
 // firebase deploy --only functions:civic,functions:loadDivisions,functions:loadDivisionsTrigger,functions:loadDivisionsAllStates,functions:listDivisions,functions:listOfficials,functions:loadOfficials,functions:unloadOfficials,functions:unloadDivisions,functions:onOfficialUrl
 ****/
 // prod deploy: 9/12/18, 9/20/18
