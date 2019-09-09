@@ -208,18 +208,28 @@ exports.editLegislator = functions.https.onRequest((req, res) => {
 
         // channels
         var channels = []
-        if(snapshot.val().channels) {
-            channels = snapshot.val().channels
-            // create a \n-delimited string of channels with this format:
-            // Twitter:twitterhandle
-            // Facebook:facebookhandle
-            var typeAndHandles = _.map(channels, function(ch) {
-              return ch.type+':'+ch.id
+        if(snapshot.val().channels) channels = snapshot.val().channels;
+        var channelPossibilities = ['Facebook', 'Twitter', 'YouTube', 'Instagram', 'LinkedIn']
+        // create a \n-delimited string of channels with this format:
+        // Twitter:twitterhandle
+        // Facebook:facebookhandle
+        var typeAndHandles = _.map(channelPossibilities, function(channelPossibility) {
+            var thechannel = _.find(channels, function(ch) {
+                return ch.type.toLowerCase() == channelPossibility.toLowerCase()
             })
-            var formattedChannelString = _.join(typeAndHandles, '\n')
-            html += '<p/><b>Channels</b>'
-            html += '<P/><textarea rows="5" cols="40" name="channels">'+formattedChannelString+'</textarea>'
-        }
+            if(thechannel) return thechannel.type+':'+thechannel.id
+            else return channelPossibility+':'
+        })
+
+
+//        var typeAndHandles = _.map(channels, function(ch) {
+//          return ch.type+':'+ch.id
+//        })
+
+
+        var formattedChannelString = _.join(typeAndHandles, '\n')
+        html += '<p/><b>Social Media Handles</b>'
+        html += '<P/><textarea rows="5" cols="40" name="channels">'+formattedChannelString+'</textarea>'
 //        html += '<input type="hidden" name="channel_count" value="'+snapshot.val().channels.length+'">'
 
         html += '<input type="hidden" name="office_count" value="'+snapshot.val().offices.length+'">'
@@ -277,8 +287,11 @@ exports.saveLegislator = functions.https.onRequest((req, res) => {
         var typeAndHandles = _.split(req.body.channels, '\n')
         var channels = _.map(typeAndHandles, function(pair) {
             var typeAndId = _.split(pair, ":")
-            var entry = {type: typeAndId[0].trim(), id: typeAndId[1].trim()}
-            if(entry.type == 'Facebook') entry.facebook_id = null
+            var channelExists = typeAndId[1] && typeAndId[1].trim() != ''
+            if(channelExists) {
+                var entry = {type: typeAndId[0].trim(), id: typeAndId[1].trim()}
+                if(entry.type == 'Facebook') entry.facebook_id = null
+            }
             return entry
         })
         update[root+'channels'] = channels
@@ -319,78 +332,125 @@ var listStates = function(res, stuff) {
         var statelist = stuff.statelist
         var html = ''
         html += '<table cellspacing="0" cellpadding="2" border="1">'
-        html += '<tr><td colspan="9"><a href="/loadStates">Load States</a></td></tr>'
+        html += '<tr><td><a href="/loadStates">Load States</a></td></tr>'
         html += '<tr>'
-        html +=     '<td colspan="9">Legislators that '
+        html +=     '<td>Legislators that '
         html +=         '[<a href="/peopleWithoutCivicData?attribute=civic_data_loaded_date_ms&value=notempty" title="People that did get their Civic data loaded">do</a>]'
         html +=         '[<a href="/peopleWithoutCivicData?attribute=civic_data_loaded_date_ms&value=empty" title="People that never got their Civic data loaded">do not</a>]'
         html +=     'have Civic data loaded</td>'
         html += '</tr>'
-        html += '<tr>'
-        html +=     '<th rowspan="2">Load</th>'
-        html +=     '<th rowspan="2">Legislators</th>'
-        html +=     '<th colspan="2">Actual</th>'
-        html +=     '<th colspan="2">Diff</th>'
-        html +=     '<th colspan="3">Loaded</th>'
-        html += '</tr>'
-        html += '<tr>'
-        html +=     '<th>SD</th>'
-        html +=     '<th>HD</th>'
-        html +=     '<th>SD</th>'
-        html +=     '<th>HD</th>'
-        html +=     '<th>SD</th>'
-        html +=     '<th>HD</th>'
-        html +=     '<th>Soc Media</th>'
-        html += '</tr>'
+//        html += '<tr>'
+//        html +=     '<th rowspan="2">Load</th>'
+//        html +=     '<th rowspan="2">Legislators</th>'
+//        html +=     '<th colspan="2">Actual</th>'
+//        html +=     '<th colspan="2">Diff</th>'
+//        html +=     '<th colspan="3">Loaded</th>'
+//        html += '</tr>'
+//        html += '<tr>'
+//        html +=     '<th>SD</th>'
+//        html +=     '<th>HD</th>'
+//        html +=     '<th>SD</th>'
+//        html +=     '<th>HD</th>'
+//        html +=     '<th>SD</th>'
+//        html +=     '<th>HD</th>'
+//        html +=     '<th>Soc Media</th>'
+//        html += '</tr>'
         for(var i=0; i < statelist.length; i++) {
-            html += '<tr>'
-            html +=     '<td>'
-            html +=         '[<a href="/loadOpenStatesDistricts?state='+statelist[i].state_abbrev+'" title="Load OpenStates Districts">Load OS D</a>]'
-            html +=         '[<a href="/loadOpenStatesLegislators?state='+statelist[i].state_abbrev+'" title="Load OpenStates Legislators">Load OS L</a>]'
-            html +=         '[<a href="/query?node=/states/list/'+statelist[i].state_abbrev+'" title="Query /states/list/'+statelist[i].state_abbrev+'" target="new">Q1</a>]'
-            html +=         '[<a href="/query?node=/states/openstates&attribute=state_abbrev&value='+statelist[i].state_abbrev+'" title="Query /states/openstates : state_abbrev='+statelist[i].state_abbrev+'" target="new">Q2</a>]'
-            html +=         '[<a href="/query?node=/states/districts&attribute=abbr&value='+statelist[i].state_abbrev+'" title="Query /states/districts : abbr='+statelist[i].state_abbrev+'" target="new">Q3</a>]'
-            html +=         '[<a href="/query?node=/states/legislators&attribute=state&value='+statelist[i].state_abbrev+'" title="Query /states/legislators : state='+statelist[i].state_abbrev+'" target="new">Q4</a>]'
-            html +=         '&nbsp;&nbsp;[<a href="/loadLegislators?state='+statelist[i].state_abbrev+'" title="Load/Reload legislators for '+statelist[i].state_name+'">load</a>]'
-            html +=     '</td>'
-            html +=     '<td><a href="/viewLegislators?state='+statelist[i].state_abbrev+'" title="view all legislators in '+statelist[i].state_name+'">'+statelist[i].state_name+'</a></td>'
-
-            html += '<td>'+statelist[i].sd_actual+'</td>'
-            html += '<td>'+statelist[i].hd_actual+'</td>'
-
             var sddiff = statelist[i].sd_actual - statelist[i].sd_loaded
-            if(sddiff == 0) {
-                html += '<td style="background-color:#008000;color:#ffffff">'+sddiff+'</td>'
-            }
-            else {
-                var title = 'OpenStates returned '+sddiff+' less than expected'
-                if(sddiff < 0) title = 'OpenStates returned '+(-1 * sddiff)+' more than expected'
-                html += '<td style="background-color:#ffff00" title="'+title+'">'+sddiff+'</td>'
-            }
-
             var hddiff = statelist[i].hd_actual - statelist[i].hd_loaded
-            if(hddiff == 0) {
-                html += '<td style="background-color:#008000;color:#ffffff">'+hddiff+'</td>'
-            }
-            else {
-                var title = 'OpenStates returned '+hddiff+' less than expected'
-                if(hddiff < 0) title = 'OpenStates returned '+(-1 * hddiff)+' more than expected'
-                html += '<td style="background-color:#ffff00" title="'+title+'">'+hddiff+'</td>'
-            }
-
-            // If either sd_loaded or hd_loaded is 0, create a hyperlink for these attributes so that we can click them '<a href="/loadLegislators?state='+statelist[i].state_abbrev+'">'+statelist[i].sd_loaded+'</a>'to reload
-            // the data from OpenStates
-            var sd_loaded = statelist[i].sd_loaded
-            var hd_loaded = statelist[i].hd_loaded
-            if(statelist[i].sd_loaded == 0 || (statelist[i].hd_loaded == 0 && statelist[i].state_abbrev != 'ne')) {
-                sd_loaded = '<a href="/loadLegislators?state='+statelist[i].state_abbrev+'">'+statelist[i].sd_loaded+'</a>'
-                hd_loaded = '<a href="/loadLegislators?state='+statelist[i].state_abbrev+'">'+statelist[i].hd_loaded+'</a>'
-            }
-            html += '<td>'+sd_loaded+'</td>'
-            html += '<td>'+hd_loaded+'</td>'
+            var exact = 'style="background-color:#008000;color:#ffffff"'
+            var notExact = 'style="background-color:#ffff00"'
+            var nothing = 'style="background-color:#FA9F9F"'
+            var sdStyle = sddiff == 0 ? exact : notExact
+            var hdStyle = hddiff == 0 ? exact : notExact
             var totalLegislators = statelist[i].sd_loaded + statelist[i].hd_loaded
-            html +=     '<td>'+statelist[i].channels_loaded+' out of '+totalLegislators+'</td>'
-            html += '</tr>'
+            var smStyle = statelist[i].channels_loaded==0 ? nothing : (statelist[i].channels_loaded < totalLegislators) ? notExact : exact;
+
+            html += '<tr>'
+            html +=     '<td nowrap>'
+            html +=         '<table border="0">'
+            html +=             '<tr>'
+            html +=                 '<td nowrap valign="top"><a href="/viewLegislators?state='+statelist[i].state_abbrev+'">'+statelist[i].state_name+'</a></td>'
+            html +=                 '<td nowrap>'
+            html +=                     '<span '+hdStyle+'>House Reps: '+statelist[i].hd_loaded+' of '+statelist[i].hd_actual+' loaded</span>'
+            html +=                     '<br/><span '+sdStyle+'>Senators: &nbsp;&nbsp;&nbsp;'+statelist[i].sd_loaded+' of '+statelist[i].sd_actual+' loaded</span>'
+            html +=                     '<br/><span '+smStyle+'>Social Media: '+statelist[i].channels_loaded+' of '+totalLegislators+' loaded</span>'
+            html +=                 '</td>'
+            html +=             '</tr>'
+            html +=             '<tr>'
+            html +=                 '<td nowrap><a href="/civic" target="civic">Manage Google Civic Data</a></td>'
+            html +=                 '<td nowrap></td>'
+            html +=             '</tr>'
+            html +=             '<tr>'
+            html +=                 '<td nowrap>'
+            html +=                     '<a href="/loadOpenStatesDistricts?state='+statelist[i].state_abbrev+'">Update /openstates/'+statelist[i].state_abbrev+'/districts</a>'
+            html +=                 '</td>'
+            html +=                 '<td nowrap>'
+            html +=                     '<a href="/query?node=/openstates/'+statelist[i].state_abbrev+'/districts" target="new">Query /openstates/'+statelist[i].state_abbrev+'/districts</a>'
+            html +=                 '</td>'
+            html +=             '</tr>'
+            html +=             '<tr>'
+            html +=                 '<td nowrap>'
+            html +=                     '<a href="/loadOpenStatesLegislators?state='+statelist[i].state_abbrev+'">Update /openstates/'+statelist[i].state_abbrev+'/legislators</a>'
+            html +=                 '</td>'
+            html +=                 '<td nowrap>'
+            html +=                     '<a href="/query?node=/openstates/'+statelist[i].state_abbrev+'/legislators" target="new">Query /openstates/'+statelist[i].state_abbrev+'/legislators</a>'
+            html +=                 '</td>'
+            html +=             '</tr>'
+            html +=             '<tr>'
+            html +=                 '<td nowrap><a href="/loadLegislators?state='+statelist[i].state_abbrev+'">Update /states/legislators/st_chamber_dist</a></td>'
+            html +=                 '<td nowrap><a href="/query?node=/states/legislators&attribute=state&value='+statelist[i].state_abbrev+'" target="new">Query /states/legislators where state='+statelist[i].state_abbrev+'</a></td>'
+            html +=             '</tr>'
+            html +=             '<tr>'
+            html +=                 '<td>'
+            html +=                 '</td>'
+            html +=                 '<td nowrap><a href="/query?node=/states/districts&attribute=abbr&value='+statelist[i].state_abbrev+'" target="new">Query /states/districts where abbr='+statelist[i].state_abbrev+'</a></td>'
+            html +=             '</tr>'
+            html +=             '<tr>'
+            html +=                 '<td>'
+            html +=                 '</td>'
+            html +=                 '<td nowrap><a href="/query?node=/states/list/'+statelist[i].state_abbrev+'" target="new">Query /states/list/'+statelist[i].state_abbrev+'</a></td>'
+            html +=             '</tr>'
+
+            html +=         '</table>'
+            html +=         ''
+            html +=     '</td>'
+//            html +=     '<td><a href="/viewLegislators?state='+statelist[i].state_abbrev+'" title="view all legislators in '+statelist[i].state_name+'">'+statelist[i].state_name+'</a></td>'
+//
+//            html += '<td>'+statelist[i].sd_actual+'</td>'
+//            html += '<td>'+statelist[i].hd_actual+'</td>'
+//
+//            if(sddiff == 0) {
+//                html += '<td style="background-color:#008000;color:#ffffff">'+sddiff+'</td>'
+//            }
+//            else {
+//                var title = 'OpenStates returned '+sddiff+' less than expected'
+//                if(sddiff < 0) title = 'OpenStates returned '+(-1 * sddiff)+' more than expected'
+//                html += '<td style="background-color:#ffff00" title="'+title+'">'+sddiff+'</td>'
+//            }
+//
+//            if(hddiff == 0) {
+//                html += '<td style="background-color:#008000;color:#ffffff">'+hddiff+'</td>'
+//            }
+//            else {
+//                var title = 'OpenStates returned '+hddiff+' less than expected'
+//                if(hddiff < 0) title = 'OpenStates returned '+(-1 * hddiff)+' more than expected'
+//                html += '<td style="background-color:#ffff00" title="'+title+'">'+hddiff+'</td>'
+//            }
+//
+//            // If either sd_loaded or hd_loaded is 0, create a hyperlink for these attributes so that we can click them '<a href="/loadLegislators?state='+statelist[i].state_abbrev+'">'+statelist[i].sd_loaded+'</a>'to reload
+//            // the data from OpenStates
+//            var sd_loaded = statelist[i].sd_loaded
+//            var hd_loaded = statelist[i].hd_loaded
+//            if(statelist[i].sd_loaded == 0 || (statelist[i].hd_loaded == 0 && statelist[i].state_abbrev != 'ne')) {
+//                sd_loaded = '<a href="/loadLegislators?state='+statelist[i].state_abbrev+'">'+statelist[i].sd_loaded+'</a>'
+//                hd_loaded = '<a href="/loadLegislators?state='+statelist[i].state_abbrev+'">'+statelist[i].hd_loaded+'</a>'
+//            }
+//            html += '<td>'+sd_loaded+'</td>'
+//            html += '<td>'+hd_loaded+'</td>'
+//            var totalLegislators = statelist[i].sd_loaded + statelist[i].hd_loaded
+//            html +=     '<td>'+statelist[i].channels_loaded+' out of '+totalLegislators+'</td>'
+//            html += '</tr>'
         }
         html += '</table>'
 
@@ -827,6 +887,7 @@ exports.loadOpenStatesLegislators = functions.https.onRequest((req, res) => {
     .then(() => {
         return listStates(res, {state_abbrev: state_abbrev})
     })
+
 })
 
 

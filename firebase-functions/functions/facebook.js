@@ -52,17 +52,17 @@ exports.testPostFacebook = functions.https.onRequest((req, res) => {
 })
 
 
-exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{key}').onWrite((change, context) => {
-    if(!change.after.val() && change.before.val()) return false // ignore deleted nodes
-    // this is where we actually post to FB
-
-    /**
-    Return early here also because all we did was write the FB post_id to this row.
-    We record the post_id at the bottom of this function.  This 'if' condition here prevents
-    infinite triggering
-    **/
-    if(change.after.val().post_id && !change.before.val().post_id)
-        return false
+exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{key}').onCreate((snap, context) => {
+//    if(!change.after.val() && change.before.val()) return false // ignore deleted nodes
+//    // this is where we actually post to FB
+//
+//    /**
+//    Return early here also because all we did was write the FB post_id to this row.
+//    We record the post_id at the bottom of this function.  This 'if' condition here prevents
+//    infinite triggering
+//    **/
+//    if(change.after.val().post_id && !change.before.val().post_id)
+//        return false
 
     /****************
     WORKING cURL COMMAND !!!!!!!!!!!
@@ -70,6 +70,9 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
     [facebook_page_access_token] is at /api_tokens/facebook_page_access_token
     [facebook_page_id] is at /api_tokens/facebook_page_id
     curl -i -X POST "https://graph.facebook.com/v3.0/[facebook_page_id]/feed?message=just+another+test&access_token=[facebook_page_access_token]"
+
+
+    curl -i -X POST "https://graph.facebook.com/v3.0/1307580742712791/feed?message=just+another+test&access_token=EAABlr4HjXpUBAJzEs3d6XZCcikDlmQqkXcvhBZCkV2yQeoewhbRmLF05QBAAWNjF2m0MO2znLOvmZCBuMhodl10RkLZAnwglq4lvl76iEvZCd4Ig2kEcpHycQZASnJMBJDRf28wZCVYysyj1PKj5tOijnCncpn1r1otwVT4jg7iwQZDZD"
     ****************/
 
 
@@ -81,14 +84,13 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
         var facebook_page_access_token = snapshot.val().facebook_page_access_token
         FB.setAccessToken(facebook_page_access_token);
 
-        var body = change.after.val().text
+        var body = snap.val().text
         var postThis = {}
         postThis['message'] = body
-        if(change.after.val().link)
-            postThis['link'] = change.after.val().link
+        if(snap.val().link)
+            postThis['link'] = snap.val().link
 
         FB.api(facebook_page_id+'/feed', 'post', postThis, function (res) {
-            //db.ref('templog2').push().set({facebook_page_access_token: facebook_page_access_token, ok10: 'ok', date: date.asCentralTime()})
 
             // TODO need some real error handling
             if(!res || res.error) {
@@ -96,9 +98,9 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
             }
             // TODO probably should write this to the db somewhere
             console.log('Post Id: ' + res.id);
-            change.after.ref.child('post_id').set(res.id) // not even sure if we NEED the post_id written here
+            snap.ref.child('post_id').set(res.id) // not even sure if we NEED the post_id written here
 
-            if(change.after.val().video_node_key) { // may not exist in testing classes
+            if(snap.val().video_node_key) { // may not exist in testing classes
                 // There's a trigger (not created yet) that listens for writes to this node and also to
                 // twitter_post_id.  The trigger then examines the values of post_to_facebook, post_to_twitter and
                 // email_to_legislator to figure out what the text of the emails should be.  There are two emails:
@@ -106,7 +108,7 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
                 // The email to the legislator is addressed to him.  Whereas the other one is a congratulatory email to
                 // the participants
                 // SEE google-cloud:socialMediaPostsCreated()
-                return db.ref().child('video/list/'+change.after.val().video_node_key+'/facebook_post_id').set(res.id)
+                return db.ref().child('video/list/'+snap.val().video_node_key+'/facebook_post_id').set(res.id)
             }
             else {
                 console.log("WHY ARE WE GETTING TO THIS BLOCK ?????")
@@ -118,10 +120,10 @@ exports.handleFacebookRequest = functions.database.ref('facebook_post_requests/{
 
 
 // add a comment whenever a post is created...
-exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/post_id').onWrite((change, context) => {
-    if(!change.after.val() && change.before.val()) return false // ignore deleted nodes
+exports.triggerComment = functions.database.ref('facebook_post_requests/{key}/post_id').onCreate((snap1, context) => {
+    if(!snap1.val() && snap1.val()) return false // ignore deleted nodes
 
-    var post_id = change.after.val()
+    var post_id = snap1.val()
 
     return db.ref('api_tokens').once('value').then(snapshot => {
 

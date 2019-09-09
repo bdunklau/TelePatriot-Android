@@ -99,13 +99,13 @@ exports.testSendEmail = email.testSendEmail
 exports.testSendEmail2 = email.testSendEmail2
 exports.chooseEmailType = email.chooseEmailType
 exports.chooseEmailType2 = email.chooseEmailType2
-exports.onReadyToSendEmails = email.onReadyToSendEmails
+exports.onReadyToSendEmails = email.onReadyToSendEmails  // prod 9/7/19
 exports.testOnReadyToSendEmails = email.testOnReadyToSendEmails
 
 
 
 /***
-dev deploy 4/22/19
+dev deploy 4/22/19, 9/6/19
 // firebase deploy --only functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData,functions:editLegislator,functions:saveLegislator
 ****/
 // prod deploy: 9/12/18, 9/20/18
@@ -213,8 +213,8 @@ const twitter = require('./twitter')
 exports.twitter = twitter.twitter
 exports.testTweet = twitter.testTweet
 exports.callback_from_twitter = twitter.callback_from_twitter
-exports.handleTweetRequest = twitter.handleTweetRequest
-exports.onTwitterPostId = twitter.onTwitterPostId
+exports.handleTweetRequest = twitter.handleTweetRequest // prod: 9/7/19
+exports.onTwitterPostId = twitter.onTwitterPostId      // prod: 9/7/19
 //exports.deleteTweet = twitter.deleteTweet  // not supported, don't think
 
 
@@ -226,9 +226,9 @@ dev deploy 4/22/19
 const facebook = require('./facebook')
 exports.facebook = facebook.facebook
 exports.testPostFacebook = facebook.testPostFacebook
-exports.handleFacebookRequest = facebook.handleFacebookRequest
-exports.triggerComment = facebook.triggerComment
-exports.onFacebookPostId = facebook.onFacebookPostId
+exports.handleFacebookRequest = facebook.handleFacebookRequest // prod: 9/7/19
+exports.triggerComment = facebook.triggerComment               // prod: 9/7/19
+exports.onFacebookPostId = facebook.onFacebookPostId         // prod: 9/7/19
 
 
 /***

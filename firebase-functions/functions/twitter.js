@@ -71,9 +71,9 @@ exports.onTwitterPostId = functions.database.ref('video/list/{video_node_key}/tw
 
 
 // This is the function that actually does the tweeting
-exports.handleTweetRequest = functions.database.ref('tweet_requests/{key}').onWrite((change, context) => {
-    if(!change.after.val() && change.before.val()) return false // ignore deleted rows
-    return tweet({tweet_request: change.after.val(), video_node_key: change.after.val().video_node_key})
+exports.handleTweetRequest = functions.database.ref('tweet_requests/{key}').onCreate((snapshot, context) => {
+//    if(!change.after.val() && change.before.val()) return false // ignore deleted rows
+    return tweet({tweet_request: snapshot.val(), video_node_key: snapshot.val().video_node_key})
 })
 
 
