@@ -301,7 +301,7 @@ exports.onPublishRequested = functions.database.ref('video/video_events/{key}').
                            domain: 'video.twilio.com',
                            MediaUri: data.MediaUri,
                            CompositionSid: snap4.val().CompositionSid,
-                           Ttl: 6000,
+                           Ttl: 3600,
                            firebaseServer: firebaseServer,
                            firebaseUri: '/twilioCallback',
                            video_title: snap4.val().video_title,
@@ -311,7 +311,6 @@ exports.onPublishRequested = functions.database.ref('video/video_events/{key}').
                            video_node_key: data.video_node_key,
                            uid: data.uid
                         };
-
                         twilio_telepatriot.publish({host: vmHost, port: vmPort, formData: formData})
                     })
                 })

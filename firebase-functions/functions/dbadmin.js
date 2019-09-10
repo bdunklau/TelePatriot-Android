@@ -206,10 +206,20 @@ exports.copy = functions.https.onRequest((req, res) => {
         return res.status(200).send("These request parms are required: <P/> to, from - both are nodes in the tree")
     }
     else {
-        return db.ref(from).once('value').then(snapshot => {
-            db.ref(to).set(snapshot.val())
-            res.status(200).send("Copied this node: "+from+"<P/>To this node: "+to)
-        })
+        // some nodes are too big to copy all at once.  So you have to copy them over a little at a time
+        // find some attribute and all its values and copy them over by value  (i.e. by state attribute)
+        if(req.query.attribute && req.query.value) {
+            return db.ref(from).orderByChild(req.query.attribute).equalTo(req.query.value).once('value').then(snapshot => {
+                db.ref(to).set(snapshot.val())
+                res.status(200).send("Copied this node: "+from+"<P/>To this node: "+to)
+            })
+        }
+        else {
+            return db.ref(from).once('value').then(snapshot => {
+                db.ref(to).set(snapshot.val())
+                res.status(200).send("Copied this node: "+from+"<P/>To this node: "+to)
+            })
+        }
     }
 
 })

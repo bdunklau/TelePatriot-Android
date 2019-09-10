@@ -565,7 +565,7 @@ exports.loadDivisions = functions.https.onRequest((req, res) => {
     var state_abbrev = req.query.state
 
     // first, get rid of this node.  It may have had division_list_url underneath.  Deleting then re-adding will
-    // cause the l
+    // cause the loadDivisionsTrigger to re-fire
     return db.ref('google_civic_data/states/'+state_abbrev).remove().then(() => {
 
         return db.ref('api_tokens/google_cloud_api_key').once('value').then(snapshot => {
@@ -607,12 +607,12 @@ exports.loadDivisionsTrigger = functions.database.ref("google_civic_data/states/
     // for those states
 
     // if url was deleted, just return
-    if(!event.data.exists() && event.data.previous.exists()) {
+    if(!change.after.exists() && change.before.exists()) {
         console.log('we should be returning early here -------------------------------')
         return false
     }
 
-    var url = event.data.val()
+    var url = change.after.val()
     console.log('url = ', url)
     var state_abbrev = context.params.state_abbrev
 
@@ -659,8 +659,10 @@ exports.loadDivisionsTrigger = functions.database.ref("google_civic_data/states/
             // to get the legislator(s) for that district/division
             return listStates().then(states => {
                 var state = _.find(states, {'state_abbrev': state_abbrev})
-                if(!state)
+                if(!state) {
+                    console.log('!state = ', !state)
                     return false
+                }
 
                 var updates = {}
                 var chamberList = ['sldl', 'sldu']
@@ -676,6 +678,7 @@ exports.loadDivisionsTrigger = functions.database.ref("google_civic_data/states/
                         updates['google_civic_data/divisions/'+key] = divisionNode
                     })
                 })
+                console.log('updates = ', updates)
                 return snapshot.ref.root.child('/').update(updates)
             })
 

@@ -148,7 +148,7 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                            domain: 'video.twilio.com',
                            MediaUri: req.body.CompositionUri+'/Media',
                            CompositionSid: req.body.CompositionSid,
-                           Ttl: 6000,
+                           Ttl: 3600,
                            firebaseServer: firebaseServer,
                            firebaseUri: '/twilioCallback',
                            video_title: title,
@@ -176,7 +176,6 @@ exports.publish = function(input) {
     var host = input.host
     var port = input.port
     var formData = input.formData
-
 
     // go see ~/nodejs/index.js and the app.get('/publish') route
     var vmUrl = 'http://'+host+':'+port+'/publish'
@@ -274,7 +273,7 @@ var roomDetails = function(stuff) {
     html +=     'Return to <a href="/testViewVideoEvents?limit=10">video/video_events</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
     html +=     '<a href="/testCompose?room_sid='+room.sid+'">Compose</a>'
     if(stuff.composition) {
-        html += ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Composition: <a href="https://video.twilio.com/v1/Compositions/'+stuff.composition.sid+'/Media?Ttl=6000">'+stuff.composition.sid+'</a>'
+        html += ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Composition: <a href="https://video.twilio.com/v1/Compositions/'+stuff.composition.sid+'/Media?Ttl=3600">'+stuff.composition.sid+'</a>'
     }
     html += '</h3>'
     html += '<table border="1" cellspacing="0" cellpadding="2">'
@@ -586,7 +585,7 @@ exports.videoEvents = function(stuff) {
         html +=     'video/video_events &nbsp;&nbsp;&nbsp;&nbsp; '
         html +=     '<a href="/testCompose?room_sid=RM722fbef9776cb52dd81e0f196f6848eb">Compose</a>'
         if(stuff.compositionSid) {
-            html += ' &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Composition: <a href="https://video.twilio.com/v1/Compositions/'+stuff.compositionSid+'/Media?Ttl=6000">'+stuff.compositionSid+'</a>'
+            html += ' &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Composition: <a href="https://video.twilio.com/v1/Compositions/'+stuff.compositionSid+'/Media?Ttl=3600">'+stuff.compositionSid+'</a>'
         }
         html += '</h3>'
         html += '<table border="1" cellspacing="0" cellpadding="2">'

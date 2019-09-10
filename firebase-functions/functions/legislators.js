@@ -16,7 +16,7 @@ const db = admin.database();
 
 /***
 to deploy everything in this file...
-firebase deploy --only functions:showStates,functions:loadStates,functions:loadLegislators,functions:viewLegislators,functions:saveDivision,functions:loadOpenStatesLegislators,functions:loadOpenStatesDistricts,functions:findCivicDataMatch,functions:lookupFacebookId,functions:facebookIdUpdated,functions:loadCivicData,functions:peopleWithoutCivicData,functions:youtubeVideoDescription,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:overwriteBadWithGoodData,functions:testUpdateSocialMedia
+firebase deploy --only functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData,functions:editLegislator,functions:saveLegislator
 ***/
 
 // loop through each state
@@ -111,6 +111,191 @@ exports.loadStates = functions.https.onRequest((req, res) => {
     })
 
 })
+
+
+/**
+This is just a temp function to get all the /states info, stream it to JSON from the dev db so that it can
+be read by the prod db
+
+MUST HAVE: req.query.node
+OPTIONAL: req.query.attribute
+OPTIONAL: req.query.value
+**/
+exports.json = functions.https.onRequest((req, res) => {
+
+    if(req.query.attribute && req.query.value) {
+        return db.ref(req.query.node).orderByChild(req.query.attribute).equalTo(req.query.value).once('value').then(snapshot => {
+            return res.status(200).send(JSON.stringify(snapshot.val()))
+        })
+    }
+    else {
+        return db.ref(req.query.node).once('value').then(snapshot => {
+            return res.status(200).send(JSON.stringify(snapshot.val()))
+        })
+    }
+})
+
+
+/**
+this is just a temp function so we can read /states data from dev and write to prod
+
+MUST HAVE: req.query.node
+OPTIONAL: req.query.attribute
+OPTIONAL: req.query.value
+**/
+exports.readjson = functions.https.onRequest((req, res) => {
+    var headers = {}
+
+    var url = 'https://us-central1-telepatriot-dev.cloudfunctions.net/json?node='+req.query.node
+    if(req.query.attribute && req.query.value) {
+        url += '&attribute='+req.query.attribute+'&value='+req.query.value
+    }
+
+    var options = {
+        url: url,
+        headers: headers
+    };
+
+    // see above:   var request = require('request')
+    request.get(options, function(error, response, body){
+        //console.log(body);
+        var json = JSON.parse(body)
+        if(error) {
+            return res.status(200).send({error: error})
+        }
+        else {
+            return db.ref(req.query.node).update(json).then(() => {
+                return res.status(200).send(json)
+            })
+        }
+    })
+})
+
+
+exports.editLegislator = functions.https.onRequest((req, res) => {
+    if(!req.query.leg_id) return res.status(200).send('need leg_id')
+    return db.ref('states/legislators/'+req.query.leg_id).once('value').then(snapshot => {
+        var html = ''
+        html += '<html><head>'
+        html += '<style>'
+        html += 'input {margin:10 10 0 10; height: 30px; width:300px; font-size:12pt}'
+        html += 'textarea {margin: 10 10 0 10; font-size:12pt}'
+        html += '</style>'
+        html += '</head><body><h2>Edit Legislator</h2>'
+        html += '<form method="post">'
+        html += '<input type="hidden" name="leg_id" value="'+req.query.leg_id+'">'
+        html += '<input type="text" name="first_name" value="'+snapshot.val().first_name+'" placeholder="first">'
+        html += '<br/><input type="text" name="last_name" value="'+snapshot.val().last_name+'" placeholder="last">'
+        html += '<br/><input type="text" name="full_name" value="'+snapshot.val().full_name+'" placeholder="full name">'
+        html += '<br/><input type="text" name="chamber" value="'+snapshot.val().chamber+'" placeholder="chamber">'
+        html += '<br/><input type="text" name="district" value="'+snapshot.val().district+'" placeholder="district">'
+        html += '<br/><input type="text" name="email" value="'+snapshot.val().email+'" placeholder="email">'
+
+        html += '<P/><B>Other Emails</B>'
+        if(snapshot.val().emails && snapshot.val().emails.length > 0) {
+            html += '<br/><textarea rows="5" cols="40" name="emails">'
+            html += _.join(snapshot.val().emails, '\n')
+            html += '</textarea>'
+        }
+        html += '<br/><input type="text" name="party" value="'+snapshot.val().party+'" placeholder="party">'
+        if(snapshot.val().photo_url && snapshot.val().photo_url != '') {
+            html += '<br/><input type="text" name="photo_url" value="'+snapshot.val().photo_url+'" placeholder="photo url">'
+        }
+        if(snapshot.val().photoUrl && snapshot.val().photoUrl != '') {
+            html += '<br/><input type="text" name="photoUrl" value="'+snapshot.val().photoUrl+'" placeholder="photo url">'
+        }
+        html += '<br/><input type="text" name="state" value="'+snapshot.val().state+'" placeholder="state">'
+
+        // channels
+        var channels = []
+        if(snapshot.val().channels) {
+            channels = snapshot.val().channels
+            // create a \n-delimited string of channels with this format:
+            // Twitter:twitterhandle
+            // Facebook:facebookhandle
+            var typeAndHandles = _.map(channels, function(ch) {
+              return ch.type+':'+ch.id
+            })
+            var formattedChannelString = _.join(typeAndHandles, '\n')
+            html += '<p/><b>Channels</b>'
+            html += '<P/><textarea rows="5" cols="40" name="channels">'+formattedChannelString+'</textarea>'
+        }
+//        html += '<input type="hidden" name="channel_count" value="'+snapshot.val().channels.length+'">'
+
+        html += '<input type="hidden" name="office_count" value="'+snapshot.val().offices.length+'">'
+
+        // offices
+        for(var i=0; i < snapshot.val().offices.length; i++) {
+            html += '<p/><b>Office #'+(i+1)+'</b>'
+            html += '<P/><textarea rows="5" cols="40" name="address'+i+'" placeholder="Office Address">'+snapshot.val().offices[i].address+'</textarea>'
+            var em = ''
+            if(snapshot.val().offices[i].email) {
+                em = snapshot.val().offices[i].email
+            }
+            html += '<br/><input type="text" name="email'+i+'" value="'+em+'" placeholder="Email">'
+            html += '<br/><input type="text" name="name'+i+'" value="'+snapshot.val().offices[i].name+'" placeholder="Office Name">'
+            var ph = ''
+            if(snapshot.val().offices[i].phone) {
+                ph = snapshot.val().offices[i].phone
+            }
+            html += '<br/><input type="text" name="phone'+i+'" value="'+ph+'" placeholder="Office Phone">'
+            html += '<br/><input type="text" name="type'+i+'" value="'+snapshot.val().offices[i].type+'" placeholder="Office type">'
+        }
+        html += '<p/><input type="submit" value="Submit" formAction="/saveLegislator"> &nbsp;&nbsp;&nbsp;'
+        html += '<a href="/viewLegislators?state='+snapshot.val().state+'">Cancel</a>'
+        html += '</form>'
+        html += '</body></html>'
+        return res.status(200).send(html);
+    })
+})
+
+
+exports.saveLegislator = functions.https.onRequest((req, res) => {
+    var update = {}
+    var root = '/states/legislators/'+req.body.leg_id+'/'
+    update[root+'first_name'] = req.body.first_name
+    update[root+'last_name'] = req.body.last_name
+    update[root+'full_name'] = req.body.full_name
+    update[root+'district'] = req.body.district
+    update[root+'email'] = req.body.email
+    if(req.body.emails) {
+        var emails = _.split(req.body.emails, '\n')
+        update[root+'emails'] = emails
+    }
+    update[root+'party'] = req.body.party
+    if(req.body.photo_url) {
+        update[root+'photo_url'] = req.body.photo_url
+    }
+    if(req.body.photoUrl) {
+        update[root+'photoUrl'] = req.body.photoUrl
+    }
+    update[root+'state'] = req.body.state.toLowerCase()
+    var office_count = parseInt(req.body.office_count)
+
+//    var channel_count = parseInt(req.body.channel_count)
+    if(req.body.channels) {
+        var typeAndHandles = _.split(req.body.channels, '\n')
+        var channels = _.map(typeAndHandles, function(pair) {
+            var typeAndId = _.split(pair, ":")
+            var entry = {type: typeAndId[0].trim(), id: typeAndId[1].trim()}
+            if(entry.type == 'Facebook') entry.facebook_id = null
+            return entry
+        })
+        update[root+'channels'] = channels
+    }
+
+    for(var i=0; i < office_count; i++) {
+        if(req.body['address'+i]) update[root+'offices/'+i+'/address'] = req.body['address'+i]
+        if(req.body['name'+i]) update[root+'offices/'+i+'/name'] = req.body['name'+i]
+        if(req.body['type'+i]) update[root+'offices/'+i+'/type'] = req.body['type'+i]
+        if(req.body['email'+i] && req.body['email'+i] != '') update[root+'offices/'+i+'/email'] = req.body['email'+i]
+        if(req.body['phone'+i] && req.body['phone'+i] != '') update[root+'offices/'+i+'/phone'] = req.body['phone'+i]
+    }
+    return db.ref('/').update(update).then(() => {
+        return listStates(res, {state_abbrev: req.body.state})
+    })
+})
+
 
 
 var listStates = function(res, stuff) {
@@ -259,7 +444,6 @@ var listStates = function(res, stuff) {
                     state_chamber = stuff.state_abbrev+'-lower'
                     return db.ref('states/legislators').orderByChild('state_chamber').equalTo(state_chamber).once('value').then(snapshot => {
                         var reps = []
-                        db.ref('templog').push().set({'rep_count': snapshot.numChildren()})
                         snapshot.forEach(function(child) {
                             var rep = child.val()
                             rep.id = child.key
@@ -330,6 +514,7 @@ var listStates = function(res, stuff) {
             var seconds = stuff['meta-refresh'].seconds
             html += '<meta http-equiv="refresh" content="'+seconds+';URL=\''+refreshUrl+'\'" />'
         }
+        html += '<script src="https://kit.fontawesome.com/8e8d7feb39.js"></script>'
         html += '</head>'
         html += '<body>'
         html += '<table border="0">'
@@ -436,7 +621,6 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
                             var legislators = []
                             snapshot.forEach(function(child) {
                                 var legislator = child.val()
-                                var key = legislator.id  //i.e.  NHL000037
                                 // some officials like Lt Gov and maybe Speaker are returned by OpenStates with no "chamber"
                                 // value.  Ignore these guys
                                 if(legislator.chamber) {
@@ -445,6 +629,7 @@ exports.loadLegislators = functions.https.onRequest((req, res) => {
                                     legislator.state_chamber_district = legislator.state_chamber+'-'+legislator.district
                                     legislator.civic_data_loaded_date = '(not loaded)'
                                     legislator.civic_data_loaded_date_ms = -1
+                                    var key = legislator.id == "~not available~" ? legislator.state_chamber_district : legislator.id  //i.e.  NHL000037
                                     updates['states/legislators/'+key] = legislator
                                     legislators.push(legislator)
                                 }
@@ -603,6 +788,7 @@ var legislatorTable = function(legislators) {
         html +=         '<br/>loaded: '+legislators[i].civic_data_loaded_date+' '
 
         html +=     '</td>'
+        html +=     '<td valign="top"><a href="/editLegislator?leg_id='+legislators[i].id+'"><i class="fa fa-edit"/></a></td>'
         html += '</tr>'
         html += '</table>'
         html += '</td></tr>'
@@ -707,14 +893,14 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
             // snapshot.val() is a list of legislators (though usually the list only has 1 person in it)
             var found = _.find(snapshot.val(), function(official) {
                 var debug = false
-                if(legislatorNode.leg_id == 'TXL000690') debug = true
+                if(legislatorNode.leg_id == 'WAL000152') debug = true
                 var sameName = (official.name.toLowerCase() == legislatorNode.full_name.toLowerCase()) ||
                             (official.name.toLowerCase() == legislatorNode.first_name.toLowerCase()+' '+legislatorNode.last_name.toLowerCase())
                 var officialEmails = _.map(official.emails, function(o) {return o.toLowerCase()})
                 var emailFound = _.find(officialEmails, function(email) {
                         return email && legislatorNode.email && email.toLowerCase() == legislatorNode.email.toLowerCase()
                 })
-                //if(debug) db.ref('templog2').push().set({official: official, legislator: legislatorNode, sameName: sameName, emailFound: (emailFound ? emailFound : 'no email found')})
+                if(debug) db.ref('templog2').push().set({official: official, legislator: legislatorNode, sameName: sameName, emailFound: (emailFound ? emailFound : 'no email found')})
                 return sameName || emailFound
             })
 
@@ -723,7 +909,9 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
                 if(found.channels)
                     updates['states/legislators/'+key+'/channels'] = found.channels
                 if(found.emails) {
-                    var alreadyContains = _.find(found.emails, function(email) { return email.toLowerCase() == legislatorNode.email.toLowerCase()} )
+                    var alreadyContains = _.find(found.emails, function(email) {
+                        return legislatorNode.email && email.toLowerCase() == legislatorNode.email.toLowerCase()
+                    } )
                     if(legislatorNode.email && !alreadyContains)  found.emails.push(legislatorNode.email)
                     updates['states/legislators/'+key+'/emails'] = found.emails
                 }
@@ -733,8 +921,14 @@ exports.findCivicDataMatch = functions.database.ref("states/legislators/{key}").
                 if(found.photoUrl) {
                     updates['states/legislators/'+key+'/photoUrl'] = found.photoUrl
                 }
+                if(found.photo_url) {
+                    updates['states/legislators/'+key+'/photoUrl'] = found.photo_url
+                }
                 if(found.urls) {
                     updates['states/legislators/'+key+'/urls'] = found.urls
+                }
+                if(found.division) {
+                    updates['states/legislators/'+key+'/division'] = found.division
                 }
                 // now add some timestamps
                 updates['states/legislators/'+key+'/civic_data_loaded_date'] = date.asCentralTime()
@@ -1067,7 +1261,7 @@ exports.testUpdateSocialMedia = functions.https.onRequest((req, res) => {
         })
         .then(stuff => {
             var result = stuff.result
-            var html = '<html><head><body>'
+            var html = '<html><head></head><body>'
             _.each(result, function(rs) {
                 html += '<br/>'+rs.message
             })

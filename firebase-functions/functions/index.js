@@ -48,8 +48,8 @@ exports.selectDistinct = dbadmin.selectDistinct
 exports.query = dbadmin.query
 exports.queryActive = dbadmin.queryActive
 exports.queryInactive = dbadmin.queryInactive
-exports.copy = dbadmin.copy
-exports.deleteNodes = dbadmin.deleteNodes //dev: 8/25/19  prod: 8/25/19
+exports.copy = dbadmin.copy  // prod 9/2/19
+exports.deleteNodes = dbadmin.deleteNodes
 exports.deleteAttributes = dbadmin.deleteAttributes
 
 
@@ -106,11 +106,11 @@ exports.testOnReadyToSendEmails = email.testOnReadyToSendEmails
 
 /***
 dev deploy 4/22/19
-// firebase deploy --only functions:downloadFromOpenStates,functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData
+// firebase deploy --only functions:loadStates,functions:loadOpenStatesDistricts,functions:loadOpenStatesLegislators,functions:getSocialMediaUrls,functions:showStates,functions:viewLegislators,functions:findCivicDataMatch,functions:lookupFacebookId,functions:saveDivision,functions:loadLegislators,functions:loadCivicData,functions:peopleWithoutCivicData,functions:facebookIdUpdated,functions:updateLegislatorSocialMedia,functions:updateVideoNodeSocialMedia,functions:testUpdateSocialMedia,functions:overwriteBadWithGoodData,functions:editLegislator,functions:saveLegislator
 ****/
 // prod deploy: 9/12/18, 9/20/18
 const legislators = require('./legislators')
-exports.downloadFromOpenStates = legislators.downloadFromOpenStates
+//exports.downloadFromOpenStates = legislators.downloadFromOpenStates //where did this function go?
 exports.loadStates = legislators.loadStates
 exports.loadOpenStatesDistricts = legislators.loadOpenStatesDistricts
 exports.loadOpenStatesLegislators = legislators.loadOpenStatesLegislators
@@ -128,6 +128,10 @@ exports.updateLegislatorSocialMedia = legislators.updateLegislatorSocialMedia
 exports.updateVideoNodeSocialMedia = legislators.updateVideoNodeSocialMedia
 exports.testUpdateSocialMedia = legislators.testUpdateSocialMedia
 exports.overwriteBadWithGoodData = legislators.overwriteBadWithGoodData
+exports.json = legislators.json
+exports.readjson = legislators.readjson
+exports.editLegislator = legislators.editLegislator
+exports.saveLegislator = legislators.saveLegislator
 
 
 
@@ -139,14 +143,14 @@ dev deploy 4/22/19
 const civic = require('./google-civic')
 exports.civic = civic.civic
 exports.loadDivisions = civic.loadDivisions
-exports.loadDivisionsTrigger = civic.loadDivisionsTrigger
+exports.loadDivisionsTrigger = civic.loadDivisionsTrigger // dev, prod 9/2/19
 exports.loadDivisionsAllStates = civic.loadDivisionsAllStates
 exports.listDivisions = civic.listDivisions
 exports.listOfficials = civic.listOfficials
 exports.loadOfficials = civic.loadOfficials
 exports.unloadOfficials = civic.unloadOfficials
 exports.unloadDivisions = civic.unloadDivisions
-exports.onOfficialUrl = civic.onOfficialUrl
+exports.onOfficialUrl = civic.onOfficialUrl  // dev, prod 9/2/19
 
 
 /***
@@ -250,11 +254,10 @@ exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
 
 /***
-dev deploy 4/22/19
-prod deploy 8/26/19
+dev deploy  8/31/19
 // firebase deploy --only functions:onConnectRequest,functions:onDisconnectRequest,functions:testViewVideoEvents,functions:onTwilioEvent,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
 ****/
-// prod deploy: 9/12/18, 9/20/18, 10/29/18
+// prod deploy:  8/31/19
 const switchboard = require('./switchboard')
 exports.onConnectRequest = switchboard.onConnectRequest
 exports.onDisconnectRequest = switchboard.onDisconnectRequest
@@ -271,10 +274,10 @@ exports.onPublishRequested = switchboard.onPublishRequested
 
 
 /***
-dev deploy 4/22/19
+dev deploy 8/31/19
+prod:  8/31/19
 // firebase deploy --only functions:testTwilioToken,functions:twilioCallback,functions:testCreateRoom,functions:testListRooms,functions:testRetrieveRoom,functions:testCompleteRoom,functions:testListParticipants,functions:testCompose
 ****/
-// prod deploy: 12/12/18
 const twilio = require('./twilio-telepatriot')
 exports.testTwilioToken = twilio.testTwilioToken
 exports.twilioCallback = twilio.twilioCallback
@@ -391,7 +394,7 @@ exports.testViewCBAPIEvents = cb_api_events.testViewCBAPIEvents
 
 /***
 dev deploy 4/22/19
-// firebase deploy --only functions:testRoleApiForm,functions:testRoleApi,functions:api_add_role,functions:api_remove_role
+// firebase deploy --only functions:testRoleApiForm,functions:testRoleApi,functions:api_add_role,functions:api_remove_role,functions:restoreVideoCreator
 ****/
 // dev deploy: 12/11/18
 // prod deploy: 12/12/18
@@ -400,6 +403,7 @@ exports.testRoleApiForm = role_api.testRoleApiForm
 exports.testRoleApi = role_api.testRoleApi
 exports.api_add_role = role_api.api_add_role
 exports.api_remove_role = role_api.api_remove_role
+exports.restoreVideoCreator = role_api.restoreVideoCreator // dev and prod: 8/30/19
 
 
 
@@ -432,16 +436,31 @@ exports.downloadApk = downloadApk.downloadApk
 
 /***
 dev deploy 4/22/19
-// firebase deploy --only functions:callNotes,functions:missions,functions:onCallNotesCreated
+// firebase deploy --only functions:callNotes,functions:editCallNotes,functions:saveCallNotes,functions:onCallNotesCreated,functions:missions,functions:updateMissionsOnCallNotesCreated,functions:downloadCallNotes
 ****/
 // dev deploy:  3/20/19
-// prod deploy: 3/21/19
+// prod deploy: 3/21/19, 8/28/19
 const call_notes = require('./call_notes')
 exports.callNotes = call_notes.callNotes
+exports.editCallNotes = call_notes.editCallNotes
+exports.saveCallNotes = call_notes.saveCallNotes
 exports.missions = call_notes.missions
 exports.onCallNotesCreated = call_notes.onCallNotesCreated
 exports.tempNotes = call_notes.tempNotes
 exports.updateMissionsOnCallNotesCreated = call_notes.updateMissionsOnCallNotesCreated
+exports.downloadCallNotes = call_notes.downloadCallNotes
+
+
+/***
+firebase deploy --only functions:displaySms,functions:receiveSms,functions:onSmsReceived,functions:sendSms
+****/
+const twilio_sms = require('./twilio-sms')
+exports.displaySms = twilio_sms.displaySms
+exports.onSmsReceived = twilio_sms.onSmsReceived
+exports.receiveSms = twilio_sms.receiveSms
+exports.sendSms = twilio_sms.sendSms
+//exports.onNameResolved = twilio_sms.onNameResolved
+
 
 
 /***
