@@ -80,8 +80,13 @@ exports.api_remove_role = functions.https.onRequest((req, res) => {
 // the TP API, but every time the user logs back in, CB overwrites the user's roles and deletes the
 // TelePatriot Video Creator role.  So this trigger watches for that and restores the role for anyone that has
 // that role.
+// UPDATE:  UNLESS the value of the role is false.  We can manually set the value to false if we actually want
+// the role to be deleted.  Otherwise, we will never be able to delete this role OR the user account (if we ever wanted to do that)
 exports.restoreVideoCreator = functions.database.ref('/users/{uid}/roles/Video Creator').onDelete( (snap, context) => {
-    return db.ref().child('/users/'+context.params.uid+'/roles/Video Creator').set("true");
+    if(snap.val() == 'false')
+        return false; // go ahead and allow the delete
+    else
+        return db.ref().child('/users/'+context.params.uid+'/roles/Video Creator').set("true");
 });
 
 
