@@ -21,7 +21,7 @@ exports.topicDeleted = topics.topicDeleted
 // dev deploy: 3/29/19,
 // prod deploy: 3/29/19
 const userCreated = require('./userCreated')
-exports.userCreated = userCreated.userCreated
+exports.userCreated = userCreated.userCreated  // prod 9/10/19
 exports.onCitizenBuilderId = userCreated.onCitizenBuilderId
 
 /***
@@ -294,7 +294,7 @@ dev deploy 4/22/19
 // firebase deploy --only functions:videoListMain,functions:testSelectVideoNode,functions:testSaveEmailTemplates,functions:testReevaluateEmailAttributes
 ****/
 // prod deploy: 9/12/18, 9/20/18
-// prod deploy: 12/12/18
+// prod deploy: 12/12/18, 8/26/19
 const videoList = require('./video-list')
 exports.videoListMain = videoList.videoListMain
 exports.testSelectVideoNode = videoList.testSelectVideoNode
@@ -403,7 +403,7 @@ exports.testRoleApiForm = role_api.testRoleApiForm
 exports.testRoleApi = role_api.testRoleApi
 exports.api_add_role = role_api.api_add_role
 exports.api_remove_role = role_api.api_remove_role
-exports.restoreVideoCreator = role_api.restoreVideoCreator // dev and prod: 8/30/19
+exports.restoreVideoCreator = role_api.restoreVideoCreator // dev: 9/9/19 prod: 8/30/19
 
 
 
@@ -465,6 +465,7 @@ exports.sendSms = twilio_sms.sendSms
 
 /***
 dev deploy 4/22/19
+prod deploy 8/26/19
 // firebase deploy --only functions:recording_has_started,functions:whenVideoIdIsCreated,functions:socialMediaPostsCreated,functions:onLegislatorChosen,functions:onParticipantAdded,functions:onParticipantRemoved
 ****/
 // MIGHT KEEP SOME OF THIS...

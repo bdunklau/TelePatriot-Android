@@ -64,10 +64,10 @@ exports.testReevaluateEmailAttributes = functions.https.onRequest((req, res) => 
 var showPage = function(input) {
     var html = ''
     html += '<html><head></head><body>'
-    html += '<style>'
-    html += '.videoListCell {}'
-    html += '.undef {color:#cbcbcb}'
-    html += 'textarea, input {font-size:12pt}'
+    html += '<style>\n'
+    html += '.videoListCell {}\n'
+    html += '.undef {color:#cbcbcb}\n'
+    html += 'textarea, input {font-size:12pt}\n'
     html += '</style>'
     return listVideos(input).then(h => {
         html += '<table border="0">'
@@ -222,12 +222,12 @@ var listVideos = function(input) {
     html += '<tr>'
     html +=     '<th>video_node_key</th>'
     html +=     '<th>email_to_legislator</th>'
-    html +=     '<th>email_to_legislator_body</th>'
-    html +=     '<th>email_to_legislator_body_unevaluated</th>'
+//    html +=     '<th>email_to_legislator_body</th>'
+//    html +=     '<th>email_to_legislator_body_unevaluated</th>'
     html +=     '<th>email_to_legislator_subject</th>'
     html +=     '<th>email_to_legislator_subject_unevaluated</th>'
-    html +=     '<th>email_to_participant_body</th>'
-    html +=     '<th>email_to_participant_body_unevaluated</th>'
+//    html +=     '<th>email_to_participant_body</th>'
+//    html +=     '<th>email_to_participant_body_unevaluated</th>'
     html +=     '<th>email_to_participant_subject</th>'
     html +=     '<th>email_to_participant_subject_unevaluated</th>'
     html +=     '<th>facebook_post_id</th>'
@@ -302,12 +302,12 @@ var listVideos = function(input) {
             
             html +=     '<td nowrap class="videoListCell"><a href="/testSelectVideoNode?video_node_key='+child.key+'">'+child.key+'</a></td>'
             html +=     '<td class="videoListCell">'+display(child.val().email_to_legislator)+'</td>'
-            html +=     '<td class="videoListCell">'+display(child.val().email_to_legislator_body)+'</td>'
-            html +=     '<td class="videoListCell">'+display(child.val().email_to_legislator_body_unevaluated)+'</td>'
+//            html +=     '<td class="videoListCell">'+display(child.val().email_to_legislator_body)+'</td>'
+//            html +=     '<td class="videoListCell">'+display(child.val().email_to_legislator_body_unevaluated)+'</td>'
             html +=     '<td class="videoListCell">'+display(child.val().email_to_legislator_subject)+'</td>'
             html +=     '<td class="videoListCell">'+display(child.val().email_to_legislator_subject_unevaluated)+'</td>'
-            html +=     '<td class="videoListCell">'+display(child.val().email_to_participant_body)+'</td>'
-            html +=     '<td class="videoListCell">'+display(child.val().email_to_participant_body_unevaluated)+'</td>'
+//            html +=     '<td class="videoListCell">'+display(child.val().email_to_participant_body)+'</td>'
+//            html +=     '<td class="videoListCell">'+display(child.val().email_to_participant_body_unevaluated)+'</td>'
             html +=     '<td class="videoListCell">'+display(child.val().email_to_participant_subject)+'</td>'
             html +=     '<td class="videoListCell">'+display(child.val().email_to_participant_subject_unevaluated)+'</td>'
             html +=     '<td class="videoListCell">'+display(child.val().facebook_post_id)+'</td>'
@@ -338,27 +338,9 @@ var listVideos = function(input) {
             html +=     '<td class="videoListCell">'+display(child.val().twitter_post_id)+'</td>'
             html +=     '<td class="videoListCell">'+display(child.val().video_mission_description)+'</td>'
 
-            var pkeys = Object.keys(child.val().video_participants)
 
-            _.each(pkeys, function(key) {
-
-                html += '<td class="videoListCell">'+JSON.stringify(child.val().video_participants[key])+'</td>'
-                html += '<td class="videoListCell">'+display(key)+'</td>'
-                html += '<td nowrap class="videoListCell">'+display(child.val().video_participants[key].connect_date)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].connect_date_ms)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].connected)+'</td>'
-                html += '<td nowrap class="videoListCell">'+display(child.val().video_participants[key].disconnect_date)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].disconnect_date_ms)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].email)+'</td>'
-                html += '<td nowrap class="videoListCell">'+display(child.val().video_participants[key].end_date)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].end_date_ms)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].name)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].present)+'</td>'
-                html += '<td nowrap class="videoListCell">'+display(child.val().video_participants[key].start_date)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].start_date_ms)+'</td>'
-                html += '<td class="videoListCell">'+display(child.val().video_participants[key].uid)+'</td>'
-            })
-            if(pkeys.length < 2) {
+            // got an error on 8/25/19 - there SHOULD always be participants, but just in case...
+            if(!child.val().video_participants) {
                 var xxxxxxx
                 html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
                 html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
@@ -375,6 +357,63 @@ var listVideos = function(input) {
                 html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
                 html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
                 html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+            }
+            else {
+
+                var pkeys = Object.keys(child.val().video_participants)
+
+                _.each(pkeys, function(key) {
+
+                    html += '<td class="videoListCell">'+JSON.stringify(child.val().video_participants[key])+'</td>'
+                    html += '<td class="videoListCell">'+display(key)+'</td>'
+                    html += '<td nowrap class="videoListCell">'+display(child.val().video_participants[key].connect_date)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].connect_date_ms)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].connected)+'</td>'
+                    html += '<td nowrap class="videoListCell">'+display(child.val().video_participants[key].disconnect_date)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].disconnect_date_ms)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].email)+'</td>'
+                    html += '<td nowrap class="videoListCell">'+display(child.val().video_participants[key].end_date)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].end_date_ms)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].name)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].present)+'</td>'
+                    html += '<td nowrap class="videoListCell">'+display(child.val().video_participants[key].start_date)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].start_date_ms)+'</td>'
+                    html += '<td class="videoListCell">'+display(child.val().video_participants[key].uid)+'</td>'
+                })
+                if(pkeys.length < 2) {
+                    var xxxxxxx
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                    html += '<td class="videoListCell">'+display(xxxxxxx)+'</td>'
+                }
             }
         
             html +=     '<td class="videoListCell">'+display(child.val().video_title)+'</td>'
@@ -383,8 +422,8 @@ var listVideos = function(input) {
             html +=     '<td class="videoListCell">'+display(child.val().youtube_video_description_unevaluated)+'</td>'
             
             html += '</tr>'
-            html += '</table>'
         })
+        html += '</table>'
         return html
     })
 }
