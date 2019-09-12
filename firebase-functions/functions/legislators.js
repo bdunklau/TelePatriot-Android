@@ -281,6 +281,8 @@ exports.saveLegislator = functions.https.onRequest((req, res) => {
             if(entry.type == 'Facebook') entry.facebook_id = null
             return entry
         })
+        .filter(ch => ch.id && ch.id.trim() != '') // don't save nodes if there isn't a handle
+
         update[root+'channels'] = channels
     }
 
