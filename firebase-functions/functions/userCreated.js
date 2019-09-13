@@ -84,8 +84,16 @@ exports.userCreated = functions.auth.user().onCreate(user => {
                         log.debug(uid, name, "userCreated.js", "userCreated", "OK: result.vol = "+result.vol)
                         // This is what we want to happen: email was found in the CB db
                         volunteers.updateUser({uid: uid, result: result, userInfo: updates})
-                        if(result.vol.petition_signed && result.vol.volunteer_agreement_signed && !result.vol.is_banned)
-                            return email_js.sendWelcomeEmail(email, name)
+                        if(result.vol.petition_signed && result.vol.volunteer_agreement_signed && !result.vol.is_banned) {
+
+                            // Sort of a hack/workaround - If the new user satisfies legal, make the person a Volunteer right off the
+                            // bat so he can see "My Mission".  Otherwise, you have to assign him the TelePatriot Volunteer role in CB
+                            // AND THEN tell him to sign out and sign back in. 
+                            return db.child('/users/'+uid+'/roles/Volunteer').set("true") // should really be a boolean, legacy bug from way back
+                                    .then(() => {
+                                        return email_js.sendWelcomeEmail(email, name)
+                                    })
+                        }
                     }
                     else {
                         if(result.error) {

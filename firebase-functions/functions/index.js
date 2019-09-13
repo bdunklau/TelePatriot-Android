@@ -21,7 +21,7 @@ exports.topicDeleted = topics.topicDeleted
 // dev deploy: 3/29/19,
 // prod deploy: 3/29/19
 const userCreated = require('./userCreated')
-exports.userCreated = userCreated.userCreated
+exports.userCreated = userCreated.userCreated  // prod 9/10/19
 exports.onCitizenBuilderId = userCreated.onCitizenBuilderId
 
 /***
@@ -316,6 +316,7 @@ exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
 
 /***
+dev deploy 4/22/19
 // firebase deploy --only functions:checkLegal,functions:timestampCbApiEvent,functions:onResponseFromLegal,functions:timestampLegalResponses,functions:timestampLoginResponses
 ****/
 //dev deploy 9/9/19
@@ -418,7 +419,7 @@ exports.testRoleApiForm = role_api.testRoleApiForm
 exports.testRoleApi = role_api.testRoleApi
 exports.api_add_role = role_api.api_add_role
 exports.api_remove_role = role_api.api_remove_role
-exports.restoreVideoCreator = role_api.restoreVideoCreator // dev and prod: 8/30/19
+exports.restoreVideoCreator = role_api.restoreVideoCreator // dev: 9/9/19 prod: 8/30/19
 
 
 

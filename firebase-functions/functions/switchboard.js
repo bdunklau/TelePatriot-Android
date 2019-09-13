@@ -23,12 +23,17 @@ firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,fun
 // When one person connects, connect the other person also.  It's one less thing we have to train people to do.
 exports.onConnectRequest = functions.database.ref('video/video_events/{key}').onCreate((snapshot, context) => {
     var data = snapshot.val()
-    if(!data.request_type)
+    if(!data.request_type) {
+        console.log('onConnectRequest: return early because data.request_type = ', data.request_type)
         return false //ignore malformed
+    }
 
     var params = context.params
 
-    if(data.request_type != 'connect request') return false //ignore, not a connect request
+    if(data.request_type != 'connect request') {
+        console.log('onConnectRequest: return early because data.request_type is not "connect request". It is ', data.request_type)
+        return false //ignore, not a connect request
+    }
 
     return connect(params.key, data.video_node_key, data.uid, data.name, data.room_id, data.RoomSid)
 })
