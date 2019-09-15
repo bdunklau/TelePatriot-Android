@@ -316,10 +316,9 @@ exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 
 
 /***
-dev deploy 4/22/19
 // firebase deploy --only functions:checkLegal,functions:timestampCbApiEvent,functions:onResponseFromLegal,functions:timestampLegalResponses,functions:timestampLoginResponses
 ****/
-//dev deploy 9/9/19
+//dev deploy 9/13/19
 // prod deploy: 1/16/19
 // prod deploy: 9/12/19
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')

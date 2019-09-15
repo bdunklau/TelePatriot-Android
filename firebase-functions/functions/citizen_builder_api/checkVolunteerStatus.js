@@ -75,13 +75,13 @@ exports.checkVolunteerStatus = function(email, allowed, notAllowed) {
 }
 
 // See LimboActivity.clickDone().  That method writes to the database at this location
-exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
-    if(event.data.val().event_type != 'check legal')
+exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').onCreate((snapshot, context) => {
+    if(snapshot.val().event_type != 'check legal')
         return false
 
-    var uid = event.data.val().uid
-    var email = event.data.val().email
-    var name = event.data.val().name
+    var uid = snapshot.val().uid
+    var email = snapshot.val().email
+    var name = snapshot.val().name
 
     // We have to determine HOW to check the user's legal status.  We could check the user's legal status via
     // 1) /volunteer_validation/check?email= _______
@@ -103,14 +103,14 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
                 }
                 console.log("checkLegal: valid_actual: ", valid_actual, " valid: ", valid)
 
-                db.ref('cb_api_events/all-events').push().set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email,
+                db.ref('cb_api_events/all-events').push().set({uid: snapshot.val().uid, name: snapshot.val().name, email: snapshot.val().email,
                                                 event_type: 'check-legal-response', valid: valid})
                 // for users from the Limbo screens.  There is a "Done" button on that page that they can click that
                 // causes this event to get called.  The limbo screens monitor /cb_api_events/check-legal-responses
                 // in order to tell the client whether they have in fact satisfied all the legal requirements now
-                db.ref('cb_api_events/check-legal-responses/'+event.data.val().uid)
+                db.ref('cb_api_events/check-legal-responses/'+snapshot.val().uid)
                     .push()
-                    .set({uid: event.data.val().uid, name: event.data.val().name, email: event.data.val().email, valid: valid})
+                    .set({uid: snapshot.val().uid, name: snapshot.val().name, email: snapshot.val().email, valid: valid})
             }
 
             // now check legal status...
@@ -120,7 +120,7 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
             var notAllowed = function(valid) {
                 f(valid) // false under normal circumstances, set to true to simulate passing legal
             }
-            exports.checkVolunteerStatus(event.data.val().email, allowed, notAllowed)
+            exports.checkVolunteerStatus(snapshot.val().email, allowed, notAllowed)
         }
         else {
             // otherwise use option 2
@@ -164,25 +164,25 @@ exports.checkLegal = functions.database.ref('cb_api_events/all-events/{key}').on
 
 
 // update the petition, conf agreement and banned flags on the user record...
-exports.onResponseFromLegal = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
-    if(event.data.val().event_type != 'check-legal-response')
+exports.onResponseFromLegal = functions.database.ref('cb_api_events/all-events/{key}').onCreate((snapshot, context) => {
+    if(snapshot.val().event_type != 'check-legal-response')
         return false
     var updates = {}
-    if(event.data.val().valid) {
-        return exports.grantAccess(updates, event.data.val().uid, event.data.val().name, event.data.val().email)
+    if(snapshot.val().valid) {
+        return exports.grantAccess(updates, snapshot.val().uid, snapshot.val().name, snapshot.val().email)
     }
     else {
-        updates['users/'+event.data.val().uid+'/has_signed_petition'] = null
-        updates['users/'+event.data.val().uid+'/has_signed_confidentiality_agreement'] = null
-        updates['users/'+event.data.val().uid+'/is_banned'] = null
+        updates['users/'+snapshot.val().uid+'/has_signed_petition'] = null
+        updates['users/'+snapshot.val().uid+'/has_signed_confidentiality_agreement'] = null
+        updates['users/'+snapshot.val().uid+'/is_banned'] = null
         return db.ref('/').update(updates)
     }
 })
 
 exports.denyAccess = function(updates, uid) {
-    updates['users/'+event.data.val().uid+'/has_signed_petition'] = null
-    updates['users/'+event.data.val().uid+'/has_signed_confidentiality_agreement'] = null
-    updates['users/'+event.data.val().uid+'/is_banned'] = null
+    updates['users/'+snapshot.val().uid+'/has_signed_petition'] = null
+    updates['users/'+snapshot.val().uid+'/has_signed_confidentiality_agreement'] = null
+    updates['users/'+snapshot.val().uid+'/is_banned'] = null
     return db.ref('/').update(updates)
 }
 
@@ -234,16 +234,16 @@ exports.grantAccess = function(updates, uid, name, email) {
 }
 
 // just housekeeping - always timestamp the event
-exports.timestampCbApiEvent = functions.database.ref('cb_api_events/all-events/{key}').onCreate(event => {
-    return event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
+exports.timestampCbApiEvent = functions.database.ref('cb_api_events/all-events/{key}').onCreate((snapshot, context) => {
+    return snapshot.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
 })
 
 // just housekeeping - always timestamp the event
-exports.timestampLegalResponses = functions.database.ref('cb_api_events/check-legal-responses/{key1}/{key2}').onCreate(event => {
-    return event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
+exports.timestampLegalResponses = functions.database.ref('cb_api_events/check-legal-responses/{key1}/{key2}').onCreate((snapshot, context) => {
+    return snapshot.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
 })
 
 // just housekeeping - always timestamp the event
-exports.timestampLoginResponses = functions.database.ref('cb_api_events/login-responses/{key1}/{key2}').onCreate(event => {
-    return event.data.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
+exports.timestampLoginResponses = functions.database.ref('cb_api_events/login-responses/{key1}/{key2}').onCreate((snapshot, context) => {
+    return snapshot.ref.update({date: date.asCentralTime(), date_ms: date.asMillis()})
 })
