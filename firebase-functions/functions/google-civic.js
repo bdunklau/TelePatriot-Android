@@ -41,11 +41,30 @@ var listStates = function() {
     })
 }
 
+var instructions = function() {
+    var html = ''
+    html += '<h3>Instructions</h3>'
+    html += 'This page is for pulling down legislator and district data using the Google Civic Information API.  The data gets pulled down from google and stored at /google_civic_data.'
+    html += '<p/><b>Divisions</b>'
+    html += '<br/>Think of divisions as districts.  Here\'s an example of a division: ocd-division/country:us/state:ak/sldl:14 The state is Alaska. The district is HD14. sldl stands for state legislative district lower. sldu would be the Senate '
+    html += '<br/>Loading divisions - You don\'t have to load divisions often. If you thought the number of districts grew or shrank, then you would want to unload and reload the divisions for a state'
+    html += '<br/><b>load vs unload vs list</b>'
+    html += '<br/>loading divisions means pulling down the list of divisions (districts) from google and storing them at /google_civic_data/divisions'
+    html += '<br/>unloading divisions means deleting the divisions (districts) stored at /google_civic_data/divisions'
+    html += '<br/>listing divisions query for the the divisions (districts) stored at /google_civic_data/divisions.  "list" exists because "load" is asynchronous and can return the page before all the results have been pulled down from google. '
+    html += 'So "list" is kind of like "refresh the page"'
+    html += '<P/><b>Officials</b>'
+    html += '<br/>These are the legislators.  You can load and unload these as often as you like.'
+    html += '<br/><b>load vs unload vs list</b>'
+    html += '<br/>These 3 mean the same thing for legislators that they did for divisions above.'
+    return html
+}
 
 var showPage = function(stuff) {
     var html = ''
     html += '<html>'
     html += '<head></head><body>'
+    html += instructions()
     html += '<table border="0">'
     html +=     '<tr>'
     html +=         '<td valign="top" rowspan="2">'
