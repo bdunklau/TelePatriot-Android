@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -18,9 +19,13 @@ import com.brentdunklau.telepatriot_android.util.AccountStatusEvent;
 import com.brentdunklau.telepatriot_android.util.AppLog;
 import com.brentdunklau.telepatriot_android.util.User;
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
@@ -103,6 +108,10 @@ public class LauncherActivity extends BaseActivity
                 final String name = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
                 final String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
 
+                FirebaseDatabase db = FirebaseDatabase.getInstance();
+                DatabaseReference ref = db.getReference("/users");
+                ref.child("foo").setValue("bar");
+
                 FirebaseDatabase.getInstance().getReference("administration/configuration").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -134,7 +143,7 @@ public class LauncherActivity extends BaseActivity
                     }
 
                     @Override
-                    public void onCancelled(DatabaseError databaseError) {  }
+                    public void onCancelled(DatabaseError databaseError) { new Exception().printStackTrace(); }
                 });
 
             } else {
