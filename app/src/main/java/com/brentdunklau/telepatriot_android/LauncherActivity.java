@@ -103,6 +103,11 @@ public class LauncherActivity extends BaseActivity
                 final String name = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
                 final String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
 
+                Map vals = new HashMap();
+                vals.put("name", name);
+                vals.put("name_lower", name.toLowerCase());
+                FirebaseDatabase.getInstance().getReference("users/"+uid).updateChildren(vals);
+
                 FirebaseDatabase.getInstance().getReference("administration/configuration").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
