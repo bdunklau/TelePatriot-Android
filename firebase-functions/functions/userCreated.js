@@ -33,6 +33,7 @@ exports.userCreated = functions.auth.user().onCreate(user => {
     var uid = user.uid
     var email = user.email
     var name = email // default value if name not present
+    console.log('user = ', user)
     if(user.displayName) name = user.displayName
     var photoUrl = user.photoURL || 'https://i.stack.imgur.com/34AD2.jpg'
 
@@ -64,8 +65,8 @@ exports.userCreated = functions.auth.user().onCreate(user => {
         }
 
         if(namePresent) {
-            updates['users/'+uid+'/name'] = name
-            updates['users/'+uid+'/name_lower'] = name.toLowerCase()
+            if(name != email) updates['users/'+uid+'/name'] = name // 9/24/19 kind of a hack - don't set the name to the email address
+            if(name != email) updates['users/'+uid+'/name_lower'] = name.toLowerCase()
         }
         if(emailPresent) {
             updates['users/'+uid+'/email'] = email
