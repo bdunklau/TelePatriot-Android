@@ -41,11 +41,30 @@ var listStates = function() {
     })
 }
 
+var instructions = function() {
+    var html = ''
+    html += '<h2>Instructions</h2>'
+    html += 'This page is for pulling down legislator and district data using the Google Civic Information API.  The data gets pulled down from google and stored at /google_civic_data.'
+    html += '<p/><h4>Divisions</h4>'
+    html += 'Think of divisions as districts.  Here\'s an example of a division: ocd-division/country:us/state:ak/sldl:14 The state is Alaska. The district is HD14. sldl stands for state legislative district lower. sldu would be the Senate '
+    html += '<br/>Loading divisions - You don\'t have to load divisions often. If you thought the number of districts grew or shrank, then you would want to unload and reload the divisions for a state'
+    html += '<br/><b>load vs unload vs list</b>'
+    html += '<br/><b>loading</b> divisions means pulling down the list of divisions (districts) from google and storing them at /google_civic_data/divisions'
+    html += '<br/><b>unloading</b> divisions means deleting the divisions (districts) stored at /google_civic_data/divisions'
+    html += '<br/><b>listing</b> divisions query for the the divisions (districts) stored at /google_civic_data/divisions.  "list" exists because "load" is asynchronous and can return the page before all the results have been pulled down from google. '
+    html += 'So "list" is kind of like "refresh the page"'
+    html += '<P/><h4>Officials</h4>'
+    html += 'These are the legislators.  You can load and unload these as often as you like.'
+    html += '<br/><b>load vs unload vs list</b>'
+    html += '<br/>These 3 mean the same thing for legislators that they did for divisions above.<p/>'
+    return html
+}
 
 var showPage = function(stuff) {
     var html = ''
     html += '<html>'
     html += '<head></head><body>'
+    html += instructions()
     html += '<table border="0">'
     html +=     '<tr>'
     html +=         '<td valign="top" rowspan="2">'
@@ -72,51 +91,41 @@ var showPage = function(stuff) {
 var stateListHtml = function(stuff) {
     var html = ''
     html += '<table cellspacing="0" cellpadding="2" border="1">'
-    html += '<tr>'
-    html += '   <th rowspan="2">Query</th>'
-    html += '   <th rowspan="2">States</th>'
-    html += '   <th rowspan="2">SD</th>'
-    html += '   <th rowspan="2">HD</th>'
-    html += '   <th colspan="5">Civic Data</th>'
-    html += '</tr>'
-    html += '<tr>'
-    html += '   <th>divisions</th>'
-    html += '   <th>officials</th>'
-    html += '   <th>off by</th>'
-    html += '   <th>SM%</th>'
-    html += '</tr>'
     for(var i=0; i < stuff.states.length; i++) {
-        html += '<tr>'
-        html += '   <td>'
-        html +=         '[<a href="/query?node=/google_civic_data/states/'+stuff.states[i].state_abbrev+'" title="Query /google_civic_data/states/'+stuff.states[i].state_abbrev+'" target="new">Q1</a>]'
-        html +=         '[<a href="/query?node=/google_civic_data/divisions&attribute=state_abbrev&value='+stuff.states[i].state_abbrev+'" title="Query /google_civic_data/divisions : state_abbrev='+stuff.states[i].state_abbrev+'" target="new">Q2</a>]'
-        html +=         '[<a href="/query?node=/google_civic_data/officials&attribute=state_abbrev&value='+stuff.states[i].state_abbrev+'" title="Query /google_civic_data/officials : state_abbrev='+stuff.states[i].state_abbrev+'" target="new">Q3</a>]'
-        html += '   </td>'
-        html += '   <td>'+stuff.states[i].state_name+'</td>'
-        html += '   <td>'+stuff.states[i].sd_actual+'</td>'
-        html += '   <td>'+stuff.states[i].hd_actual+'</td>'
-        html += '   <td>'
-        html +=         '[<a href="/loadDivisions?state='+stuff.states[i].state_abbrev+'" title="Load Divisions">L</a>]'
-        var divisions_loaded = 'n/a'
-        if(stuff.states[i].civic_divisions_loaded) divisions_loaded = stuff.states[i].civic_divisions_loaded
-        html +=         '<a href="/listDivisions?state='+stuff.states[i].state_abbrev+'" title="List Divisions">'+divisions_loaded+'</a>'
-        html +=         '[<a href="/unloadDivisions?state='+stuff.states[i].state_abbrev+'" title="Delete Divisions">D</a>]'
-        html +=     '</td>'
-        html += '   <td>'
-        html +=         '[<a href="/loadOfficials?state='+stuff.states[i].state_abbrev+'" title="Load Officials">L</a>]'
-        html +=         '<a href="/listOfficials?state='+stuff.states[i].state_abbrev+'" title="List all officials">'+stuff.states[i].civic_officials_loaded+'</a>'
-        html +=         '[<a href="/unloadOfficials?state='+stuff.states[i].state_abbrev+'" title="Delete Officials">D</a>]'
-        html +=     '</td>'
-
         var total = stuff.states[i].sd_actual + stuff.states[i].hd_actual
         var offBy = total - stuff.states[i].civic_officials_loaded
+        var style = ''
         if(offBy == 0) {
-            html += '<td style="background-color:#008000;color:#ffffff">'+offBy+'</td>'
+            style += ' style="background-color:#008000;color:#ffffff"'
         }
-        else {
-            html += '<td>'+offBy+'</td>'
+        var divisions_loaded = 'n/a'
+        if(stuff.states[i].civic_divisions_loaded) divisions_loaded = stuff.states[i].civic_divisions_loaded
+        var divisionStyle = ''
+        if(divisions_loaded+'' == total+'') {
+            divisionStyle += ' style="background-color:#008000;color:#ffffff"'
         }
-        html += '   <td>'+stuff.states[i].channels_loaded+' / '+total+'</td>'
+        // error condition: more officials loaded than total
+        var officialCountNotPossible = ''
+        if(stuff.states[i].civic_officials_loaded > total) {
+            officialCountNotPossible = '<span style="background-color:#FF4444;color:#ffffff">not possible</span>'
+        }
+
+        html += '<tr>'
+        html += '   <td nowrap>'+stuff.states[i].state_name+' House Districts: '+stuff.states[i].hd_actual+' Senate Districts: '+stuff.states[i].sd_actual
+        html +=         '<br/><a href="/query?node=/google_civic_data/states/'+stuff.states[i].state_abbrev+'" target="new">/query?node=/google_civic_data/states/'+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<br/><a href="/query?node=/google_civic_data/divisions&attribute=state_abbrev&value='+stuff.states[i].state_abbrev+'" target="new">/query?node=/google_civic_data/divisions&attribute=state_abbrev&value='+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<br/><a href="/query?node=/google_civic_data/officials&attribute=state_abbrev&value='+stuff.states[i].state_abbrev+'" target="new">/query?node=/google_civic_data/officials&attribute=state_abbrev&value='+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<p/><span '+divisionStyle+'>divisions loaded: '+divisions_loaded+'</span>'
+        html +=         '<br/><a href="/loadDivisions?state='+stuff.states[i].state_abbrev+'">/loadDivisions?state='+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<br/><a href="/unloadDivisions?state='+stuff.states[i].state_abbrev+'">/unloadDivisions?state='+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<br/><a href="/listDivisions?state='+stuff.states[i].state_abbrev+'">/listDivisions?state='+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<p/><span '+style+'>Officials loaded: '+stuff.states[i].civic_officials_loaded+' of '+total+'</span> '+officialCountNotPossible
+        html +=         '<br/><a href="/loadOfficials?state='+stuff.states[i].state_abbrev+'">/loadOfficials?state='+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<br/><a href="/unloadOfficials?state='+stuff.states[i].state_abbrev+'">/unloadOfficials?state='+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<br/><a href="/listOfficials?state='+stuff.states[i].state_abbrev+'">/listOfficials?state='+stuff.states[i].state_abbrev+'</a>'
+        html +=         '<p/>Officials with social media: '+stuff.states[i].channels_loaded+' out of '+total
+        html +=    '</td>'
+
         html += '</tr>'
     }
     html += '</table>'
