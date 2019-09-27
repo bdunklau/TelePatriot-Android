@@ -320,6 +320,8 @@ exports.testReevaluateEmailAttributes = videoList.testReevaluateEmailAttributes
 //dev deploy 9/13/19
 // prod deploy: 1/16/19
 // prod deploy: 9/12/19
+// dev deploy: 9/25/19
+// prod deploy: 9/25/19
 const checkVolunteerStatus = require('./citizen_builder_api/checkVolunteerStatus')
 exports.checkLegal = checkVolunteerStatus.checkLegal
 exports.timestampCbApiEvent = checkVolunteerStatus.timestampCbApiEvent
