@@ -480,6 +480,15 @@ exports.sendSms = twilio_sms.sendSms
 //exports.onNameResolved = twilio_sms.onNameResolved
 
 
+/**
+firebase deploy --only functions:twitterArmy,functions:twitterArmyTweet,functions:twitterArmyAuthorize,functions:twitterArmyCallback
+**/
+const twitterArmy = require('./twitterArmy/twitterArmy')
+exports.twitterArmy = twitterArmy.twitterArmy
+exports.twitterArmyTweet = twitterArmy.twitterArmyTweet
+exports.twitterArmyAuthorize = twitterArmy.twitterArmyAuthorize
+exports.twitterArmyCallback = twitterArmy.twitterArmyCallback
+
 
 /***
 //dev deploy 9/9/19
