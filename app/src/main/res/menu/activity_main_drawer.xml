@@ -4,6 +4,7 @@
     <item android:title="Act">
         <menu>
             <group android:checkableBehavior="single">
+                <!-- See MainActivity.onNavigationItemSelected() -->
                 <item
                     android:id="@+id/nav_switch_teams"
                     android:icon="@drawable/ic_menu_slideshow"
@@ -23,6 +24,10 @@
                     android:id="@+id/nav_admin_layout"
                     android:icon="@drawable/ic_menu_slideshow"
                     android:title="Admins" />
+                <item
+                    android:id="@+id/nav_share_layout"
+                    android:icon="@drawable/ic_menu_slideshow"
+                    android:title="Share" />
             </group>
         </menu>
     </item>

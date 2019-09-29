@@ -278,7 +278,10 @@ public class MainActivity extends AppCompatActivity
             });
 
         }
-
+        else if(id == R.id.nav_share_layout) {
+            Fragment fragment = new ShareFragment();
+            getFragmentManager().beginTransaction().replace(R.id.content_frame, fragment).addToBackStack(fragment.getClass().getName()).commit();
+        }
 
         // Director and Admin menu items are commented out for the time being (Dec 2018)
         // To put these back in, uncomment the blocks below AND THEN go to activity_main_drawer.xml
