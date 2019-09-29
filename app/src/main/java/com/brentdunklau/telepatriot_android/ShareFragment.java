@@ -80,7 +80,7 @@ public class ShareFragment extends BaseFragment {
             ActivityCompat.requestPermissions(
                     getActivity(),
                     new String[]{Manifest.permission.SEND_SMS},
-                    SMS_PERMISSION_REQUEST_CODE);
+                    SMS_PERMISSION_REQUEST_CODE); 
         }
     }
 }
