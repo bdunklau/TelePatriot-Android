@@ -22,6 +22,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import org.w3c.dom.Text;
 
+import java.net.URLEncoder;
 import java.util.Map;
 
 /**
@@ -70,8 +71,7 @@ public class InviteByTextMessage extends Dialog {
         guest_phone = findViewById(R.id.guest_phone);
         final String name = guest_name.getText().toString();
         final String first_name = name.substring(0, name.indexOf(" "));
-        final String template = "Hi %s\nPlease touch the link below to join me on a video call\n\n%s\n\nThanks!\n"+ User.getInstance().getName();
-
+        final String message = "Hi "+first_name+"\nPlease touch the link below to join me on a video call\n\nThanks!\n"+ User.getInstance().getName();
 
         FirebaseDatabase.getInstance().getReference("administration/hosts")
                 .orderByChild("type")
@@ -85,18 +85,27 @@ public class InviteByTextMessage extends Dialog {
                     return;
                 }
 
-                Map<String, Object> hostNode = (Map<String, Object>) dataSnapshot.getChildren().iterator().next();
-                String server = hostNode.get("host")+"";
+                DataSnapshot obj = (DataSnapshot) dataSnapshot.getChildren().iterator().next();
+                Map<String, Object> hostNode = (Map<String, Object>) obj.getValue();
+                        String server = hostNode.get("host")+"";
+
+                String encodedName = first_name;
+                try {
+                    encodedName = URLEncoder.encode(name, "UTF-8");
+                } catch(Throwable t) {
+                }
 
                 String videoCallInvitation = "https://"+server+"/video_call_invitation?"
                         +"video_node_key="+currentVideoNode.getKey()
                         +"&phone="+guest_phone.getText().toString()
-                        +"&name="+name;
-                String message = String.format(template, first_name, videoCallInvitation);
+                        +"&name="+ encodedName;
                 SmsManager smsManager = SmsManager.getDefault();
                 String ph = guest_phone.getText().toString();
-                String phone = ph.startsWith("+1") ? ph : "+1"+ph;
-                smsManager.sendTextMessage(phone, null, message, null, null);
+                smsManager.sendTextMessage(ph, null, message, null, null);
+                smsManager.sendTextMessage(ph, null, videoCallInvitation, null, null);
+
+                // invited person needs to be displayed when we return to VidyoChatFragment - how do we do that???
+                InviteByTextMessage.this.dismiss();
             }
 
             @Override

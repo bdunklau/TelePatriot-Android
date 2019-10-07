@@ -3,6 +3,7 @@ package com.brentdunklau.telepatriot_android;
 import android.app.Dialog;
 import android.content.Context;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 
 import com.brentdunklau.telepatriot_android.util.VideoNode;
@@ -31,16 +32,29 @@ public class InviteSomeoneDlg extends Dialog {
         button_invite_by_name.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
                 SearchUsersDlg dialog = new SearchUsersDlg(activity, currentVideoNode);
+//              InviteSomeoneDlg dialog = new InviteSomeoneDlg(getActivity(), currentVideoNode);
+                lp.copyFrom(dialog.getWindow().getAttributes());
+                lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+                lp.height = WindowManager.LayoutParams.MATCH_PARENT;
                 dialog.show();
+                dialog.getWindow().setAttributes(lp);
+                InviteSomeoneDlg.this.dismiss();
             }
         });
 
         button_invite_by_text_message.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
                 InviteByTextMessage dialog = new InviteByTextMessage(activity, currentVideoNode);
+                lp.copyFrom(dialog.getWindow().getAttributes());
+                lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+                lp.height = WindowManager.LayoutParams.MATCH_PARENT;
                 dialog.show();
+                dialog.getWindow().setAttributes(lp);
+                InviteSomeoneDlg.this.dismiss();
             }
         });
     }

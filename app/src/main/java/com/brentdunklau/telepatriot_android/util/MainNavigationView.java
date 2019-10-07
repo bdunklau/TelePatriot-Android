@@ -69,7 +69,6 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
         // make menu items visible corresponding to the user's role(s)
         Map<String, Boolean> roles = new HashMap<String, Boolean>();
         roles.put("Volunteer", User.getInstance().isVolunteer());
-        roles.put("Share", User.getInstance().isVolunteer());
         roles.put("Director", User.getInstance().isDirector());
         roles.put("Admin", User.getInstance().isAdmin());
         roles.put("Video Creator", User.getInstance().isVideoCreator());
@@ -122,7 +121,6 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
 
         Map<String, String> menuItemsToRoles = new HashMap<String, String>();
         menuItemsToRoles.put("My Mission", "Volunteer");
-        menuItemsToRoles.put("Share", "Volunteer");
         menuItemsToRoles.put("Directors", "Director");
         menuItemsToRoles.put("Admins", "Admin");
         menuItemsToRoles.put("Video Chat", "Video Creator");
