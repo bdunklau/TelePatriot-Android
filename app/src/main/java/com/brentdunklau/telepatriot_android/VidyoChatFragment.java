@@ -29,6 +29,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -1941,8 +1942,14 @@ public class VidyoChatFragment extends BaseFragment
     }
 
     private void inviteSomeone() {
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         SearchUsersDlg dialog = new SearchUsersDlg(getActivity(), currentVideoNode);
+        lp.copyFrom(dialog.getWindow().getAttributes());
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.MATCH_PARENT;
         dialog.show();
+        dialog.getWindow().setAttributes(lp);
+
 //        SearchUsersFragment f = new SearchUsersFragment();
 //        f.setWhereTo(VidyoChatFragment.this); // means we'll come back to this fragment once we select a user
 //        showFragment(f);
