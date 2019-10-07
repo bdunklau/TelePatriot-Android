@@ -9,6 +9,7 @@ import android.support.v7.widget.SearchView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.UserBean;
@@ -32,6 +33,7 @@ public class SearchUsersDlg extends Dialog {
 
     private FirebaseRecyclerAdapter<UserBean, UserHolder> firebaseRecyclerAdapter22;
     private RecyclerView users;
+    private Button button_cancel_search_users;
     SearchView search_users;
 
     public SearchUsersDlg(Context activity, final VideoNode currentVideoNode) {
@@ -40,9 +42,16 @@ public class SearchUsersDlg extends Dialog {
         setContentView(R.layout.search_users_fragment);
         search_users = findViewById(R.id.search_users);
         search_users.setQueryHint("Search by name");
-
+        button_cancel_search_users = findViewById(R.id.button_cancel_search_users);
         users = (RecyclerView) findViewById(R.id.user_list);
         users.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        button_cancel_search_users.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SearchUsersDlg.this.dismiss();
+            }
+        });
 
         search_users.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
