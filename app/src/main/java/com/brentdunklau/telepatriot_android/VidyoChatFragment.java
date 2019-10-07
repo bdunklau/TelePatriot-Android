@@ -1942,10 +1942,8 @@ public class VidyoChatFragment extends BaseFragment
 
     private void inviteSomeone() {
         SearchUsersDlg dialog = new SearchUsersDlg(getActivity(), currentVideoNode);
+//        InviteSomeoneDlg dialog = new InviteSomeoneDlg(getActivity(), currentVideoNode);
         dialog.show();
-//        SearchUsersFragment f = new SearchUsersFragment();
-//        f.setWhereTo(VidyoChatFragment.this); // means we'll come back to this fragment once we select a user
-//        showFragment(f);
     }
 
     private void revokeInvitation() {
