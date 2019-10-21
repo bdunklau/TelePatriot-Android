@@ -19,6 +19,7 @@ public class InviteSomeoneDlg extends Dialog {
 
     private Button button_invite_by_name;
     private Button button_invite_by_text_message;
+    private Button button_cancel;
 
 
     public InviteSomeoneDlg(final Context activity, final VideoNode currentVideoNode) {
@@ -28,6 +29,7 @@ public class InviteSomeoneDlg extends Dialog {
 
         button_invite_by_name = findViewById(R.id.button_invite_by_name);
         button_invite_by_text_message = findViewById(R.id.button_invite_by_text_message);
+        button_cancel = findViewById(R.id.button_cancel);
 
         button_invite_by_name.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,6 +56,13 @@ public class InviteSomeoneDlg extends Dialog {
                 lp.height = WindowManager.LayoutParams.MATCH_PARENT;
                 dialog.show();
                 dialog.getWindow().setAttributes(lp);
+                InviteSomeoneDlg.this.dismiss();
+            }
+        });
+
+        button_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
                 InviteSomeoneDlg.this.dismiss();
             }
         });

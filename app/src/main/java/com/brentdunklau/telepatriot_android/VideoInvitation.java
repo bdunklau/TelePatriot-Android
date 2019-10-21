@@ -67,7 +67,26 @@ public class VideoInvitation {
         this.video_node_key = video_node_key;
     }
 
-    // convenience constructor for delete() and also for getInitiator_name()
+
+    // for sending video invitations by text message, when the guest doesn't have a user record
+    // And even if the guest DOES have a user record, we don't look it up.
+    public VideoInvitation(User creator, String guest_name, String guest_sms, String video_node_key) {
+        initiator_id = creator.getUid();
+        initiator_name = creator.getName();
+        initiator_email = creator.getEmail();
+        initiator_photo_url = creator.getPhotoURL();
+        invitation_create_date = Util.getDate_Day_MMM_d_hmmss_am_z_yyyy();
+        invitation_create_date_ms = Util.getDate_as_millis();
+        room_id = video_node_key;
+        guest_id = "mobile_phone_"+guest_sms;
+        this.guest_name = guest_name;
+//        guest_email =  does not exist for text message invites
+//        guest_photo_url =  does not exist for text message invites
+        this.video_node_key = video_node_key;
+    }
+
+
+    // convenience constructor for: delete(), getInitiator_name()
     public VideoInvitation(VideoNode videoNode) {
         this.videoNode = videoNode;
         this.video_node_key = videoNode.getKey();

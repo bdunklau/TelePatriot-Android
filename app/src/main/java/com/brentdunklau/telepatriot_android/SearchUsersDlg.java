@@ -1,8 +1,11 @@
 package com.brentdunklau.telepatriot_android;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.pm.ActivityInfo;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -36,8 +39,21 @@ public class SearchUsersDlg extends Dialog {
     private Button button_cancel_search_users;
     SearchView search_users;
 
-    public SearchUsersDlg(Context activity, final VideoNode currentVideoNode) {
+    public SearchUsersDlg(final Context activity, final VideoNode currentVideoNode) {
         super(activity);
+
+        ((Activity) activity).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        this.setOnDismissListener(new OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                // Ideally I wanted the orientation to switch to landscape BEFORE the dialog is dismissed so the
+                // video chat screen doesn't look weird.  But switching the orientation BEFORE dismissing made
+                // the invited person and "cancel invite" link disappear from the lower left of the screen.
+                // This is the best we can do at the moment.
+                ((Activity) activity).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
+        });
 
         setContentView(R.layout.search_users_fragment);
         search_users = findViewById(R.id.search_users);
@@ -121,7 +137,6 @@ public class SearchUsersDlg extends Dialog {
                                         updates.put("users/"+uid+"/video_invitation_from_name", User.getInstance().getName());
                                         updates.put("users/"+uid+"/current_video_node_key", User.getInstance().getCurrent_video_node_key());
                                         FirebaseDatabase.getInstance().getReference("/").updateChildren(updates);
-
 
                                         SearchUsersDlg.this.dismiss();
                                     }

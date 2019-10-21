@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import com.brentdunklau.telepatriot_android.util.User;
 import com.brentdunklau.telepatriot_android.util.VideoNode;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -23,6 +24,7 @@ import com.google.firebase.database.ValueEventListener;
 import org.w3c.dom.Text;
 
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -71,11 +73,11 @@ public class InviteByTextMessage extends Dialog {
         guest_phone = findViewById(R.id.guest_phone);
         final String name = guest_name.getText().toString();
         final String first_name = name.substring(0, name.indexOf(" "));
-        final String message = "Hi "+first_name+"\nPlease touch the link below to join me on a video call\n\nThanks!\n"+ User.getInstance().getName();
+        final String message = "Hi "+first_name+"\nPlease touch the link above to join me on a video call\n\nThanks!\n"+ User.getInstance().getName();
 
         FirebaseDatabase.getInstance().getReference("administration/hosts")
                 .orderByChild("type")
-                .equalTo("firebase functions")
+                .equalTo("web host")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -87,7 +89,7 @@ public class InviteByTextMessage extends Dialog {
 
                 DataSnapshot obj = (DataSnapshot) dataSnapshot.getChildren().iterator().next();
                 Map<String, Object> hostNode = (Map<String, Object>) obj.getValue();
-                        String server = hostNode.get("host")+"";
+                final String server = hostNode.get("host")+"";
 
                 String encodedName = first_name;
                 try {
@@ -95,17 +97,32 @@ public class InviteByTextMessage extends Dialog {
                 } catch(Throwable t) {
                 }
 
-                String videoCallInvitation = "https://"+server+"/video_call_invitation?"
-                        +"video_node_key="+currentVideoNode.getKey()
-                        +"&phone="+guest_phone.getText().toString()
-                        +"&name="+ encodedName;
-                SmsManager smsManager = SmsManager.getDefault();
-                String ph = guest_phone.getText().toString();
-                smsManager.sendTextMessage(ph, null, message, null, null);
-                smsManager.sendTextMessage(ph, null, videoCallInvitation, null, null);
+                VideoInvitation inv = new VideoInvitation(User.getInstance(),
+                        guest_name.getText().toString(),
+                        guest_phone.getText().toString(),
+                        currentVideoNode.getKey());
 
-                // invited person needs to be displayed when we return to VidyoChatFragment - how do we do that???
-                InviteByTextMessage.this.dismiss();
+                String key = inv.save();
+                Map updates = new HashMap();
+
+                updates.put("video/list/"+currentVideoNode.getKey()+"/video_invitation_key", key);
+                updates.put("video/list/"+currentVideoNode.getKey()+"/video_invitation_extended_to", guest_name.getText().toString());
+                updates.put("video/list/"+currentVideoNode.getKey()+"/sms_phone", guest_phone.getText().toString());
+                FirebaseDatabase.getInstance().getReference("/").updateChildren(updates).addOnSuccessListener(new OnSuccessListener() {
+                    @Override
+                    public void onSuccess(Object o) {
+
+                        String videoCallInvitation = "https://"+server+"/video/invitation/"+currentVideoNode.getKey()+"/"+guest_phone.getText().toString();
+                        SmsManager smsManager = SmsManager.getDefault();
+                        String ph = guest_phone.getText().toString();
+                        smsManager.sendTextMessage(ph, null, videoCallInvitation, null, null);
+                        smsManager.sendTextMessage(ph, null, message, null, null);
+
+                        // invited person needs to be displayed when we return to VidyoChatFragment - how do we do that???
+                        InviteByTextMessage.this.dismiss();
+                    }
+                });
+
             }
 
             @Override
