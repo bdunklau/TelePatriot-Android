@@ -83,8 +83,7 @@ exports.temp_call_volunteers = userList.temp_call_volunteers
 
 
 /***
-dev deploy 9/9/19
-//prod deploy 9/9/19
+dev deploy 11/10/19
 // firebase deploy --only functions:testEmail,functions:testEmail2,functions:renderEmail,functions:renderEmail2,functions:saveEmail,functions:saveEmail2,functions:testSendEmail,functions:testSendEmail2,functions:chooseEmailType,functions:chooseEmailType2,functions:onReadyToSendEmails,functions:testOnReadyToSendEmails
 ****/
 // prod deploy: 9/12/18, 9/20/18
@@ -264,7 +263,7 @@ exports.testPreviewLegislatorEmail = videoTypes.testPreviewLegislatorEmail
 
 /***
 dev deploy 9/9/19
-// firebase deploy --only functions:onConnectRequest,functions:onDisconnectRequest,functions:testViewVideoEvents,functions:onTwilioEvent,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
+// firebase deploy --only functions:onConnectRequest,functions:onDisconnectRequest,functions:testViewVideoEvents,functions:onTwilioEvent,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onTwilioTokenRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
 ****/
 // prod deploy:  8/31/19
 // prod deploy: 9/12/19
@@ -280,6 +279,7 @@ exports.onRevokeInvitation = switchboard.onRevokeInvitation
 exports.onRoomIdChange = switchboard.onRoomIdChange
 exports.onTokenRequested = switchboard.onTokenRequested
 exports.onPublishRequested = switchboard.onPublishRequested
+exports.onTwilioTokenRequest = switchboard.onTwilioTokenRequest // dev 11/1/19
 
 
 
@@ -290,8 +290,8 @@ prod:  8/31/19
 // firebase deploy --only functions:testTwilioToken,functions:twilioCallback,functions:testCreateRoom,functions:testListRooms,functions:testRetrieveRoom,functions:testCompleteRoom,functions:testListParticipants,functions:testCompose
 ****/
 const twilio = require('./twilio-telepatriot')
-exports.testTwilioToken = twilio.testTwilioToken
-exports.twilioCallback = twilio.twilioCallback
+exports.testTwilioToken = twilio.testTwilioToken // dev 10/24/19
+exports.twilioCallback = twilio.twilioCallback  // dev 11/17/19
 exports.testCreateRoom = twilio.testCreateRoom
 exports.testListRooms = twilio.testListRooms
 exports.testRetrieveRoom = twilio.testRetrieveRoom
@@ -491,9 +491,9 @@ const googleCloud = require('./google-cloud')
 exports.recording_has_started = googleCloud.recording_has_started
 exports.whenVideoIdIsCreated = googleCloud.whenVideoIdIsCreated
 exports.socialMediaPostsCreated = googleCloud.socialMediaPostsCreated
-exports.onLegislatorChosen = googleCloud.onLegislatorChosen
-exports.onParticipantAdded = googleCloud.onParticipantAdded
-exports.onParticipantRemoved = googleCloud.onParticipantRemoved
+exports.onLegislatorChosen = googleCloud.onLegislatorChosen         // dev 11/11/19
+exports.onParticipantAdded = googleCloud.onParticipantAdded         // dev 11/11/19
+exports.onParticipantRemoved = googleCloud.onParticipantRemoved     // dev 11/11/19
 //exports.cloud = googleCloud.cloud                                       X   X
 //exports.listImages = googleCloud.listImages                             X   X
 //exports.sendToVirtualMachines = googleCloud.sendToVirtualMachines       X   X
