@@ -464,9 +464,9 @@ public class VidyoChatFragment extends BaseFragment
     private SharedPreferences preferences;
 
     private static final String PREF_AUDIO_CODEC = "audio_codec";
-    private static final String PREF_AUDIO_CODEC_DEFAULT = OpusCodec.NAME;
+    private static final String PREF_AUDIO_CODEC_DEFAULT = IsacCodec.NAME;
     private static final String PREF_VIDEO_CODEC = "video_codec";
-    private static final String PREF_VIDEO_CODEC_DEFAULT = Vp8Codec.NAME;
+    private static final String PREF_VIDEO_CODEC_DEFAULT = H264Codec.NAME; //Vp8Codec.NAME;
     private static final String PREF_SENDER_MAX_AUDIO_BITRATE = "sender_max_audio_bitrate";
     private static final String PREF_SENDER_MAX_AUDIO_BITRATE_DEFAULT = "0";
     private static final String PREF_SENDER_MAX_VIDEO_BITRATE = "sender_max_video_bitrate";
@@ -661,6 +661,8 @@ public class VidyoChatFragment extends BaseFragment
      */
     private VideoCodec getVideoCodecPreference(String key, String defaultValue) {
         final String videoCodecName = preferences.getString(key, defaultValue);
+
+        Log.i(TAG, "getVideoCodecPreference(): CHECK: videoCodecName = "+videoCodecName);
 
         switch (videoCodecName) {
             // TODO what are we going to do about these default values?
@@ -879,8 +881,15 @@ public class VidyoChatFragment extends BaseFragment
         inviteLinks();
 
         /*
+         * Start listening for participant events
+         */
+        Log.i(TAG, "addRemoteParticipant(): remoteParticipant.setListener()");
+        remoteParticipant.setListener(remoteParticipantListener());
+
+        /*
          * Add remote participant renderer
          */
+        Log.i(TAG, "addRemoteParticipant(): remoteParticipant.getRemoteVideoTracks().size()="+remoteParticipant.getRemoteVideoTracks().size()+" (want > 0)");
         if (remoteParticipant.getRemoteVideoTracks().size() > 0) {
             RemoteVideoTrackPublication remoteVideoTrackPublication =
                     remoteParticipant.getRemoteVideoTracks().get(0);
@@ -888,18 +897,16 @@ public class VidyoChatFragment extends BaseFragment
             /*
              * Only render video tracks that are subscribed to
              */
+            Log.i(TAG, "addRemoteParticipant(): remoteVideoTrackPublication.isTrackSubscribed()="+remoteVideoTrackPublication.isTrackSubscribed()+" (want: true)");
             if (remoteVideoTrackPublication.isTrackSubscribed()) {
                 addRemoteParticipantVideo(remoteVideoTrackPublication.getRemoteVideoTrack());
             }
         }
-
-        /*
-         * Start listening for participant events
-         */
-        remoteParticipant.setListener(remoteParticipantListener());
     }
 
     private RemoteParticipant.Listener remoteParticipantListener() {
+
+        Log.i(TAG, "remoteParticipantListener(): return new RemoteParticipant.Listener()");
         return new RemoteParticipant.Listener() {
             @Override
             public void onAudioTrackPublished(RemoteParticipant remoteParticipant,
@@ -1107,8 +1114,10 @@ public class VidyoChatFragment extends BaseFragment
                                                RemoteVideoTrack remoteVideoTrack) {
                 Log.i(TAG, String.format("onVideoTrackSubscribed: " +
                                 "[RemoteParticipant: identity=%s], " +
+                                "[RemoteVideoTrackPublication: isTrackSubscribed=%s], "+
                                 "[RemoteVideoTrack: enabled=%b, name=%s]",
                         remoteParticipant.getIdentity(),
+                        remoteVideoTrackPublication.isTrackSubscribed(),
                         remoteVideoTrack.isEnabled(),
                         remoteVideoTrack.getName()));
 
@@ -1123,8 +1132,10 @@ public class VidyoChatFragment extends BaseFragment
                                                  RemoteVideoTrack remoteVideoTrack) {
                 Log.i(TAG, String.format("onVideoTrackUnsubscribed: " +
                                 "[RemoteParticipant: identity=%s], " +
+                                "[RemoteVideoTrackPublication: isTrackSubscribed=%s], "+
                                 "[RemoteVideoTrack: enabled=%b, name=%s]",
                         remoteParticipant.getIdentity(),
+                        remoteVideoTrackPublication.isTrackSubscribed(),
                         remoteVideoTrack.isEnabled(),
                         remoteVideoTrack.getName()));
 
@@ -1185,6 +1196,8 @@ public class VidyoChatFragment extends BaseFragment
     }
 
     private void removeParticipantVideo(VideoTrack videoTrack) {
+        Log.i(TAG, "removeParticipantVideo(): videoTrack.removeRenderer(remote_camera_view);");
+
         videoTrack.removeRenderer(remote_camera_view);
         remote_camera_view.setBackgroundColor(0xFFDDDDDD);
 
@@ -1197,6 +1210,8 @@ public class VidyoChatFragment extends BaseFragment
      * Set primary view as renderer for participant video track
      */
     private void addRemoteParticipantVideo(VideoTrack videoTrack) {
+        Log.i(TAG, "addRemoteParticipantVideo(): videoTrack name:"+videoTrack.getName()+" enabled:"+videoTrack.isEnabled());
+
         //moveLocalVideoToThumbnailView(); // we don't need to do this anymore
         remote_camera_view.setMirror(false);
         remote_camera_view.setBackgroundColor(0x00000000);
@@ -1208,13 +1223,17 @@ public class VidyoChatFragment extends BaseFragment
      */
     private void removeRemoteParticipant(RemoteParticipant remoteParticipant) {
 
+        Log.i(TAG, "removeRemoteParticipant() identity:"+remoteParticipant.getIdentity());
+
         if (!remoteParticipant.getIdentity().equals(remoteParticipantIdentity)) {
+            Log.i(TAG, "removeRemoteParticipant(): return early - wrong identity");
             return;
         }
 
         /*
          * Remove remote participant renderer
          */
+        Log.i(TAG, "removeRemoteParticipant(): remoteParticipant.getRemoteVideoTracks().isEmpty()="+remoteParticipant.getRemoteVideoTracks().isEmpty());
         if (!remoteParticipant.getRemoteVideoTracks().isEmpty()) {
             RemoteVideoTrackPublication remoteVideoTrackPublication =
                     remoteParticipant.getRemoteVideoTracks().get(0);
@@ -1222,6 +1241,7 @@ public class VidyoChatFragment extends BaseFragment
             /*
              * Remove video only if subscribed to participant track
              */
+            Log.i(TAG, "removeRemoteParticipant(): remoteVideoTrackPublication.isTrackSubscribed()="+remoteVideoTrackPublication.isTrackSubscribed()+" (want: true)");
             if (remoteVideoTrackPublication.isTrackSubscribed()) {
                 removeParticipantVideo(remoteVideoTrackPublication.getRemoteVideoTrack());
             }
@@ -1652,7 +1672,8 @@ public class VidyoChatFragment extends BaseFragment
 //    }
 
     private void inviteLinks() {
-        if(isAdded())
+        boolean added = isAdded();
+        if(added)
             inviteLinks_();
     }
 
@@ -1943,16 +1964,13 @@ public class VidyoChatFragment extends BaseFragment
 
     private void inviteSomeone() {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        SearchUsersDlg dialog = new SearchUsersDlg(getActivity(), currentVideoNode);
+//        SearchUsersDlg dialog = new SearchUsersDlg(getActivity(), currentVideoNode);
+        InviteSomeoneDlg dialog = new InviteSomeoneDlg(getActivity(), currentVideoNode);
         lp.copyFrom(dialog.getWindow().getAttributes());
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = WindowManager.LayoutParams.MATCH_PARENT;
         dialog.show();
         dialog.getWindow().setAttributes(lp);
-
-//        SearchUsersFragment f = new SearchUsersFragment();
-//        f.setWhereTo(VidyoChatFragment.this); // means we'll come back to this fragment once we select a user
-//        showFragment(f);
     }
 
     private void revokeInvitation() {

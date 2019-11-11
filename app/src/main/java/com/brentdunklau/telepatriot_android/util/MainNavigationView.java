@@ -59,6 +59,7 @@ public class MainNavigationView extends NavigationView implements AccountStatusE
         it.setTitle("Team: "+User.getInstance().getCurrentTeamName());
     }
 
+    // See activity_main_drawer.xml for the xml definition of the main menu
     @Override
     public void inflateMenu(int resId) {
         super.inflateMenu(resId);

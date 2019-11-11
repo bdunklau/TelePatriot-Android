@@ -279,7 +279,6 @@ public class MainActivity extends AppCompatActivity
 
         }
 
-
         // Director and Admin menu items are commented out for the time being (Dec 2018)
         // To put these back in, uncomment the blocks below AND THEN go to activity_main_drawer.xml
         // and uncomment the menu items there also

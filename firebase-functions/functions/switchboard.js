@@ -17,7 +17,7 @@ const db = admin.database()
 
 /***
 paste this on the command line...
-firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,functions:onConnectRequest,functions:onDisconnectRequest,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
+firebase deploy --only functions:onTwilioEvent,functions:testViewVideoEvents,functions:onConnectRequest,functions:onDisconnectRequest,functions:onStartRecordingRequest,functions:onStopRecordingRequest,functions:onTwilioTokenRequest,functions:onRoomCreated,functions:onRevokeInvitation,functions:onRoomIdChange,functions:onTokenRequested,functions:onPublishRequested
 ***/
 
 // When one person connects, connect the other person also.  It's one less thing we have to train people to do.
@@ -260,6 +260,31 @@ exports.onStopRecordingRequest = functions.database.ref('video/video_events/{key
 })
 
 
+
+// created for TelePatriot-Web
+exports.onTwilioTokenRequest = functions.database.ref('video/video_events/{key}').onCreate((snapshot, context) => {
+    var data = snapshot.val()
+    if(!data.request_type) {
+        console.log('onTwilioTokenRequest: return early because data.request_type = ', data.request_type)
+        return false //ignore malformed
+    }
+
+    if(data.request_type != 'twilio token request') {
+        console.log('onTwilioTokenRequest: return early because data.request_type is not "twilio token request". It is ', data.request_type)
+        return false //ignore, not a "twilio token request"
+    }
+
+    var stuff = {name: snapshot.val().name}
+    if(snapshot.val().room_name) {
+        stuff['room_id'] = snapshot.val().room_name
+    }
+
+    return twilio_telepatriot.generateTwilioToken(stuff).then(token => {
+        return db.ref('video/tokens').push().set({name:stuff.name, room_name:snapshot.val().room_name, token: token, date: date.asCentralTime(), date_ms: snapshot.val().date_ms})
+    })
+})
+
+
 // TODO soon we'll decouple the composition from the publishing because we now capture the details of the composed media file
 // in twilio-telepatriot.js:twilioCallback "composition-available" block
 // TODO make VideoEvent pass in composition_MediaUri if it's available
@@ -363,6 +388,18 @@ exports.onDisconnectRequest = functions.database.ref('video/video_events/{key}')
     return disconnect(db.ref(), params.key, data.video_node_key, data.uid, data.room_id)
 })
 
+/**
+Something here triggers the video title, video description and email nodes to be re-evaluated
+That's not what I want.
+What's doing that?
+
+We know that email.js: evaluate_video_and_email() is called by ==============================================
+email.js:        onReadyToSendEmails()
+video-list.js:    testReevaluateEmailAttributes()  (http function)
+google-cloud.js:  onLegislatorChosen()  (db trigger)
+                  onParticipantAdded()  (db trigger)  THE CULPRIT - BUT WHY?
+                  onParticipantRemoved()(db trigger)
+**/
 var disconnect = function(adminRef, video_event_key, video_node_key, uid, room_id) {
     var updates = {}
     updates['video/video_events/'+video_event_key+'/date'] = date.asCentralTime()

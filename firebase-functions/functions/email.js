@@ -412,7 +412,7 @@ exports.onReadyToSendEmails = functions.database.ref('video/list/{video_node_key
     if(snap2.val()) {
         // We need to evaluate the 2 emails and the youtube video title and description one last time
         // before the emails go out...
-        return exports.evaluate_video_and_email(params.video_node_key).then(() => {
+        return exports.evaluate_email(params.video_node_key).then(() => {
 
             return db.ref().child('video/list/'+params.video_node_key).once('value').then(snapshot => {
                 if(snapshot.val().email_to_legislator) {
@@ -739,6 +739,15 @@ var getVideoNode = function(video_node_key) {
 }
 
 
+/**
+Called by =========================================================
+this file:        onReadyToSendEmails()
+video-list.js:    testReevaluateEmailAttributes()  (http function)
+google-cloud.js:  onLegislatorChosen()  (db trigger)
+                  onParticipantAdded()  (db trigger)
+                  onParticipantRemoved()(db trigger)
+
+**/
 exports.evaluate_video_and_email = function(video_node_key) {
     return getVideoNode(video_node_key).then(videoNode => {
         if(!videoNode || !videoNode.video_participants || videoNode.video_participants.length == 0) {
@@ -755,6 +764,38 @@ exports.evaluate_video_and_email = function(video_node_key) {
         updates['video/list/'+video_node_key+'/email_to_participant_subject'] = evaluate_email_to_participant_subject(videoNode)
         updates['video/list/'+video_node_key+'/youtube_video_description'] = evaluate_youtube_video_description(videoNode)
         updates['video/list/'+video_node_key+'/video_title'] = evaluate_video_title(videoNode)
+        return db.ref('/').update(updates)
+    })
+}
+
+
+/**
+Adapted from evaluate_video_and_email() above.  But in evaluate_email(), we don't (re)evaluate the youtube video title
+and youtube video description.  What we found was than, when onReadyToSendEmails() was called, we were re-evaluating the youtube
+video title and description AFTER the youtube video had been uploaded.  So the video on youtube had the correct title and description
+even if the user provided an alternate title and description.  BUT THE DATABASE WAS GETTING OUT OF SYNC WITH THE TITLE AND VIDEO
+DESCRIPTION THAT WERE ACTUALLY ON YOUTUBE BECAUSE WE WERE RE-EVALUATING THE TITLE AND VIDEO DESCRIPTION IN evaluate_video_and_email()
+ABOVE.
+
+So what I did was create this method that does everything evaluate_video_and_email() does EXCEPT this method does not re-evaluate
+the youtube video description and title
+
+CALLED BY:  onReadyToSendEmail()  (this file)  which is triggered by whenVideoIdIsCreated()
+**/
+exports.evaluate_email = function(video_node_key) {
+    return getVideoNode(video_node_key).then(videoNode => {
+        if(!videoNode || !videoNode.video_participants || videoNode.video_participants.length == 0) {
+            console.log('videoNode=',videoNode);
+            console.log('videoNode.video_participants=',videoNode.video_participants);
+            console.log('videoNode.video_participants.length=',videoNode.video_participants.length);
+            return false
+        }
+
+        var updates = {}
+        updates['video/list/'+video_node_key+'/email_to_legislator_body'] = evaluate_email_to_legislator_body(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_legislator_subject'] = evaluate_email_to_legislator_subject(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_participant_body'] = evaluate_email_to_participant_body(videoNode)
+        updates['video/list/'+video_node_key+'/email_to_participant_subject'] = evaluate_email_to_participant_subject(videoNode)
         return db.ref('/').update(updates)
     })
 }

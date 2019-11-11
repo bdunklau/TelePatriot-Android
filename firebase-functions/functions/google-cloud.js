@@ -84,10 +84,8 @@ when a participant is added, re-evaluate the node's:
     video_title
 We have to re-evaluate these attributes because the constituent is changing and constituent info
 is in these attributes.  The constituent is always the person added most recently
-
-Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
-exports.onParticipantAdded = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}/{uid}').onCreate((snapshot, context) => {
+exports.onParticipantAdded = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}/uid').onCreate((snapshot, context) => {
     return email.evaluate_video_and_email(context.params.video_node_key)
 })
 
@@ -102,8 +100,6 @@ when a participant is removed, re-evaluate the node's:
     video_title
 We have to re-evaluate these attributes because the constituent is changing and constituent info
 is in these attributes.  The constituent is always the person added most recently
-
-Get rid of: exports.video_title, exports.youtubeVideoDescription
 **********/
 exports.onParticipantRemoved = functions.database.ref('video/list/{video_node_key}/video_participants/{vp_uid}').onDelete((snapshot, context) => {
     return email.evaluate_video_and_email(context.params.video_node_key)

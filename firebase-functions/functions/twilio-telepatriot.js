@@ -126,7 +126,14 @@ exports.twilioCallback = functions.https.onRequest((req, res) => {
                                 }
                             }
 
-                            db.ref('video/invitations/'+child.val().video_invitation_key).remove()
+
+                            /**
+                            We DO want to get rid of these when done, but for now (11.7.19) I need to debug what happens when the video
+                            becomes available.  I need to verify that the web page dynamically switches over to the Mission Accomplished
+                            screen as soon as video/list/[key]/email_to_participant_send_date is created
+                            **/
+                            // db.ref('video/invitations/'+child.val().video_invitation_key).remove()
+
 
                             // capture the details on the composition.  If we need to re-upload, having
                             // this info means we won't have to re-compose the file
@@ -199,11 +206,12 @@ exports.publish = function(input) {
 
 exports.testTwilioToken = functions.https.onRequest((req, res) => {
 
-    var stuff = {name:'testuser',
-                room:'cool room'}
+    var stuff = {name: req.query.name,
+                room_id: req.query.room_id}
 
     return exports.generateTwilioToken(stuff).then(token => {
-        res.status(200).send('Twilio token: <P/>'+token)
+        res.set('Access-Control-Allow-Origin', '*');
+        res.status(200).send({token: token});
     })
 
 })
@@ -338,7 +346,7 @@ exports.completeRoom = function(room_sid, callback) {
 
         client.video.rooms(room_sid).update({status: 'completed'})
                     .then(room => {
-                        db.ref('templog2').push().set({func: 'completeRoom', room_sid: room_sid, event: 'this room should be \'completed\''})
+//                        db.ref('templog2').push().set({func: 'completeRoom', room_sid: room_sid, event: 'this room should be \'completed\''})
                         var stuff = {room: room, twilio_account_sid: snapshot.val().twilio_account_sid, twilio_auth_token: snapshot.val().twilio_auth_token}
                         callback(stuff)
                     })
@@ -533,7 +541,7 @@ exports.generateTwilioToken = function(stuff) {
 
         // Create Video Grant
         const videoGrant = new VideoGrant({
-          room: stuff.room_id,
+            room: stuff.room_id,  // room name, not RoomSid   (optional?)
         });
 
         // Create an access token which we will sign and return to the client,
