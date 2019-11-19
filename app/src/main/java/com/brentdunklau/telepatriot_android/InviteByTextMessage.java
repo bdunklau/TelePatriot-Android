@@ -45,6 +45,10 @@ public class InviteByTextMessage extends Dialog {
 
         setContentView(R.layout.invite_by_text_message_dlg);
 
+        guest_name = findViewById(R.id.guest_name);
+        guest_name.setFocusable(true);
+        guest_name.requestFocus();
+        guest_phone = findViewById(R.id.guest_phone);
         button_send_text_message = findViewById(R.id.button_send_text_message);
         button_cancel = findViewById(R.id.button_cancel);
 
@@ -69,8 +73,6 @@ public class InviteByTextMessage extends Dialog {
     }
 
     private void sendTextMessage(final VideoNode currentVideoNode) {
-        guest_name = findViewById(R.id.guest_name);
-        guest_phone = findViewById(R.id.guest_phone);
         final String name = guest_name.getText().toString();
         final String first_name = name.substring(0, name.indexOf(" "));
         final String message = "Hi "+first_name+"\nPlease touch the link above to join me on a video call\n\nThanks!\n"+ User.getInstance().getName();
