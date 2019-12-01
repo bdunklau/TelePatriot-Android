@@ -875,11 +875,6 @@ public class VidyoChatFragment extends BaseFragment
     private void addRemoteParticipant(RemoteParticipant remoteParticipant) {
         remoteParticipantIdentity = remoteParticipant.getIdentity();
 
-        // remove the invitation links and text
-        // remove the invitation links and text
-        remoteCameraVisible = true;
-        inviteLinks();
-
         /*
          * Start listening for participant events
          */
@@ -891,6 +886,8 @@ public class VidyoChatFragment extends BaseFragment
          */
         Log.i(TAG, "addRemoteParticipant(): remoteParticipant.getRemoteVideoTracks().size()="+remoteParticipant.getRemoteVideoTracks().size()+" (want > 0)");
         if (remoteParticipant.getRemoteVideoTracks().size() > 0) {
+
+
             RemoteVideoTrackPublication remoteVideoTrackPublication =
                     remoteParticipant.getRemoteVideoTracks().get(0);
 
@@ -902,6 +899,8 @@ public class VidyoChatFragment extends BaseFragment
                 addRemoteParticipantVideo(remoteVideoTrackPublication.getRemoteVideoTrack());
             }
         }
+
+        inviteLinks();
     }
 
     private RemoteParticipant.Listener remoteParticipantListener() {
@@ -1216,6 +1215,9 @@ public class VidyoChatFragment extends BaseFragment
         remote_camera_view.setMirror(false);
         remote_camera_view.setBackgroundColor(0x00000000);
         videoTrack.addRenderer(remote_camera_view);
+
+        // remove the invitation links and text
+        remoteCameraVisible = true;
     }
 
     /*
