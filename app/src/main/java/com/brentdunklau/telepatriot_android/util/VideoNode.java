@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by bdunklau on 6/21/18.
@@ -667,5 +668,20 @@ public class VideoNode {
 
     public VideoParticipant getParticipant(String uid) {
         return video_participants.get(uid);
+    }
+
+    // all that's known is "my" id, so use it to get the other/remote participant
+    public VideoParticipant getRemoteParticipant(String myId) {
+        String remoteId = getRemoteParticipantUid(myId);
+        if(remoteId == null) return null;
+        return video_participants.get(remoteId);
+    }
+
+    private String getRemoteParticipantUid(String myId) {
+        for(String id : video_participants.keySet()) {
+            if(id.equals(myId)) continue;
+            else return id;
+        }
+        return null;
     }
 }

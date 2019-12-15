@@ -598,6 +598,7 @@ exports.videoEvents = function(stuff) {
         html += '</h3>'
         html += '<table border="1" cellspacing="0" cellpadding="2">'
         html +=     '<tr>'
+        html +=         '<th>key</th>'
         html +=         '<th>date</th>'
         html +=         '<th>name</th>'
         html +=         '<th>request_type</th>'
@@ -625,6 +626,7 @@ exports.videoEvents = function(stuff) {
         html +=     '</tr>'
         snapshot.forEach(function(child) {
             html += '<tr>'
+            html +=     '<td nowrap>'+(child.key)+'</td>'
             html +=     '<td nowrap>'+(child.val()['date'] ? child.val()['date'] : "")+'</td>'
             html +=     '<td nowrap>'+(child.val()['name'] ? child.val()['name'] : "")+'</td>'
             html +=     '<td nowrap>'+(child.val()['request_type'] ? child.val()['request_type'] : "")+'</td>'

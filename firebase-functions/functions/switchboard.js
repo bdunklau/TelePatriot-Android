@@ -35,9 +35,13 @@ exports.onConnectRequest = functions.database.ref('video/video_events/{key}').on
         return false //ignore, not a connect request
     }
 
+    console.log('onConnectRequest: video_event_key = ', params.key)
+    console.log('onConnectRequest: video_event = ', data)
     return connect(params.key, data.video_node_key, data.uid, data.name, data.room_id, data.RoomSid)
 })
 
+
+// connects both participants
 var connect = function(video_event_key, video_node_key, uid, name, room_id, RoomSid) {
 
     var stuff = {room_id: room_id,
@@ -45,6 +49,8 @@ var connect = function(video_event_key, video_node_key, uid, name, room_id, Room
                   video_event_key: video_event_key}
 
     if(RoomSid) { // means we don't have to create the room, it's already created
+
+        console.log('connect(): DO NOT CREATE ROOM because RoomSid = ', RoomSid)
 
         return db.ref('api_tokens').once('value').then(snap8 => {
             stuff.twilio_account_sid = snap8.val().twilio_account_sid
@@ -60,6 +66,8 @@ var connect = function(video_event_key, video_node_key, uid, name, room_id, Room
 
             var host
             snapshot.forEach(function(child) { host = child.val().host })
+
+            console.log('connect(): CREATE ROOM because RoomSid = ', RoomSid)
 
             return twilio_telepatriot.createRoom(room_id, host).then(roomResult => {
                 stuff.twilio_account_sid = roomResult.twilio_account_sid

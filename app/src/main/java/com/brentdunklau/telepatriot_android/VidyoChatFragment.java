@@ -117,6 +117,7 @@ public class VidyoChatFragment extends BaseFragment
     private VideoView remote_camera_view;
     private boolean remoteCameraVisible;
     private TextView invite_someone_button, guest_name, revoke_invitation_button;
+//    boolean remoteIsReady = false;
 
     private boolean mCameraPrivacy = false;
     private boolean mMicrophonePrivacy = false;
@@ -577,10 +578,10 @@ public class VidyoChatFragment extends BaseFragment
                 //videoStatusTextView.setText("Connected to " + room.getName()); // maybe change the text to say WHO we're connected to
                 //setTitle(room.getName()); // don't think we care about the room name
 
-                for (RemoteParticipant remoteParticipant : room.getRemoteParticipants()) {
-                    addRemoteParticipant(remoteParticipant);
-                    break;
-                }
+//                for (RemoteParticipant remoteParticipant : room.getRemoteParticipants()) {
+//                    addRemoteParticipant(remoteParticipant);
+//                    break;
+//                }
             }
 
             @Override
@@ -878,13 +879,13 @@ public class VidyoChatFragment extends BaseFragment
         /*
          * Start listening for participant events
          */
-        Log.i(TAG, "addRemoteParticipant(): remoteParticipant.setListener()");
+        Log.i(TAG, "addRemoteParticipant: remoteParticipant.setListener()");
         remoteParticipant.setListener(remoteParticipantListener());
 
         /*
          * Add remote participant renderer
          */
-        Log.i(TAG, "addRemoteParticipant(): remoteParticipant.getRemoteVideoTracks().size()="+remoteParticipant.getRemoteVideoTracks().size()+" (want > 0)");
+        Log.i(TAG, "addRemoteParticipant: remoteParticipant.getRemoteVideoTracks().size()="+remoteParticipant.getRemoteVideoTracks().size()+" (want > 0)");
         if (remoteParticipant.getRemoteVideoTracks().size() > 0) {
 
 
@@ -894,15 +895,24 @@ public class VidyoChatFragment extends BaseFragment
             /*
              * Only render video tracks that are subscribed to
              */
-            Log.i(TAG, "addRemoteParticipant(): remoteVideoTrackPublication.isTrackSubscribed()="+remoteVideoTrackPublication.isTrackSubscribed()+" (want: true)");
+            Log.i(TAG, "addRemoteParticipant: remoteVideoTrackPublication.isTrackSubscribed()="+remoteVideoTrackPublication.isTrackSubscribed()+" (want: true)");
             if (remoteVideoTrackPublication.isTrackSubscribed()) {
+                // TODO FIXME this isn't being called when sometimes because
+                // TODO FIXME remoteVideoTrackPublication.isTrackSubscribed() is false - but don't know why yet
+                // TODO FIXME Some problem with localParticipant ...?
                 addRemoteParticipantVideo(remoteVideoTrackPublication.getRemoteVideoTrack());
             }
+        }
+        else {
+            // need to "recover"...  The remote participant connected but there was no video track
         }
 
         inviteLinks();
     }
 
+
+    // When does this get called?
+    // Ans:  addRemoteParticipant()
     private RemoteParticipant.Listener remoteParticipantListener() {
 
         Log.i(TAG, "remoteParticipantListener(): return new RemoteParticipant.Listener()");
@@ -1202,8 +1212,10 @@ public class VidyoChatFragment extends BaseFragment
 
         // remove the invitation links and text
         remoteCameraVisible = false;
+        buttonStates(remoteCameraVisible);
         inviteLinks();
     }
+
 
     /*
      * Set primary view as renderer for participant video track
@@ -1218,6 +1230,7 @@ public class VidyoChatFragment extends BaseFragment
 
         // remove the invitation links and text
         remoteCameraVisible = true;
+        buttonStates(remoteCameraVisible);
     }
 
     /*
@@ -1531,6 +1544,10 @@ public class VidyoChatFragment extends BaseFragment
         boolean doINeedToSwitchRooms = shouldBeConnected && connectedToTheWrongRoom;
         boolean iAmAboutToSwitchRooms = iAmAbleToConect && doINeedToSwitchRooms;
 
+        if(isRemoteReady()) {
+            inviteLinks();
+        }
+
         System.out.println(TAG+ "]  ------------------------------------------------------------");
         System.out.println(TAG+ "]  RoomId IS: "+currentRoomId+"   -- CHANGING TO: "+currentVideoNode.getRoom_id());
 //        System.out.println(TAG+ "]      connected: "+connected);
@@ -1562,6 +1579,15 @@ public class VidyoChatFragment extends BaseFragment
             doConnect();
             currentRoomId = currentVideoNode.getRoom_id();
         }
+
+    }
+
+
+    private boolean isRemoteReady() {
+        VideoParticipant remoteParticipant = currentVideoNode.getRemoteParticipant(User.getInstance().getUid());
+        boolean notnull = remoteParticipant != null;
+        boolean ret = notnull && (Boolean.TRUE == remoteParticipant.getPage_loaded());
+        return ret;
     }
 
 
@@ -1612,13 +1638,13 @@ public class VidyoChatFragment extends BaseFragment
 
         room = Video.connect(getActivity(), connectOptionsBuilder.build(), roomListener());
 
-        buttonStates(true);
+//        buttonStates(true);
 
         if(room.getName().startsWith("record"))
             record_label.setText("Recording...");
         else record_label.setText("");
-        microphone_button.setVisibility(View.VISIBLE);
-        record_button.setVisibility(View.VISIBLE);
+//        microphone_button.setVisibility(View.VISIBLE);
+//        record_button.setVisibility(View.VISIBLE);
         setDisconnectAction();
     }
 
@@ -1642,23 +1668,22 @@ public class VidyoChatFragment extends BaseFragment
             record_label.setText("");
         }
 
-        buttonStates(false);
+//        buttonStates(false);
 
         System.out.println(TAG+ "]  disconnected from:  "+room.getName()+" (currentVideoNode.getRoom_id() = "+currentVideoNode.getRoom_id()+")");
     }
 
 
-    // Update our UI based upon if we are in a Room or not
-    private void buttonStates(boolean inRoom) {
+    private void buttonStates(boolean checked) {
         if(currentVideoNode == null)
             return;
         if (recordingWillStart || recordingWillStop) {
             // prevent the buttons from changing state when the recording starts and stops - very confusing to the user
             // The user doesn't know that they are actually being disconnected from one room and automatically connected to another room
         } else {
-            connect_button.setChecked(inRoom);
-            microphone_button.setVisibility(inRoom ? View.VISIBLE : View.GONE);
-            record_button.setVisibility(inRoom ? View.VISIBLE : View.GONE);
+            connect_button.setChecked(checked);
+            microphone_button.setVisibility(checked ? View.VISIBLE : View.GONE);
+            record_button.setVisibility(checked ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -1695,7 +1720,10 @@ public class VidyoChatFragment extends BaseFragment
                     // So compare current user with the name the invitation was extended to and don't show the
                     // guest_name label
                     guest_name.setVisibility(View.VISIBLE);
-                    if(!User.getInstance().getName().equals(currentVideoNode.getVideo_invitation_extended_to())) {
+                    if(isRemoteReady()) {
+                        guest_name.setText("TOUCH THE GREEN BUTTON  "+currentVideoNode.getVideo_invitation_extended_to()+" is READY");
+                    }
+                    else if(!User.getInstance().getName().equals(currentVideoNode.getVideo_invitation_extended_to())) {
                         guest_name.setText("You have invited "+currentVideoNode.getVideo_invitation_extended_to()+" to participate in a video chat");
                         revoke_invitation_button.setVisibility(View.VISIBLE);
                     }
@@ -2033,16 +2061,17 @@ public class VidyoChatFragment extends BaseFragment
         recordingWillStop = false;  // the connect/disconnect button is clicked
 
         VideoParticipant vp = currentVideoNode.getParticipant(User.getInstance().getUid());
+        VideoParticipant thePerson = vp;
         if(vp == null) {
             simpleOKDialog("Video chat is currently disabled");
             return;
         }
         showSpinner(); // dismissed in doConnect() and doDisconnect()
         String request_type = "connect request";
-        if(vp.isConnected()) {
+        if(/*remoteCameraVisible*/ vp.isConnected()) {
             request_type = "disconnect request";
         }
-        VideoEvent ve = new VideoEvent(User.getInstance().getUid(), User.getInstance().getName(), currentVideoNode.getKey(),
+        VideoEvent ve = new VideoEvent(thePerson.getUid(), thePerson.getName(), currentVideoNode.getKey(),
                 currentVideoNode.getRoom_id(), request_type, currentVideoNode.getRoom_sid(), currentVideoNode.getComposition_MediaUri());
                 // currentVideoNode.getRoom_sid() prevents js exception on the server by not trying to create a room that we know exists -  see switchboard.js:connect()
                 // currentVideoNode.getComposition_MediaUri() when not null, will let us publish a video without re-composing it, because re-composing isn't necessary

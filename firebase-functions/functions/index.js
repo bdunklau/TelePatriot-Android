@@ -268,9 +268,9 @@ dev deploy 9/9/19
 // prod deploy:  8/31/19
 // prod deploy: 9/12/19
 const switchboard = require('./switchboard')
-exports.onConnectRequest = switchboard.onConnectRequest
+exports.onConnectRequest = switchboard.onConnectRequest      // dev 12/12/19
 exports.onDisconnectRequest = switchboard.onDisconnectRequest
-exports.testViewVideoEvents = switchboard.testViewVideoEvents
+exports.testViewVideoEvents = switchboard.testViewVideoEvents   // dev 12/10/19
 exports.onTwilioEvent = switchboard.onTwilioEvent
 exports.onStartRecordingRequest = switchboard.onStartRecordingRequest
 exports.onStopRecordingRequest = switchboard.onStopRecordingRequest
@@ -280,6 +280,7 @@ exports.onRoomIdChange = switchboard.onRoomIdChange
 exports.onTokenRequested = switchboard.onTokenRequested
 exports.onPublishRequested = switchboard.onPublishRequested
 exports.onTwilioTokenRequest = switchboard.onTwilioTokenRequest // dev 11/1/19
+//exports.onReconnectRemoteRequest = switchboard.onReconnectRemoteRequest // dev 12/10/19
 
 
 

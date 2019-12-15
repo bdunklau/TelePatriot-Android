@@ -21,6 +21,8 @@ public class VideoParticipant {
     private long disconnect_date_ms;
     private String end_date;
     private long end_date_ms;
+    private Boolean page_loaded = Boolean.FALSE; // means the browser-based chat client has loaded the page
+
     private String role;
     private boolean present = true; // because basically a participant has to be present for this object to be instantiated
     //String vidyo_token;  // don't use this anymore 8/10/18
@@ -36,6 +38,7 @@ public class VideoParticipant {
         uid = user.getUid();
         name = user.getName();
         email = user.getEmail();
+        page_loaded = Boolean.FALSE;
         // not init-ing with phone
         start_date = Util.getDate_Day_MMM_d_hmmss_am_z_yyyy();
         start_date_ms = Util.getDate_as_millis();
@@ -56,6 +59,7 @@ public class VideoParticipant {
         m.put("disconnect_date_ms", disconnect_date_ms);
         m.put("end_date", end_date);
         m.put("end_date_ms", end_date_ms);
+        m.put("page_loaded", page_loaded);
         m.put("role", role);
         m.put("present", present);
         m.put("twilio_token", twilio_token);
@@ -174,6 +178,14 @@ public class VideoParticipant {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public Boolean getPage_loaded() {
+        return page_loaded;
+    }
+
+    public void setPage_loaded(Boolean page_loaded) {
+        this.page_loaded = page_loaded;
     }
 
     public String getTwilio_token() {
