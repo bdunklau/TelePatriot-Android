@@ -10,7 +10,7 @@
     "firebase-functions": "^2.3.0",
     "fs": "0.0.1-security",
     "google-auth-library": "^0.11.0",
-    "googleapis": "^22.2.0",
+    "googleapis": "^59.0.0",
     "jssha": "^2.3.1",
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
